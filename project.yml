@@ -14,11 +14,19 @@ settings:
     ARCHS: arm64
     ONLY_ACTIVE_ARCH: YES
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.0.0
+
 targets:
   Tippi:
     type: application
     platform: macOS
     deploymentTarget: "15.0"
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     sources:
       - path: Tippi
         excludes:

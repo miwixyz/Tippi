@@ -16,13 +16,14 @@ struct CustomPrompt: Codable, Identifiable, Equatable {
     }
 
     func asDemoPrompt() -> DemoPrompt {
-        DemoPrompt(
+        let promptTitle = title
+        return DemoPrompt(
             id: "custom-\(id.uuidString)",
             title: title,
             symbol: symbol,
             systemPrompt: systemPrompt,
-            transform: { text in
-                "[\(self.title)] \(text)\n\n(Local demo — add an AI key in Settings → Providers.)"
+            transform: { @Sendable text in
+                "[\(promptTitle)] \(text)\n\n(Local demo — add an AI key in Settings → Providers.)"
             }
         )
     }
@@ -53,6 +54,11 @@ final class CustomPromptStore: ObservableObject {
 
     func delete(id: UUID) {
         prompts.removeAll { $0.id == id }
+        save()
+    }
+
+    func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+        prompts.move(fromOffsets: source, toOffset: destination)
         save()
     }
 

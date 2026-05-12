@@ -13,8 +13,6 @@ struct PromptPopupView: View {
             header
             Divider()
             list
-            Divider()
-            footer
         }
         .frame(width: 290)
         .background(.regularMaterial)
@@ -61,9 +59,12 @@ struct PromptPopupView: View {
             Text("Tippi")
                 .font(.subheadline.weight(.semibold))
             Spacer()
-            Text("⎋")
-                .font(.caption2.monospaced())
-                .foregroundStyle(.secondary)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+                    .font(.system(size: 15))
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.top, 10)
@@ -85,18 +86,6 @@ struct PromptPopupView: View {
         .padding(.vertical, 6)
     }
 
-    private var footer: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "cloud.slash")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(String(localized: "popup.footer.phase3"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-    }
 }
 
 private struct PromptRow: View {

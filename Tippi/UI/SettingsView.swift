@@ -12,6 +12,8 @@ struct SettingsView: View {
                 .tabItem { Label(String(localized: "settings.tab.providers"), systemImage: "key") }
             PromptsTab()
                 .tabItem { Label(String(localized: "settings.tab.prompts"), systemImage: "text.bubble") }
+            HelpTab()
+                .tabItem { Label(String(localized: "settings.tab.help"), systemImage: "questionmark.circle") }
             AboutTab()
                 .tabItem { Label(String(localized: "settings.tab.about"), systemImage: "info.circle") }
         }
@@ -99,6 +101,10 @@ private struct HotkeysTab: View {
                                     savedFlash = false
                                 }
                             }
+
+                        Text(String(localized: "settings.hotkeys.restartHint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
                         HStack {
                             Button(String(localized: "settings.hotkeys.reset")) {
@@ -402,24 +408,29 @@ private struct PromptsTab: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         } else {
-                            ForEach(store.prompts) { p in
-                                HStack {
-                                    Image(systemName: p.symbol)
-                                        .foregroundStyle(.tint)
-                                        .frame(width: 22)
-                                    Text(p.title)
-                                    Spacer()
-                                    Button(action: { editing = p }) {
-                                        Image(systemName: "pencil")
+                            List {
+                                ForEach(store.prompts) { p in
+                                    HStack {
+                                        Image(systemName: p.symbol)
+                                            .foregroundStyle(.tint)
+                                            .frame(width: 22)
+                                        Text(p.title)
+                                        Spacer()
+                                        Button(action: { editing = p }) {
+                                            Image(systemName: "pencil")
+                                        }
+                                        .buttonStyle(.borderless)
+                                        Button(action: { store.delete(id: p.id) }) {
+                                            Image(systemName: "trash")
+                                                .foregroundStyle(.red)
+                                        }
+                                        .buttonStyle(.borderless)
                                     }
-                                    .buttonStyle(.borderless)
-                                    Button(action: { store.delete(id: p.id) }) {
-                                        Image(systemName: "trash")
-                                            .foregroundStyle(.red)
-                                    }
-                                    .buttonStyle(.borderless)
                                 }
+                                .onMove { store.move(fromOffsets: $0, toOffset: $1) }
                             }
+                            .listStyle(.plain)
+                            .frame(minHeight: CGFloat(store.prompts.count) * 36)
                         }
                     }
                     .padding(6)
@@ -528,24 +539,98 @@ private struct PromptEditor: View {
     }
 }
 
+// MARK: - Help
+
+private struct HelpTab: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                helpSection(
+                    icon: "cursorarrow.rays",
+                    title: String(localized: "settings.help.howTitle"),
+                    body: String(localized: "settings.help.howBody")
+                )
+                helpSection(
+                    icon: "text.bubble",
+                    title: String(localized: "settings.help.promptsTitle"),
+                    body: String(localized: "settings.help.promptsBody")
+                )
+                helpSection(
+                    icon: "key",
+                    title: String(localized: "settings.help.apiTitle"),
+                    body: String(localized: "settings.help.apiBody")
+                )
+                helpSection(
+                    icon: "exclamationmark.triangle",
+                    title: String(localized: "settings.help.troubleTitle"),
+                    body: String(localized: "settings.help.troubleBody")
+                )
+            }
+            .padding(24)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func helpSection(icon: String, title: String, body: String) -> some View {
+        GroupBox {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundStyle(.tint)
+                    .font(.title3)
+                    .frame(width: 24)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.headline)
+                    Text(body)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(6)
+        }
+    }
+}
+
 // MARK: - About
 
 private struct AboutTab: View {
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "pencil.and.outline")
-                .font(.system(size: 64))
-                .foregroundStyle(.tint)
-            Text("Tippi")
-                .font(.largeTitle)
-                .bold()
-            Text("Version 1.0.0-dev")
+        ScrollView {
+            VStack(spacing: 16) {
+                Image(systemName: "pencil.and.outline")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.tint)
+                Text("Tippi")
+                    .font(.largeTitle)
+                    .bold()
+                Text("Version 1.0.0")
+                    .foregroundStyle(.secondary)
+
+                Divider()
+
+                Text(String(localized: "settings.about.description"))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(String(localized: "settings.about.feature1"), systemImage: "cursorarrow.rays")
+                    Label(String(localized: "settings.about.feature2"), systemImage: "key")
+                    Label(String(localized: "settings.about.feature3"), systemImage: "lock.shield")
+                    Label(String(localized: "settings.about.feature4"), systemImage: "text.bubble")
+                }
+                .font(.callout)
                 .foregroundStyle(.secondary)
-            Text(String(localized: "settings.about.copyright"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+
+                Divider()
+
+                Text(String(localized: "settings.about.copyright"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity)
         }
-        .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

@@ -68,13 +68,37 @@ if [ ! -d "${APP_PATH}" ]; then
     echo "✗ Build failed — ${APP_PATH} not found"; exit 1
 fi
 
-# 4. Re-sign explicitly with our entitlements file to make sure get-task-allow=false
+# 4. Re-sign: Sparkle nested components first (inside → out), then outer app
 echo "▶ [3/7] Re-signing app with explicit entitlements + verifying..."
+SPARKLE_FW="${APP_PATH}/Contents/Frameworks/Sparkle.framework/Versions/B"
+
+# Sign Sparkle executables
+for bin in \
+    "${SPARKLE_FW}/XPCServices/Installer.xpc/Contents/MacOS/Installer" \
+    "${SPARKLE_FW}/XPCServices/Downloader.xpc/Contents/MacOS/Downloader" \
+    "${SPARKLE_FW}/Autoupdate" \
+    "${SPARKLE_FW}/Updater.app/Contents/MacOS/Updater"; do
+    [ -f "$bin" ] && codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" "$bin"
+done
+
+# Sign Sparkle bundles
+for bundle in \
+    "${SPARKLE_FW}/XPCServices/Installer.xpc" \
+    "${SPARKLE_FW}/XPCServices/Downloader.xpc" \
+    "${SPARKLE_FW}/Updater.app"; do
+    [ -d "$bundle" ] && codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" "$bundle"
+done
+
+# Sign Sparkle framework
+codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" \
+    "${APP_PATH}/Contents/Frameworks/Sparkle.framework"
+
+# Sign outer app with our entitlements
 codesign --force --options runtime --timestamp \
     --entitlements Tippi/Resources/Tippi.entitlements \
     --sign "${DEVELOPER_ID}" \
     "${APP_PATH}"
-codesign --verify --deep --strict --verbose=2 "${APP_PATH}" 2>&1 | head -5
+codesign --verify --deep --strict "${APP_PATH}" && echo "  ✓ Signature valid"
 
 # 5. Create DMG
 echo "▶ [4/7] Creating DMG..."
@@ -116,11 +140,24 @@ echo "▶ [7/7] Stapling notarization ticket..."
 xcrun stapler staple "${DMG_PATH}" >/dev/null
 spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 2>&1 | head -2
 
-# 9. Final report
+# 9. Generate appcast.xml for Sparkle
+echo "▶ [8/8] Generating appcast.xml..."
+APPCAST_TOOL="${HOME}/Developer/sparkle-tools/bin/generate_appcast"
+if [ -f "${APPCAST_TOOL}" ]; then
+    "${APPCAST_TOOL}" "${DIST_DIR}" -o appcast.xml
+    gh gist edit 595ce79e698bb6a98008dc061f1f4a78 appcast.xml
+    echo "  ✓ appcast.xml generiert und Gist aktualisiert"
+else
+    echo "  ⚠ Sparkle tools nicht gefunden unter ${APPCAST_TOOL}"
+    echo "    Setup: siehe docs/HANDOVER.md → Sparkle"
+fi
+
+# 10. Final report
 echo ""
 echo "✓ Release complete"
 echo "  DMG:  ${DMG_PATH}"
 echo "  Size: $(du -h "${DMG_PATH}" | cut -f1)"
 echo ""
-echo "Next: upload to GitHub release with:"
-echo "  gh release create v${VERSION} ${DMG_PATH} --title 'Tippi ${VERSION}' --notes-file CHANGELOG.md"
+echo "Next steps:"
+echo "  1. git add appcast.xml && git commit -m 'release: v${VERSION}' && git push"
+echo "  2. gh release create v${VERSION} ${DMG_PATH} --title 'Tippi ${VERSION}' --notes-file CHANGELOG.md"

@@ -24,42 +24,42 @@ struct DemoPrompt: Identifiable, Equatable {
                 title: String(localized: "prompt.improve"),
                 symbol: "wand.and.stars",
                 systemPrompt: "Improve the writing quality of the following text. Keep the original language, meaning, and approximate length. Return only the improved text without any commentary, quotes, or formatting.",
-                transform: Self.localImprove
+                transform: { @Sendable in Self.localImprove($0) }
             ),
             DemoPrompt(
                 id: "fixGrammar",
                 title: String(localized: "prompt.fixGrammar"),
                 symbol: "checkmark.seal",
                 systemPrompt: "Fix only spelling, punctuation, and grammar errors in the following text. Do not change wording, tone, or style beyond what is required to be correct. Keep the original language. Return only the corrected text.",
-                transform: Self.localFixGrammar
+                transform: { @Sendable in Self.localFixGrammar($0) }
             ),
             DemoPrompt(
                 id: "translateDE",
                 title: String(localized: "prompt.translateDE"),
                 symbol: "globe.europe.africa",
                 systemPrompt: "Translate the following text into German. Preserve tone and formatting. Return only the German translation.",
-                transform: { "[Demo DE] " + $0 }
+                transform: { @Sendable in "[Demo DE] " + $0 }
             ),
             DemoPrompt(
                 id: "translateEN",
                 title: String(localized: "prompt.translateEN"),
                 symbol: "globe.americas",
                 systemPrompt: "Translate the following text into English. Preserve tone and formatting. Return only the English translation.",
-                transform: { "[Demo EN] " + $0 }
+                transform: { @Sendable in "[Demo EN] " + $0 }
             ),
             DemoPrompt(
                 id: "shorten",
                 title: String(localized: "prompt.shorten"),
                 symbol: "arrow.down.right.and.arrow.up.left",
                 systemPrompt: "Rewrite the following text to be about 30% shorter while keeping all key information. Keep the original language. Return only the shortened text.",
-                transform: Self.localShorten
+                transform: { @Sendable in Self.localShorten($0) }
             ),
             DemoPrompt(
                 id: "lengthen",
                 title: String(localized: "prompt.lengthen"),
                 symbol: "text.append",
                 systemPrompt: "Expand the following text with relevant context and detail. Aim for about 50% more length. Keep the original language and tone. Return only the expanded text.",
-                transform: { $0 + "\n\n(Local demo — add an API key in Settings for real AI expansion.)" }
+                transform: { @Sendable in $0 + "\n\n(Local demo — add an API key in Settings for real AI expansion.)" }
             )
         ]
     }

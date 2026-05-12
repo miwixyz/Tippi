@@ -2,7 +2,21 @@
 
 All notable changes to Tippi will be documented in this file.
 
-## [1.0.0] — Unreleased
+## [1.0.1] — 2026-05-13
+
+### New
+- **Auto-Updates via Sparkle** — check for updates from the menu bar icon (✏️ → Nach Updates suchen…)
+- **Help tab** in Settings — quick reference for hotkey, custom prompts, providers, and troubleshooting
+- **Close button** (✕) in the prompt popup header
+- **Expanded About tab** — description, feature highlights
+
+### Improved
+- Custom prompts now sortable via **Drag & Drop** in Settings → Prompts
+- Hotkey settings: added restart hint for cases where new hotkey needs an app restart
+- Popup window now positions correctly when cursor is near the bottom of the screen
+- Removed outdated "Phase 3 Demo" footer text from popup
+
+## [1.0.0] — 2026-05-12
 
 First public release.
 

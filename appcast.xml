@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Tippi</title>
+        <item>
+            <title>1.0.1</title>
+            <pubDate>Wed, 13 May 2026 01:10:50 +0200</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/Tippi-1.0.1.dmg" length="2194497" type="application/octet-stream" sparkle:edSignature="B44felmr9B+A3Yb5vav3tHzpVBf8KhmWoj3lRCNgJvsgMPLYQZsxf6euxQ4uzr9rcPs13qHh9th63dG9yB3MDQ=="/>
+        </item>
+    </channel>
+</rss>

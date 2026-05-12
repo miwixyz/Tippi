@@ -26,6 +26,12 @@
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>© 2026 Michael Wildenauer</string>
+    <key>SUFeedURL</key>
+    <string>https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>iE2bazGoslgGEsgo2MJUwphVYlEKkeRcsWdzwbGge4w=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
     <key>NSAppleEventsUsageDescription</key>
     <string>Tippi reads selected text from your active application and inserts AI-improved results back. No data is stored or sent anywhere except to the AI provider you configured.</string>
     <key>CFBundleLocalizations</key>

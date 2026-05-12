@@ -1,6 +1,7 @@
 import AppKit
 import Carbon
 import Combine
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -16,12 +17,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let popupController = PromptPopupController()
     private let previewWindowController = PreviewWindowController()
     private var cancellables = Set<AnyCancellable>()
+    private var updaterController: SPUStandardUpdaterController?
 
     private var safetyHotKeyRef: EventHotKeyRef?
     private var safetyHotKeyHandler: EventHandlerRef?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
         setupMenuBar()
         observeFrontmostApp()
         observePermissions()
@@ -120,6 +127,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
+        let updateItem = NSMenuItem(
+            title: String(localized: "menu.checkForUpdates"),
+            action: #selector(checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        menu.addItem(updateItem)
+
+        menu.addItem(.separator())
+
         menu.addItem(
             withTitle: String(localized: "menu.welcome"),
             action: #selector(showWelcomeWindow),
@@ -145,6 +162,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         item.menu = menu
         statusItem = item
+    }
+
+    @objc func checkForUpdates(_ sender: Any?) {
+        updaterController?.checkForUpdates(sender)
     }
 
     @objc func showWelcomeWindow() {
