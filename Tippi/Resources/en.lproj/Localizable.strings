@@ -1,0 +1,169 @@
+/* Menubar */
+"menu.trigger" = "Trigger Tippi…";
+"menu.welcome" = "Welcome…";
+"menu.settings" = "Settings…";
+"menu.quit" = "Quit Tippi";
+
+/* Popup */
+"popup.footer.phase3" = "Phase 3 demo — LLM arrives in Phase 4";
+
+/* Prompts */
+"prompt.improve" = "Improve";
+"prompt.fixGrammar" = "Fix Grammar";
+"prompt.translateDE" = "Translate → DE";
+"prompt.translateEN" = "Translate → EN";
+"prompt.shorten" = "Shorten";
+"prompt.lengthen" = "Lengthen";
+
+/* Welcome / Setup Wizard */
+"welcome.title" = "Welcome to Tippi";
+"welcome.subtitle" = "Your system-wide AI writing assistant for macOS.\nLet's get you set up in 5 quick steps.";
+
+"setup.next" = "Continue";
+"setup.back" = "Back";
+"setup.finish" = "Finish";
+"setup.openSettings" = "Open System Settings";
+"setup.checkAgain" = "Check Again";
+"setup.granted" = "Granted";
+"setup.notGranted" = "Not yet granted";
+
+"setup.accessibility.title" = "Accessibility Permission";
+"setup.accessibility.body" = "Tippi needs Accessibility access to read selected text from any app and paste the AI result back. Your data never leaves your Mac unless you choose a cloud model.";
+
+"setup.inputMonitoring.title" = "Input Monitoring";
+"setup.inputMonitoring.body" = "Tippi listens for your hotkey across all apps. This requires Input Monitoring permission.";
+"setup.inputMonitoring.manualHeader" = "If the prompt doesn't appear:";
+"setup.inputMonitoring.manualStep1" = "1. Click 'Open System Settings' below";
+"setup.inputMonitoring.manualStep2" = "2. Click the '+' button under Input Monitoring";
+"setup.inputMonitoring.manualStep3" = "3. Navigate to Applications and pick Tippi.app";
+
+"setup.apiKey.title" = "Your API Key";
+"setup.apiKey.body" = "Tippi uses your own API keys (BYOK). We recommend starting with OpenAI's gpt-4o-mini — fast and inexpensive.";
+"setup.apiKey.placeholder" = "sk-…";
+"setup.apiKey.save" = "Save to Keychain";
+"setup.apiKey.saved" = "Saved securely to macOS Keychain.";
+"setup.apiKey.skip" = "You can skip this and add keys later in Settings.";
+
+"setup.tryIt.title" = "You're all set!";
+"setup.tryIt.body" = "Mark any text in any app, then double-tap the right Option key. Tippi's prompt menu will appear at your cursor.";
+"setup.tryIt.hotkey" = "Default shortcut: ⌥⌘T  ·  change in Settings → Hotkeys";
+"setup.tryIt.demo.heading" = "Demo text — try it now:";
+"setup.tryIt.demo.text" = "this sentence has some grammer mistakes and weird wording it could realy be improved a lot dont you think";
+"setup.tryIt.listening" = "Listening for hotkey…";
+"setup.tryIt.inactive" = "Hotkey not active — grant Input Monitoring and restart Tippi";
+"setup.tryIt.lastTrigger" = "Last triggered at %@";
+"setup.tryIt.testButton" = "Try Tippi now";
+"setup.tryIt.testHint" = "This demo works without any permissions. Click to see the prompt menu, pick one, and Tippi shows what it would do with the text above.";
+
+/* Demo result */
+"demo.result.title" = "Tippi demo: %@";
+"demo.result.original" = "Original";
+"demo.result.transformed" = "Result";
+
+/* Demo sheet (in Welcome wizard) */
+"demo.sheet.close" = "Close";
+"demo.sheet.cancel" = "Cancel";
+"demo.sheet.retry" = "Try again";
+"demo.sheet.originalLabel" = "Original text";
+"demo.sheet.resultLabel" = "Result";
+"demo.sheet.errorLabel" = "Error:";
+"demo.sheet.pickAction" = "Choose an action:";
+"demo.sheet.tryAnother" = "Try another action";
+"demo.sheet.loading" = "Asking the AI…";
+"demo.sheet.localFallbackBadge" = "Local demo · add an API key for real AI";
+
+/* Preview window */
+"preview.original" = "Original";
+"preview.suggestion" = "Tippi Suggestion";
+"preview.loading" = "AI is thinking…";
+"preview.errorLabel" = "Something went wrong";
+"preview.replace" = "Replace";
+"preview.append" = "Append";
+"preview.copy" = "Copy";
+"preview.cancel" = "Cancel";
+"preview.regenerate" = "Regenerate";
+"preview.retry" = "Try again";
+"preview.fallback.badge" = "Local demo · no API key";
+
+"setup.tryIt.clickCount" = "Button clicked %d time(s) ✓";
+"setup.tryIt.hotkey.heading" = "Once permissions are granted, the global hotkey is:";
+
+/* Phase 2 demo alerts */
+"alert.noText.title" = "No text selected";
+"alert.noText.body" = "Select some text in any app, then trigger Tippi again.";
+"alert.preview.title" = "Tippi — Captured Text";
+"alert.preview.body" = "Captured text:\n\n%@\n\nSource app: %@\nMethod: %@\n\nPick a demo transformation to paste back, or copy to clipboard.";
+"alert.preview.uppercase" = "Replace with UPPERCASE (demo)";
+"alert.preview.exclaim" = "Append Sparkle ✨ (demo)";
+"alert.preview.copyOnly" = "Copy to Clipboard";
+"alert.preview.cancel" = "Cancel";
+
+/* Settings */
+"settings.window.title" = "Tippi — Settings";
+"settings.tab.general" = "General";
+"settings.tab.hotkeys" = "Hotkeys";
+"settings.tab.providers" = "Providers";
+"settings.tab.prompts" = "Prompts";
+"settings.tab.about" = "About";
+
+"settings.general.autostart.enabled" = "Tippi will now start at login.";
+"settings.general.autostart.disabled" = "Tippi will no longer start at login.";
+
+"settings.hotkeys.header" = "Global keyboard shortcut";
+"settings.hotkeys.intro" = "Click the field and press your desired combination. The shortcut works in any app. Press Escape to cancel recording.";
+"settings.hotkeys.reset" = "Reset to default (⌥⌘T)";
+"settings.hotkeys.testTrigger" = "Test trigger now";
+"settings.hotkeys.macOSHeader" = "Alternative: macOS-managed shortcut";
+"settings.hotkeys.macOSBody" = "If the in-app hotkey misbehaves (locally-signed apps sometimes have TCC issues), macOS can bind any combo to Tippi's 'Trigger Tippi…' menu item. Click below, then: + → choose Tippi → menu title 'Trigger Tippi…' → assign your shortcut.";
+"settings.hotkeys.macOSOpen" = "Open macOS Keyboard Shortcuts";
+"settings.hotkeys.tipHeader" = "Doesn't fire?";
+"settings.hotkeys.tip1" = "1. Tippi needs Accessibility permission — check System Settings → Privacy & Security → Accessibility";
+"settings.hotkeys.tip2" = "2. You can always trigger via the menu bar ✏️ → \"Trigger Tippi…\"";
+
+"hotkey.recorder.pressNow" = "Press a key combination now…";
+"hotkey.recorder.changeHint" = "click to change";
+"hotkey.recorder.cancelHint" = "Esc to cancel";
+
+"settings.hotkeys.mode" = "Trigger mode";
+"settings.hotkeys.mode.doubleTap" = "Double-tap a modifier key";
+"settings.hotkeys.mode.hold" = "Hold a modifier key";
+"settings.hotkeys.mode.disabled" = "Off (use menu bar instead)";
+"settings.hotkeys.modifier" = "Modifier key";
+"settings.hotkeys.doubleTapMs" = "Double-tap within %d ms";
+"settings.hotkeys.holdMs" = "Hold for at least %d ms";
+"settings.hotkeys.apply" = "Apply";
+"settings.hotkeys.active" = "Active: %@";
+"settings.hotkeys.inactive" = "Hotkey not active — grant Input Monitoring or use ⇧⌘T";
+
+"settings.prompts.builtIn" = "Built-in";
+"settings.prompts.custom" = "Your prompts";
+"settings.prompts.new" = "Add prompt";
+"settings.prompts.empty" = "No custom prompts yet. Click \"Add prompt\" to create your own (e.g. \"Translate to Bavarian\" or \"Rewrite as Slack message\").";
+"settings.prompts.readOnly" = "built-in";
+
+"settings.prompts.editor.titleNew" = "New prompt";
+"settings.prompts.editor.titleEdit" = "Edit prompt";
+"settings.prompts.editor.titlePlaceholder" = "Title (e.g. Rewrite as Slack message)";
+"settings.prompts.editor.symbolPlaceholder" = "SF Symbol name";
+"settings.prompts.editor.symbolHint" = "Find symbol names at developer.apple.com/sf-symbols (e.g. paperplane, lightbulb, text.bubble).";
+"settings.prompts.editor.systemLabel" = "Instructions for the AI:";
+"settings.prompts.editor.systemHint" = "Describe exactly what the AI should do. Your selected text will be passed in as the user message.";
+"settings.general.autostart" = "Launch Tippi at login";
+"settings.general.updates" = "Check for updates";
+"settings.hotkeys.placeholder" = "Hotkey configuration coming in the next phase.";
+"settings.providers.save" = "Save";
+"settings.providers.empty" = "No key saved yet";
+"settings.providers.default" = "Default Provider";
+"settings.providers.default.hint" = "Tippi will try this provider first when you trigger a prompt. If no key is set, it falls through to the next configured one.";
+"settings.providers.apiKey" = "API key (sk-…)";
+"settings.providers.model" = "Model:";
+"settings.providers.savedFlash" = "Saved ✓";
+"settings.providers.keySaved" = "Key saved";
+"settings.providers.noKey" = "No key yet";
+"settings.providers.localBadge" = "Local — no key needed";
+"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default model: gpt-4o-mini (fast & cheap).";
+"settings.providers.hint.anthropic" = "Get a key at console.anthropic.com. Default: claude-haiku-4-5 — great for German text.";
+"settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.0-flash.";
+"settings.providers.hint.mistral" = "Get a key at console.mistral.ai. Default: mistral-small-latest (EU hosting available).";
+"settings.providers.hint.ollama" = "Install Ollama from ollama.com — runs models locally on your Mac, no key, no cloud.";
+"settings.about.copyright" = "© 2026 Michael Wildenauer";
