@@ -68,8 +68,12 @@ if [ ! -d "${APP_PATH}" ]; then
     echo "✗ Build failed — ${APP_PATH} not found"; exit 1
 fi
 
-# 4. Verify signature
-echo "▶ [3/7] Verifying signature..."
+# 4. Re-sign explicitly with our entitlements file to make sure get-task-allow=false
+echo "▶ [3/7] Re-signing app with explicit entitlements + verifying..."
+codesign --force --options runtime --timestamp \
+    --entitlements Tippi/Resources/Tippi.entitlements \
+    --sign "${DEVELOPER_ID}" \
+    "${APP_PATH}"
 codesign --verify --deep --strict --verbose=2 "${APP_PATH}" 2>&1 | head -5
 
 # 5. Create DMG
