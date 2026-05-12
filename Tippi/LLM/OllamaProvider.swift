@@ -3,7 +3,7 @@ import Foundation
 struct OllamaProvider: LLMProvider {
     let id = "ollama"
     let displayName = "Ollama (local)"
-    let defaultModel = "llama3.1"
+    let defaultModel = "llama3.3"
     let requiresAPIKey = false
 
     private let endpoint = URL(string: "http://localhost:11434/api/chat")!

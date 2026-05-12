@@ -3,7 +3,7 @@ import Foundation
 struct OpenAIProvider: LLMProvider {
     let id = "openai"
     let displayName = "OpenAI"
-    let defaultModel = "gpt-4o-mini"
+    let defaultModel = "gpt-5-mini"
     let requiresAPIKey = true
 
     private let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!

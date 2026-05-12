@@ -12,7 +12,12 @@ First public release.
 - Cursor-positioned popup menu with 6 built-in prompts: Improve, Fix Grammar, Translate→DE, Translate→EN, Shorten, Lengthen
 - Custom prompts with SF Symbol icons and per-prompt AI instructions
 - Preview window with Replace / Append / Copy / Regenerate
-- 5 AI providers — OpenAI, Anthropic Claude, Google Gemini, Mistral, Ollama (local)
+- 5 AI providers (defaults as of May 2026):
+  - OpenAI — `gpt-5-mini`
+  - Anthropic Claude — `claude-haiku-4-5`
+  - Google Gemini — `gemini-2.5-flash`
+  - Mistral — `mistral-small-latest`
+  - Ollama — `llama3.3` (local, no key)
 - Per-provider model override
 - Default global hotkey: ⌥⌘T (configurable in Settings)
 - Autostart at login

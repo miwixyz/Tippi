@@ -3,7 +3,7 @@ import Foundation
 struct MistralProvider: LLMProvider {
     let id = "mistral"
     let displayName = "Mistral"
-    let defaultModel = "mistral-small-latest"
+    let defaultModel = "mistral-small-latest"  // alias auto-updates to current small model
     let requiresAPIKey = true
 
     private let endpoint = URL(string: "https://api.mistral.ai/v1/chat/completions")!

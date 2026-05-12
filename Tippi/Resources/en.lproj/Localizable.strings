@@ -161,9 +161,9 @@
 "settings.providers.keySaved" = "Key saved";
 "settings.providers.noKey" = "No key yet";
 "settings.providers.localBadge" = "Local — no key needed";
-"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default model: gpt-4o-mini (fast & cheap).";
-"settings.providers.hint.anthropic" = "Get a key at console.anthropic.com. Default: claude-haiku-4-5 — great for German text.";
-"settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.0-flash.";
+"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default: gpt-5-mini (fast, cheap, May 2026).";
+"settings.providers.hint.anthropic" = "Get a key at console.anthropic.com. Default: claude-haiku-4-5 — excellent for German text.";
+"settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Get a key at console.mistral.ai. Default: mistral-small-latest (EU hosting available).";
-"settings.providers.hint.ollama" = "Install Ollama from ollama.com — runs models locally on your Mac, no key, no cloud.";
+"settings.providers.hint.ollama" = "Install Ollama from ollama.com. Pull a model first: `ollama pull llama3.3`. Runs locally, no key, no cloud.";
 "settings.about.copyright" = "© 2026 Michael Wildenauer";

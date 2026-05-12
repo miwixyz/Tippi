@@ -3,7 +3,7 @@ import Foundation
 struct GeminiProvider: LLMProvider {
     let id = "gemini"
     let displayName = "Google Gemini"
-    let defaultModel = "gemini-2.0-flash"
+    let defaultModel = "gemini-2.5-flash"
     let requiresAPIKey = true
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {

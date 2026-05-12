@@ -161,9 +161,9 @@
 "settings.providers.keySaved" = "Key gespeichert";
 "settings.providers.noKey" = "Noch kein Key";
 "settings.providers.localBadge" = "Lokal — kein Key nötig";
-"settings.providers.hint.openai" = "Key bekommst du bei platform.openai.com → API keys. Standardmodell: gpt-4o-mini (schnell & günstig).";
+"settings.providers.hint.openai" = "Key bei platform.openai.com → API keys. Standard: gpt-5-mini (schnell, günstig, Stand Mai 2026).";
 "settings.providers.hint.anthropic" = "Key bei console.anthropic.com. Standard: claude-haiku-4-5 — sehr stark bei deutschem Text.";
-"settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.0-flash.";
+"settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Key bei console.mistral.ai. Standard: mistral-small-latest (EU-Hosting möglich).";
-"settings.providers.hint.ollama" = "Ollama installieren von ollama.com — Modelle laufen lokal auf deinem Mac, kein Key, keine Cloud.";
+"settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
 "settings.about.copyright" = "© 2026 Michael Wildenauer";

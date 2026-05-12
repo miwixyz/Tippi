@@ -3,7 +3,7 @@ import Foundation
 struct AnthropicProvider: LLMProvider {
     let id = "anthropic"
     let displayName = "Anthropic Claude"
-    let defaultModel = "claude-haiku-4-5"
+    let defaultModel = "claude-haiku-4-5"  // current as of May 2026
     let requiresAPIKey = true
 
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
