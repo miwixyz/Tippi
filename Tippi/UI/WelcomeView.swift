@@ -46,6 +46,7 @@ struct WelcomeView: View {
                     .buttonStyle(.borderedProminent)
                 } else {
                     Button(String(localized: "setup.finish")) {
+                        UserDefaults.standard.set(true, forKey: "setupCompleted")
                         NSApp.keyWindow?.close()
                     }
                     .keyboardShortcut(.return)
@@ -188,6 +189,7 @@ private struct APIKeyStep: View {
     @State private var apiKey: String = ""
     @State private var feedback: String?
     @State private var feedbackIsError: Bool = false
+    @State private var hasExistingKey: Bool = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -204,6 +206,13 @@ private struct APIKeyStep: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            if hasExistingKey {
+                Label(String(localized: "setup.apiKey.alreadySaved"),
+                      systemImage: "checkmark.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(.green)
+            }
+
             SecureField(String(localized: "setup.apiKey.placeholder"), text: $apiKey)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: 360)
@@ -213,6 +222,7 @@ private struct APIKeyStep: View {
                     try KeychainStore.setAPIKey(apiKey, for: "openai")
                     feedback = String(localized: "setup.apiKey.saved")
                     feedbackIsError = false
+                    hasExistingKey = true
                 } catch {
                     feedback = error.localizedDescription
                     feedbackIsError = true
@@ -229,6 +239,9 @@ private struct APIKeyStep: View {
             Text(String(localized: "setup.apiKey.skip"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+        .onAppear {
+            hasExistingKey = KeychainStore.hasAPIKey(for: "openai")
         }
     }
 }
@@ -626,8 +639,9 @@ private struct HotkeyStatusBadge: View {
 
     var body: some View {
         Group {
-            if let error = hotkeyManager.lastError {
-                Label(error, systemImage: "exclamationmark.triangle.fill")
+            if hotkeyManager.lastError != nil {
+                Label(String(localized: "setup.tryIt.inactive"),
+                      systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
             } else if hotkeyManager.isActive {
                 if let last = hotkeyManager.lastTriggerAt {

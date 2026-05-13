@@ -44,6 +44,7 @@
 "setup.apiKey.save" = "Im Schlüsselbund speichern";
 "setup.apiKey.saved" = "Sicher im macOS-Schlüsselbund gespeichert.";
 "setup.apiKey.skip" = "Kann übersprungen und später in den Einstellungen ergänzt werden.";
+"setup.apiKey.alreadySaved" = "Key bereits gespeichert — neuen Key eingeben, um zu aktualisieren";
 
 "setup.tryIt.title" = "Du bist startklar!";
 "setup.tryIt.body" = "Markiere einen Text in einer beliebigen App und drücke zweimal kurz die rechte Wahltaste (⌥). Das Prompt-Menü erscheint am Cursor.";

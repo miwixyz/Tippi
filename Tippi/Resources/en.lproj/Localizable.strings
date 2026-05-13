@@ -43,6 +43,7 @@
 "setup.apiKey.save" = "Save to Keychain";
 "setup.apiKey.saved" = "Saved securely to macOS Keychain.";
 "setup.apiKey.skip" = "You can skip this and add keys later in Settings.";
+"setup.apiKey.alreadySaved" = "Key already saved — enter a new one to update";
 
 "setup.tryIt.title" = "You're all set!";
 "setup.tryIt.body" = "Mark any text in any app, then double-tap the right Option key. Tippi's prompt menu will appear at your cursor.";

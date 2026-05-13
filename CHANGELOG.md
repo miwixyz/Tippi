@@ -2,6 +2,14 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.1] — 2026-05-13
+
+### Fixed
+- **Welcome screen on every launch** — setup wizard now appears only once; completing it sets a persistent flag so it is never shown again on subsequent launches.
+- **Hotkey inactive on first launch** — root cause was the welcome screen being shown every time; after one-time setup the hotkey activates normally. The wizard's final step now shows the correct localized message ("restart required") instead of a raw internal error string when Input Monitoring requires an app restart.
+- **API key "lost" on every launch** — not actually lost; the welcome wizard was re-opening and showing an empty key field. The API-key step now displays a "Key already saved" badge on open when a key is already in the Keychain.
+- **Whisper model download silently saves HTML** — the download completion handler now validates the HTTP status code and file size. Downloads that return a CDN error page (< 10 MB) are rejected with a clear error message instead of saving a corrupt model file.
+
 ## [1.1.0] — 2026-05-13
 
 ### New

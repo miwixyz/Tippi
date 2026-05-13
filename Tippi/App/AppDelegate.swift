@@ -36,7 +36,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyManager.update(trigger: loadHotkeyTrigger())
         registerSafetyHotKey()
         startGlobalKeyMonitor()
-        showWelcomeWindow()
+        if !UserDefaults.standard.bool(forKey: "setupCompleted") {
+            showWelcomeWindow()
+        }
         startHotkey()
     }
 

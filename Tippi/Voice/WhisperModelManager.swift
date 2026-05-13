@@ -61,7 +61,7 @@ final class WhisperModelManager: NSObject, ObservableObject {
         downloadError = nil
         destinationURL = model.localURL
 
-        let task = URLSession.shared.downloadTask(with: model.downloadURL) { [weak self] tempURL, _, error in
+        let task = URLSession.shared.downloadTask(with: model.downloadURL) { [weak self] tempURL, response, error in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.downloadingModel = nil
@@ -71,6 +71,13 @@ final class WhisperModelManager: NSObject, ObservableObject {
                     self.downloadError = error.localizedDescription
                     return
                 }
+
+                // Guard against CDN error pages returned as HTTP 200 HTML
+                if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                    self.downloadError = "Download failed: server returned HTTP \(http.statusCode). Try again later."
+                    return
+                }
+
                 guard let tempURL,
                       let dest = self.destinationURL else { return }
 
@@ -79,6 +86,15 @@ final class WhisperModelManager: NSObject, ObservableObject {
                         try fm.removeItem(at: dest)
                     }
                     try fm.moveItem(at: tempURL, to: dest)
+
+                    // Sanity-check: real models start at ~77 MB; anything smaller is an error page
+                    let attrs = try fm.attributesOfItem(atPath: dest.path)
+                    if let size = attrs[.size] as? Int64, size < 10_000_000 {
+                        try? fm.removeItem(at: dest)
+                        self.downloadError = "Download failed: file too small (\(size / 1024) KB). Check your network connection and try again."
+                        return
+                    }
+
                     // Clear any manual model path override so auto-detection picks this up
                     UserDefaults.standard.removeObject(forKey: "voice.whisperModelPath")
                 } catch {
