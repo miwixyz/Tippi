@@ -18,7 +18,7 @@
   - **Mistral** (default: `mistral-small-latest`, EU hosting available)
   - **Ollama** (local, fully offline)
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
-- **Voice Instruction** — select text, then trigger the hotkey holding the mic: speak a command (e.g. "make this shorter"), Tippi applies it via AI directly — no prompt picker needed
+- **Voice Instruction** — select text, trigger the hotkey, then press the mic button in the popup and speak a command (e.g. "make this shorter"); Tippi applies it via AI directly — no prompt picker needed
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
 - **Preview before applying** — side-by-side original vs. AI suggestion, then Replace / Append / Copy / Regenerate
 - **Auto-updates via Sparkle 2** — menu bar → "Check for Updates…", automatic check at launch
@@ -184,10 +184,10 @@ A signed and Apple-notarized DMG is required for stable distribution and TCC per
   ```bash
   DEVELOPER_ID="Developer ID Application: Your Name (YOURTEAMID)"
   NOTARY_PROFILE="tippi-notary"
-  GIST_ID="your-appcast-gist-id"
-  GITHUB_REPO="miwixyz/Tippi"
   VERSION="1.1.7"
   ```
+
+  The Gist ID and GitHub repo are set directly in `scripts/release.sh` — fork the repo and update those two lines before building your own releases.
 
 ### Build
 
