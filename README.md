@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/mascot.png" width="140" alt="Tippi mascot">
+</p>
+
 # Tippi
 
 [![Latest Release](https://img.shields.io/github/v/release/miwixyz/Tippi)](https://github.com/miwixyz/Tippi/releases/latest)
