@@ -69,7 +69,8 @@ Tippi/
 │   ├── PasteboardSnapshot.swift    Capture/Restore für Clipboard-Roundtrip
 │   ├── TextCapture.swift           AX-API zuerst, Pasteboard-Fallback
 │   ├── TextInsertion.swift         Replace / Append / Copy via simuliertem ⌘V
-│   └── CustomPrompt.swift          User-Prompts + JSON-Persistierung
+│   ├── CustomPrompt.swift          User-Prompts + JSON-Persistierung
+│   └── TippiColors.swift           Color.tippiNavy / .tippiSurface / .tippiMist Extensions
 ├── LLM/
 │   ├── LLMProvider.swift           Protocol + LLMError
 │   ├── OpenAIProvider.swift        gpt-5-mini, /v1/chat/completions
@@ -101,13 +102,24 @@ Tippi/
     ├── Info.plist                  LSUIElement=true, NSAppleEventsUsageDescription,
     │                               SUFeedURL, SUPublicEDKey
     ├── Tippi.entitlements          app-sandbox=false, network.client=true
-    ├── Assets.xcassets             AppIcon (10 macOS-Größen), AccentColor (warm orange)
+    ├── Assets.xcassets/
+    │   ├── AppIcon.appiconset      10 macOS-Größen (CoreGraphics, kein third-party)
+    │   ├── AccentColor.colorset    Signal Blue #3B8CFF — treibt .tint / .accentColor app-weit
+    │   ├── BrandNavy.colorset      #10192B (fix, kein Dark-Variant — Logo-Farbe)
+    │   ├── BrandSurface.colorset   Soft White / Dark Navy (adaptiv Light/Dark)
+    │   └── BrandMistBlue.colorset  Mist Blue / Deep Navy-Blue (adaptiv Light/Dark)
     ├── en.lproj/Localizable.strings
     └── de.lproj/Localizable.strings
 
 scripts/
 ├── release.sh                      Vollautomatische Build-Notarisierungs-Release-Pipeline
 └── prepare-binary.sh               Build-Skript für whisper-cli (whisper.cpp v1.7.4, statisch)
+
+docs/
+├── HANDOVER.md                     Dieses Dokument
+├── BRANDKIT.md                     Farbpalette, adaptive Mappings, Typografie, Ikonografie
+├── demo.gif                        Demo-GIF für README (Text-Verbesserung + Voice Instruction)
+└── mascot.png                      Tippi-Maskottchen (Navy-Kreis, weißer Bot, Signal-Blue-Blase)
 ```
 
 ---
@@ -346,6 +358,17 @@ Tippi läuft **außerhalb der Sandbox** (`com.apple.security.app-sandbox` = fals
 ### 8.7 `head -n -1` auf macOS (BSD head)
 
 BSD `head` unterstützt keine negativen Zeilenzahlen (`head -n -1` = "alle außer die letzte Zeile" in GNU head). In `scripts/release.sh` durch `awk 'NR>1{print prev} {prev=$0}'` ersetzt.
+
+### 8.8 Dark / Light Mode — Design-Entscheidungen
+
+Die App ist vollständig Dark/Light-Mode-konform:
+
+- Popup: `.regularMaterial` — adaptiert automatisch, kein manueller Override nötig
+- Alle Farben: semantische System-Colors (`.primary`, `.secondary`, `.tint`, `.accentColor`) oder Assets mit Dark-Varianten (`BrandMistBlue`, `BrandSurface`)
+- `BrandNavy` hat bewusst **keine** Dark-Variante — es ist immer die Marken-Tinte (#10192B), z.B. für den Logo-Kreis im About-Tab
+- Kein `window.appearance`-Lock irgendwo — alle Fenster übernehmen das System-Appearance
+
+**Stolperstein beim Auswahlzustand im Popup:** Wenn eine Zeile ausgewählt ist (AccentColor-Hintergrund), muss der Text ablesbar bleiben. Statt `Color.white` (hardcoded) wird `Color(nsColor: .selectedMenuItemTextColor)` verwendet — der macOS-Systemtoken für Text auf einem ausgewählten Menüelement. Aktuell weiß, aber semantisch korrekt und zukunftssicher gegen Theme-Änderungen.
 
 ### 8.8 whisper-cli Ausgabe-Pfad
 
