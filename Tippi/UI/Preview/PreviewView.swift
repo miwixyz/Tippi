@@ -123,7 +123,8 @@ struct PreviewView: View {
                 column(
                     label: String(localized: "preview.suggestion"),
                     text: suggestion,
-                    tint: .accentColor
+                    tint: .accentColor,
+                    background: .tippiMist.opacity(0.4)
                 )
             }
 
@@ -145,7 +146,7 @@ struct PreviewView: View {
         }
     }
 
-    private func column(label: String, text: String, tint: Color) -> some View {
+    private func column(label: String, text: String, tint: Color, background: Color = .clear) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(.caption)
@@ -158,6 +159,7 @@ struct PreviewView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(background)
     }
 
     // MARK: - Footer

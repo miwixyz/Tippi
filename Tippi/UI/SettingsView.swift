@@ -605,9 +605,15 @@ private struct AboutTab: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                Image(systemName: "pencil.and.outline")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.tint)
+                // Brand header: navy circle + Signal Blue pencil icon
+                ZStack {
+                    Circle()
+                        .fill(Color.tippiNavy)
+                        .frame(width: 88, height: 88)
+                    Image(systemName: "pencil.and.outline")
+                        .font(.system(size: 36, weight: .light))
+                        .foregroundStyle(Color.accentColor)
+                }
                 Text("Tippi")
                     .font(.largeTitle)
                     .bold()
