@@ -36,6 +36,8 @@ LIBGGML_BASE_REAL="$(realpath "${BREW_GGML_LIB}/libggml-base.0.dylib")"
 
 echo "▶ Preparing whisper helpers in ${HELPERS}/"
 mkdir -p "${HELPERS}"
+# Ensure existing files are writable before overwriting (Homebrew sources are r--r--r--)
+chmod -R u+w "${HELPERS}" 2>/dev/null || true
 
 # ── Copy binaries ────────────────────────────────────────────────────────────
 
@@ -43,7 +45,8 @@ cp "${WHISPER_CLI_REAL}"   "${HELPERS}/whisper-cli"
 cp "${LIBWHISPER_REAL}"    "${HELPERS}/libwhisper.1.dylib"
 cp "${LIBGGML_REAL}"       "${HELPERS}/libggml.0.dylib"
 cp "${LIBGGML_BASE_REAL}"  "${HELPERS}/libggml-base.0.dylib"
-chmod +x "${HELPERS}/whisper-cli"
+chmod 755 "${HELPERS}/whisper-cli"
+chmod 644 "${HELPERS}/libwhisper.1.dylib" "${HELPERS}/libggml.0.dylib" "${HELPERS}/libggml-base.0.dylib"
 
 # ── Fix rpaths so helpers are self-contained ────────────────────────────────
 #
