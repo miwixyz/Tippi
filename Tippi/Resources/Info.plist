@@ -34,6 +34,8 @@
     <true/>
     <key>NSAppleEventsUsageDescription</key>
     <string>Tippi reads selected text from your active application and inserts AI-improved results back. No data is stored or sent anywhere except to the AI provider you configured.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Tippi uses your microphone to transcribe speech into text locally using Whisper. Audio is processed on-device and never sent to any server.</string>
     <key>CFBundleLocalizations</key>
     <array>
         <string>en</string>

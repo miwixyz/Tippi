@@ -5,6 +5,10 @@ struct PromptPopupView: View {
     let onSelect: (DemoPrompt) -> Void
     let onDismiss: () -> Void
 
+    // Voice — both nil when feature is unavailable or not configured.
+    var audioRecorder: AudioRecorder? = nil
+    var onVoiceTranscribed: ((String) -> Void)? = nil
+
     @State private var selectedIndex: Int = 0
     @FocusState private var focused: Bool
 
@@ -13,6 +17,13 @@ struct PromptPopupView: View {
             header
             Divider()
             list
+            if audioRecorder != nil || !WhisperConfig.isConfigured {
+                Divider()
+                VoiceSection(
+                    audioRecorder: audioRecorder,
+                    onTranscribed: onVoiceTranscribed ?? { _ in }
+                )
+            }
         }
         .frame(width: 290)
         .background(.regularMaterial)
@@ -85,8 +96,196 @@ struct PromptPopupView: View {
         }
         .padding(.vertical, 6)
     }
-
 }
+
+// MARK: - Voice Section
+
+private struct VoiceSection: View {
+    var audioRecorder: AudioRecorder?
+    let onTranscribed: (String) -> Void
+
+    private enum State { case idle, recording, transcribing, failed(String) }
+    @SwiftUI.State private var voiceState: State = .idle
+    @ObservedObject private var recorder: AudioRecorder
+
+    init(audioRecorder: AudioRecorder?, onTranscribed: @escaping (String) -> Void) {
+        self.audioRecorder   = audioRecorder
+        self.onTranscribed   = onTranscribed
+        self._recorder       = ObservedObject(wrappedValue: audioRecorder ?? AudioRecorder())
+    }
+
+    var body: some View {
+        Group {
+            if !WhisperConfig.isConfigured {
+                setupBanner
+            } else {
+                voiceControls
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: Setup banner
+
+    private var setupBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "mic.slash")
+                .foregroundStyle(.secondary)
+                .font(.system(size: 14))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(String(localized: "voice.setup.banner.title"))
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.primary)
+                Text(String(localized: "voice.setup.banner.body"))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 7)
+                .fill(Color.secondary.opacity(0.08))
+        )
+    }
+
+    // MARK: Voice controls
+
+    @ViewBuilder
+    private var voiceControls: some View {
+        HStack(spacing: 10) {
+            micButton
+            statusText
+            Spacer()
+            if case .recording = voiceState {
+                waveform
+            }
+        }
+    }
+
+    private var micButton: some View {
+        Button(action: toggleRecording) {
+            ZStack {
+                Circle()
+                    .fill(micButtonBackground)
+                    .frame(width: 32, height: 32)
+                Image(systemName: micButtonSymbol)
+                    .foregroundStyle(.white)
+                    .font(.system(size: 14, weight: .medium))
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled({
+            if case .transcribing = voiceState { return true }
+            return false
+        }())
+    }
+
+    private var micButtonBackground: Color {
+        switch voiceState {
+        case .recording:     return .red
+        case .transcribing:  return .orange
+        default:             return .accentColor
+        }
+    }
+
+    private var micButtonSymbol: String {
+        switch voiceState {
+        case .recording:     return "stop.fill"
+        case .transcribing:  return "waveform"
+        default:             return "mic.fill"
+        }
+    }
+
+    @ViewBuilder
+    private var statusText: some View {
+        switch voiceState {
+        case .idle:
+            Text(String(localized: "voice.mic.tapToDictate"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .recording:
+            Text(String(localized: "voice.mic.recording"))
+                .font(.caption)
+                .foregroundStyle(.red)
+        case .transcribing:
+            HStack(spacing: 4) {
+                ProgressView().scaleEffect(0.6)
+                Text(String(localized: "voice.mic.transcribing"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        case .failed(let msg):
+            Text(msg)
+                .font(.caption2)
+                .foregroundStyle(.orange)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // Simple animated waveform using the recorder's level
+    private var waveform: some View {
+        HStack(spacing: 2) {
+            ForEach(0..<4, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(Color.red.opacity(0.7))
+                    .frame(width: 3, height: CGFloat(4 + Int(recorder.level * 12)) + CGFloat(i % 2 == 0 ? 2 : 0))
+                    .animation(.easeInOut(duration: 0.1), value: recorder.level)
+            }
+        }
+        .frame(height: 20)
+    }
+
+    // MARK: Actions
+
+    private func toggleRecording() {
+        switch voiceState {
+        case .idle, .failed:
+            startRecording()
+        case .recording:
+            stopAndTranscribe()
+        case .transcribing:
+            break
+        }
+    }
+
+    private func startRecording() {
+        guard let rec = audioRecorder else { return }
+        do {
+            try rec.start()
+            voiceState = .recording
+        } catch {
+            voiceState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func stopAndTranscribe() {
+        guard let wavURL = audioRecorder?.stop() else {
+            voiceState = .idle
+            return
+        }
+        voiceState = .transcribing
+
+        Task {
+            do {
+                let text = try await WhisperTranscriber.transcribe(wavURL: wavURL)
+                await MainActor.run {
+                    voiceState = .idle
+                    onTranscribed(text)
+                }
+            } catch {
+                await MainActor.run {
+                    voiceState = .failed(error.localizedDescription)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Prompt Row
 
 private struct PromptRow: View {
     let prompt: DemoPrompt

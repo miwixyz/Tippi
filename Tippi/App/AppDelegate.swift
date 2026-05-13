@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let permissions = PermissionsManager()
     let hotkeyManager = HotkeyManager()
     let keyMonitor = GlobalKeyMonitor(combo: KeyComboStore.load())
+    let audioRecorder = AudioRecorder()
 
     private var statusItem: NSStatusItem?
     private var welcomeWindowController: NSWindowController?
@@ -340,22 +341,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let sourceApp = lastNonTippiApp
         NSLog("Tippi: source app = \(sourceApp?.localizedName ?? "nil")")
-        guard let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp) else {
-            NSLog("Tippi: no text captured")
-            await showNoTextAlert()
-            return
-        }
-        NSLog("Tippi: captured \(captured.text.count) chars from \(captured.sourceApp?.localizedName ?? "?")")
-
+        let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
         let mouseLocation = NSEvent.mouseLocation
         let prompts = DemoPrompt.all
+
+        if let captured {
+            NSLog("Tippi: captured \(captured.text.count) chars from \(captured.sourceApp?.localizedName ?? "?")")
+        } else {
+            NSLog("Tippi: no text captured — showing popup with voice option")
+        }
+
+        // Resolve mic permission before showing popup.
+        let micReady: Bool
+        if WhisperConfig.isConfigured {
+            micReady = await AudioRecorder.requestPermission()
+        } else {
+            micReady = false
+        }
+
+        popupController.show(
+            at: mouseLocation,
+            prompts: prompts,
+            onSelect: { [weak self] prompt in
+                guard let self, let captured else { return }
+                self.showPreview(prompt: prompt, captured: captured)
+            },
+            onDismiss: { /* nothing — user cancelled */ },
+            audioRecorder: micReady ? audioRecorder : nil,
+            onVoiceTranscribed: { [weak self] transcribedText in
+                guard let self else { return }
+                let voiceCaptured = CapturedText(
+                    text: transcribedText,
+                    sourceApp: sourceApp,
+                    usedClipboardFallback: false
+                )
+                self.showPopupWithText(voiceCaptured, at: mouseLocation, prompts: prompts)
+            }
+        )
+
+        // If no text AND voice not available → show the original alert as fallback.
+        if captured == nil && !micReady && !WhisperConfig.isConfigured {
+            popupController.close()
+            await showNoTextAlert()
+        }
+    }
+
+    /// Re-shows the popup pre-loaded with already-captured (or dictated) text.
+    private func showPopupWithText(
+        _ captured: CapturedText,
+        at mouseLocation: NSPoint,
+        prompts: [DemoPrompt]
+    ) {
         popupController.show(
             at: mouseLocation,
             prompts: prompts,
             onSelect: { [weak self] prompt in
                 self?.showPreview(prompt: prompt, captured: captured)
             },
-            onDismiss: { /* nothing — user cancelled */ }
+            onDismiss: { }
         )
     }
 

@@ -183,3 +183,26 @@
 "settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt OpenAI, Anthropic, Gemini, Mistral und Ollama (lokal, kostenlos). Keys werden sicher im macOS-Schlüsselbund gespeichert.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 "settings.help.troubleBody" = "Hotkey loest nicht aus? Bedienungshilfen-Berechtigung erteilen: Systemeinstellungen, Datenschutz & Sicherheit, Bedienungshilfen. Tippi ist auch ueber das Menueleisten-Icon ausloesbar. Falls ein neuer Hotkey nicht reagiert: App neu starten.";
+
+/* Voice Input */
+"settings.tab.voice" = "Sprache";
+"settings.voice.mic.title" = "Mikrofon-Berechtigung";
+"settings.voice.mic.grant" = "Zugriff erteilen";
+"settings.voice.binary.title" = "whisper-cli Binärdatei";
+"settings.voice.binary.detected" = "Automatisch gefunden: %@";
+"settings.voice.binary.notFound" = "Nicht gefunden — installieren mit: brew install whisper-cpp";
+"settings.voice.binary.placeholder" = "/opt/homebrew/bin/whisper-cli";
+"settings.voice.binary.hint" = "Installieren: brew install whisper-cpp";
+"settings.voice.model.title" = "Whisper-Modell & Sprache";
+"settings.voice.model.placeholder" = "~/.cache/whisper/ggml-base.en.bin";
+"settings.voice.model.hint" = "Herunterladen: whisper-cli --model base.en --audio /dev/null --output-txt (lädt automatisch nach ~/.cache/whisper/)";
+"settings.voice.language.title" = "Sprache";
+"settings.voice.language.auto" = "Automatisch erkennen";
+
+"voice.mic.tapToDictate" = "Tippen zum Diktieren";
+"voice.mic.recording" = "Aufnahme läuft… tippen zum Stoppen";
+"voice.mic.transcribing" = "Transkribiere…";
+"voice.setup.banner.title" = "Spracheingabe nicht eingerichtet";
+"voice.setup.banner.body" = "Installieren: brew install whisper-cpp, dann Modellpfad in Einstellungen → Sprache setzen.";
+"voice.error.noBinary" = "whisper-cli nicht gefunden. Installieren: brew install whisper-cpp";
+"voice.error.noModel" = "Whisper-Modell nicht gefunden. Pfad in Einstellungen → Sprache setzen.";

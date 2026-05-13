@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import AVFoundation
 import IOKit
 import IOKit.hid
 
@@ -7,6 +8,7 @@ import IOKit.hid
 final class PermissionsManager: ObservableObject {
     @Published private(set) var accessibilityGranted: Bool = false
     @Published private(set) var inputMonitoringGranted: Bool = false
+    @Published private(set) var microphoneGranted: Bool = false
 
     init() {
         refresh()
@@ -30,6 +32,20 @@ final class PermissionsManager: ObservableObject {
     func refresh() {
         accessibilityGranted = AXIsProcessTrusted()
         inputMonitoringGranted = checkInputMonitoring()
+        microphoneGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+    }
+
+    func requestMicrophonePermission() {
+        AVCaptureDevice.requestAccess(for: .audio) { [weak self] _ in
+            Task { @MainActor in self?.refresh() }
+        }
+    }
+
+    func openMicrophoneSettings() {
+        let url = URL(string:
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+        )!
+        NSWorkspace.shared.open(url)
     }
 
     /// Triggers macOS's native Accessibility consent prompt the first time it is called,
