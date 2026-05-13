@@ -1,6 +1,6 @@
 # Tippi
 
-**Tippi** is a system-wide AI writing assistant for macOS. Select text in any app, hit a hotkey, let AI transform it — improve writing, fix grammar, translate, shorten, lengthen, or run your own custom prompts. Results land back in your original app with one click.
+**Tippi** is a system-wide AI writing assistant for macOS. Select text in any app, hit a hotkey, let AI transform it — improve writing, fix grammar, translate, shorten, lengthen, or run your own custom prompts. Results land back in your original app with one click. No text selected? Trigger the hotkey to record voice — Whisper transcribes locally, then optionally applies an AI prompt.
 
 > Mark text anywhere. Hit ⌥⌘T. Let AI do the rest.
 
@@ -17,7 +17,11 @@
   - **Google Gemini** (default: `gemini-2.5-flash`)
   - **Mistral** (default: `mistral-small-latest`, EU hosting available)
   - **Ollama** (local, fully offline)
+- **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
+- **Voice Instruction** — select text, then trigger the hotkey holding the mic: speak a command (e.g. "make this shorter"), Tippi applies it via AI directly — no prompt picker needed
+- **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
 - **Preview before applying** — side-by-side original vs. AI suggestion, then Replace / Append / Copy / Regenerate
+- **Auto-updates via Sparkle 2** — menu bar → "Check for Updates…", automatic check at launch
 - **Configurable global hotkey** — record any combination in Settings, or use macOS's built-in keyboard shortcut binding
 - **Autostart at login**
 - **DE + EN UI**
@@ -25,6 +29,7 @@
   - **BYOK** (bring your own API key) — keys stored in macOS Keychain only
   - **No telemetry, no analytics, no crash reporting**
   - **No request history saved** — your text never leaves your Mac except to the AI provider you chose
+  - **Voice processing fully local** — Whisper runs on-device, no audio sent anywhere
   - **Open source** under MIT
 
 ---
@@ -36,6 +41,7 @@
 - At least one AI provider:
   - An API key for OpenAI, Anthropic, Google Gemini, or Mistral, **or**
   - [Ollama](https://ollama.com) installed locally (free, no key required)
+- **Voice features** (optional): a Whisper model downloaded via Settings → Voice (in-app download, no manual install)
 
 ---
 
@@ -47,6 +53,8 @@
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant Accessibility permission, optionally enter an API key)
+
+Tippi checks for updates automatically at launch. You can also trigger a check manually via the menu bar icon → "Check for Updates…".
 
 ### From source
 
@@ -67,6 +75,8 @@ Then build and run in Xcode (⌘R). Note: an unsigned build will have TCC permis
 
 Tippi needs **Accessibility** permission to read selected text from other apps and paste results back. The wizard guides you to System Settings → Privacy & Security → Accessibility. Toggle **Tippi** on.
 
+For Voice Input, macOS will also prompt for **Microphone** access on first use.
+
 ### 2. Add an AI provider
 
 Menu bar ✏️ → **Settings → Providers** tab. Enter at least one API key. Recommended starting point:
@@ -79,6 +89,14 @@ Menu bar ✏️ → **Settings → Providers** tab. Enter at least one API key. 
 In any app: select some text → press **⌥⌘T** (the default global hotkey).
 
 Tippi's prompt menu appears at your cursor. Pick a transformation. The preview window shows your original and the AI suggestion side by side. Click **Ersetzen** (Replace) or press Enter — done.
+
+### 4. Voice Input (bonus)
+
+Press **⌥⌘T** with no text selected. A small popup with a mic button appears. Hold the button to record, release to transcribe. Whisper processes your audio locally. The popup shows the transcript — pick an AI prompt to transform it, or click "Insert directly" to paste as-is.
+
+**Voice Instruction:** select text first, then hold the mic button in the popup and speak your instruction (e.g. "translate this to English"). Tippi applies it via AI — no prompt menu step.
+
+To enable voice, download a Whisper model first: Settings → Voice → Download Model.
 
 ---
 
@@ -110,6 +128,18 @@ Settings → Prompts → "New prompt":
 - **Instructions for the AI** — system prompt sent to the model along with your selected text
 
 Custom prompts appear in the popup alongside the built-ins. They use the same default provider.
+
+### Voice / Whisper model
+
+Settings → Voice → Download Model. Three sizes available:
+
+| Model | Size | Speed | Notes |
+|-------|------|-------|-------|
+| Tiny  | ~75 MB | Fastest | Good for short commands, EN-only variant available |
+| Base  | ~145 MB | Fast | Balanced accuracy/speed, recommended default |
+| Small | ~465 MB | Slower | Best accuracy for long dictation or noisy environments |
+
+Each size comes in an English-only or multilingual variant. English-only is faster if you only dictate in English.
 
 ### Autostart
 
@@ -154,7 +184,9 @@ A signed and Apple-notarized DMG is required for stable distribution and TCC per
   ```bash
   DEVELOPER_ID="Developer ID Application: Your Name (YOURTEAMID)"
   NOTARY_PROFILE="tippi-notary"
-  VERSION="1.0.0"
+  GIST_ID="your-appcast-gist-id"
+  GITHUB_REPO="miwixyz/Tippi"
+  VERSION="1.1.7"
   ```
 
 ### Build
@@ -172,15 +204,11 @@ This runs `scripts/release.sh`, which:
 5. Signs the DMG
 6. Submits to Apple's notary service (3–10 min)
 7. Staples the notarization ticket
-8. Outputs `dist/Tippi-<version>.dmg`
+8. Creates a GitHub Release and uploads the DMG
+9. Updates the Sparkle appcast on the configured GitHub Gist
+10. Outputs `dist/Tippi-<version>.dmg`
 
-### Publish on GitHub
-
-```bash
-gh release create v1.0.0 dist/Tippi-1.0.0.dmg \
-    --title "Tippi 1.0.0" \
-    --notes-file CHANGELOG.md
-```
+That's the full pipeline — no manual `gh release create` or appcast editing required.
 
 ---
 
@@ -192,6 +220,11 @@ gh release create v1.0.0 dist/Tippi-1.0.0.dmg \
 - **Text capture**: Accessibility API first (`AXUIElementCopyAttributeValue` on focused element), Pasteboard ⌘C round-trip as fallback (with snapshot/restore to keep clipboard intact)
 - **Hotkey**: `NSEvent.addGlobalMonitorForEvents(matching: .keyDown)` plus a Carbon `RegisterEventHotKey` backup. For self-signed builds, the macOS-native keyboard shortcut binding to the "Trigger Tippi…" menu item is the most reliable path.
 - **LLM layer**: a `LLMProvider` protocol with five implementations; `LLMRouter` picks the preferred configured provider with automatic fallthrough
+- **Voice layer**:
+  - `AudioRecorder` — AVFoundation-based push-to-talk capture
+  - `WhisperTranscriber` — wraps a statically linked `whisper-cli` binary bundled in the app; runs out-of-process, no dynamic library dependencies
+  - `WhisperModelManager` — handles in-app model download, verification, and storage in Application Support
+- **Auto-updates**: Sparkle 2 framework; appcast hosted on GitHub Gist, checked at launch and on demand
 
 Full technical handover doc: [`docs/HANDOVER.md`](docs/HANDOVER.md).
 
@@ -206,6 +239,7 @@ Tippi is designed so your text never reaches anything except the AI provider you
 - **API keys**: macOS Keychain, accessible only to Tippi (no iCloud sync)
 - **Logs**: only crash-level logs to `~/Library/Logs/Tippi/`, content strings redacted
 - **App-container excluded from Spotlight indexing**
+- **Voice processing fully local** — audio is passed directly to the bundled `whisper-cli` binary; nothing is sent to any network endpoint
 
 Provider-specific privacy varies — review each provider's data policy if you handle sensitive content. **Ollama** runs entirely locally for the strictest privacy posture.
 
@@ -213,13 +247,14 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 ## Roadmap
 
-| Version | Highlights |
-|---------|------------|
-| 1.0     | Current — system-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
-| 1.1     | Voice input (push-to-talk + auto-stop, Whisper.cpp local), Sparkle auto-updates |
-| 1.2     | Prompt variables (`{clipboard}`, `{language}`, `{app_name}`), prompt chains |
-| 1.3     | Encrypted local history (opt-in, SQLite + SQLCipher) |
-| 2.0     | Cross-platform consideration |
+| Version | Status | Highlights |
+|---------|--------|------------|
+| v1.0.x  | ✅ Done | System-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
+| v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, bug fixes through v1.1.7 |
+| v1.2    | Planned | Prompt variables (`{clipboard}`, `{language}`, `{app_name}`), prompt chains |
+| v1.3    | Planned | MLX provider — Tippi manages a local `mlx_lm.server`; faster than Ollama on Apple Silicon |
+| v1.4    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
+| v2.0    | Planned | Cross-platform (Windows) |
 
 ---
 
@@ -229,4 +264,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Credits
 
-Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, and the [Ollama](https://ollama.com) project. Icon hand-rendered with CoreGraphics, no third-party graphics.
+Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, and the [Ollama](https://ollama.com) project. Voice transcription via [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Auto-updates via [Sparkle 2](https://sparkle-project.org). Icon hand-rendered with CoreGraphics, no third-party graphics.
