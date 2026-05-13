@@ -10,6 +10,21 @@ final class PermissionsManager: ObservableObject {
 
     init() {
         refresh()
+        beginStartupPoll()
+    }
+
+    /// Polls permissions every 1.5 s for up to 15 s after launch.
+    /// Handles the common case where macOS hasn't finished loading the TCC
+    /// database by the time the app launches at login.
+    private func beginStartupPoll() {
+        Task { @MainActor [weak self] in
+            for _ in 0..<10 {
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                guard let self else { return }
+                self.refresh()
+                if self.accessibilityGranted && self.inputMonitoringGranted { return }
+            }
+        }
     }
 
     func refresh() {

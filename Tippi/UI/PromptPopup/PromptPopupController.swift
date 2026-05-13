@@ -47,6 +47,14 @@ final class PromptPopupController {
         panel.hasShadow = true
         panel.hidesOnDeactivate = false
 
+        // Layout first so fittingSize reflects actual content height
+        hosting.view.layoutSubtreeIfNeeded()
+        let fittingSize = hosting.view.fittingSize
+        let panelSize = NSSize(
+            width: max(fittingSize.width, 290),
+            height: max(fittingSize.height, 100)
+        )
+        panel.setContentSize(panelSize)
         positionPanel(panel, near: point)
 
         self.panel = panel

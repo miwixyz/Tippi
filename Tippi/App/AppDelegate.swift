@@ -231,9 +231,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - Permissions observation (auto-restart hotkey)
+    // MARK: - Permissions observation (auto-restart hotkey + key monitor)
 
     private func observePermissions() {
+        // Input Monitoring → restart event tap
         permissions.$inputMonitoringGranted
             .removeDuplicates()
             .sink { [weak self] granted in
@@ -241,6 +242,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if granted && !self.hotkeyManager.isActive {
                     NSLog("Tippi: Input Monitoring granted — (re)starting hotkey")
                     self.startHotkey()
+                }
+            }
+            .store(in: &cancellables)
+
+        // Accessibility → restart global key monitor.
+        // Fires at startup (TCC loads after the monitor tried to register)
+        // and whenever the user re-grants the permission in System Settings.
+        permissions.$accessibilityGranted
+            .removeDuplicates()
+            .sink { [weak self] granted in
+                guard let self else { return }
+                if granted && !self.keyMonitor.isActive {
+                    NSLog("Tippi: Accessibility granted — (re)starting key monitor")
+                    self.startGlobalKeyMonitor()
                 }
             }
             .store(in: &cancellables)
