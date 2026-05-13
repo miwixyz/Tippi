@@ -41,8 +41,9 @@ struct PromptPopupView: View {
         self.audioRecorder = audioRecorder
         self.onVoiceTranscribed = onVoiceTranscribed
         self.voiceMode = voiceMode
-        // Default selection: direct insert row when available, else first prompt
-        _selectedIndex = State(initialValue: onDirectInsert != nil ? -1 : 0)
+        // Always start at first AI prompt (index 0).
+        // "Direkt einfügen" row (index -1) is visible but requires explicit click or ↑ arrow.
+        _selectedIndex = State(initialValue: 0)
     }
 
     var body: some View {

@@ -2,6 +2,16 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.6] — 2026-05-13
+
+### Fixed
+- **Dictation inserts directly** — after speaking (no text selected), the transcript is now pasted immediately without showing an extra prompt-picker popup. To apply AI to dictated text, select it and trigger Tippi again.
+
+## [1.1.6] — 2026-05-13
+
+### Fixed
+- **Dictation prompt picker** — after dictating, the popup now highlights the first AI prompt by default (not "Insert directly"). Pick any AI prompt to process the transcript, or click "Direkt einfügen" explicitly to paste as-is.
+
 ## [1.1.5] — 2026-05-13
 
 ### Fixed
