@@ -642,35 +642,29 @@ private struct AboutTab: View {
 
 private struct VoiceTab: View {
     @EnvironmentObject var permissions: PermissionsManager
-
-    @AppStorage("voice.whisperBinaryPath") private var binaryPath: String = ""
-    @AppStorage("voice.whisperModelPath")  private var modelPath: String  = ""
-    @AppStorage("voice.language")          private var language: String   = "auto"
-
-    private var resolvedBinaryPath: String {
-        binaryPath.isEmpty ? (WhisperConfig.autoDetectedBinaryPath ?? "") : binaryPath
-    }
+    @StateObject private var modelManager = WhisperModelManager()
+    @AppStorage("voice.language") private var language: String = "auto"
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 microphoneSection
-                binarySection
                 modelSection
+                languageSection
+                advancedSection
             }
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    // MARK: Microphone permission
+    // MARK: Microphone
 
     private var microphoneSection: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
                 Text(String(localized: "settings.voice.mic.title"))
                     .font(.headline)
-
                 HStack {
                     if permissions.microphoneGranted {
                         Label(String(localized: "setup.granted"), systemImage: "checkmark.circle.fill")
@@ -682,8 +676,7 @@ private struct VoiceTab: View {
                     Spacer()
                     if !permissions.microphoneGranted {
                         Button(String(localized: "settings.voice.mic.grant")) {
-                            let status = AudioRecorder.authorizationStatus()
-                            if status == .notDetermined {
+                            if AudioRecorder.authorizationStatus() == .notDetermined {
                                 permissions.requestMicrophonePermission()
                             } else {
                                 permissions.openMicrophoneSettings()
@@ -697,92 +690,174 @@ private struct VoiceTab: View {
         }
     }
 
-    // MARK: whisper-cli binary
+    // MARK: Model download
 
-    private var binarySection: some View {
+    private var modelSection: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(String(localized: "settings.voice.binary.title"))
-                    .font(.headline)
-
-                if let detected = WhisperConfig.autoDetectedBinaryPath {
-                    Text(String(format: String(localized: "settings.voice.binary.detected"), detected))
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                } else {
-                    Text(String(localized: "settings.voice.binary.notFound"))
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    TextField(String(localized: "settings.voice.binary.placeholder"),
-                              text: $binaryPath)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.caption, design: .monospaced))
-
-                    // Show green/red dot for current path validity
-                    Image(systemName: FileManager.default.isExecutableFile(atPath: resolvedBinaryPath)
-                          ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(FileManager.default.isExecutableFile(atPath: resolvedBinaryPath)
-                                         ? Color.green : Color.orange)
+                    Text(String(localized: "settings.voice.model.title"))
+                        .font(.headline)
+                    Spacer()
+                    // Overall status pill
+                    if WhisperConfig.autoDetectedModelPath != nil {
+                        Label(String(localized: "setup.granted"), systemImage: "checkmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    } else {
+                        Label(String(localized: "voice.model.noModel"), systemImage: "exclamationmark.circle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
                 }
 
-                Text(String(localized: "settings.voice.binary.hint"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                Divider()
+
+                ForEach(WhisperModel.catalog) { model in
+                    ModelRow(model: model, manager: modelManager)
+                }
             }
             .padding(6)
         }
     }
 
-    // MARK: Model + Language
+    // MARK: Language
 
-    private var modelSection: some View {
+    private var languageSection: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(String(localized: "settings.voice.model.title"))
-                    .font(.headline)
-
-                HStack {
-                    TextField(String(localized: "settings.voice.model.placeholder"),
-                              text: $modelPath)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.caption, design: .monospaced))
-
-                    let resolved = modelPath.isEmpty ? WhisperConfig.modelPath : modelPath
-                    Image(systemName: FileManager.default.fileExists(atPath: resolved)
-                          ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(FileManager.default.fileExists(atPath: resolved)
-                                         ? Color.green : Color.orange)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(String(localized: "settings.voice.language.title"))
+                        .font(.headline)
+                    Text(String(localized: "settings.voice.language.hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+                Spacer()
+                Picker("", selection: $language) {
+                    Text(String(localized: "settings.voice.language.auto")).tag("auto")
+                    Text("English").tag("en")
+                    Text("Deutsch").tag("de")
+                    Text("Español").tag("es")
+                    Text("Français").tag("fr")
+                    Text("日本語").tag("ja")
+                }
+                .pickerStyle(.menu)
+                .frame(width: 160)
+                .onChange(of: language) { _, new in WhisperConfig.language = new }
+            }
+            .padding(6)
+        }
+    }
 
-                Text(String(localized: "settings.voice.model.hint"))
+    // MARK: Advanced (power users)
+
+    private var advancedSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(String(localized: "settings.voice.advanced.title"))
+                    .font(.headline)
+                Text(String(localized: "settings.voice.advanced.body"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                Divider()
-
-                HStack {
-                    Text(String(localized: "settings.voice.language.title"))
-                        .font(.subheadline)
-                    Spacer()
-                    Picker("", selection: $language) {
-                        Text(String(localized: "settings.voice.language.auto")).tag("auto")
-                        Text("English").tag("en")
-                        Text("Deutsch").tag("de")
-                        Text("Español").tag("es")
-                        Text("Français").tag("fr")
-                        Text("日本語").tag("ja")
-                    }
-                    .pickerStyle(.menu)
-                    .frame(width: 160)
-                    .onChange(of: language) { _, new in WhisperConfig.language = new }
+                HStack(spacing: 6) {
+                    let status = WhisperConfig.autoDetectedBinaryPath
+                    Image(systemName: status != nil ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(status != nil ? Color.green : Color.orange)
+                        .font(.caption)
+                    Text(status ?? String(localized: "settings.voice.advanced.noBinary"))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
             .padding(6)
+        }
+    }
+}
+
+// MARK: - Model row
+
+private struct ModelRow: View {
+    let model: WhisperModel
+    @ObservedObject var manager: WhisperModelManager
+    @State private var isDownloaded: Bool = false
+
+    var isThisDownloading: Bool {
+        manager.downloadingModel == model.id
+    }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            // Status icon
+            if isDownloaded {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .frame(width: 18)
+            } else if isThisDownloading {
+                ProgressView()
+                    .scaleEffect(0.7)
+                    .frame(width: 18)
+            } else {
+                Image(systemName: "arrow.down.circle")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(model.displayName)
+                    .font(.subheadline)
+                HStack(spacing: 6) {
+                    Text("\(model.sizeMB) MB")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("·")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(model.languages)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            // Action button or progress bar
+            if isThisDownloading {
+                VStack(alignment: .trailing, spacing: 4) {
+                    ProgressView(value: manager.downloadProgress)
+                        .frame(width: 80)
+                    Button(String(localized: "voice.model.cancel")) {
+                        manager.cancel()
+                    }
+                    .font(.caption2)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                }
+            } else if isDownloaded {
+                Button(String(localized: "voice.model.delete")) {
+                    manager.delete(model)
+                    isDownloaded = false
+                }
+                .buttonStyle(.bordered)
+                .font(.caption)
+                .foregroundStyle(.red)
+            } else {
+                Button(String(localized: "voice.model.download")) {
+                    manager.download(model)
+                }
+                .buttonStyle(.borderedProminent)
+                .font(.caption)
+                .disabled(manager.downloadingModel != nil)
+            }
+        }
+        .padding(.vertical, 2)
+        .onAppear { isDownloaded = model.isDownloaded }
+        .onChange(of: manager.downloadingModel) { _, downloading in
+            // Refresh downloaded state when download completes
+            if downloading == nil { isDownloaded = model.isDownloaded }
         }
     }
 }

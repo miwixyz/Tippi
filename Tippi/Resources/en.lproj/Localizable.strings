@@ -204,4 +204,15 @@
 "voice.setup.banner.title" = "Voice Input not configured";
 "voice.setup.banner.body" = "Install: brew install whisper-cpp, then set the model path in Settings → Voice.";
 "voice.error.noBinary" = "whisper-cli not found. Install: brew install whisper-cpp";
-"voice.error.noModel" = "Whisper model not found. Set the model path in Settings → Voice.";
+"voice.error.noModel" = "Whisper model not found. Download one in Settings → Voice.";
+
+"voice.model.noModel" = "No model downloaded";
+"voice.model.download" = "Download";
+"voice.model.cancel" = "Cancel";
+"voice.model.delete" = "Delete";
+
+"settings.voice.model.title" = "Whisper Model";
+"settings.voice.language.hint" = "Choose the language you'll dictate in, or Auto-detect.";
+"settings.voice.advanced.title" = "Advanced";
+"settings.voice.advanced.body" = "whisper-cli is bundled inside Tippi — no installation needed. The path below is for reference or manual override.";
+"settings.voice.advanced.noBinary" = "Not found (contact support)";

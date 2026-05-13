@@ -1,4 +1,4 @@
-.PHONY: help generate open build clean lint icons release release-dry-run
+.PHONY: help generate open build clean lint icons prepare-binary release release-dry-run
 
 help:
 	@echo "Tippi — Make Targets"
@@ -9,7 +9,9 @@ help:
 	@echo "  make clean            Remove generated project and build artifacts"
 	@echo "  make icons            Open icons/ folder"
 	@echo ""
-	@echo "  make release          Build + sign + notarize + DMG (needs release.env)"
+	@echo "  make prepare-binary   Copy whisper-cli + dylibs from Homebrew, fix rpaths"
+	@echo "                        Run once per build machine (needs: brew install whisper-cpp)"
+	@echo "  make release          prepare-binary + build + sign + notarize + DMG"
 	@echo "  make release-dry-run  Show release env without running"
 
 generate:
@@ -28,7 +30,10 @@ clean:
 icons:
 	open icons/
 
-release:
+prepare-binary:
+	@./scripts/prepare-binary.sh
+
+release: prepare-binary
 	@./scripts/release.sh
 
 release-dry-run:

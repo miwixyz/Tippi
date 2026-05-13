@@ -30,28 +30,67 @@ enum WhisperConfig {
     private static let modelKey  = "voice.whisperModelPath"
     private static let langKey   = "voice.language"
 
-    static let knownBinaryPaths = [
+    // MARK: Binary resolution
+
+    /// In release builds: whisper-cli bundled at Contents/MacOS/ alongside the main exe.
+    static var bundledBinaryPath: String? {
+        guard let url = Bundle.main.executableURL?
+            .deletingLastPathComponent()
+            .appendingPathComponent("whisper-cli")
+        else { return nil }
+        return FileManager.default.isExecutableFile(atPath: url.path) ? url.path : nil
+    }
+
+    /// Homebrew fall-backs for development builds (Xcode, `make build`).
+    static let brewBinaryPaths = [
         "/opt/homebrew/bin/whisper-cli",
         "/usr/local/bin/whisper-cli",
         "/opt/homebrew/bin/whisper",
-        "/usr/local/bin/whisper",
     ]
 
     static var autoDetectedBinaryPath: String? {
-        knownBinaryPaths.first { FileManager.default.isExecutableFile(atPath: $0) }
+        bundledBinaryPath
+            ?? brewBinaryPaths.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
+    /// Resolved binary: user override → bundled → Homebrew → empty.
     static var binaryPath: String {
-        get { UserDefaults.standard.string(forKey: binaryKey) ?? autoDetectedBinaryPath ?? "" }
+        get {
+            let stored = UserDefaults.standard.string(forKey: binaryKey) ?? ""
+            return stored.isEmpty ? (autoDetectedBinaryPath ?? "") : stored
+        }
         set { UserDefaults.standard.set(newValue, forKey: binaryKey) }
     }
 
-    /// Default: `~/.cache/whisper/ggml-base.en.bin` (whisper.cpp standard location).
+    // MARK: Model resolution
+
+    /// App-managed model storage: ~/Library/Application Support/com.tippi.app/Models/
+    static var appModelDirectory: URL {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return support.appendingPathComponent("com.tippi.app/Models", isDirectory: true)
+    }
+
+    /// Best available model: first app-support model, then ~/.cache/whisper/ (Homebrew default).
+    static var autoDetectedModelPath: String? {
+        let fm = FileManager.default
+        // Check app support directory first
+        if let url = try? fm.contentsOfDirectory(at: appModelDirectory, includingPropertiesForKeys: nil)
+            .first(where: { $0.pathExtension == "bin" }) {
+            return url.path
+        }
+        // Homebrew / manual cache fall-back
+        let legacy = fm.homeDirectoryForCurrentUser.appendingPathComponent(".cache/whisper")
+        if let url = try? fm.contentsOfDirectory(at: legacy, includingPropertiesForKeys: nil)
+            .first(where: { $0.pathExtension == "bin" }) {
+            return url.path
+        }
+        return nil
+    }
+
     static var modelPath: String {
         get {
-            UserDefaults.standard.string(forKey: modelKey)
-                ?? FileManager.default.homeDirectoryForCurrentUser
-                    .appendingPathComponent(".cache/whisper/ggml-base.en.bin").path
+            let stored = UserDefaults.standard.string(forKey: modelKey) ?? ""
+            return stored.isEmpty ? (autoDetectedModelPath ?? "") : stored
         }
         set { UserDefaults.standard.set(newValue, forKey: modelKey) }
     }

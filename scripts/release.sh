@@ -68,9 +68,37 @@ if [ ! -d "${APP_PATH}" ]; then
     echo "✗ Build failed — ${APP_PATH} not found"; exit 1
 fi
 
-# 4. Re-sign: Sparkle nested components first (inside → out), then outer app
+# 4a. Inject whisper helpers into bundle
+echo "▶ [3/7] Injecting whisper-cli + dylibs into bundle..."
+HELPERS_SRC="./Tippi/Helpers"
+if [ ! -f "${HELPERS_SRC}/whisper-cli" ]; then
+    echo "✗ ${HELPERS_SRC}/whisper-cli not found."
+    echo "  Run: make prepare-binary   (needs: brew install whisper-cpp)"
+    exit 1
+fi
+# whisper-cli → Contents/MacOS/ (alongside main binary)
+cp "${HELPERS_SRC}/whisper-cli"          "${APP_PATH}/Contents/MacOS/whisper-cli"
+chmod +x "${APP_PATH}/Contents/MacOS/whisper-cli"
+# dylibs → Contents/Frameworks/
+cp "${HELPERS_SRC}/libwhisper.1.dylib"   "${APP_PATH}/Contents/Frameworks/libwhisper.1.dylib"
+cp "${HELPERS_SRC}/libggml.0.dylib"      "${APP_PATH}/Contents/Frameworks/libggml.0.dylib"
+cp "${HELPERS_SRC}/libggml-base.0.dylib" "${APP_PATH}/Contents/Frameworks/libggml-base.0.dylib"
+
+# 4b. Re-sign: whisper dylibs + cli + Sparkle (inside → out), then outer app
 echo "▶ [3/7] Re-signing app with explicit entitlements + verifying..."
 SPARKLE_FW="${APP_PATH}/Contents/Frameworks/Sparkle.framework/Versions/B"
+
+# Sign whisper dylibs first (deepest dependencies)
+for dylib in \
+    "${APP_PATH}/Contents/Frameworks/libggml.0.dylib" \
+    "${APP_PATH}/Contents/Frameworks/libggml-base.0.dylib" \
+    "${APP_PATH}/Contents/Frameworks/libwhisper.1.dylib"; do
+    codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" "$dylib"
+done
+
+# Sign whisper-cli binary
+codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" \
+    "${APP_PATH}/Contents/MacOS/whisper-cli"
 
 # Sign Sparkle executables
 for bin in \
