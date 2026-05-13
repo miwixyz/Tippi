@@ -2,6 +2,14 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.11] — 2026-05-14
+
+### Changed
+- **Brand Colors** — Accent `#3070F0`, Navy `#020B1D`, Surface `#E5DEDA` (aus Brand Guide extrahiert)
+- **Fenster-Hintergrund** — adaptiv: `#020B1D` im Dark Mode, System-Standard im Light Mode
+- **Sparkle Update-Fenster** — liegt jetzt immer im Vordergrund (LSUIElement-Fix via `SPUStandardUserDriverDelegate`)
+- **Swift Concurrency** — Timer-Closure in `AudioRecorder` und `FileManager`-Capture in `WhisperModelManager` gefixt
+
 ## [1.1.10] — 2026-05-14
 
 ### Changed

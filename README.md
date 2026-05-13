@@ -218,7 +218,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | Version | Status | Highlights |
 |---------|--------|------------|
 | v1.0.x  | ✅ Done | System-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
-| v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, bug fixes through v1.1.7 |
+| v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, brand refresh (mascot icon, `#3070F0` accent, `#020B1D` navy, adaptive dark/light bg), bug fixes through v1.1.11 |
 | v1.2    | Planned | Prompt variables (`{clipboard}`, `{language}`, `{app_name}`), prompt chains |
 | v1.3    | Planned | MLX provider — Tippi manages a local `mlx_lm.server`; faster than Ollama on Apple Silicon |
 | v1.4    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
@@ -232,6 +232,6 @@ MIT — see [LICENSE](LICENSE).
 
 ## Credits
 
-Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, and the [Ollama](https://ollama.com) project. Voice transcription via [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Auto-updates via [Sparkle 2](https://sparkle-project.org). Icon hand-rendered with CoreGraphics, no third-party graphics.
+Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, and the [Ollama](https://ollama.com) project. Voice transcription via [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Auto-updates via [Sparkle 2](https://sparkle-project.org). Tippi mascot and brand assets by Michael Wlr.
 
 © 2026 Michael Wlr — MIT License
