@@ -124,8 +124,9 @@ struct WhisperTranscriber {
             throw WhisperError.modelNotFound
         }
 
-        // whisper-cli --output-txt writes a sidecar <name>.txt next to the WAV.
-        let txtURL = wavURL.deletingPathExtension().appendingPathExtension("txt")
+        // whisper-cli --output-txt writes a sidecar <name>.wav.txt (appends .txt to
+        // the full input filename, it does NOT strip the .wav extension first).
+        let txtURL = wavURL.appendingPathExtension("txt")
 
         // Run the process and wait for it to finish.
         try await runProcess(

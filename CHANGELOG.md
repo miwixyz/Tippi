@@ -2,6 +2,13 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.2] — 2026-05-13
+
+### Fixed
+- **Whisper model crash fixed** — root cause: Homebrew's whisper-cpp 1.8.4 uses GGML 0.11.1 which loads GPU/CPU backends as separate `.so` plugins from a hardcoded Homebrew path. With Hardened Runtime, macOS blocks these plugins (Team ID mismatch). whisper-cli was crashing with `GGML_ASSERT(device) failed` before even processing audio. Fix: whisper-cli is now built from source (whisper.cpp v1.7.4) with all backends compiled in statically (`GGML_BACKEND_DL=OFF`, `GGML_METAL_EMBED_LIBRARY=ON`). The binary is fully self-contained — no Homebrew, no external `.so` files, no runtime plugin lookup.
+- **Whisper output file path fixed** — `whisper-cli --output-txt` writes `<input>.wav.txt`, not `<input>.txt`. The transcriber now reads the correct sidecar filename. (Was silently producing no output even on successful runs.)
+- `libwhisper.1.dylib`, `libggml.0.dylib`, `libggml-base.0.dylib` removed from the app bundle — superseded by the static build.
+
 ## [1.1.1] — 2026-05-13
 
 ### Fixed
