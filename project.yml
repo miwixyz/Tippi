@@ -32,6 +32,7 @@ targets:
         excludes:
           - "Resources/Info.plist"
           - "Resources/Tippi.entitlements"
+          - "Helpers/**"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tippi.app
