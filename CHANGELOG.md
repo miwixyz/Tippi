@@ -2,6 +2,11 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.3] — 2026-05-13
+
+### Fixed
+- **About tab version display** — version was hardcoded to "1.0.0" instead of reading from the app bundle. Now displays the real installed version via `CFBundleShortVersionString`.
+
 ## [1.1.2] — 2026-05-13
 
 ### Fixed

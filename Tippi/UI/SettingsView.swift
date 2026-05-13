@@ -606,7 +606,7 @@ private struct AboutTab: View {
                 Text("Tippi")
                     .font(.largeTitle)
                     .bold()
-                Text("Version 1.0.0")
+                Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
                     .foregroundStyle(.secondary)
 
                 Divider()

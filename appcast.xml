@@ -6,10 +6,10 @@
             <title>1.0.1</title>
             <pubDate>Wed, 13 May 2026 01:10:50 +0200</pubDate>
             <sparkle:version>1</sparkle:version>
-            <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
+            <sparkle:shortVersionString>1.1.3</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/Tippi-1.1.2.dmg" length="2941442" type="application/octet-stream" sparkle:edSignature="gkHEeaTLglJPnzrNXs2K15vvNaNb89NVqJG6RvxYAkwOcsnG6h9aRRBBCA5CfP4qjj2HrP7vhAPmGIj0NJG2Dg=="/>
+            <enclosure url="https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/Tippi-1.1.3.dmg" length="2941684" type="application/octet-stream" sparkle:edSignature="YW+6/AYxLHxMQQsAxdyAGV81tmJ6TReWaMl+4t7qZPpwNhR/T8z21K/jUZQLxiCNS3Bm0hilDaweFWrsJ+tNAg=="/>
         </item>
     </channel>
 </rss>
