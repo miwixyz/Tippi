@@ -19,8 +19,8 @@ Tippi ist ein systemweiter KI-Schreibassistent für macOS. In jeder beliebigen M
 
 ## 2. Repository
 
-- **GitHub:** https://github.com/miwixyz/Tippi (privat)
-- **Lokal:** `/Users/michaelwildenauer/-Coding/Tippi/`
+- **GitHub:** https://github.com/miwixyz/Tippi (public, Open-Source)
+- **Lokal:** `~/-Coding/Tippi/`
 - **Branch:** `main`
 - **Lizenz:** MIT
 
@@ -181,7 +181,7 @@ Eigenschaften pro Prompt:
 ### 7.1 Lokal entwickeln
 
 ```bash
-cd /Users/michaelwildenauer/-Coding/Tippi
+cd ~/-Coding/Tippi
 brew install xcodegen          # einmalig
 make open                      # generiert Xcode-Projekt und öffnet
 # → in Xcode auf ▶ klicken
@@ -203,8 +203,8 @@ xcodebuild -project Tippi.xcodeproj -scheme Tippi -configuration Debug \
 # 2. App-Specific Password unter appleid.apple.com erstellen
 # 3. Notarytool credentials profile speichern:
 xcrun notarytool store-credentials tippi-notary \
-    --apple-id miwimail@icloud.com \
-    --team-id 54PMA7GFAN \
+    --apple-id YOUR_APPLE_ID@example.com \
+    --team-id YOUR_TEAM_ID \
     --password "<app-spec-pwd>"
 # 4. release.env vorbereiten:
 cp release.env.example release.env
@@ -261,7 +261,7 @@ Mit korrekt signierter Version sollte der in-App-Recorder funktionieren.
 
 ### 8.3 Apple Developer Account & Nachfolge
 
-Apple Developer Account: `miwimail@icloud.com`, Team-ID: `54PMA7GFAN`.
+Apple Developer Account: `YOUR_APPLE_ID@example.com`, Team-ID: `YOUR_TEAM_ID`.
 
 Bei Verlängerung jährlich automatisch. **Wenn Account ausläuft**: keine neuen Versionen signierbar, alte Versionen funktionieren weiter (eingefroren). Nutzer bekommen keine Warnungen.
 
@@ -319,7 +319,7 @@ security delete-generic-password -s com.tippi.app 2>/dev/null
 ### Lokale Tippi-App neu installieren (nach Rebuild)
 
 ```bash
-cd /Users/michaelwildenauer/-Coding/Tippi
+cd ~/-Coding/Tippi
 make release   # signed + notarisiert (vorausgesetzt Apple-Setup ist da)
 osascript -e 'tell application "Tippi" to quit' 2>/dev/null; sleep 1
 rm -rf /Applications/Tippi.app
@@ -333,7 +333,7 @@ open /Applications/Tippi.app
 
 ## 11. Kontakte / Konten
 
-- **Apple Developer Account:** miwimail@icloud.com, Team-ID `54PMA7GFAN`
+- **Apple Developer Account:** YOUR_APPLE_ID@example.com, Team-ID `YOUR_TEAM_ID`
 - **GitHub:** miwixyz, Repo `Tippi` (privat)
 - **Domain (falls geplant):** —
 
@@ -343,7 +343,7 @@ open /Applications/Tippi.app
 
 Wenn ich nach 6+ Monaten zurückkomme und Tippi weitermachen will:
 
-- [ ] `cd /Users/michaelwildenauer/-Coding/Tippi`
+- [ ] `cd ~/-Coding/Tippi`
 - [ ] `git pull` (falls remote Changes da sind)
 - [ ] `brew install xcodegen` falls nicht da
 - [ ] `make open` → Xcode öffnet
