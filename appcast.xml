@@ -9,7 +9,7 @@
             <sparkle:shortVersionString>1.1.6</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/Tippi-1.1.6.dmg" length="2948778" type="application/octet-stream" sparkle:edSignature="BdJO7jRzwFs0vUyLgTnAXQ6So3DvNn7A34UbdwCMfi8xbFGHvxV2SypGPQu0/wU02clnAh5VtZLA5o4wzmPRCg=="/>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.6/Tippi-1.1.6.dmg" length="2948778" type="application/octet-stream" sparkle:edSignature="BdJO7jRzwFs0vUyLgTnAXQ6So3DvNn7A34UbdwCMfi8xbFGHvxV2SypGPQu0/wU02clnAh5VtZLA5o4wzmPRCg=="/>
         </item>
         <item>
             <title>1.1.5</title>
@@ -18,16 +18,16 @@
             <sparkle:shortVersionString>1.1.5</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/Tippi-1.1.5.dmg" length="2950237" type="application/octet-stream" sparkle:edSignature="0Gh4kKXnA7XQZ8fVhHTOVqWi3PuKlxgrdr1WZ/dub0YIDxa0iyVWwkRGUct4Ik94QZlOy8rhwWLmRtn3k03hCA=="/>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.5/Tippi-1.1.5.dmg" length="2950237" type="application/octet-stream" sparkle:edSignature="0Gh4kKXnA7XQZ8fVhHTOVqWi3PuKlxgrdr1WZ/dub0YIDxa0iyVWwkRGUct4Ik94QZlOy8rhwWLmRtn3k03hCA=="/>
         </item>
         <item>
-            <title>1.0.1</title>
+            <title>1.1.4</title>
             <pubDate>Wed, 13 May 2026 01:10:50 +0200</pubDate>
             <sparkle:version>1</sparkle:version>
             <sparkle:shortVersionString>1.1.4</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/Tippi-1.1.4.dmg" length="2950204" type="application/octet-stream" sparkle:edSignature="BAvrN1Zx7k8eJpQh04IiwP5d0+RYSpnYnT/V79Dow04pqzfX3kENEFCiLak9vCO846S5mMiHqQpwWr/UUTpYCw=="/>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.4/Tippi-1.1.4.dmg" length="2950204" type="application/octet-stream" sparkle:edSignature="BAvrN1Zx7k8eJpQh04IiwP5d0+RYSpnYnT/V79Dow04pqzfX3kENEFCiLak9vCO846S5mMiHqQpwWr/UUTpYCw=="/>
         </item>
     </channel>
 </rss>

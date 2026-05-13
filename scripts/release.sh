@@ -158,11 +158,24 @@ echo "▶ [7/7] Stapling notarization ticket..."
 xcrun stapler staple "${DMG_PATH}" >/dev/null
 spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 2>&1 | head -2
 
-# 9. Generate appcast.xml for Sparkle
-echo "▶ [8/8] Generating appcast.xml..."
+# 9. GitHub Release — upload DMG first so the download URL exists for the appcast
+echo "▶ [8/9] Creating GitHub release..."
+GH_RELEASE_URL="https://github.com/miwixyz/Tippi/releases/download/v${VERSION}"
+# Extract release notes for this version from CHANGELOG.md
+RELEASE_NOTES="$(awk "/^## \[${VERSION}\]/,/^## \[/" CHANGELOG.md | head -n -1)"
+gh release create "v${VERSION}" "${DMG_PATH}" \
+    --title "Tippi ${VERSION}" \
+    --notes "${RELEASE_NOTES}" 2>/dev/null \
+    && echo "  ✓ GitHub Release v${VERSION} erstellt" \
+    || echo "  ⚠ GitHub Release existiert bereits oder Fehler — appcast wird trotzdem generiert"
+
+# 10. Generate appcast.xml — DMGs are hosted on GitHub Releases, not Gist
+echo "▶ [9/9] Generating appcast.xml..."
 APPCAST_TOOL="${HOME}/Developer/sparkle-tools/bin/generate_appcast"
 if [ -f "${APPCAST_TOOL}" ]; then
-    "${APPCAST_TOOL}" "${DIST_DIR}" -o appcast.xml 2>/dev/null
+    "${APPCAST_TOOL}" "${DIST_DIR}" \
+        --download-url-prefix "${GH_RELEASE_URL}/" \
+        -o appcast.xml 2>/dev/null
     gh gist edit 595ce79e698bb6a98008dc061f1f4a78 appcast.xml
     echo "  ✓ appcast.xml generiert und Gist aktualisiert"
 else
@@ -170,7 +183,7 @@ else
     echo "    Setup: siehe docs/HANDOVER.md → Sparkle"
 fi
 
-# 10. Final report
+# 11. Final report
 echo ""
 echo "✓ Release complete"
 echo "  DMG:  ${DMG_PATH}"
@@ -178,4 +191,3 @@ echo "  Size: $(du -h "${DMG_PATH}" | cut -f1)"
 echo ""
 echo "Next steps:"
 echo "  1. git add appcast.xml && git commit -m 'release: v${VERSION}' && git push"
-echo "  2. gh release create v${VERSION} ${DMG_PATH} --title 'Tippi ${VERSION}' --notes-file CHANGELOG.md"
