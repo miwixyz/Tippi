@@ -39,6 +39,7 @@ echo "▶ Tippi release pipeline"
 echo "  Version:     ${VERSION}"
 echo "  Signing:     ${DEVELOPER_ID}"
 echo "  Notary:      ${NOTARY_PROFILE}"
+# BUILD_NUMBER is set later (after git rev-list), printed during build step
 echo ""
 
 # 1. Clean previous build
@@ -50,14 +51,16 @@ echo "▶ [1/7] Generating Xcode project..."
 xcodegen generate >/dev/null
 
 # 3. Build Release
-echo "▶ [2/7] Building Release with hardened runtime..."
+# Build number = git commit count — monotonically increasing, no manual tracking needed.
+BUILD_NUMBER="$(git rev-list --count HEAD)"
+echo "▶ [2/7] Building Release with hardened runtime (build ${BUILD_NUMBER})..."
 xcodebuild \
     -project Tippi.xcodeproj \
     -scheme Tippi \
     -configuration Release \
     -derivedDataPath ./build \
     MARKETING_VERSION="${VERSION}" \
-    CURRENT_PROJECT_VERSION="1" \
+    CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="${DEVELOPER_ID}" \
     OTHER_CODE_SIGN_FLAGS="--options=runtime --timestamp" \

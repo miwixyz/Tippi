@@ -2,6 +2,11 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.5] — 2026-05-13
+
+### Fixed
+- **Sparkle updates not delivered** — `CFBundleVersion` (build number) was hardcoded to `1` in every release. Sparkle compares the build number to decide if an update is available, so all versions looked identical. Build number now derives from `git rev-list --count HEAD` and increments automatically with every release.
+
 ## [1.1.4] — 2026-05-13
 
 ### New
