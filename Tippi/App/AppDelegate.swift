@@ -28,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
-            userDriverDelegate: nil
+            userDriverDelegate: self
         )
         setupMenuBar()
         observeFrontmostApp()
@@ -184,6 +184,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 600, height: 480))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
+            window.backgroundColor = NSColor(name: nil) { appearance in
+                appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                    ? NSColor(red: 0.008, green: 0.043, blue: 0.114, alpha: 1) // #020B1D dark
+                    : NSColor.windowBackgroundColor // system default light
+            }
             window.center()
             welcomeWindowController = NSWindowController(window: window)
         }
@@ -206,6 +211,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 640, height: 580))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
+            window.backgroundColor = NSColor(name: nil) { appearance in
+                appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                    ? NSColor(red: 0.008, green: 0.043, blue: 0.114, alpha: 1) // #020B1D dark
+                    : NSColor.windowBackgroundColor // system default light
+            }
             window.center()
             settingsWindowController = NSWindowController(window: window)
         }
@@ -479,4 +489,16 @@ private func safetyHotKeyCallback(
         delegate.triggerManually()
     }
     return noErr
+}
+
+// MARK: - Sparkle user driver delegate
+// Brings the update window to the front in menu-bar-only (LSUIElement) apps.
+extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
+    func standardUserDriverWillHandleShowingUpdate(
+        _ handleShowingUpdate: Bool,
+        forUpdate update: SUAppcastItem,
+        state: SPUUserUpdateState
+    ) {
+        NSApp.activate(ignoringOtherApps: true)
+    }
 }

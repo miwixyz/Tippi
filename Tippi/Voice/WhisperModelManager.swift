@@ -52,7 +52,7 @@ final class WhisperModelManager: NSObject, ObservableObject {
     func download(_ model: WhisperModel) {
         guard downloadingModel == nil else { return }
 
-        let fm = FileManager.default
+        let fm = FileManager()
         try? fm.createDirectory(at: WhisperConfig.appModelDirectory,
                                 withIntermediateDirectories: true)
 
@@ -82,15 +82,16 @@ final class WhisperModelManager: NSObject, ObservableObject {
                       let dest = self.destinationURL else { return }
 
                 do {
-                    if fm.fileExists(atPath: dest.path) {
-                        try fm.removeItem(at: dest)
+                    let localFM = FileManager()
+                    if localFM.fileExists(atPath: dest.path) {
+                        try localFM.removeItem(at: dest)
                     }
-                    try fm.moveItem(at: tempURL, to: dest)
+                    try localFM.moveItem(at: tempURL, to: dest)
 
                     // Sanity-check: real models start at ~77 MB; anything smaller is an error page
-                    let attrs = try fm.attributesOfItem(atPath: dest.path)
+                    let attrs = try localFM.attributesOfItem(atPath: dest.path)
                     if let size = attrs[.size] as? Int64, size < 10_000_000 {
-                        try? fm.removeItem(at: dest)
+                        try? localFM.removeItem(at: dest)
                         self.downloadError = "Download failed: file too small (\(size / 1024) KB). Check your network connection and try again."
                         return
                     }

@@ -2,6 +2,25 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.10] — 2026-05-14
+
+### Changed
+- **Über-Tab Icon** — zeigt jetzt das Tippi-Maskottchen statt des SF Symbols
+
+## [1.1.9] — 2026-05-14
+
+### Changed
+- **Neues App-Icon** — Tippi-Maskottchen (Roboter mit Sprechblase)
+- **Neues Menübar-Icon** — Custom Tippi-Icon statt SF Symbol, Template Image (passt sich automatisch an Light/Dark Mode an)
+
+## [1.1.8] — 2026-05-14
+
+### Changed
+- **Brand Kit** — Signal Blue Akzentfarbe, überarbeiteter About-Header, neue Brand Color Assets
+- **Popup selection color** — selektierter Eintrag nutzt jetzt `selectedMenuItemTextColor` (korrekte Systemfarbe)
+- **Texte poliert** — alle UI-Texte für Public Release überarbeitet
+- **Copyright** korrigiert
+
 ## [1.1.7] — 2026-05-13
 
 ### Fixed

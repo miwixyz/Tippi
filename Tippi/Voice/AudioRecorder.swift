@@ -92,12 +92,13 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     private func startLevelTimer() {
         levelTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self, let rec = self.recorder, rec.isRecording else { return }
-            rec.updateMeters()
-            let dB = rec.averagePower(forChannel: 0) // -160…0
-            // Map -60…0 dB to 0…1
-            let clamped = max(-60, dB)
-            self.level = Float((clamped + 60) / 60)
+            Task { @MainActor [weak self] in
+                guard let self, let rec = self.recorder, rec.isRecording else { return }
+                rec.updateMeters()
+                let dB = rec.averagePower(forChannel: 0) // -160…0
+                let clamped = max(-60, dB)
+                self.level = Float((clamped + 60) / 60)
+            }
         }
     }
 
