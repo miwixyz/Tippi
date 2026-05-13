@@ -1,8 +1,16 @@
 # Tippi
 
+[![Latest Release](https://img.shields.io/github/v/release/miwixyz/Tippi)](https://github.com/miwixyz/Tippi/releases/latest)
+[![macOS 15+](https://img.shields.io/badge/macOS-15%2B-brightgreen)](#requirements)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Tippi** is a system-wide AI writing assistant for macOS. Select text in any app, hit a hotkey, let AI transform it — improve writing, fix grammar, translate, shorten, lengthen, or run your own custom prompts. Results land back in your original app with one click. No text selected? Trigger the hotkey to record voice — Whisper transcribes locally, then optionally applies an AI prompt.
 
 > Mark text anywhere. Hit ⌥⌘T. Let AI do the rest.
+
+<!-- Screenshot: add a GIF or PNG here showing the popup + preview flow.
+     Recommended size: 1200×750 px. Commit to docs/ and reference with:
+     ![Tippi in action](docs/screenshot.gif) -->
 
 ---
 
@@ -149,66 +157,23 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 
 ## AI provider notes
 
-| Provider  | Cost       | Speed   | German quality | Notes |
-|-----------|------------|---------|----------------|-------|
-| OpenAI    | $          | Fast    | ★★★★           | Most popular. `gpt-5-mini` is the right balance. |
-| Anthropic | $          | Fast    | ★★★★★          | Excellent prose quality. `claude-haiku-4-5` for fast tier. |
-| Gemini    | Free tier  | Fast    | ★★★            | Generous free tier at `aistudio.google.com/apikey`. |
-| Mistral   | $          | Fast    | ★★★★           | EU-hosted option for data-residency requirements. |
-| Ollama    | **Free**   | ⚡ Hardware-dependent | ★★ to ★★★★ depending on model | Fully local. Privacy-best. Hardware-dependent. |
+| Provider  | Cost       | Speed   | Quality | Notes |
+|-----------|------------|---------|---------|-------|
+| OpenAI    | $          | Fast    | ★★★★   | Most popular. `gpt-5-mini` is the right balance. |
+| Anthropic | $          | Fast    | ★★★★★  | Excellent prose quality. `claude-haiku-4-5` for fast tier. |
+| Gemini    | Free tier  | Fast    | ★★★    | Generous free tier at `aistudio.google.com/apikey`. |
+| Mistral   | $          | Fast    | ★★★★   | EU-hosted option for data-residency requirements. |
+| Ollama    | **Free**   | ⚡ Hardware-dependent | ★★–★★★★ | Fully local. Privacy-best. Quality depends on model. |
 
 API keys are stored exclusively in the macOS Keychain (account `provider.<name>`, service `com.tippi.app`), not in plaintext anywhere on disk.
 
 ---
 
-## Building a release
+## Contributing
 
-A signed and Apple-notarized DMG is required for stable distribution and TCC permission persistence.
+Bug reports and pull requests are welcome. For significant changes, please open an issue first.
 
-### Prerequisites
-
-- Apple Developer Program membership ($99/year)
-- "Developer ID Application" certificate installed in Keychain
-- App-specific password from [appleid.apple.com](https://appleid.apple.com) → "Sign-In and Security → App-Specific Passwords"
-- `notarytool` credential profile:
-
-  ```bash
-  xcrun notarytool store-credentials tippi-notary \
-      --apple-id you@example.com \
-      --team-id YOURTEAMID \
-      --password "xxxx-xxxx-xxxx-xxxx"
-  ```
-
-- A `release.env` file (copy from `release.env.example`):
-
-  ```bash
-  DEVELOPER_ID="Developer ID Application: Your Name (YOURTEAMID)"
-  NOTARY_PROFILE="tippi-notary"
-  VERSION="1.1.7"
-  ```
-
-  The Gist ID and GitHub repo are set directly in `scripts/release.sh` — fork the repo and update those two lines before building your own releases.
-
-### Build
-
-```bash
-make release
-```
-
-This runs `scripts/release.sh`, which:
-
-1. Generates the Xcode project from `project.yml`
-2. Builds Release with hardened runtime + your Developer ID signing
-3. Verifies the signature
-4. Wraps the `.app` in a DMG with `/Applications` symlink
-5. Signs the DMG
-6. Submits to Apple's notary service (3–10 min)
-7. Staples the notarization ticket
-8. Creates a GitHub Release and uploads the DMG
-9. Updates the Sparkle appcast on the configured GitHub Gist
-10. Outputs `dist/Tippi-<version>.dmg`
-
-That's the full pipeline — no manual `gh release create` or appcast editing required.
+**Building a signed release** (Apple Developer account required) is documented in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
