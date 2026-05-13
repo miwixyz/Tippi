@@ -3,6 +3,15 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>1.1.7</title>
+            <pubDate>Wed, 13 May 2026 16:21:07 +0200</pubDate>
+            <sparkle:version>26</sparkle:version>
+            <sparkle:shortVersionString>1.1.7</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.7/Tippi-1.1.7.dmg" length="2952181" type="application/octet-stream" sparkle:edSignature="6O1Ucbx42Tu+n1gtZiMlCY4x1fQRmhLv71TN8Y6tA1CjwQjNr3V9FRMB8P2eGv2TVAexd8KJAroETe8Pnl4hDw=="/>
+        </item>
+        <item>
             <title>1.1.6</title>
             <pubDate>Wed, 13 May 2026 15:32:03 +0200</pubDate>
             <sparkle:version>21</sparkle:version>
@@ -19,15 +28,6 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.5/Tippi-1.1.5.dmg" length="2950237" type="application/octet-stream" sparkle:edSignature="0Gh4kKXnA7XQZ8fVhHTOVqWi3PuKlxgrdr1WZ/dub0YIDxa0iyVWwkRGUct4Ik94QZlOy8rhwWLmRtn3k03hCA=="/>
-        </item>
-        <item>
-            <title>1.1.4</title>
-            <pubDate>Wed, 13 May 2026 01:10:50 +0200</pubDate>
-            <sparkle:version>1</sparkle:version>
-            <sparkle:shortVersionString>1.1.4</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.4/Tippi-1.1.4.dmg" length="2950204" type="application/octet-stream" sparkle:edSignature="BAvrN1Zx7k8eJpQh04IiwP5d0+RYSpnYnT/V79Dow04pqzfX3kENEFCiLak9vCO846S5mMiHqQpwWr/UUTpYCw=="/>
         </item>
     </channel>
 </rss>
