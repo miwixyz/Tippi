@@ -114,10 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupMenuBar() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(
-            systemSymbolName: "pencil.and.outline",
-            accessibilityDescription: "Tippi"
-        )
+        let menubarImage = NSImage(named: "tippi-menubar-black")
+        menubarImage?.isTemplate = true
+        item.button?.image = menubarImage
 
         let menu = NSMenu()
         let triggerItem = NSMenuItem(
