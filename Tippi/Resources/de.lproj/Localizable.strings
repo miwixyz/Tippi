@@ -201,8 +201,11 @@
 "settings.voice.language.auto" = "Automatisch erkennen";
 
 "voice.mic.tapToDictate" = "Tippen zum Diktieren";
+"voice.mic.speakInstruction" = "Befehl sprechen…";
 "voice.mic.recording" = "Aufnahme läuft… tippen zum Stoppen";
 "voice.mic.transcribing" = "Transkribiere…";
+"voice.directInsert" = "Direkt einfügen";
+"voice.promptTitle" = "Sprachbefehl";
 "voice.setup.banner.title" = "Spracheingabe nicht eingerichtet";
 "voice.setup.banner.body" = "Installieren: brew install whisper-cpp, dann Modellpfad in Einstellungen → Sprache setzen.";
 "voice.error.noBinary" = "whisper-cli nicht gefunden. Installieren: brew install whisper-cpp";

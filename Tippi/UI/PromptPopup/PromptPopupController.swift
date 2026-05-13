@@ -15,11 +15,13 @@ final class PromptPopupController {
         onSelect: @escaping (DemoPrompt) -> Void,
         onDismiss: @escaping () -> Void,
         audioRecorder: AudioRecorder? = nil,
-        onVoiceTranscribed: @escaping (String) -> Void = { _ in }
+        voiceMode: VoiceMode = .dictate,
+        onVoiceTranscribed: @escaping (String) -> Void = { _ in },
+        onDirectInsert: (() -> Void)? = nil
     ) {
         guard panel == nil else { return }
 
-        var view = PromptPopupView(
+        let view = PromptPopupView(
             prompts: prompts,
             onSelect: { [weak self] prompt in
                 self?.close()
@@ -28,13 +30,20 @@ final class PromptPopupController {
             onDismiss: { [weak self] in
                 self?.close()
                 onDismiss()
-            }
+            },
+            onDirectInsert: onDirectInsert.map { insert in
+                { [weak self] in
+                    self?.close()
+                    insert()
+                }
+            },
+            audioRecorder: audioRecorder,
+            onVoiceTranscribed: { [weak self] text in
+                self?.close()
+                onVoiceTranscribed(text)
+            },
+            voiceMode: voiceMode
         )
-        view.audioRecorder       = audioRecorder
-        view.onVoiceTranscribed  = { [weak self] text in
-            self?.close()
-            onVoiceTranscribed(text)
-        }
 
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = [.intrinsicContentSize]

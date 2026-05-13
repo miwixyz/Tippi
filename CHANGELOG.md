@@ -2,6 +2,12 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.1.4] — 2026-05-13
+
+### New
+- **Direkt einfügen** — after dictation, the popup now shows an "Insert directly" row at the top (default, press Return). Dictated text is pasted immediately without going through an AI prompt.
+- **Voice instructions for selected text** — when text is selected, the mic button changes to "Speak your instruction…". Speak a custom command (e.g., "make this shorter and more formal") and Tippi applies it directly via AI — no prompt picker needed.
+
 ## [1.1.3] — 2026-05-13
 
 ### Fixed

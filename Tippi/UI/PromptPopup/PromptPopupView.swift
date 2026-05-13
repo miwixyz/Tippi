@@ -1,26 +1,70 @@
 import SwiftUI
 
+// MARK: - Voice Mode
+
+/// Controls how the mic button in the popup behaves.
+enum VoiceMode {
+    /// No text pre-selected — mic records text to insert (dictation).
+    case dictate
+    /// Text is pre-selected — mic records a spoken AI instruction.
+    case voicePrompt
+}
+
+// MARK: - Main View
+
 struct PromptPopupView: View {
     let prompts: [DemoPrompt]
     let onSelect: (DemoPrompt) -> Void
     let onDismiss: () -> Void
-
-    // Voice — both nil when feature is unavailable or not configured.
+    var onDirectInsert: (() -> Void)? = nil
     var audioRecorder: AudioRecorder? = nil
     var onVoiceTranscribed: ((String) -> Void)? = nil
+    var voiceMode: VoiceMode = .dictate
 
-    @State private var selectedIndex: Int = 0
+    // -1 means the "Direkt einfügen" row is highlighted (only when onDirectInsert != nil)
+    @State private var selectedIndex: Int
     @FocusState private var focused: Bool
+
+    init(
+        prompts: [DemoPrompt],
+        onSelect: @escaping (DemoPrompt) -> Void,
+        onDismiss: @escaping () -> Void,
+        onDirectInsert: (() -> Void)? = nil,
+        audioRecorder: AudioRecorder? = nil,
+        onVoiceTranscribed: ((String) -> Void)? = nil,
+        voiceMode: VoiceMode = .dictate
+    ) {
+        self.prompts = prompts
+        self.onSelect = onSelect
+        self.onDismiss = onDismiss
+        self.onDirectInsert = onDirectInsert
+        self.audioRecorder = audioRecorder
+        self.onVoiceTranscribed = onVoiceTranscribed
+        self.voiceMode = voiceMode
+        // Default selection: direct insert row when available, else first prompt
+        _selectedIndex = State(initialValue: onDirectInsert != nil ? -1 : 0)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
+            if let insert = onDirectInsert {
+                DirectInsertRow(
+                    isSelected: selectedIndex == -1,
+                    onHover: { selectedIndex = -1 },
+                    onTap: insert
+                )
+                Divider()
+                    .padding(.horizontal, 10)
+                    .padding(.top, 2)
+            }
             list
             if audioRecorder != nil || !WhisperConfig.isConfigured {
                 Divider()
                 VoiceSection(
                     audioRecorder: audioRecorder,
+                    mode: voiceMode,
                     onTranscribed: onVoiceTranscribed ?? { _ in }
                 )
             }
@@ -41,7 +85,8 @@ struct PromptPopupView: View {
             return .handled
         }
         .onKeyPress(.upArrow) {
-            selectedIndex = max(0, selectedIndex - 1)
+            let minIndex = onDirectInsert != nil ? -1 : 0
+            selectedIndex = max(minIndex, selectedIndex - 1)
             return .handled
         }
         .onKeyPress(.downArrow) {
@@ -49,7 +94,11 @@ struct PromptPopupView: View {
             return .handled
         }
         .onKeyPress(.return) {
-            onSelect(prompts[selectedIndex])
+            if selectedIndex == -1 {
+                onDirectInsert?()
+            } else {
+                onSelect(prompts[selectedIndex])
+            }
             return .handled
         }
         .onKeyPress { keyPress in
@@ -98,20 +147,65 @@ struct PromptPopupView: View {
     }
 }
 
+// MARK: - Direct Insert Row
+
+private struct DirectInsertRow: View {
+    let isSelected: Bool
+    let onHover: () -> Void
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 10) {
+                Image(systemName: "arrow.down.doc.fill")
+                    .frame(width: 18)
+                    .foregroundStyle(isSelected ? Color.white : .accentColor)
+                Text(String(localized: "voice.directInsert"))
+                    .foregroundStyle(isSelected ? Color.white : .primary)
+                Spacer()
+                Text("↩")
+                    .font(.caption2.monospaced())
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(isSelected ? Color.white.opacity(0.25) : Color.secondary.opacity(0.15))
+                    )
+                    .foregroundStyle(isSelected ? Color.white : .secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Color.accentColor : Color.clear)
+                .padding(.horizontal, 6)
+        )
+        .onHover { hovering in
+            if hovering { onHover() }
+        }
+    }
+}
+
 // MARK: - Voice Section
 
 private struct VoiceSection: View {
     var audioRecorder: AudioRecorder?
+    let mode: VoiceMode
     let onTranscribed: (String) -> Void
 
     private enum State { case idle, recording, transcribing, failed(String) }
     @SwiftUI.State private var voiceState: State = .idle
     @ObservedObject private var recorder: AudioRecorder
 
-    init(audioRecorder: AudioRecorder?, onTranscribed: @escaping (String) -> Void) {
-        self.audioRecorder   = audioRecorder
-        self.onTranscribed   = onTranscribed
-        self._recorder       = ObservedObject(wrappedValue: audioRecorder ?? AudioRecorder())
+    init(audioRecorder: AudioRecorder?, mode: VoiceMode, onTranscribed: @escaping (String) -> Void) {
+        self.audioRecorder = audioRecorder
+        self.mode          = mode
+        self.onTranscribed = onTranscribed
+        self._recorder     = ObservedObject(wrappedValue: audioRecorder ?? AudioRecorder())
     }
 
     var body: some View {
@@ -193,9 +287,9 @@ private struct VoiceSection: View {
 
     private var micButtonSymbol: String {
         switch voiceState {
-        case .recording:     return "stop.fill"
-        case .transcribing:  return "waveform"
-        default:             return "mic.fill"
+        case .recording:    return "stop.fill"
+        case .transcribing: return "waveform"
+        default:            return mode == .voicePrompt ? "text.bubble" : "mic.fill"
         }
     }
 
@@ -203,7 +297,9 @@ private struct VoiceSection: View {
     private var statusText: some View {
         switch voiceState {
         case .idle:
-            Text(String(localized: "voice.mic.tapToDictate"))
+            Text(String(localized: mode == .voicePrompt
+                        ? "voice.mic.speakInstruction"
+                        : "voice.mic.tapToDictate"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         case .recording:

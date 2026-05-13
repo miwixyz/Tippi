@@ -370,14 +370,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onDismiss: { /* nothing — user cancelled */ },
             audioRecorder: micReady ? audioRecorder : nil,
+            // When text is selected, mic = voice instruction; otherwise = dictation
+            voiceMode: captured != nil ? .voicePrompt : .dictate,
             onVoiceTranscribed: { [weak self] transcribedText in
                 guard let self else { return }
-                let voiceCaptured = CapturedText(
-                    text: transcribedText,
-                    sourceApp: sourceApp,
-                    usedClipboardFallback: false
-                )
-                self.showPopupWithText(voiceCaptured, at: mouseLocation, prompts: prompts)
+                if let captured {
+                    // Voice prompt mode: transcript is the AI instruction for selected text
+                    let voicePrompt = DemoPrompt(
+                        id: "voice-prompt",
+                        title: String(localized: "voice.promptTitle"),
+                        symbol: "mic",
+                        systemPrompt: transcribedText
+                            + " Return only the result without any commentary, explanation, or quotes.",
+                        transform: { @Sendable in $0 }
+                    )
+                    self.showPreview(prompt: voicePrompt, captured: captured)
+                } else {
+                    // Dictate mode: transcript is the new text to process
+                    let voiceCaptured = CapturedText(
+                        text: transcribedText,
+                        sourceApp: sourceApp,
+                        usedClipboardFallback: false
+                    )
+                    self.showPopupWithText(voiceCaptured, at: mouseLocation, prompts: prompts)
+                }
             }
         )
 
@@ -388,7 +404,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Re-shows the popup pre-loaded with already-captured (or dictated) text.
+    /// Re-shows the popup pre-loaded with dictated text.
+    /// Offers "Direkt einfügen" at the top (default) plus all AI prompts.
     private func showPopupWithText(
         _ captured: CapturedText,
         at mouseLocation: NSPoint,
@@ -400,7 +417,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onSelect: { [weak self] prompt in
                 self?.showPreview(prompt: prompt, captured: captured)
             },
-            onDismiss: { }
+            onDismiss: { },
+            onDirectInsert: { [weak self] in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.pasteBack(captured.text, into: captured.sourceApp)
+                }
+            }
         )
     }
 
