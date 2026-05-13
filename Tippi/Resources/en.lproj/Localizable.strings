@@ -5,7 +5,6 @@
 "menu.quit" = "Quit Tippi";
 
 /* Popup */
-"popup.footer.phase3" = "Phase 3 demo — LLM arrives in Phase 4";
 
 /* Prompts */
 "prompt.improve" = "Improve";
@@ -38,7 +37,7 @@
 "setup.inputMonitoring.manualStep3" = "3. Navigate to Applications and pick Tippi.app";
 
 "setup.apiKey.title" = "Your API Key";
-"setup.apiKey.body" = "Tippi uses your own API keys (BYOK). We recommend starting with OpenAI's gpt-4o-mini — fast and inexpensive.";
+"setup.apiKey.body" = "Tippi uses your own API keys (BYOK — Bring Your Own Key). No keys are stored on any server. Recommended start: OpenAI gpt-5-mini — fast and affordable.";
 "setup.apiKey.placeholder" = "sk-…";
 "setup.apiKey.save" = "Save to Keychain";
 "setup.apiKey.saved" = "Saved securely to macOS Keychain.";
@@ -46,7 +45,7 @@
 "setup.apiKey.alreadySaved" = "Key already saved — enter a new one to update";
 
 "setup.tryIt.title" = "You're all set!";
-"setup.tryIt.body" = "Mark any text in any app, then double-tap the right Option key. Tippi's prompt menu will appear at your cursor.";
+"setup.tryIt.body" = "Select text in any app, then press ⌥⌘T (default hotkey). Tippi's prompt menu appears at your cursor — pick a transformation and the result replaces your text.";
 "setup.tryIt.hotkey" = "Default shortcut: ⌥⌘T  ·  change in Settings → Hotkeys";
 "setup.tryIt.demo.heading" = "Demo text — try it now:";
 "setup.tryIt.demo.text" = "this sentence has some grammer mistakes and weird wording it could realy be improved a lot dont you think";
@@ -134,7 +133,7 @@
 "settings.hotkeys.holdMs" = "Hold for at least %d ms";
 "settings.hotkeys.apply" = "Apply";
 "settings.hotkeys.active" = "Active: %@";
-"settings.hotkeys.inactive" = "Hotkey not active — grant Input Monitoring or use ⇧⌘T";
+"settings.hotkeys.inactive" = "Hotkey not active — grant Input Monitoring, then restart Tippi";
 
 "settings.prompts.builtIn" = "Built-in";
 "settings.prompts.custom" = "Your prompts";
@@ -167,7 +166,7 @@
 "settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Get a key at console.mistral.ai. Default: mistral-small-latest (EU hosting available).";
 "settings.providers.hint.ollama" = "Install Ollama from ollama.com. Pull a model first: `ollama pull llama3.3`. Runs locally, no key, no cloud.";
-"settings.about.copyright" = "© 2026 Michael Wildenauer";
+"settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
 "settings.hotkeys.restartHint" = "If the new hotkey does not respond immediately, restart Tippi.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
 "settings.about.feature1" = "Works in every app system-wide";
@@ -190,12 +189,12 @@
 "settings.voice.mic.grant" = "Grant Access";
 "settings.voice.binary.title" = "whisper-cli binary";
 "settings.voice.binary.detected" = "Auto-detected: %@";
-"settings.voice.binary.notFound" = "Not found — install with: brew install whisper-cpp";
+"settings.voice.binary.notFound" = "Not found — try reinstalling Tippi";
 "settings.voice.binary.placeholder" = "/opt/homebrew/bin/whisper-cli";
-"settings.voice.binary.hint" = "Install: brew install whisper-cpp";
+"settings.voice.binary.hint" = "whisper-cli is bundled inside Tippi — no manual installation needed";
 "settings.voice.model.title" = "Whisper model + language";
 "settings.voice.model.placeholder" = "~/.cache/whisper/ggml-base.en.bin";
-"settings.voice.model.hint" = "Download: whisper-cli --model base.en --audio /dev/null --output-txt (auto-downloads to ~/.cache/whisper/)";
+"settings.voice.model.hint" = "Download a model above. Models are stored in ~/Library/Application Support/Tippi/Models/.";
 "settings.voice.language.title" = "Language";
 "settings.voice.language.auto" = "Auto-detect";
 
@@ -206,8 +205,8 @@
 "voice.directInsert" = "Insert directly";
 "voice.promptTitle" = "Voice instruction";
 "voice.setup.banner.title" = "Voice Input not configured";
-"voice.setup.banner.body" = "Install: brew install whisper-cpp, then set the model path in Settings → Voice.";
-"voice.error.noBinary" = "whisper-cli not found. Install: brew install whisper-cpp";
+"voice.setup.banner.body" = "Download a Whisper model in Settings → Voice to enable dictation.";
+"voice.error.noBinary" = "whisper-cli not found. Please reinstall Tippi.";
 "voice.error.noModel" = "Whisper model not found. Download one in Settings → Voice.";
 
 "voice.model.noModel" = "No model downloaded";
@@ -219,4 +218,8 @@
 "settings.voice.language.hint" = "Choose the language you'll dictate in, or Auto-detect.";
 "settings.voice.advanced.title" = "Advanced";
 "settings.voice.advanced.body" = "whisper-cli is bundled inside Tippi — no installation needed. The path below is for reference or manual override.";
-"settings.voice.advanced.noBinary" = "Not found (contact support)";
+"settings.voice.advanced.noBinary" = "Not found — try reinstalling Tippi";
+"settings.about.feature5" = "Voice Input — local Whisper transcription, no cloud";
+"settings.about.github" = "github.com/miwixyz/Tippi";
+"settings.help.voiceTitle" = "Voice Input";
+"settings.help.voiceBody" = "Press ⌥⌘T with no text selected: a mic button appears in the popup. Hold to record, release to transcribe — Whisper runs fully on-device. The transcript appears in the popup; pick an AI prompt or tap \"Insert directly\" to paste as-is.\n\nVoice Instruction: select text first, trigger Tippi, then press the mic button and speak your command (e.g. \"make this shorter\"). Tippi applies it via AI immediately.\n\nDownload a model in Settings → Voice before first use.";

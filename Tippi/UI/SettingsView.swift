@@ -568,6 +568,11 @@ private struct HelpTab: View {
                     title: String(localized: "settings.help.troubleTitle"),
                     body: String(localized: "settings.help.troubleBody")
                 )
+                helpSection(
+                    icon: "mic",
+                    title: String(localized: "settings.help.voiceTitle"),
+                    body: String(localized: "settings.help.voiceBody")
+                )
             }
             .padding(24)
         }
@@ -621,6 +626,7 @@ private struct AboutTab: View {
                     Label(String(localized: "settings.about.feature2"), systemImage: "key")
                     Label(String(localized: "settings.about.feature3"), systemImage: "lock.shield")
                     Label(String(localized: "settings.about.feature4"), systemImage: "text.bubble")
+                    Label(String(localized: "settings.about.feature5"), systemImage: "mic")
                 }
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -628,6 +634,9 @@ private struct AboutTab: View {
                 Divider()
 
                 Text(String(localized: "settings.about.copyright"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Link(String(localized: "settings.about.github"), destination: URL(string: "https://github.com/miwixyz/Tippi")!)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -232,3 +232,5 @@ MIT — see [LICENSE](LICENSE).
 ## Credits
 
 Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, and the [Ollama](https://ollama.com) project. Voice transcription via [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Auto-updates via [Sparkle 2](https://sparkle-project.org). Icon hand-rendered with CoreGraphics, no third-party graphics.
+
+© 2026 Michael Wlr — MIT License

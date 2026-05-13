@@ -6,7 +6,6 @@
 "menu.quit" = "Tippi beenden";
 
 /* Popup */
-"popup.footer.phase3" = "Phase 3 Demo — LLM folgt in Phase 4";
 
 /* Prompts */
 "prompt.improve" = "Verbessern";
@@ -39,7 +38,7 @@
 "setup.inputMonitoring.manualStep3" = "3. Geh in den Programme-Ordner und wähle Tippi.app";
 
 "setup.apiKey.title" = "Dein API-Key";
-"setup.apiKey.body" = "Tippi nutzt deine eigenen API-Keys (BYOK). Empfehlung zum Start: gpt-4o-mini von OpenAI — schnell und günstig.";
+"setup.apiKey.body" = "Tippi nutzt deine eigenen API-Keys (BYOK — Bring Your Own Key). Kein Key wird auf einem Server gespeichert. Empfehlung: OpenAI gpt-5-mini — schnell und günstig.";
 "setup.apiKey.placeholder" = "sk-…";
 "setup.apiKey.save" = "Im Schlüsselbund speichern";
 "setup.apiKey.saved" = "Sicher im macOS-Schlüsselbund gespeichert.";
@@ -47,7 +46,7 @@
 "setup.apiKey.alreadySaved" = "Key bereits gespeichert — neuen Key eingeben, um zu aktualisieren";
 
 "setup.tryIt.title" = "Du bist startklar!";
-"setup.tryIt.body" = "Markiere einen Text in einer beliebigen App und drücke zweimal kurz die rechte Wahltaste (⌥). Das Prompt-Menü erscheint am Cursor.";
+"setup.tryIt.body" = "Text in einer beliebigen App markieren, dann ⌥⌘T drücken (Standard-Hotkey). Das Prompt-Menü erscheint am Cursor — Aktion wählen, Ergebnis ersetzt den Text.";
 "setup.tryIt.hotkey" = "Standard-Hotkey: ⌥⌘T  ·  ändern unter Einstellungen → Hotkeys";
 "setup.tryIt.demo.heading" = "Demo-Text — probier es gleich aus:";
 "setup.tryIt.demo.text" = "dieser satz hat ein paar grammatik fehler und seltsame formulierungen er könnte echt deutlich verbesert werden findest du nicht";
@@ -135,7 +134,7 @@
 "settings.hotkeys.holdMs" = "Mind. halten für %d ms";
 "settings.hotkeys.apply" = "Anwenden";
 "settings.hotkeys.active" = "Aktiv: %@";
-"settings.hotkeys.inactive" = "Hotkey nicht aktiv — Eingabeüberwachung erteilen oder ⇧⌘T nutzen";
+"settings.hotkeys.inactive" = "Hotkey nicht aktiv — Eingabeüberwachung erteilen, dann Tippi neu starten";
 
 "settings.prompts.builtIn" = "Eingebaut";
 "settings.prompts.custom" = "Deine Prompts";
@@ -168,7 +167,7 @@
 "settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Key bei console.mistral.ai. Standard: mistral-small-latest (EU-Hosting möglich).";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
-"settings.about.copyright" = "© 2026 Michael Wildenauer";
+"settings.about.copyright" = "© 2026 Michael Wlr · MIT-Lizenz";
 "settings.hotkeys.restartHint" = "Falls der neue Hotkey nicht sofort reagiert, Tippi neu starten.";
 "settings.tab.help" = "Hilfe";
 "settings.about.description" = "Text in einer beliebigen App markieren, ⌥⌘T drücken — KI transformiert ihn direkt an Ort und Stelle.";
@@ -191,12 +190,12 @@
 "settings.voice.mic.grant" = "Zugriff erteilen";
 "settings.voice.binary.title" = "whisper-cli Binärdatei";
 "settings.voice.binary.detected" = "Automatisch gefunden: %@";
-"settings.voice.binary.notFound" = "Nicht gefunden — installieren mit: brew install whisper-cpp";
+"settings.voice.binary.notFound" = "Nicht gefunden — Tippi neu installieren";
 "settings.voice.binary.placeholder" = "/opt/homebrew/bin/whisper-cli";
-"settings.voice.binary.hint" = "Installieren: brew install whisper-cpp";
-"settings.voice.model.title" = "Whisper-Modell & Sprache";
+"settings.voice.binary.hint" = "whisper-cli ist in Tippi eingebettet — keine manuelle Installation nötig";
+"settings.voice.model.title" = "Whisper-Modell";
 "settings.voice.model.placeholder" = "~/.cache/whisper/ggml-base.en.bin";
-"settings.voice.model.hint" = "Herunterladen: whisper-cli --model base.en --audio /dev/null --output-txt (lädt automatisch nach ~/.cache/whisper/)";
+"settings.voice.model.hint" = "Modell oben herunterladen. Modelle werden in ~/Library/Application Support/Tippi/Models/ gespeichert.";
 "settings.voice.language.title" = "Sprache";
 "settings.voice.language.auto" = "Automatisch erkennen";
 
@@ -207,8 +206,8 @@
 "voice.directInsert" = "Direkt einfügen";
 "voice.promptTitle" = "Sprachbefehl";
 "voice.setup.banner.title" = "Spracheingabe nicht eingerichtet";
-"voice.setup.banner.body" = "Installieren: brew install whisper-cpp, dann Modellpfad in Einstellungen → Sprache setzen.";
-"voice.error.noBinary" = "whisper-cli nicht gefunden. Installieren: brew install whisper-cpp";
+"voice.setup.banner.body" = "Whisper-Modell herunterladen unter Einstellungen → Sprache, um Diktierfunktion zu aktivieren.";
+"voice.error.noBinary" = "whisper-cli nicht gefunden. Tippi bitte neu installieren.";
 "voice.error.noModel" = "Whisper-Modell nicht gefunden. In Einstellungen → Sprache herunterladen.";
 
 "voice.model.noModel" = "Kein Modell heruntergeladen";
@@ -216,8 +215,11 @@
 "voice.model.cancel" = "Abbrechen";
 "voice.model.delete" = "Löschen";
 
-"settings.voice.model.title" = "Whisper-Modell";
 "settings.voice.language.hint" = "Sprache, in der du diktierst — oder automatisch erkennen.";
 "settings.voice.advanced.title" = "Erweitert";
 "settings.voice.advanced.body" = "whisper-cli ist in Tippi eingebettet — keine Installation nötig. Der Pfad unten dient zur Information oder als manueller Override.";
-"settings.voice.advanced.noBinary" = "Nicht gefunden (Support kontaktieren)";
+"settings.voice.advanced.noBinary" = "Nicht gefunden — Tippi neu installieren";
+"settings.about.feature5" = "Spracheingabe — lokale Whisper-Transkription, keine Cloud";
+"settings.about.github" = "github.com/miwixyz/Tippi";
+"settings.help.voiceTitle" = "Spracheingabe";
+"settings.help.voiceBody" = "⌥⌘T ohne markierten Text drücken: ein Mikrofon-Button erscheint im Popup. Halten zum Aufnehmen, loslassen zum Transkribieren — Whisper läuft vollständig auf dem Gerät. Das Transkript erscheint im Popup; KI-Prompt wählen oder „Direkt einfügen“ tippen.\n\nSprachbefehl: zuerst Text markieren, Tippi auslösen, dann Mikrofon-Button halten und Anweisung sprechen (z.B. „Mach das kürzer“). Tippi wendet sie sofort per KI an.\n\nVor dem ersten Einsatz ein Modell unter Einstellungen → Sprache herunterladen.";
