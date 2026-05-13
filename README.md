@@ -34,6 +34,7 @@
 - **Auto-updates via Sparkle 2** — menu bar → "Check for Updates…", automatic check at launch
 - **Configurable global hotkey** — record any combination in Settings, or use macOS's built-in keyboard shortcut binding
 - **Autostart at login**
+- **Dark Mode + Light Mode** — fully adaptive UI; all surfaces use macOS semantic materials and system colors; brand palette has explicit dark-mode variants
 - **DE + EN UI**
 - **Privacy-first**:
   - **BYOK** (bring your own API key) — keys stored in macOS Keychain only
