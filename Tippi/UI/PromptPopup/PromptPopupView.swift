@@ -160,9 +160,9 @@ private struct DirectInsertRow: View {
             HStack(spacing: 10) {
                 Image(systemName: "arrow.down.doc.fill")
                     .frame(width: 18)
-                    .foregroundStyle(isSelected ? Color.white : .accentColor)
+                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .accentColor)
                 Text(String(localized: "voice.directInsert"))
-                    .foregroundStyle(isSelected ? Color.white : .primary)
+                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .primary)
                 Spacer()
                 Text("↩")
                     .font(.caption2.monospaced())
@@ -170,9 +170,9 @@ private struct DirectInsertRow: View {
                     .padding(.vertical, 1)
                     .background(
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(isSelected ? Color.white.opacity(0.25) : Color.secondary.opacity(0.15))
+                            .fill(isSelected ? Color(nsColor: .selectedMenuItemTextColor).opacity(0.25) : Color.secondary.opacity(0.15))
                     )
-                    .foregroundStyle(isSelected ? Color.white : .secondary)
+                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -396,9 +396,9 @@ private struct PromptRow: View {
             HStack(spacing: 10) {
                 Image(systemName: prompt.symbol)
                     .frame(width: 18)
-                    .foregroundStyle(isSelected ? Color.white : .secondary)
+                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
                 Text(prompt.title)
-                    .foregroundStyle(isSelected ? Color.white : .primary)
+                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .primary)
                 Spacer()
                 Text(shortcut)
                     .font(.caption2.monospaced())
@@ -406,9 +406,9 @@ private struct PromptRow: View {
                     .padding(.vertical, 1)
                     .background(
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(isSelected ? Color.white.opacity(0.25) : Color.secondary.opacity(0.15))
+                            .fill(isSelected ? Color(nsColor: .selectedMenuItemTextColor).opacity(0.25) : Color.secondary.opacity(0.15))
                     )
-                    .foregroundStyle(isSelected ? Color.white : .secondary)
+                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
