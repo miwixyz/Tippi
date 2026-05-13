@@ -2,10 +2,10 @@
 
 All notable changes to Tippi will be documented in this file.
 
-## [1.1.6] — 2026-05-13
+## [1.1.7] — 2026-05-13
 
 ### Fixed
-- **Dictation inserts directly** — after speaking (no text selected), the transcript is now pasted immediately without showing an extra prompt-picker popup. To apply AI to dictated text, select it and trigger Tippi again.
+- **App unresponsive after one use** — when the preview window was closed via the native close button (red ✕ or Cmd-W), the internal `isOpen` flag stayed `true` permanently, blocking every subsequent trigger. Fixed by wiring `NSWindowDelegate.windowWillClose` to reset state regardless of how the window is closed.
 
 ## [1.1.6] — 2026-05-13
 

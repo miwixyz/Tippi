@@ -386,7 +386,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     )
                     self.showPreview(prompt: voicePrompt, captured: captured)
                 } else {
-                    // Dictate mode: transcript is the new text to process
+                    // Dictate mode: show popup with the transcript so user can
+                    // pick an AI prompt or use "Direkt einfügen".
                     let voiceCaptured = CapturedText(
                         text: transcribedText,
                         sourceApp: sourceApp,
