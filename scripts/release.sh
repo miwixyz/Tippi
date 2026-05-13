@@ -172,7 +172,7 @@ spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 
 echo "▶ [8/8] Generating appcast.xml..."
 APPCAST_TOOL="${HOME}/Developer/sparkle-tools/bin/generate_appcast"
 if [ -f "${APPCAST_TOOL}" ]; then
-    "${APPCAST_TOOL}" "${DIST_DIR}" -o appcast.xml
+    "${APPCAST_TOOL}" "${DIST_DIR}" -o appcast.xml 2>/dev/null
     gh gist edit 595ce79e698bb6a98008dc061f1f4a78 appcast.xml
     echo "  ✓ appcast.xml generiert und Gist aktualisiert"
 else
