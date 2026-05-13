@@ -8,9 +8,7 @@
 
 > Mark text anywhere. Hit ⌥⌘T. Let AI do the rest.
 
-<!-- Screenshot: add a GIF or PNG here showing the popup + preview flow.
-     Recommended size: 1200×750 px. Commit to docs/ and reference with:
-     ![Tippi in action](docs/screenshot.gif) -->
+![Tippi in action](docs/demo.gif)
 
 ---
 
