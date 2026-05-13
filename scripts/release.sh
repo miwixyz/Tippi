@@ -162,7 +162,8 @@ spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 
 echo "▶ [8/9] Creating GitHub release..."
 GH_RELEASE_URL="https://github.com/miwixyz/Tippi/releases/download/v${VERSION}"
 # Extract release notes for this version from CHANGELOG.md
-RELEASE_NOTES="$(awk "/^## \[${VERSION}\]/,/^## \[/" CHANGELOG.md | head -n -1)"
+# (macOS BSD head has no -n -1 support; use awk to skip header + stop at next entry)
+RELEASE_NOTES="$(awk "/^## \[${VERSION}\]/{found=1;next} found && /^## \[/{exit} found{print}" CHANGELOG.md)"
 gh release create "v${VERSION}" "${DMG_PATH}" \
     --title "Tippi ${VERSION}" \
     --notes "${RELEASE_NOTES}" 2>/dev/null \
