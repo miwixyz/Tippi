@@ -6,7 +6,6 @@
 <title>Tippi — System-wide AI writing assistant for macOS</title>
 <meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 6 AI providers, fully local option via MLX. macOS only.">
 
-<!-- Open Graph -->
 <meta property="og:title" content="Tippi — System-wide AI writing assistant for macOS">
 <meta property="og:description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, fully local option.">
 <meta property="og:type" content="website">
@@ -19,8 +18,6 @@
     --accent-hover: #1e5cd0;
     --navy: #020B1D;
     --navy-2: #0B1730;
-    --surface: #E5DEDA;
-    --mist: #EAF3FF;
     --ink: #F7F2EA;
     --ink-dim: #aab1c0;
     --border: rgba(255,255,255,.08);
@@ -42,6 +39,10 @@
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
+  /* Bilingual visibility — single hidden language at a time */
+  html[lang="en"] [data-lang="de"] { display: none !important; }
+  html[lang="de"] [data-lang="en"] { display: none !important; }
+
   .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
 
   /* ── Nav ───────────────────────────────────────────────────────────────── */
@@ -58,9 +59,32 @@
   }
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; }
   .brand img { width: 28px; height: 28px; border-radius: 50%; }
+  .nav-right { display: flex; gap: 24px; align-items: center; }
   .nav-links { display: flex; gap: 24px; font-size: 14px; color: var(--ink-dim); }
   .nav-links a { color: var(--ink-dim); }
   .nav-links a:hover { color: var(--ink); text-decoration: none; }
+
+  .lang-toggle {
+    display: inline-flex;
+    background: var(--navy-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .lang-toggle button {
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    transition: background .15s, color .15s;
+  }
+  .lang-toggle button.active { background: var(--accent); color: white; }
+  .lang-toggle button:not(.active):hover { color: var(--ink); }
 
   /* ── Hero ──────────────────────────────────────────────────────────────── */
   .hero {
@@ -121,140 +145,49 @@
     text-align: center;
   }
 
-  /* ── How-it-works ──────────────────────────────────────────────────────── */
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-  .step {
-    background: var(--navy-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-  }
-  .step .n {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: white; font-weight: 700;
-    display: grid; place-items: center;
-    margin-bottom: 18px;
-  }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .step { background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+  .step .n { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; font-weight: 700; display: grid; place-items: center; margin-bottom: 18px; }
   .step h3 { font-size: 18px; margin-bottom: 8px; }
   .step p { color: var(--ink-dim); font-size: 15px; }
 
-  /* ── Features grid ─────────────────────────────────────────────────────── */
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-  }
-  .feature {
-    background: var(--navy-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-  }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .feature { background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
   .feature .icon { font-size: 28px; margin-bottom: 12px; }
   .feature h3 { font-size: 17px; margin-bottom: 8px; }
   .feature p { color: var(--ink-dim); font-size: 14px; line-height: 1.5; }
 
-  /* ── Comparison table ──────────────────────────────────────────────────── */
   .compare-wrap { overflow-x: auto; }
-  table.compare {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--navy-2);
-    border-radius: var(--radius);
-    overflow: hidden;
-    min-width: 520px;
-  }
-  table.compare th, table.compare td {
-    padding: 16px 20px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    font-size: 15px;
-  }
+  table.compare { width: 100%; border-collapse: collapse; background: var(--navy-2); border-radius: var(--radius); overflow: hidden; min-width: 520px; }
+  table.compare th, table.compare td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--border); font-size: 15px; }
   table.compare th { font-weight: 700; color: var(--ink); background: rgba(48,112,240,.08); }
   table.compare tr:last-child td { border-bottom: none; }
   table.compare td:first-child { color: var(--ink-dim); }
   table.compare td.tippi { color: var(--ink); font-weight: 500; }
 
-  /* ── Privacy ───────────────────────────────────────────────────────────── */
-  .privacy-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-  }
-  .privacy-item {
-    display: flex; gap: 14px; align-items: flex-start;
-    padding: 18px;
-    background: var(--navy-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-  .privacy-item .check {
-    color: var(--accent);
-    font-weight: 700; font-size: 18px;
-    flex-shrink: 0;
-  }
+  .privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .privacy-item { display: flex; gap: 14px; align-items: flex-start; padding: 18px; background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius); }
+  .privacy-item .check { color: var(--accent); font-weight: 700; font-size: 18px; flex-shrink: 0; }
   .privacy-item p { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
   .privacy-item strong { color: var(--ink); display: block; margin-bottom: 4px; }
 
-  /* ── Providers strip ───────────────────────────────────────────────────── */
-  .providers {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-  }
-  .provider {
-    background: var(--navy-2);
-    border: 1px solid var(--border);
-    padding: 18px;
-    border-radius: var(--radius);
-    text-align: center;
-  }
+  .providers { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .provider { background: var(--navy-2); border: 1px solid var(--border); padding: 18px; border-radius: var(--radius); text-align: center; }
   .provider .pname { font-weight: 600; margin-bottom: 4px; }
   .provider .ptag { font-size: 12px; color: var(--ink-dim); }
   .provider.local { border-color: rgba(48,112,240,.4); }
   .provider.local .ptag { color: var(--accent); }
 
-  /* ── Builtins ──────────────────────────────────────────────────────────── */
-  .builtins {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-  }
-  .builtin {
-    background: var(--navy-2);
-    border: 1px solid var(--border);
-    padding: 12px 14px;
-    border-radius: 8px;
-    font-size: 14px;
-    color: var(--ink-dim);
-  }
+  .builtins { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .builtin { background: var(--navy-2); border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; font-size: 14px; color: var(--ink-dim); }
   .builtin strong { color: var(--ink); display: block; font-size: 14px; font-weight: 500; }
 
-  /* ── Final CTA ─────────────────────────────────────────────────────────── */
-  .final {
-    text-align: center;
-    background: radial-gradient(ellipse 60% 60% at 50% 50%,
-                rgba(48,112,240,.12) 0%, transparent 70%);
-  }
+  .final { text-align: center; background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(48,112,240,.12) 0%, transparent 70%); }
 
-  /* ── Footer ────────────────────────────────────────────────────────────── */
-  footer {
-    padding: 36px 0;
-    border-top: 1px solid var(--border);
-    color: var(--ink-dim);
-    font-size: 13px;
-    text-align: center;
-  }
+  footer { padding: 36px 0; border-top: 1px solid var(--border); color: var(--ink-dim); font-size: 13px; text-align: center; }
   footer a { color: var(--ink-dim); }
   footer a:hover { color: var(--ink); }
 
-  /* ── Responsive ────────────────────────────────────────────────────────── */
   @media (max-width: 720px) {
     .nav-links { display: none; }
     .steps { grid-template-columns: 1fr; }
@@ -271,53 +204,77 @@
       <img src="mascot.png" alt="Tippi">
       <span>Tippi</span>
     </div>
-    <div class="nav-links">
-      <a href="#how">How it works</a>
-      <a href="#features">Features</a>
-      <a href="#privacy">Privacy</a>
-      <a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">GitHub</a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#how"><span data-lang="en">How it works</span><span data-lang="de">So funktioniert's</span></a>
+        <a href="#features"><span data-lang="en">Features</span><span data-lang="de">Features</span></a>
+        <a href="#privacy"><span data-lang="en">Privacy</span><span data-lang="de">Datenschutz</span></a>
+        <a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" id="lang-en" onclick="setLang('en')">EN</button>
+        <button type="button" id="lang-de" onclick="setLang('de')">DE</button>
+      </div>
     </div>
   </div>
 </nav>
 
-<!-- ── Hero ───────────────────────────────────────────────────────────────── -->
+<!-- ── Hero ──────────────────────────────────────────────────────────────── -->
 <header class="hero">
   <div class="wrap">
     <img src="mascot.png" class="mascot" alt="Tippi mascot">
-    <h1>Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
-    <p class="sub">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in. Open-source, BYOK, with a fully local option.</p>
+
+    <h1 data-lang="en">Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
+    <h1 data-lang="de">Text markieren.<br><span class="accent">⌥⌘T drücken.</span> KI macht den Rest.</h1>
+
+    <p class="sub" data-lang="en">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in. Open-source, BYOK, with a fully local option.</p>
+    <p class="sub" data-lang="de">Ein systemweiter KI-Schreibassistent für macOS — der dich nicht aus deiner App reißt. Open Source, BYOK, mit voll-lokaler Option.</p>
+
     <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
-        Download for macOS →
+        <span data-lang="en">Download for macOS →</span>
+        <span data-lang="de">Für macOS laden →</span>
       </a>
       <a class="btn ghost" href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">
-        View source on GitHub
+        <span data-lang="en">View source on GitHub</span>
+        <span data-lang="de">Quellcode auf GitHub</span>
       </a>
     </div>
-    <small>Free · MIT licensed · Apple Silicon · macOS 15+</small>
+
+    <small data-lang="en">Free · MIT licensed · Apple Silicon · macOS 15+</small>
+    <small data-lang="de">Kostenlos · MIT-Lizenz · Apple Silicon · macOS 15+</small>
   </div>
 </header>
 
 <!-- ── How it works ──────────────────────────────────────────────────────── -->
 <section id="how">
   <div class="wrap">
-    <h2>How it works</h2>
-    <p class="lead">Three steps. One hotkey. Zero context switching.</p>
+    <h2 data-lang="en">How it works</h2>
+    <h2 data-lang="de">So funktioniert Tippi</h2>
+    <p class="lead" data-lang="en">Three steps. One hotkey. Zero context switching.</p>
+    <p class="lead" data-lang="de">Drei Schritte. Ein Hotkey. Kein Kontext-Wechsel.</p>
+
     <div class="steps">
       <div class="step">
         <div class="n">1</div>
-        <h3>Select text anywhere</h3>
-        <p>Mail, Safari, Notes, Slack, VS Code, Pages — any text field, any app on macOS.</p>
+        <h3 data-lang="en">Select text anywhere</h3>
+        <h3 data-lang="de">Text irgendwo markieren</h3>
+        <p data-lang="en">Mail, Safari, Notes, Slack, VS Code, Pages — any text field, any app on macOS.</p>
+        <p data-lang="de">Mail, Safari, Notes, Slack, VS Code, Pages — jedes Textfeld, jede App unter macOS.</p>
       </div>
       <div class="step">
         <div class="n">2</div>
-        <h3>Press ⌥⌘T</h3>
-        <p>A small popup appears at your cursor. Pick one of 22 built-in prompts or your own custom ones.</p>
+        <h3 data-lang="en">Press ⌥⌘T</h3>
+        <h3 data-lang="de">⌥⌘T drücken</h3>
+        <p data-lang="en">A small popup appears at your cursor. Pick one of 22 built-in prompts or your own custom ones.</p>
+        <p data-lang="de">Ein kleines Popup erscheint am Cursor. Wähle einen der 22 eingebauten Prompts oder einen eigenen.</p>
       </div>
       <div class="step">
         <div class="n">3</div>
-        <h3>Replace in place</h3>
-        <p>Preview the AI's rewrite side-by-side with the original. Replace, append, copy, or regenerate.</p>
+        <h3 data-lang="en">Replace in place</h3>
+        <h3 data-lang="de">An Ort und Stelle ersetzen</h3>
+        <p data-lang="en">Preview the AI's rewrite side-by-side with the original. Replace, append, copy, or regenerate.</p>
+        <p data-lang="de">Vorschau Original vs. KI-Vorschlag nebeneinander. Ersetzen, anhängen, kopieren oder neu generieren.</p>
       </div>
     </div>
   </div>
@@ -326,19 +283,40 @@
 <!-- ── Comparison ────────────────────────────────────────────────────────── -->
 <section>
   <div class="wrap">
-    <h2>Why Tippi</h2>
-    <p class="lead">What you get that you don't get from cloud-only assistants.</p>
+    <h2 data-lang="en">Why Tippi</h2>
+    <h2 data-lang="de">Warum Tippi</h2>
+    <p class="lead" data-lang="en">What you get that you don't get from cloud-only assistants.</p>
+    <p class="lead" data-lang="de">Was du bei Cloud-Tools nicht bekommst.</p>
+
     <div class="compare-wrap">
       <table class="compare">
         <thead>
-          <tr><th>What others do</th><th>What Tippi does</th></tr>
+          <tr>
+            <th><span data-lang="en">What others do</span><span data-lang="de">Andere</span></th>
+            <th>Tippi</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>Open a new tab, paste your text, copy the answer back</td><td class="tippi">Works in every app, right at your cursor</td></tr>
-          <tr><td>Locked to one provider</td><td class="tippi">6 providers — pick what works for you</td></tr>
-          <tr><td>Cloud-only — your text leaves your Mac</td><td class="tippi">Two local engines (MLX, Ollama) — fully offline option</td></tr>
-          <tr><td>Subscription</td><td class="tippi">Free, open-source (MIT), bring your own key</td></tr>
-          <tr><td>Telemetry, analytics, "anonymized" data</td><td class="tippi">Zero telemetry, no analytics, no crash reports</td></tr>
+          <tr>
+            <td><span data-lang="en">Open a new tab, paste your text, copy the answer back</span><span data-lang="de">Neuer Tab, Text einfügen, Antwort zurückkopieren</span></td>
+            <td class="tippi"><span data-lang="en">Works in every app, right at your cursor</span><span data-lang="de">In jeder App, direkt am Cursor</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Locked to one provider</span><span data-lang="de">An einen Anbieter gebunden</span></td>
+            <td class="tippi"><span data-lang="en">6 providers — pick what works for you</span><span data-lang="de">6 Anbieter zur freien Wahl</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Cloud-only — your text leaves your Mac</span><span data-lang="de">Cloud-only — Text verlässt deinen Mac</span></td>
+            <td class="tippi"><span data-lang="en">Two local engines (MLX, Ollama) — fully offline option</span><span data-lang="de">Zwei lokale Engines (MLX, Ollama) — komplett offline möglich</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Subscription</span><span data-lang="de">Abo-Modell</span></td>
+            <td class="tippi"><span data-lang="en">Free, open-source (MIT), bring your own key</span><span data-lang="de">Kostenlos, Open Source (MIT), BYOK</span></td>
+          </tr>
+          <tr>
+            <td><span data-lang="en">Telemetry, analytics, "anonymized" data</span><span data-lang="de">Telemetrie, Analytics, „anonymisierte" Daten</span></td>
+            <td class="tippi"><span data-lang="en">Zero telemetry, no analytics, no crash reports</span><span data-lang="de">Null Telemetrie, kein Tracking, keine Crash-Reports</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -348,38 +326,53 @@
 <!-- ── Features ──────────────────────────────────────────────────────────── -->
 <section id="features">
   <div class="wrap">
-    <h2>What's in the box</h2>
-    <p class="lead">Built to fit into your existing workflow, not replace it.</p>
+    <h2 data-lang="en">What's in the box</h2>
+    <h2 data-lang="de">Was drinsteckt</h2>
+    <p class="lead" data-lang="en">Built to fit into your existing workflow, not replace it.</p>
+    <p class="lead" data-lang="de">Gebaut um sich in deinen Workflow einzufügen — nicht ihn zu ersetzen.</p>
+
     <div class="features">
       <div class="feature">
         <div class="icon">⚡</div>
-        <h3>System-wide hotkey</h3>
-        <p>Triggers in any app. No need to switch to a chat window or paste into a different tab.</p>
+        <h3 data-lang="en">System-wide hotkey</h3>
+        <h3 data-lang="de">Systemweiter Hotkey</h3>
+        <p data-lang="en">Triggers in any app. No need to switch to a chat window or paste into a different tab.</p>
+        <p data-lang="de">Funktioniert in jeder App. Kein Wechsel zu Chat-Fenstern, kein Einfügen in andere Tabs.</p>
       </div>
       <div class="feature">
         <div class="icon">🎯</div>
-        <h3>22 curated built-in prompts</h3>
-        <p>Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize, and more — plus your own custom prompts.</p>
+        <h3 data-lang="en">22 curated built-in prompts</h3>
+        <h3 data-lang="de">22 kuratierte Built-in-Prompts</h3>
+        <p data-lang="en">Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize, and more — plus your own custom prompts.</p>
+        <p data-lang="de">Verbessern, Rechtschreibung, Übersetzen, Zusammenfassen, TL;DR, LinkedIn-Post, E-Mail-Antwort, Menschlicher — plus deine eigenen Prompts.</p>
       </div>
       <div class="feature">
         <div class="icon">🎙️</div>
-        <h3>Voice input</h3>
-        <p>Push-to-talk dictation with Whisper running fully on-device. No audio leaves your Mac.</p>
+        <h3 data-lang="en">Voice input</h3>
+        <h3 data-lang="de">Spracheingabe</h3>
+        <p data-lang="en">Push-to-talk dictation with Whisper running fully on-device. No audio leaves your Mac.</p>
+        <p data-lang="de">Push-to-Talk-Diktat mit Whisper komplett lokal. Audio verlässt deinen Mac nicht.</p>
       </div>
       <div class="feature">
         <div class="icon">🏷️</div>
-        <h3>Smart variables</h3>
-        <p><code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code>, <code>{selected_text}</code> — your prompts adapt to context at trigger time.</p>
+        <h3 data-lang="en">Smart variables</h3>
+        <h3 data-lang="de">Smarte Variablen</h3>
+        <p data-lang="en"><code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code>, <code>{selected_text}</code> — your prompts adapt to context at trigger time.</p>
+        <p data-lang="de"><code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code>, <code>{selected_text}</code> — Prompts passen sich beim Auslösen automatisch dem Kontext an.</p>
       </div>
       <div class="feature">
         <div class="icon">📦</div>
-        <h3>One-click MLX setup</h3>
-        <p>Run AI fully locally on Apple Silicon. Tippi installs the toolchain from Settings — no Terminal required.</p>
+        <h3 data-lang="en">One-click MLX setup</h3>
+        <h3 data-lang="de">MLX in einem Klick</h3>
+        <p data-lang="en">Run AI fully locally on Apple Silicon. Tippi installs the toolchain from Settings — no Terminal required.</p>
+        <p data-lang="de">KI komplett lokal auf Apple Silicon. Tippi installiert die Toolchain aus den Einstellungen — kein Terminal nötig.</p>
       </div>
       <div class="feature">
         <div class="icon">🔄</div>
-        <h3>Auto-updates</h3>
-        <p>Sparkle 2 keeps Tippi current. Notarized DMG, signed with a Developer ID.</p>
+        <h3 data-lang="en">Auto-updates</h3>
+        <h3 data-lang="de">Auto-Updates</h3>
+        <p data-lang="en">Sparkle 2 keeps Tippi current. Notarized DMG, signed with a Developer ID.</p>
+        <p data-lang="de">Sparkle 2 hält Tippi aktuell. Notarisiertes DMG, signiert mit Developer ID.</p>
       </div>
     </div>
   </div>
@@ -388,15 +381,36 @@
 <!-- ── Providers ─────────────────────────────────────────────────────────── -->
 <section>
   <div class="wrap">
-    <h2>Pick your AI provider</h2>
-    <p class="lead">Cloud, local, or any mix. Swap with one click in Settings.</p>
+    <h2 data-lang="en">Pick your AI provider</h2>
+    <h2 data-lang="de">KI-Anbieter wählen</h2>
+    <p class="lead" data-lang="en">Cloud, local, or any mix. Swap with one click in Settings.</p>
+    <p class="lead" data-lang="de">Cloud, lokal oder Mischung. In den Einstellungen ein Klick zum Wechseln.</p>
+
     <div class="providers">
-      <div class="provider"><div class="pname">OpenAI</div><div class="ptag">cloud · BYOK</div></div>
-      <div class="provider"><div class="pname">Anthropic</div><div class="ptag">cloud · BYOK</div></div>
-      <div class="provider"><div class="pname">Google Gemini</div><div class="ptag">cloud · free tier</div></div>
-      <div class="provider"><div class="pname">Mistral</div><div class="ptag">EU cloud · BYOK</div></div>
-      <div class="provider local"><div class="pname">Ollama</div><div class="ptag">100% local</div></div>
-      <div class="provider local"><div class="pname">MLX</div><div class="ptag">100% local · Apple-Silicon-native</div></div>
+      <div class="provider">
+        <div class="pname">OpenAI</div>
+        <div class="ptag"><span data-lang="en">cloud · BYOK</span><span data-lang="de">Cloud · BYOK</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Anthropic</div>
+        <div class="ptag"><span data-lang="en">cloud · BYOK</span><span data-lang="de">Cloud · BYOK</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Google Gemini</div>
+        <div class="ptag"><span data-lang="en">cloud · free tier</span><span data-lang="de">Cloud · Free-Tier</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Mistral</div>
+        <div class="ptag"><span data-lang="en">EU cloud · BYOK</span><span data-lang="de">EU-Cloud · BYOK</span></div>
+      </div>
+      <div class="provider local">
+        <div class="pname">Ollama</div>
+        <div class="ptag"><span data-lang="en">100% local</span><span data-lang="de">100 % lokal</span></div>
+      </div>
+      <div class="provider local">
+        <div class="pname">MLX</div>
+        <div class="ptag"><span data-lang="en">100% local · Apple-Silicon-native</span><span data-lang="de">100 % lokal · Apple-Silicon-nativ</span></div>
+      </div>
     </div>
   </div>
 </section>
@@ -404,32 +418,65 @@
 <!-- ── Privacy ───────────────────────────────────────────────────────────── -->
 <section id="privacy">
   <div class="wrap">
-    <h2>Privacy by design</h2>
-    <p class="lead">Your text never reaches anything except the AI provider you explicitly configured.</p>
+    <h2 data-lang="en">Privacy by design</h2>
+    <h2 data-lang="de">Datenschutz von Grund auf</h2>
+    <p class="lead" data-lang="en">Your text never reaches anything except the AI provider you explicitly configured.</p>
+    <p class="lead" data-lang="de">Dein Text erreicht ausschließlich den KI-Anbieter, den du selbst konfiguriert hast.</p>
+
     <div class="privacy-grid">
       <div class="privacy-item">
         <div class="check">✓</div>
-        <div><strong>No telemetry, ever</strong><p>No analytics, no crash reporting, no usage stats.</p></div>
+        <div>
+          <strong data-lang="en">No telemetry, ever</strong>
+          <strong data-lang="de">Keine Telemetrie, niemals</strong>
+          <p data-lang="en">No analytics, no crash reporting, no usage stats.</p>
+          <p data-lang="de">Kein Analytics, keine Crash-Reports, keine Nutzungsstatistik.</p>
+        </div>
       </div>
       <div class="privacy-item">
         <div class="check">✓</div>
-        <div><strong>No request history</strong><p>Once a response is rendered, neither input nor output is written to disk.</p></div>
+        <div>
+          <strong data-lang="en">No request history</strong>
+          <strong data-lang="de">Kein Verlauf</strong>
+          <p data-lang="en">Once a response is rendered, neither input nor output is written to disk.</p>
+          <p data-lang="de">Sobald die Antwort angezeigt ist, wird weder Input noch Output gespeichert.</p>
+        </div>
       </div>
       <div class="privacy-item">
         <div class="check">✓</div>
-        <div><strong>API keys in Keychain</strong><p>Stored exclusively in the macOS Keychain. No iCloud sync, no plaintext config.</p></div>
+        <div>
+          <strong data-lang="en">API keys in Keychain</strong>
+          <strong data-lang="de">API-Keys im Schlüsselbund</strong>
+          <p data-lang="en">Stored exclusively in the macOS Keychain. No iCloud sync, no plaintext config.</p>
+          <p data-lang="de">Nur im macOS-Schlüsselbund. Kein iCloud-Sync, kein Klartext.</p>
+        </div>
       </div>
       <div class="privacy-item">
         <div class="check">✓</div>
-        <div><strong>Voice runs on-device</strong><p>Whisper transcribes audio locally. Nothing is sent to any network endpoint.</p></div>
+        <div>
+          <strong data-lang="en">Voice runs on-device</strong>
+          <strong data-lang="de">Sprache läuft lokal</strong>
+          <p data-lang="en">Whisper transcribes audio locally. Nothing is sent to any network endpoint.</p>
+          <p data-lang="de">Whisper transkribiert auf dem Gerät. Nichts geht ins Netz.</p>
+        </div>
       </div>
       <div class="privacy-item">
         <div class="check">✓</div>
-        <div><strong>Fully local option</strong><p>MLX and Ollama backends run on your Mac — no cloud round-trip at all.</p></div>
+        <div>
+          <strong data-lang="en">Fully local option</strong>
+          <strong data-lang="de">Voll-lokale Option</strong>
+          <p data-lang="en">MLX and Ollama backends run on your Mac — no cloud round-trip at all.</p>
+          <p data-lang="de">MLX und Ollama laufen lokal — kein Cloud-Roundtrip.</p>
+        </div>
       </div>
       <div class="privacy-item">
         <div class="check">✓</div>
-        <div><strong>Open source</strong><p>Every line on GitHub. MIT licensed. Audit it yourself.</p></div>
+        <div>
+          <strong data-lang="en">Open source</strong>
+          <strong data-lang="de">Open Source</strong>
+          <p data-lang="en">Every line on GitHub. MIT licensed. Audit it yourself.</p>
+          <p data-lang="de">Jede Zeile auf GitHub. MIT-Lizenz. Selbst nachprüfen.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -438,31 +485,34 @@
 <!-- ── Built-ins showcase ────────────────────────────────────────────────── -->
 <section>
   <div class="wrap">
-    <h2>22 prompts that ship with Tippi</h2>
-    <p class="lead">All language-aware. All editable. Build your own on top.</p>
+    <h2 data-lang="en">22 prompts that ship with Tippi</h2>
+    <h2 data-lang="de">22 Built-in-Prompts</h2>
+    <p class="lead" data-lang="en">All language-aware. All editable. Build your own on top.</p>
+    <p class="lead" data-lang="de">Alle sprachbewusst. Alle anpassbar. Eigene draufsetzen.</p>
+
     <div class="builtins">
-      <div class="builtin"><strong>Improve</strong>Clearer, more natural prose</div>
-      <div class="builtin"><strong>Fix grammar</strong>Spelling + punctuation only</div>
-      <div class="builtin"><strong>Shorten</strong>~30% shorter, no info lost</div>
-      <div class="builtin"><strong>Lengthen</strong>~50% longer with context</div>
-      <div class="builtin"><strong>Make formal</strong>Business-ready tone</div>
-      <div class="builtin"><strong>Make casual</strong>Friend-to-friend tone</div>
-      <div class="builtin"><strong>Simplify</strong>Short sentences, no jargon</div>
-      <div class="builtin"><strong>Explain like I'm 10</strong>Everyday analogy</div>
-      <div class="builtin"><strong>Humanize</strong>Strip AI tells</div>
-      <div class="builtin"><strong>Summarize</strong>3 key bullet points</div>
-      <div class="builtin"><strong>TL;DR</strong>1–2 sentences max</div>
-      <div class="builtin"><strong>Bullet points</strong>Every thought as a bullet</div>
-      <div class="builtin"><strong>Key points</strong>Max 5 essence bullets</div>
-      <div class="builtin"><strong>Action items</strong>Verb-first to-do list</div>
-      <div class="builtin"><strong>Email reply</strong>Matched formality</div>
-      <div class="builtin"><strong>Adapt for app</strong>Tone matches current app</div>
-      <div class="builtin"><strong>LinkedIn post</strong>Hook + 2–3 hashtags</div>
-      <div class="builtin"><strong>Instagram caption</strong>Hook for "…more" cut</div>
-      <div class="builtin"><strong>Facebook post</strong>Conversational story</div>
-      <div class="builtin"><strong>Translate → DE</strong>Natural modern German</div>
-      <div class="builtin"><strong>Translate → EN</strong>Natural modern English</div>
-      <div class="builtin"><strong>Translate → ES</strong>Natural modern Spanish</div>
+      <div class="builtin"><strong data-lang="en">Improve</strong><strong data-lang="de">Verbessern</strong><span data-lang="en">Clearer, more natural prose</span><span data-lang="de">Klarer und natürlicher</span></div>
+      <div class="builtin"><strong data-lang="en">Fix grammar</strong><strong data-lang="de">Rechtschreibung</strong><span data-lang="en">Spelling + punctuation only</span><span data-lang="de">Nur Tippfehler + Interpunktion</span></div>
+      <div class="builtin"><strong data-lang="en">Shorten</strong><strong data-lang="de">Kürzen</strong><span data-lang="en">~30% shorter, no info lost</span><span data-lang="de">~30 % kürzer, alle Infos erhalten</span></div>
+      <div class="builtin"><strong data-lang="en">Lengthen</strong><strong data-lang="de">Verlängern</strong><span data-lang="en">~50% longer with context</span><span data-lang="de">~50 % länger mit Kontext</span></div>
+      <div class="builtin"><strong data-lang="en">Make formal</strong><strong data-lang="de">Formell</strong><span data-lang="en">Business-ready tone</span><span data-lang="de">Geschäftlicher Ton</span></div>
+      <div class="builtin"><strong data-lang="en">Make casual</strong><strong data-lang="de">Locker</strong><span data-lang="en">Friend-to-friend tone</span><span data-lang="de">Wie an einen Freund</span></div>
+      <div class="builtin"><strong data-lang="en">Simplify</strong><strong data-lang="de">Vereinfachen</strong><span data-lang="en">Short sentences, no jargon</span><span data-lang="de">Kurze Sätze, kein Fachjargon</span></div>
+      <div class="builtin"><strong data-lang="en">Explain like I'm 10</strong><strong data-lang="de">Für 10-Jährige</strong><span data-lang="en">Everyday analogy</span><span data-lang="de">Alltagsbeispiel</span></div>
+      <div class="builtin"><strong data-lang="en">Humanize</strong><strong data-lang="de">Menschlicher</strong><span data-lang="en">Strip AI tells</span><span data-lang="de">KI-Floskeln raus</span></div>
+      <div class="builtin"><strong data-lang="en">Summarize</strong><strong data-lang="de">Zusammenfassen</strong><span data-lang="en">3 key bullet points</span><span data-lang="de">3 Kern-Bullets</span></div>
+      <div class="builtin"><strong>TL;DR</strong><span data-lang="en">1–2 sentences max</span><span data-lang="de">Max. 1–2 Sätze</span></div>
+      <div class="builtin"><strong data-lang="en">Bullet points</strong><strong data-lang="de">Bulletpoints</strong><span data-lang="en">Every thought as a bullet</span><span data-lang="de">Jeden Gedanken als Bullet</span></div>
+      <div class="builtin"><strong data-lang="en">Key points</strong><strong data-lang="de">Stichpunkte</strong><span data-lang="en">Max 5 essence bullets</span><span data-lang="de">Max. 5 prägnante Bullets</span></div>
+      <div class="builtin"><strong data-lang="en">Action items</strong><strong data-lang="de">To-Dos</strong><span data-lang="en">Verb-first to-do list</span><span data-lang="de">Verb-first Aufgabenliste</span></div>
+      <div class="builtin"><strong data-lang="en">Email reply</strong><strong data-lang="de">E-Mail-Antwort</strong><span data-lang="en">Matched formality</span><span data-lang="de">Passende Formalität</span></div>
+      <div class="builtin"><strong data-lang="en">Adapt for app</strong><strong data-lang="de">Für App anpassen</strong><span data-lang="en">Tone matches current app</span><span data-lang="de">Ton passt zur App</span></div>
+      <div class="builtin"><strong data-lang="en">LinkedIn post</strong><strong data-lang="de">LinkedIn-Post</strong><span data-lang="en">Hook + 2–3 hashtags</span><span data-lang="de">Hook + 2–3 Hashtags</span></div>
+      <div class="builtin"><strong data-lang="en">Instagram caption</strong><strong data-lang="de">Instagram-Caption</strong><span data-lang="en">Hook for "…more" cut</span><span data-lang="de">Hook für „…mehr"-Cut</span></div>
+      <div class="builtin"><strong data-lang="en">Facebook post</strong><strong data-lang="de">Facebook-Post</strong><span data-lang="en">Conversational story</span><span data-lang="de">Erzählerischer Stil</span></div>
+      <div class="builtin"><strong data-lang="en">Translate → DE</strong><strong data-lang="de">Übersetzen → DE</strong><span data-lang="en">Natural modern German</span><span data-lang="de">Natürliches modernes Deutsch</span></div>
+      <div class="builtin"><strong data-lang="en">Translate → EN</strong><strong data-lang="de">Übersetzen → EN</strong><span data-lang="en">Natural modern English</span><span data-lang="de">Natürliches modernes Englisch</span></div>
+      <div class="builtin"><strong data-lang="en">Translate → ES</strong><strong data-lang="de">Übersetzen → ES</strong><span data-lang="en">Natural modern Spanish</span><span data-lang="de">Natürliches modernes Spanisch</span></div>
     </div>
   </div>
 </section>
@@ -470,14 +520,19 @@
 <!-- ── Final CTA ─────────────────────────────────────────────────────────── -->
 <section class="final">
   <div class="wrap">
-    <h2>Try it in 60 seconds</h2>
-    <p class="lead">Download the DMG, grant Accessibility, add one API key (or install MLX with one click). Done.</p>
+    <h2 data-lang="en">Try it in 60 seconds</h2>
+    <h2 data-lang="de">In 60 Sekunden ausprobieren</h2>
+    <p class="lead" data-lang="en">Download the DMG, grant Accessibility, add one API key (or install MLX with one click). Done.</p>
+    <p class="lead" data-lang="de">DMG laden, Bedienungshilfen erlauben, einen API-Key eintragen (oder MLX in einem Klick installieren). Fertig.</p>
+
     <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
-        Download Tippi →
+        <span data-lang="en">Download Tippi →</span>
+        <span data-lang="de">Tippi laden →</span>
       </a>
       <a class="btn ghost" href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">
-        Star on GitHub ★
+        <span data-lang="en">Star on GitHub ★</span>
+        <span data-lang="de">Auf GitHub mit ★ markieren</span>
       </a>
     </div>
   </div>
@@ -485,10 +540,50 @@
 
 <footer>
   <div class="wrap">
-    <p>Open source · MIT licensed · Made by <a href="https://github.com/miwixyz" target="_blank" rel="noopener">Michael Wlr</a></p>
+    <p>
+      <span data-lang="en">Open source · MIT licensed · Made by</span>
+      <span data-lang="de">Open Source · MIT-Lizenz · von</span>
+      <a href="https://github.com/miwixyz" target="_blank" rel="noopener">Michael Wlr</a>
+    </p>
     <p style="margin-top:8px"><a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">github.com/miwixyz/Tippi</a></p>
   </div>
 </footer>
+
+<script>
+  const TITLES = {
+    en: "Tippi — System-wide AI writing assistant for macOS",
+    de: "Tippi — Systemweiter KI-Schreibassistent für macOS",
+  };
+  const DESCRIPTIONS = {
+    en: "Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 6 AI providers, fully local option via MLX. macOS only.",
+    de: "Text markieren. ⌥⌘T drücken. KI macht den Rest — direkt am Cursor. Open Source, BYOK, 6 KI-Anbieter, voll-lokale Option via MLX. macOS only.",
+  };
+
+  function setLang(lang) {
+    if (lang !== 'en' && lang !== 'de') lang = 'en';
+    document.documentElement.lang = lang;
+    document.title = TITLES[lang];
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', DESCRIPTIONS[lang]);
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    document.getElementById('lang-de').classList.toggle('active', lang === 'de');
+    try { localStorage.setItem('tippi-lang', lang); } catch (e) {}
+  }
+
+  // Init: saved preference > browser default > 'en'
+  (function() {
+    let lang = 'en';
+    try {
+      const saved = localStorage.getItem('tippi-lang');
+      if (saved === 'en' || saved === 'de') {
+        lang = saved;
+      } else if ((navigator.language || '').toLowerCase().startsWith('de')) {
+        lang = 'de';
+      }
+    } catch (e) {}
+    setLang(lang);
+  })();
+</script>
 
 </body>
 </html>
