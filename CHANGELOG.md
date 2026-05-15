@@ -2,6 +2,18 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.2] — 2026-05-15
+
+### Changed
+- **MLX model presets curated for text rewrites**: removed 4 presets that emit chain-of-thought "reasoning" tokens before any usable content (Qwen3.5 0.8B/2B/9B, DeepSeek-R1) — these are unsuitable for Tippi's "fix this text, return only the result" interaction. Kept 3 presets, one per RAM tier:
+  - Llama 3.2 3B (8 GB Mac, fast)
+  - Llama 3.1 8B ⭐ (16 GB Mac, recommended default)
+  - Qwen2.5 14B (32 GB Mac, best quality)
+- The Custom field is still available for power users who want a different model.
+
+### Note
+- If you previously selected one of the removed presets (e.g. Qwen3.5 0.8B), Settings will fall back to "Custom" with your old repo ID. Switch to one of the curated presets above for better results.
+
 ## [1.5.1] — 2026-05-15
 
 ### Fixed
