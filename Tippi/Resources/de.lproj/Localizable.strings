@@ -14,6 +14,11 @@
 "prompt.translateEN" = "Übersetzen → EN";
 "prompt.shorten" = "Kürzen";
 "prompt.lengthen" = "Verlängern";
+"prompt.makeFormal" = "Formell";
+"prompt.makeCasual" = "Locker";
+"prompt.simplify" = "Vereinfachen";
+"prompt.summarize" = "Zusammenfassen";
+"prompt.adaptForApp" = "App-Angepasst";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Willkommen bei Tippi";
@@ -150,6 +155,23 @@
 "settings.prompts.editor.systemLabel" = "Anweisung an die KI:";
 "settings.prompts.editor.systemHint" = "Beschreibe genau, was die KI tun soll. Dein markierter Text wird automatisch als Benutzer-Nachricht angehängt.";
 "settings.prompts.editor.variablesHint" = "Variablen: {clipboard} · {app_name} · {language} · {selected_text}";
+
+/* Prompts — Import / Export */
+"prompts.import.button" = "Importieren";
+"prompts.export.all" = "Alle exportieren";
+"prompts.export.one" = "Exportieren";
+"prompts.import.alert.title" = "Prompts importieren";
+"prompts.import.alert.message" = "Wie sollen die importierten Prompts hinzugefügt werden?";
+"prompts.import.merge" = "Hinzufügen (bestehende behalten)";
+"prompts.import.replace" = "Ersetzen (bestehende löschen)";
+"prompts.import.cancel" = "Abbrechen";
+"prompts.import.success" = "%lld Prompt(s) importiert.";
+"prompts.import.failed" = "Import fehlgeschlagen – die Datei konnte nicht gelesen werden.";
+"prompts.export.panel.title" = "Prompts exportieren";
+"prompts.export.panel.message" = "Als .tippipack speichern – diese Datei kannst du weitergeben.";
+"prompts.import.panel.title" = "Prompts importieren";
+"prompts.import.panel.message" = "Wähle eine .tippipack-Datei aus.";
+
 "settings.general.autostart" = "Tippi beim Anmelden starten";
 "settings.general.updates" = "Auf Updates prüfen";
 "settings.hotkeys.placeholder" = "Hotkey-Konfiguration folgt in der nächsten Phase.";
@@ -182,6 +204,8 @@
 "settings.help.promptsBody" = "Im Tab Prompts eigene Prompts anlegen. Jeder Prompt braucht einen Titel, einen SF-Symbol-Namen und eine KI-Anweisung. Der markierte Text wird automatisch mitgeschickt — kein Platzhalter nötig.";
 "settings.help.variablesTitle" = "Prompt-Variablen";
 "settings.help.variablesBody" = "Nutze {Platzhalter} in deinen Prompt-Anweisungen — Tippi ersetzt sie beim Auslösen:\n\n{clipboard} — aktueller Clipboard-Inhalt\n{app_name} — die App, in der du Tippi nutzt (z.B. Mail, Safari, Slack)\n{language} — erkannte Sprache deines markierten Texts (z.B. German)\n{selected_text} — der markierte Text selbst\n\nBeispiel – App-angepasster Ton:\n\"Schreibe für {app_name} um. In Slack: kurz. In Mail: förmlich.\"\n\nBeispiel – Clipboard als Stil-Vorlage (vorher Mustertext kopieren):\n\"Passe den Stil an diese Vorlage an: {clipboard}\"\n\nBeispiel – immer in der richtigen Sprache:\n\"Verbessere den Text. Behalte {language}. Gib nur das Ergebnis zurück.\"";
+"settings.help.importExportTitle" = "Prompts teilen & importieren";
+"settings.help.importExportBody" = "Exportiere deine eigenen Prompts als .tippipack-Datei — zum Teilen oder als Backup.\n\nAlle exportieren — klick auf Alle exportieren oben im Prompts-Tab.\nEinzeln exportieren — klick auf das ↑-Symbol neben einem Prompt.\nImportieren — klick auf Importieren, wähle eine .tippipack-Datei, dann: Hinzufügen (bestehende behalten) oder Ersetzen (bestehende überschreiben).\n\nImportierte Prompts bekommen immer neue IDs — keine Konflikte mit vorhandenen.";
 "settings.help.apiTitle" = "KI-Anbieter & API-Keys";
 "settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt OpenAI, Anthropic, Gemini, Mistral und Ollama (lokal, kostenlos). Keys werden sicher im macOS-Schlüsselbund gespeichert.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";

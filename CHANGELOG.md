@@ -2,7 +2,14 @@
 
 All notable changes to Tippi will be documented in this file.
 
-## [1.2.0] — unreleased
+## [1.3.0] — unreleased
+
+### Added
+- **5 new built-in prompts** — Make Formal, Make Casual, Simplify, Summarize, Adapt for App
+- **Import / Export for custom prompts** — share your prompts as `.tippipack` files; import merges or replaces; export all or a single prompt; fresh UUIDs on import to avoid collisions
+- All built-in prompts now use `{language}` variable to stay in the detected language of the selected text
+
+## [1.2.0] — 2026-05-15
 
 ### Added
 - **Prompt Variables** — Custom prompts can now include dynamic placeholders that are resolved at trigger time:

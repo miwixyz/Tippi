@@ -179,6 +179,32 @@ Context from clipboard: {clipboard}
 This is a draft reply. Polish it so it fits the context above. Return only the improved reply.
 ```
 
+#### Import / Export custom prompts
+
+Share your custom prompts with teammates or between devices using `.tippipack` files (JSON under the hood):
+
+- **Export all** — Settings → Prompts → "Export All" → saves `Tippi-Prompts.tippipack`
+- **Export single** — click the ↑ icon next to any prompt → saves `Tippi-[Title].tippipack`
+- **Import** — "Import" button → choose a `.tippipack` → pick **Merge** (keep existing) or **Replace** (overwrite); imported prompts always get fresh IDs to avoid conflicts
+
+### Built-in prompts
+
+Tippi ships with 11 ready-to-use prompts — all language-aware via `{language}`:
+
+| Prompt | What it does |
+|--------|-------------|
+| **Improve** | Rewrites for better quality, same length and meaning |
+| **Fix Grammar** | Corrects spelling, punctuation, grammar only — no rewording |
+| **Shorten** | Trims ~30%, keeps all key information |
+| **Lengthen** | Expands ~50% with relevant context and detail |
+| **Make Formal** | Professional tone, no filler words |
+| **Make Casual** | Conversational, natural language |
+| **Simplify** | Short sentences, no jargon, no passive voice |
+| **Summarize** | 3 concise bullet points with key info |
+| **Adapt for App** | Tone adapts to `{app_name}` — casual for Slack/WhatsApp, formal for Mail, bullets for Notes |
+| **Translate → DE** | German translation, preserves tone and formatting |
+| **Translate → EN** | English translation, preserves tone and formatting |
+
 ### Voice / Whisper model
 
 Settings → Voice → Download Model. Three sizes available:
@@ -259,7 +285,8 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.0.x  | ✅ Done | System-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
 | v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, brand refresh (mascot icon, `#3070F0` accent, `#020B1D` navy, adaptive dark/light bg), bug fixes through v1.1.11 |
 | v1.2    | ✅ Done | Prompt variables — `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` in custom prompts |
-| v1.3    | Planned | MLX provider — Tippi manages a local `mlx_lm.server`; faster than Ollama on Apple Silicon |
+| v1.3    | 🚧 In progress | 5 new built-in prompts (Formal, Casual, Simplify, Summarize, Adapt for App); Import/Export custom prompts as `.tippipack`; all built-ins use `{language}` |
+| v1.4    | Planned | MLX provider — Tippi manages a local `mlx_lm.server`; faster than Ollama on Apple Silicon |
 | v1.4    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
 | v2.0    | Planned | Cross-platform (Windows) |
 

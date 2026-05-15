@@ -370,10 +370,13 @@ private struct PromptsTab: View {
     @StateObject private var store = CustomPromptStore.shared
     @State private var editing: CustomPrompt?
     @State private var creatingNew: Bool = false
+    @State private var pendingImportData: Data?
+    @State private var importMessage: String?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                // ── Built-in prompts ──────────────────────────────────────────
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "settings.prompts.builtIn"))
@@ -394,12 +397,25 @@ private struct PromptsTab: View {
                     .padding(6)
                 }
 
+                // ── Custom prompts ────────────────────────────────────────────
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
+                        HStack(spacing: 6) {
                             Text(String(localized: "settings.prompts.custom"))
                                 .font(.headline)
                             Spacer()
+                            Button(action: importPrompts) {
+                                Label(String(localized: "prompts.import.button"),
+                                      systemImage: "square.and.arrow.down")
+                            }
+                            .buttonStyle(.borderless)
+                            if !store.prompts.isEmpty {
+                                Button(action: exportAll) {
+                                    Label(String(localized: "prompts.export.all"),
+                                          systemImage: "square.and.arrow.up")
+                                }
+                                .buttonStyle(.borderless)
+                            }
                             Button(action: { creatingNew = true }) {
                                 Label(String(localized: "settings.prompts.new"),
                                       systemImage: "plus.circle.fill")
@@ -419,6 +435,12 @@ private struct PromptsTab: View {
                                             .frame(width: 22)
                                         Text(p.title)
                                         Spacer()
+                                        Button(action: { exportSingle(p) }) {
+                                            Image(systemName: "square.and.arrow.up")
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help(String(localized: "prompts.export.one"))
                                         Button(action: { editing = p }) {
                                             Image(systemName: "pencil")
                                         }
@@ -438,10 +460,32 @@ private struct PromptsTab: View {
                     }
                     .padding(6)
                 }
+
+                // ── Import status message ─────────────────────────────────────
+                if let msg = importMessage {
+                    Text(msg)
+                        .font(.caption)
+                        .foregroundStyle(msg.hasPrefix("✓") ? Color.secondary : Color.orange)
+                        .padding(.horizontal, 4)
+                }
             }
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // ── Import merge / replace alert ──────────────────────────────────────
+        .alert(
+            String(localized: "prompts.import.alert.title"),
+            isPresented: Binding(
+                get: { pendingImportData != nil },
+                set: { if !$0 { pendingImportData = nil } }
+            )
+        ) {
+            Button(String(localized: "prompts.import.merge")) { doImport(merge: true) }
+            Button(String(localized: "prompts.import.replace"), role: .destructive) { doImport(merge: false) }
+            Button(String(localized: "prompts.import.cancel"), role: .cancel) { pendingImportData = nil }
+        } message: {
+            Text(String(localized: "prompts.import.alert.message"))
+        }
         .sheet(item: $editing) { prompt in
             PromptEditor(existing: prompt) { updated in
                 if let updated { store.update(updated) }
@@ -459,6 +503,67 @@ private struct PromptsTab: View {
                 }
                 creatingNew = false
             }
+        }
+    }
+
+    // MARK: - Export
+
+    private func exportAll() {
+        exportPrompts(store.prompts, suggestedName: "Tippi-Prompts.tippipack")
+    }
+
+    private func exportSingle(_ prompt: CustomPrompt) {
+        let safeName = prompt.title
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "/", with: "-")
+        exportPrompts([prompt], suggestedName: "Tippi-\(safeName).tippipack")
+    }
+
+    private func exportPrompts(_ prompts: [CustomPrompt], suggestedName: String) {
+        guard let data = try? store.packageData(for: prompts) else { return }
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = suggestedName
+        panel.title = String(localized: "prompts.export.panel.title")
+        panel.message = String(localized: "prompts.export.panel.message")
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            try? data.write(to: url)
+        }
+    }
+
+    // MARK: - Import
+
+    private func importPrompts() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.title = String(localized: "prompts.import.panel.title")
+        panel.message = String(localized: "prompts.import.panel.message")
+        panel.begin { response in
+            guard response == .OK,
+                  let url = panel.url,
+                  let data = try? Data(contentsOf: url) else { return }
+            self.pendingImportData = data
+        }
+    }
+
+    private func doImport(merge: Bool) {
+        guard let data = pendingImportData else { return }
+        pendingImportData = nil
+        do {
+            let count = try store.importPackage(from: data, merge: merge)
+            showImportMessage(String(format: String(localized: "prompts.import.success"), count))
+        } catch {
+            showImportMessage(String(localized: "prompts.import.failed"))
+        }
+    }
+
+    private func showImportMessage(_ msg: String) {
+        importMessage = msg
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await MainActor.run { importMessage = nil }
         }
     }
 }
@@ -566,6 +671,11 @@ private struct HelpTab: View {
                     icon: "curlybraces",
                     title: String(localized: "settings.help.variablesTitle"),
                     body: String(localized: "settings.help.variablesBody")
+                )
+                helpSection(
+                    icon: "square.and.arrow.up.on.square",
+                    title: String(localized: "settings.help.importExportTitle"),
+                    body: String(localized: "settings.help.importExportBody")
                 )
                 helpSection(
                     icon: "key",

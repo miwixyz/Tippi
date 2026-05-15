@@ -13,6 +13,11 @@
 "prompt.translateEN" = "Translate → EN";
 "prompt.shorten" = "Shorten";
 "prompt.lengthen" = "Lengthen";
+"prompt.makeFormal" = "Make Formal";
+"prompt.makeCasual" = "Make Casual";
+"prompt.simplify" = "Simplify";
+"prompt.summarize" = "Summarize";
+"prompt.adaptForApp" = "Adapt for App";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Welcome to Tippi";
@@ -149,6 +154,22 @@
 "settings.prompts.editor.systemLabel" = "Instructions for the AI:";
 "settings.prompts.editor.systemHint" = "Describe exactly what the AI should do. Your selected text will be passed in as the user message.";
 "settings.prompts.editor.variablesHint" = "Variables: {clipboard} · {app_name} · {language} · {selected_text}";
+
+/* Prompts — Import / Export */
+"prompts.import.button" = "Import";
+"prompts.export.all" = "Export All";
+"prompts.export.one" = "Export";
+"prompts.import.alert.title" = "Import prompts";
+"prompts.import.alert.message" = "How should the imported prompts be added?";
+"prompts.import.merge" = "Merge (keep existing)";
+"prompts.import.replace" = "Replace (delete existing)";
+"prompts.import.cancel" = "Cancel";
+"prompts.import.success" = "%lld prompt(s) imported.";
+"prompts.import.failed" = "Import failed — the file could not be read.";
+"prompts.export.panel.title" = "Export prompts";
+"prompts.export.panel.message" = "Save as .tippipack — share this file to distribute your prompts.";
+"prompts.import.panel.title" = "Import prompts";
+"prompts.import.panel.message" = "Select a .tippipack file.";
 "settings.general.autostart" = "Launch Tippi at login";
 "settings.general.updates" = "Check for updates";
 "settings.hotkeys.placeholder" = "Hotkey configuration coming in the next phase.";
@@ -181,6 +202,8 @@
 "settings.help.promptsBody" = "Go to the Prompts tab to add your own. Each prompt needs a title, an SF Symbol name, and an instruction for the AI. The selected text is sent automatically — no placeholder needed.";
 "settings.help.variablesTitle" = "Prompt variables";
 "settings.help.variablesBody" = "Use {placeholders} in your prompt instructions — Tippi fills them in at trigger time:\n\n{clipboard} — your current clipboard content\n{app_name} — the app you're writing in (e.g. Mail, Safari, Slack)\n{language} — detected language of your selected text (e.g. German)\n{selected_text} — the selected text itself\n\nExample — app-aware tone:\n\"Rewrite for {app_name}. In Slack: casual, max 2 sentences. In Mail: formal.\"\n\nExample — clipboard as style reference (copy a sample text first):\n\"Match the tone of this reference: {clipboard}\"\n\nExample — always stay in the right language:\n\"Improve the text. Stay in {language}. Return only the result.\"";
+"settings.help.importExportTitle" = "Share & import prompts";
+"settings.help.importExportBody" = "Export your custom prompts as a .tippipack file to share them with teammates or keep a backup.\n\nExport all — click \"Export All\" at the top of the Prompts tab.\nExport one — click the ↑ icon next to any prompt.\nImport — click \"Import\", select a .tippipack file, then choose Merge (keeps your existing prompts) or Replace (replaces them).\n\nImported prompts always get fresh IDs, so they never conflict with existing ones.";
 "settings.help.apiTitle" = "AI providers & keys";
 "settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports OpenAI, Anthropic, Gemini, Mistral, and Ollama (local, free). Keys are stored securely in the macOS Keychain.";
 "settings.help.troubleTitle" = "Troubleshooting";
