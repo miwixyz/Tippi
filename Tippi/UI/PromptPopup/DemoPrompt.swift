@@ -147,6 +147,57 @@ struct DemoPrompt: Identifiable, Equatable {
                 transform: { @Sendable text in "• " + text.replacingOccurrences(of: ".", with: "\n• ") + " [local demo]" }
             ),
 
+            // ── Audience-specific ─────────────────────────────────────────────
+            DemoPrompt(
+                id: "explainForChild",
+                title: String(localized: "prompt.explainForChild"),
+                symbol: "lightbulb",
+                systemPrompt: """
+                Explain the following text as if to a 10-year-old. Use short sentences, common words, and one concrete everyday example or analogy. No technical terms — replace each with a simple alternative. Stay in {language}. Return ONLY the explanation.
+                """,
+                transform: { @Sendable in Self.localSimplify($0) }
+            ),
+
+            // ── Communication ─────────────────────────────────────────────────
+            DemoPrompt(
+                id: "emailReply",
+                title: String(localized: "prompt.emailReply"),
+                symbol: "arrowshape.turn.up.left",
+                systemPrompt: """
+                Write a friendly, professional reply to the following incoming email. Keep it short (3–5 sentences). Start with an appropriate greeting matching the formality of the original. End with a neutral closing (e.g. "Best regards", "Viele Grüße") — do NOT invent or add a specific name. Stay in {language}. Return ONLY the reply text.
+                """,
+                transform: { @Sendable text in "[Reply draft] \(String(text.prefix(80)))… [local demo]" }
+            ),
+
+            // ── Social media ──────────────────────────────────────────────────
+            DemoPrompt(
+                id: "linkedinPost",
+                title: String(localized: "prompt.linkedinPost"),
+                symbol: "person.crop.rectangle",
+                systemPrompt: """
+                Rewrite the following text as a LinkedIn post. First-person voice. Attention-grabbing first line (the "hook"). 1–3 short paragraphs separated by blank lines (LinkedIn rewards line breaks). One clear takeaway. End with 2–3 relevant hashtags maximum. Avoid emoji floods (1–2 max), avoid the cliché "Thoughts?" close. Stay in {language}. Return ONLY the post.
+                """,
+                transform: { @Sendable text in "[LinkedIn] \(text) [local demo]" }
+            ),
+            DemoPrompt(
+                id: "instagramCaption",
+                title: String(localized: "prompt.instagramCaption"),
+                symbol: "camera",
+                systemPrompt: """
+                Rewrite the following text as an Instagram caption. Personal, emotional voice. Attention-grabbing first sentence — must work even after the "...more" truncation. Maximum 150 words. End with 3–5 relevant hashtags on a separate line. Stay in {language}. Return ONLY the caption.
+                """,
+                transform: { @Sendable text in "[IG] \(text) [local demo]" }
+            ),
+            DemoPrompt(
+                id: "facebookPost",
+                title: String(localized: "prompt.facebookPost"),
+                symbol: "bubble.middle.bottom",
+                systemPrompt: """
+                Rewrite the following text as a Facebook post. Conversational and personal — like sharing with friends. Storytelling first paragraph (the hook). 1–4 short paragraphs. Sparing hashtags (0–2 maximum). No marketing-speak. Stay in {language}. Return ONLY the post.
+                """,
+                transform: { @Sendable text in "[FB] \(text) [local demo]" }
+            ),
+
             // ── Context-aware ─────────────────────────────────────────────────
             DemoPrompt(
                 id: "adaptForApp",
@@ -183,6 +234,15 @@ struct DemoPrompt: Identifiable, Equatable {
                 Translate the following text into natural, modern English. Preserve the original tone and meaning. If the text is already in English, fix only obvious errors. Return ONLY the English translation.
                 """,
                 transform: { @Sendable in "[Demo EN] " + $0 }
+            ),
+            DemoPrompt(
+                id: "translateES",
+                title: String(localized: "prompt.translateES"),
+                symbol: "globe",
+                systemPrompt: """
+                Translate the following text into natural, modern Spanish (Castilian unless the source clearly suggests Latin American Spanish). Preserve the original tone and meaning. If the text is already in Spanish, fix only obvious errors. Return ONLY the Spanish translation.
+                """,
+                transform: { @Sendable in "[Demo ES] " + $0 }
             ),
         ]
     }

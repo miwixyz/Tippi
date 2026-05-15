@@ -2,6 +2,17 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.5] — 2026-05-15
+
+### Added
+- **6 more built-in prompts**, bringing the total to 22:
+  - **Explain like I'm 10** — for a 10-year-old, one everyday analogy, no jargon
+  - **Email reply** — friendly professional reply, matched formality, neutral closing (no hard-coded name)
+  - **LinkedIn post** — first-person hook, short paragraphs, 2–3 hashtags, no "Thoughts?" cliché
+  - **Instagram caption** — emotional, max 150 words, hook works after the "...more" truncation, 3–5 hashtags
+  - **Facebook post** — conversational storytelling, sparing hashtags, no marketing-speak
+  - **Translate → ES** — natural modern Spanish
+
 ## [1.5.4] — 2026-05-15
 
 ### Added

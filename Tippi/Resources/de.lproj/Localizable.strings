@@ -24,6 +24,12 @@
 "prompt.bulletpoints" = "Bulletpoints";
 "prompt.keypoints" = "Stichpunkte";
 "prompt.todos" = "To-Dos";
+"prompt.explainForChild" = "Für 10-Jährige";
+"prompt.emailReply" = "E-Mail-Antwort";
+"prompt.linkedinPost" = "LinkedIn-Post";
+"prompt.instagramCaption" = "Instagram-Caption";
+"prompt.facebookPost" = "Facebook-Post";
+"prompt.translateES" = "Übersetzen → ES";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Willkommen bei Tippi";
