@@ -200,7 +200,7 @@
 "settings.tab.help" = "Hilfe";
 "settings.about.description" = "Text in einer beliebigen App markieren, ⌥⌘T drücken — KI transformiert ihn direkt an Ort und Stelle.";
 "settings.about.feature1" = "Funktioniert systemweit in jeder App";
-"settings.about.feature2" = "Bring Your Own Key — 5 KI-Anbieter";
+"settings.about.feature2" = "Bring Your Own Key — 6 KI-Anbieter (4 Cloud + 2 lokal)";
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.howTitle" = "So funktioniert Tippi";
@@ -212,7 +212,10 @@
 "settings.help.importExportTitle" = "Prompts teilen & importieren";
 "settings.help.importExportBody" = "Exportiere deine eigenen Prompts als .tippipack-Datei — zum Teilen oder als Backup.\n\nAlle exportieren — klick auf Alle exportieren oben im Prompts-Tab.\nEinzeln exportieren — klick auf das ↑-Symbol neben einem Prompt.\nImportieren — klick auf Importieren, wähle eine .tippipack-Datei, dann: Hinzufügen (bestehende behalten) oder Ersetzen (bestehende überschreiben).\n\nImportierte Prompts bekommen immer neue IDs — keine Konflikte mit vorhandenen.";
 "settings.help.apiTitle" = "KI-Anbieter & API-Keys";
-"settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt OpenAI, Anthropic, Gemini, Mistral und Ollama (lokal, kostenlos). Keys werden sicher im macOS-Schlüsselbund gespeichert.";
+"settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt 6 Anbieter — OpenAI, Anthropic, Gemini, Mistral (Cloud, BYOK) sowie Ollama und MLX (beide komplett lokal, kostenlos, ohne Key). Keys werden sicher im macOS-Schlüsselbund gespeichert.";
+
+"settings.help.mlxTitle" = "MLX — lokale KI auf Apple Silicon";
+"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung (Terminal): uv tool install mlx-lm\nDanach im Tab Anbieter MLX wählen und ein Modell-Preset passend zum RAM auswählen (8 / 16 / 32 GB). Modelle werden beim ersten Einsatz automatisch geladen und liegen in ~/MLXModels/.\n\nTippi startet und stoppt den mlx_lm.server selbständig im Hintergrund — wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt, die erste Transformation ist sofort da.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 "settings.help.troubleBody" = "Hotkey loest nicht aus? Bedienungshilfen-Berechtigung erteilen: Systemeinstellungen, Datenschutz & Sicherheit, Bedienungshilfen. Tippi ist auch ueber das Menueleisten-Icon ausloesbar. Falls ein neuer Hotkey nicht reagiert: App neu starten.";
 

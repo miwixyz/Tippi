@@ -2,6 +2,15 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.4.2] — 2026-05-15
+
+### Changed
+- **In-app Help** — Settings → Help now has a dedicated MLX section and the AI providers list mentions all 6 providers (was: 5)
+- **About tab** — feature line corrected to "6 AI providers (4 cloud + 2 local)" (was: 5)
+
+### Internal
+- `scripts/release.sh` now runs a pre-build drift check: refuses to release when shipped providers don't appear in Help / About strings (EN + DE). Prevents future "the app says 5 providers but ships 6" type drift.
+
 ## [1.4.1] — 2026-05-15
 
 ### Changed

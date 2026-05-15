@@ -824,6 +824,11 @@ private struct HelpTab: View {
                     body: String(localized: "settings.help.apiBody")
                 )
                 helpSection(
+                    icon: "cpu",
+                    title: String(localized: "settings.help.mlxTitle"),
+                    body: String(localized: "settings.help.mlxBody")
+                )
+                helpSection(
                     icon: "exclamationmark.triangle",
                     title: String(localized: "settings.help.troubleTitle"),
                     body: String(localized: "settings.help.troubleBody")

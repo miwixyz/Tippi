@@ -42,6 +42,54 @@ echo "  Notary:      ${NOTARY_PROFILE}"
 # BUILD_NUMBER is set later (after git rev-list), printed during build step
 echo ""
 
+# 0. Pre-release sanity: docs ↔ code drift check.
+# Catches features that were shipped in code but never reflected in user-facing
+# help texts. Fails the release if any provider or built-in prompt is mentioned
+# in code but missing from settings.help.apiBody / About-Tab features in either
+# Localizable.strings file.
+echo "▶ [0/7] Drift check: code ↔ Help texts..."
+LROUTER="Tippi/LLM/LLMRouter.swift"
+EN_STRINGS="Tippi/Resources/en.lproj/Localizable.strings"
+DE_STRINGS="Tippi/Resources/de.lproj/Localizable.strings"
+DRIFT_ERRORS=0
+
+# Extract provider names: e.g. "OpenAIProvider()" → "OpenAI"
+PROVIDERS=$(grep -oE '\b[A-Z][A-Za-z]+Provider\(\)' "${LROUTER}" | sed 's/Provider()//')
+for p in ${PROVIDERS}; do
+    case "${p}" in
+        Anthropic) needle_en="Anthropic"; needle_de="Anthropic";;
+        Mistral)   needle_en="Mistral";   needle_de="Mistral";;
+        OpenAI)    needle_en="OpenAI";    needle_de="OpenAI";;
+        Gemini)    needle_en="Gemini";    needle_de="Gemini";;
+        Ollama)    needle_en="Ollama";    needle_de="Ollama";;
+        MLX)       needle_en="MLX";       needle_de="MLX";;
+        *)         needle_en="${p}";      needle_de="${p}";;
+    esac
+    grep -q "settings.help.apiBody.*${needle_en}" "${EN_STRINGS}" || {
+        echo "  ✗ Provider '${p}' not mentioned in EN settings.help.apiBody"; DRIFT_ERRORS=1; }
+    grep -q "settings.help.apiBody.*${needle_de}" "${DE_STRINGS}" || {
+        echo "  ✗ Provider '${p}' not mentioned in DE settings.help.apiBody"; DRIFT_ERRORS=1; }
+done
+
+# About-Tab feature2: should mention the actual provider count.
+ACTUAL_COUNT=$(echo "${PROVIDERS}" | wc -w | tr -d ' ')
+if ! grep -q "settings.about.feature2.*${ACTUAL_COUNT}" "${EN_STRINGS}"; then
+    echo "  ✗ EN settings.about.feature2 doesn't mention the current provider count (${ACTUAL_COUNT})"
+    DRIFT_ERRORS=1
+fi
+if ! grep -q "settings.about.feature2.*${ACTUAL_COUNT}" "${DE_STRINGS}"; then
+    echo "  ✗ DE settings.about.feature2 doesn't mention the current provider count (${ACTUAL_COUNT})"
+    DRIFT_ERRORS=1
+fi
+
+if [ "${DRIFT_ERRORS}" -ne 0 ]; then
+    echo ""
+    echo "✗ Help texts are out of date — refusing to release with stale documentation."
+    echo "  Update Tippi/Resources/{en,de}.lproj/Localizable.strings, then retry."
+    exit 1
+fi
+echo "  ✓ Help texts match shipped code (${ACTUAL_COUNT} providers, both languages)"
+
 # 1. Clean previous build
 rm -rf build dist
 mkdir -p "${DIST_DIR}"
