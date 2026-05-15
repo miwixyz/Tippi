@@ -2,7 +2,7 @@
 
 All notable changes to Tippi will be documented in this file.
 
-## [1.3.0] — unreleased
+## [1.3.0] — 2026-05-15
 
 ### Added
 - **5 new built-in prompts** — Make Formal, Make Casual, Simplify, Summarize, Adapt for App
