@@ -3,7 +3,7 @@ import Foundation
 struct MLXProvider: LLMProvider {
     let id           = "mlx"
     let displayName  = "MLX (local)"
-    let defaultModel = "mlx-community/Qwen3.5-2B-MLX-8bit"
+    let defaultModel = "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
     let requiresAPIKey = false
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
@@ -23,9 +23,11 @@ struct MLXProvider: LLMProvider {
             let stream: Bool
             let max_tokens: Int
         }
-        let resolvedModel = model.isEmpty
-            ? await MainActor.run { MLXServerManager.model }
-            : model
+        // Always use the model ID the server actually registered (from /v1/models).
+        // When the server is started with a local cache path, that path becomes the
+        // model ID — using MLXServerManager.activeModel handles both HF-repo and
+        // local-path cases correctly and avoids 404 errors.
+        let resolvedModel = await MainActor.run { MLXServerManager.activeModel }
         let body = Body(
             model: resolvedModel,
             messages: [
@@ -46,13 +48,18 @@ struct MLXProvider: LLMProvider {
 
         // OpenAI-compatible response shape
         struct Choice: Decodable {
-            struct Msg: Decodable { let content: String }
+            struct Msg: Decodable {
+                let content: String?
+                let reasoning: String?  // Thinking-Modelle (Qwen3.5 etc.) liefern reasoning statt content
+            }
             let message: Msg
         }
         struct ResponseBody: Decodable { let choices: [Choice] }
 
         let decoded = try JSONDecoder().decode(ResponseBody.self, from: data)
         guard let first = decoded.choices.first else { throw LLMError.invalidResponse }
-        return first.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = first.message.content ?? first.message.reasoning ?? ""
+        guard !text.isEmpty else { throw LLMError.invalidResponse }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

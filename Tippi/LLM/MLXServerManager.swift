@@ -33,6 +33,11 @@ final class MLXServerManager: ObservableObject {
 
     private var process: Process?
 
+    /// The model ID as reported by the running server via /v1/models.
+    /// This can differ from the configured model string when the server was
+    /// started with a local path instead of a HuggingFace repo ID.
+    private(set) var activeModelID: String?
+
     // MARK: - Configuration keys
 
     // Uses same key convention as LLMRouter for model ("defaultModel.mlx")
@@ -40,7 +45,7 @@ final class MLXServerManager: ObservableObject {
     static let portKey   = "mlx.port"
 
     static var model: String {
-        get { UserDefaults.standard.string(forKey: modelKey) ?? "mlx-community/Qwen3.5-2B-MLX-8bit" }
+        get { UserDefaults.standard.string(forKey: modelKey) ?? "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit" }
         set { UserDefaults.standard.set(newValue, forKey: modelKey) }
     }
     static var port: Int {
@@ -97,6 +102,7 @@ final class MLXServerManager: ObservableObject {
         // Poll until the server is ready (up to 60 s — first load takes time)
         do {
             let p = try await waitForHealth(port: port, timeout: 60)
+            activeModelID = await fetchActiveModelID(port: p)
             state = .running(port: p)
             return p
         } catch {
@@ -114,6 +120,7 @@ final class MLXServerManager: ObservableObject {
         process?.terminate()
         process = nil
         state = .stopped
+        activeModelID = nil
     }
 
     // MARK: - Binary resolution
@@ -145,7 +152,24 @@ final class MLXServerManager: ObservableObject {
 
     static var isInstalled: Bool { resolvedBinary() != nil }
 
+    /// The model ID that the running server actually registered (from /v1/models).
+    /// Falls back to the configured model string if the server is not yet running.
+    static var activeModel: String { shared.activeModelID ?? model }
+
     // MARK: - Health polling
+
+    /// Query /v1/models to get the exact model ID the server registered.
+    /// When the server is started with a local cache path the ID differs from the
+    /// HuggingFace repo string — using this value prevents 404 errors in completions.
+    private func fetchActiveModelID(port: Int) async -> String? {
+        let url = URL(string: "http://localhost:\(port)/v1/models")!
+        guard let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
+        struct ModelsResponse: Decodable {
+            struct ModelEntry: Decodable { let id: String }
+            let data: [ModelEntry]
+        }
+        return try? JSONDecoder().decode(ModelsResponse.self, from: data).data.first?.id
+    }
 
     private func waitForHealth(port: Int, timeout: TimeInterval) async throws -> Int {
         let url      = URL(string: "http://localhost:\(port)/v1/models")!
