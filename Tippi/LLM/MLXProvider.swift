@@ -22,6 +22,7 @@ struct MLXProvider: LLMProvider {
             let messages: [Message]
             let stream: Bool
             let max_tokens: Int
+            let temperature: Double
         }
         // Always use the model ID the server actually registered (from /v1/models).
         // When the server is started with a local cache path, that path becomes the
@@ -35,7 +36,8 @@ struct MLXProvider: LLMProvider {
                 Message(role: "user",   content: userText)
             ],
             stream: false,
-            max_tokens: 2048
+            max_tokens: 2048,
+            temperature: 0.3
         )
         request.httpBody = try JSONEncoder().encode(body)
 
