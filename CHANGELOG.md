@@ -2,6 +2,13 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.1] — 2026-05-15
+
+### Fixed
+- **MLX transformations hung at "AI is thinking…"** when more than one model existed in the HuggingFace cache:
+  - `MLXProvider` was deriving the request's `model` field from `/v1/models[0].id`, which mlx_lm.server populates with *every* cached model in arbitrary order — not the model we explicitly launched the server with. The fix sends `MLXServerManager.model` (the configured HF repo ID) directly, so requests always match the loaded model.
+- **Zombie mlx_lm.server processes** from previous Tippi sessions could survive an app quit and silently block port 8080 for the next launch. `MLXServerManager.start()` now runs `pkill -f mlx_lm.server` before spawning, so each new session begins with a clean server bound to the user's currently configured model.
+
 ## [1.5.0] — 2026-05-15
 
 ### Added

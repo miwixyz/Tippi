@@ -75,6 +75,19 @@ final class MLXServerManager: ObservableObject {
             throw MLXError.serverNotFound
         }
 
+        // Clean up any orphaned mlx_lm.server from a previous Tippi session.
+        // Symptom this prevents: Tippi crashes / quits → server keeps running →
+        // next launch finds the port still bound, our new Process silently
+        // fails to bind it, waitForHealth happily talks to the zombie, and
+        // every transformation hangs because the zombie may be loading a
+        // different model than the user configured.
+        //
+        // We are the sole manager of this binary on this machine; any running
+        // instance is ours to reclaim. Worst case for a user who hand-started
+        // mlx_lm.server outside Tippi: it gets restarted with their currently
+        // configured model — annoying but recoverable.
+        Self.killOrphanProcesses()
+
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: binary.path)
         proc.arguments     = binary.arguments + [
@@ -151,6 +164,27 @@ final class MLXServerManager: ObservableObject {
     }
 
     static var isInstalled: Bool { resolvedBinary() != nil }
+
+    /// Synchronously kill any leftover `mlx_lm.server` processes from previous
+    /// Tippi sessions and wait long enough for the port to actually free up.
+    /// Called at the top of `start()`.
+    private static func killOrphanProcesses() {
+        let pkill = Process()
+        pkill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        pkill.arguments = ["-f", "mlx_lm.server"]
+        pkill.standardOutput = FileHandle.nullDevice
+        pkill.standardError  = FileHandle.nullDevice
+        do {
+            try pkill.run()
+            pkill.waitUntilExit()
+        } catch {
+            // pkill missing or denied — fine, we'll try to spawn anyway.
+            return
+        }
+        // pkill returns immediately; the OS still needs a beat to release
+        // the listening port before our new Process can bind it.
+        Thread.sleep(forTimeInterval: 0.8)
+    }
 
     /// The model ID that the running server actually registered (from /v1/models).
     /// Falls back to the configured model string if the server is not yet running.

@@ -24,11 +24,19 @@ struct MLXProvider: LLMProvider {
             let max_tokens: Int
             let temperature: Double
         }
-        // Always use the model ID the server actually registered (from /v1/models).
-        // When the server is started with a local cache path, that path becomes the
-        // model ID — using MLXServerManager.activeModel handles both HF-repo and
-        // local-path cases correctly and avoids 404 errors.
-        let resolvedModel = await MainActor.run { MLXServerManager.activeModel }
+        // Use the HuggingFace repo ID we explicitly started the server with —
+        // NOT whatever /v1/models reports first.
+        //
+        // mlx_lm.server's /v1/models lists every model in the HF cache, in
+        // arbitrary order. Picking data[0] (the old behaviour) was wrong
+        // whenever the user had more than one model downloaded: the API call
+        // would request a different model than the one --model launched the
+        // server with, forcing a full model swap on every transformation and
+        // hanging the UI forever.
+        //
+        // Since MLXServerManager always launches mlx_lm.server with
+        // `--model <configured>`, that exact ID is guaranteed to be valid.
+        let resolvedModel = await MainActor.run { MLXServerManager.model }
         let body = Body(
             model: resolvedModel,
             messages: [
