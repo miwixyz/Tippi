@@ -19,14 +19,16 @@
 ## Features
 
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
-- **6 built-in prompts** — Improve, Fix Grammar, Translate → DE, Translate → EN, Shorten, Lengthen
+- **11 built-in prompts** — Improve, Fix Grammar, Translate → DE, Translate → EN, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Summarize, Adapt for App; all language-aware via `{language}`
 - **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
-- **5 AI providers** — choose any combination, switch freely:
+- **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
+- **6 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5-mini`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
   - **Google Gemini** (default: `gemini-2.5-flash`)
   - **Mistral** (default: `mistral-small-latest`, EU hosting available)
   - **Ollama** (local, fully offline)
+  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, with 7 RAM-tiered model presets (8 / 16 / 32 GB) and auto-start on launch when MLX is your preferred provider
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Voice Instruction** — select text, trigger the hotkey, then press the mic button in the popup and speak a command (e.g. "make this shorter"); Tippi applies it via AI directly — no prompt picker needed
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
@@ -51,7 +53,8 @@
 - Apple Silicon Mac (M1, M2, M3, M4)
 - At least one AI provider:
   - An API key for OpenAI, Anthropic, Google Gemini, or Mistral, **or**
-  - [Ollama](https://ollama.com) installed locally (free, no key required)
+  - [Ollama](https://ollama.com) installed locally (free, no key required), **or**
+  - [MLX](https://github.com/ml-explore/mlx-lm) installed locally via `uv tool install mlx-lm` — Tippi will start and manage the server itself
 - **Voice features** (optional): a Whisper model downloaded via Settings → Voice (in-app download, no manual install)
 
 ---
@@ -232,6 +235,7 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 | Gemini    | Free tier  | Fast    | ★★★    | Generous free tier at `aistudio.google.com/apikey`. |
 | Mistral   | $          | Fast    | ★★★★   | EU-hosted option for data-residency requirements. |
 | Ollama    | **Free**   | ⚡ Hardware-dependent | ★★–★★★★ | Fully local. Privacy-best. Quality depends on model. |
+| MLX       | **Free**   | ⚡⚡ ~1.5–2× faster than Ollama on Apple Silicon | ★★–★★★★ | Fully local, Apple-Silicon-native via Metal. Tippi manages the `mlx_lm.server` process. Auto-starts on launch when set as default. |
 
 API keys are stored exclusively in the macOS Keychain (account `provider.<name>`, service `com.tippi.app`), not in plaintext anywhere on disk.
 
@@ -252,7 +256,7 @@ Bug reports and pull requests are welcome. For significant changes, please open 
 - **Hardened Runtime, no Sandbox** — required for cross-app text capture
 - **Text capture**: Accessibility API first (`AXUIElementCopyAttributeValue` on focused element), Pasteboard ⌘C round-trip as fallback (with snapshot/restore to keep clipboard intact)
 - **Hotkey**: `NSEvent.addGlobalMonitorForEvents(matching: .keyDown)` plus a Carbon `RegisterEventHotKey` backup. For self-signed builds, the macOS-native keyboard shortcut binding to the "Trigger Tippi…" menu item is the most reliable path.
-- **LLM layer**: a `LLMProvider` protocol with five implementations; `LLMRouter` picks the preferred configured provider with automatic fallthrough
+- **LLM layer**: a `LLMProvider` protocol with six implementations (OpenAI, Anthropic, Gemini, Mistral, Ollama, MLX); `LLMRouter` picks the preferred configured provider with automatic fallthrough. The MLX provider additionally drives `MLXServerManager`, which spawns and supervises a local `mlx_lm.server` process and resolves the active model ID via `/v1/models`.
 - **Voice layer**:
   - `AudioRecorder` — AVFoundation-based push-to-talk capture
   - `WhisperTranscriber` — wraps a statically linked `whisper-cli` binary bundled in the app; runs out-of-process, no dynamic library dependencies
@@ -274,7 +278,7 @@ Tippi is designed so your text never reaches anything except the AI provider you
 - **App-container excluded from Spotlight indexing**
 - **Voice processing fully local** — audio is passed directly to the bundled `whisper-cli` binary; nothing is sent to any network endpoint
 
-Provider-specific privacy varies — review each provider's data policy if you handle sensitive content. **Ollama** runs entirely locally for the strictest privacy posture.
+Provider-specific privacy varies — review each provider's data policy if you handle sensitive content. **Ollama** and **MLX** run entirely locally for the strictest privacy posture — no text ever leaves your Mac.
 
 ---
 
@@ -285,9 +289,10 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.0.x  | ✅ Done | System-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
 | v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, brand refresh (mascot icon, `#3070F0` accent, `#020B1D` navy, adaptive dark/light bg), bug fixes through v1.1.11 |
 | v1.2    | ✅ Done | Prompt variables — `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` in custom prompts |
-| v1.3    | 🚧 In progress | 5 new built-in prompts (Formal, Casual, Simplify, Summarize, Adapt for App); Import/Export custom prompts as `.tippipack`; all built-ins use `{language}` |
-| v1.4    | Planned | MLX provider — Tippi manages a local `mlx_lm.server`; faster than Ollama on Apple Silicon |
-| v1.4    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
+| v1.3    | ✅ Done | 5 new built-in prompts (Formal, Casual, Simplify, Summarize, Adapt for App); Import/Export custom prompts as `.tippipack`; all built-ins use `{language}` |
+| v1.4    | ✅ Done | MLX provider — Tippi manages a local `mlx_lm.server`; ~1.5–2× faster than Ollama on Apple Silicon; 7 RAM-tiered model presets; auto model-ID resolution |
+| v1.4.1  | ✅ Done | MLX auto-start (on app launch, provider switch, settings save); temperature 0.3 for more consistent rewrites |
+| v1.5    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
 | v2.0    | Planned | Cross-platform (Windows) |
 
 ---
@@ -298,6 +303,6 @@ MIT — see [LICENSE](LICENSE).
 
 ## Credits
 
-Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, and the [Ollama](https://ollama.com) project. Voice transcription via [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Auto-updates via [Sparkle 2](https://sparkle-project.org). Tippi mascot and brand assets by Michael Wlr.
+Built with Swift + SwiftUI + AppKit. AI provider APIs by OpenAI, Anthropic, Google, Mistral, the [Ollama](https://ollama.com) project, and [Apple's MLX](https://github.com/ml-explore/mlx-lm) framework via `mlx_lm.server`. Voice transcription via [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Auto-updates via [Sparkle 2](https://sparkle-project.org). Tippi mascot and brand assets by Michael Wlr.
 
 © 2026 Michael Wlr — MIT License
