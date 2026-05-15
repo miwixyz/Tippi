@@ -268,12 +268,16 @@ private struct ProviderRow: View {
     }
 
     static let mlxPresets: [MLXPreset] = [
-        MLXPreset(id: "gemma3-4b",  label: "Gemma 3 4B — 8 GB",     repoID: "mlx-community/gemma-3-4b-it-4bit"),
-        MLXPreset(id: "qwen3-8b",   label: "Qwen3 8B — 8–16 GB",    repoID: "mlx-community/Qwen3-8B-4bit"),
-        MLXPreset(id: "llama31-8b", label: "Llama 3.1 8B — 16 GB",  repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"),
-        MLXPreset(id: "qwen25-14b", label: "Qwen2.5 14B — 32 GB ⭐", repoID: "mlx-community/Qwen2.5-14B-Instruct-4bit"),
-        MLXPreset(id: "qwen3-14b",  label: "Qwen3 14B — 32 GB",     repoID: "mlx-community/Qwen3-14B-4bit"),
-        MLXPreset(id: "gptoss-20b", label: "GPT OSS 20B — 32 GB",   repoID: "mlx-community/GPT-OSS-20B-4bit"),
+        // 8 GB
+        MLXPreset(id: "qwen35-08b",    label: "Qwen3.5 0.8B — 8 GB",       repoID: "mlx-community/Qwen3.5-0.8B-MLX-8bit"),
+        MLXPreset(id: "qwen35-2b",     label: "Qwen3.5 2B — 8 GB",         repoID: "mlx-community/Qwen3.5-2B-MLX-8bit"),
+        // 16 GB
+        MLXPreset(id: "qwen35-9b",     label: "Qwen3.5 9B — 16 GB ⭐",     repoID: "mlx-community/Qwen3.5-9B-MLX-8bit"),
+        MLXPreset(id: "llama31-8b-4b", label: "Llama 3.1 8B 4bit — 16 GB", repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"),
+        // 32 GB
+        MLXPreset(id: "llama31-8b-3b", label: "Llama 3.1 8B 3bit — 32 GB", repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-3bit"),
+        MLXPreset(id: "qwen25-14b",    label: "Qwen2.5 14B — 32 GB ⭐",    repoID: "mlx-community/Qwen2.5-14B-Instruct-4bit"),
+        MLXPreset(id: "deepseek-r1",   label: "DeepSeek-R1 7B — 32 GB",    repoID: "mlx-community/DeepSeek-R1-Distill-Qwen-7B-4bit"),
     ]
 
     var body: some View {
