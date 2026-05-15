@@ -212,8 +212,27 @@
 "settings.help.apiTitle" = "AI providers & keys";
 "settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 6 providers — OpenAI, Anthropic, Gemini, Mistral (cloud, BYOK), plus Ollama and MLX (both fully local, free, no key needed). Keys are stored securely in the macOS Keychain.";
 
+/* MLX in-app installer */
+"mlx.install.title" = "Set up MLX";
+"mlx.install.subtitle" = "Run AI fully on your Mac — no API key, no cloud";
+"mlx.install.button" = "Install MLX…";
+"mlx.install.notInstalled" = "MLX is not installed yet — click \"Install MLX\" to set it up.";
+"mlx.install.phase.checking" = "Checking what's already installed…";
+"mlx.install.phase.uv" = "Install uv (Python tool installer)";
+"mlx.install.phase.mlxlm" = "Install mlx-lm (the local AI engine)";
+"mlx.install.phase.done" = "Installation complete";
+"mlx.install.start" = "Install";
+"mlx.install.cancel" = "Cancel";
+"mlx.install.close" = "Done";
+"mlx.install.success" = "MLX is ready. You can now select a model in the Providers tab.";
+"mlx.install.error.uv" = "Could not install uv. Check your internet connection and try again.";
+"mlx.install.error.mlxlm" = "Could not install mlx-lm. Check your internet connection and try again.";
+"mlx.install.error.notFound" = "Installer reported success but mlx_lm.server still isn't on disk. Try the manual command below.";
+"mlx.install.fallbackHint" = "You can also install manually in Terminal:";
+"mlx.install.copyCommand" = "Copy command";
+
 "settings.help.mlxTitle" = "MLX — local AI on Apple Silicon";
-"settings.help.mlxBody" = "MLX runs AI models directly on your Mac — no cloud, no API key, no data leaves your device. It's roughly 1.5–2× faster than Ollama on Apple Silicon.\n\nOne-time setup (Terminal): uv tool install mlx-lm\nThen pick MLX as your provider in Settings → Providers and choose a model preset matched to your RAM (8 / 16 / 32 GB). Models are downloaded automatically on first use and stored in ~/MLXModels/.\n\nTippi starts and stops the mlx_lm.server in the background for you — when MLX is your default provider, the server pre-warms on app launch so the first transformation is instant.";
+"settings.help.mlxBody" = "MLX runs AI models directly on your Mac — no cloud, no API key, no data leaves your device. It's roughly 1.5–2× faster than Ollama on Apple Silicon.\n\nOne-time setup: pick MLX in Settings → Providers and click \"Install MLX…\". Tippi handles the rest — no Terminal needed.\n\nThen choose a model preset matched to your RAM (8 / 16 / 32 GB). Models are downloaded automatically on first use and stored in ~/MLXModels/.\n\nWhen MLX is your default provider, Tippi pre-warms the server on app launch so your first transformation is instant.";
 "settings.help.troubleTitle" = "Troubleshooting";
 "settings.help.troubleBody" = "Hotkey not firing? Grant Accessibility permission in System Settings → Privacy & Security → Accessibility. You can also trigger Tippi via the menu bar icon ✏️. If a new hotkey doesn't respond, restart the app.";
 

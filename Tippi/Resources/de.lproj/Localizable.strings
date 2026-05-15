@@ -214,8 +214,27 @@
 "settings.help.apiTitle" = "KI-Anbieter & API-Keys";
 "settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt 6 Anbieter — OpenAI, Anthropic, Gemini, Mistral (Cloud, BYOK) sowie Ollama und MLX (beide komplett lokal, kostenlos, ohne Key). Keys werden sicher im macOS-Schlüsselbund gespeichert.";
 
+/* MLX In-App-Installer */
+"mlx.install.title" = "MLX einrichten";
+"mlx.install.subtitle" = "KI komplett auf deinem Mac — kein API-Key, keine Cloud";
+"mlx.install.button" = "MLX installieren…";
+"mlx.install.notInstalled" = "MLX ist noch nicht installiert — klick auf „MLX installieren“ um es einzurichten.";
+"mlx.install.phase.checking" = "Prüfe was schon installiert ist…";
+"mlx.install.phase.uv" = "uv installieren (Python-Tool-Installer)";
+"mlx.install.phase.mlxlm" = "mlx-lm installieren (die lokale KI-Engine)";
+"mlx.install.phase.done" = "Installation abgeschlossen";
+"mlx.install.start" = "Installieren";
+"mlx.install.cancel" = "Abbrechen";
+"mlx.install.close" = "Fertig";
+"mlx.install.success" = "MLX ist startklar. Du kannst jetzt im Anbieter-Tab ein Modell wählen.";
+"mlx.install.error.uv" = "uv konnte nicht installiert werden. Internetverbindung prüfen und erneut versuchen.";
+"mlx.install.error.mlxlm" = "mlx-lm konnte nicht installiert werden. Internetverbindung prüfen und erneut versuchen.";
+"mlx.install.error.notFound" = "Installation meldet Erfolg, aber mlx_lm.server liegt nicht auf der Platte. Versuche den Terminal-Befehl unten.";
+"mlx.install.fallbackHint" = "Du kannst auch manuell im Terminal installieren:";
+"mlx.install.copyCommand" = "Befehl kopieren";
+
 "settings.help.mlxTitle" = "MLX — lokale KI auf Apple Silicon";
-"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung (Terminal): uv tool install mlx-lm\nDanach im Tab Anbieter MLX wählen und ein Modell-Preset passend zum RAM auswählen (8 / 16 / 32 GB). Modelle werden beim ersten Einsatz automatisch geladen und liegen in ~/MLXModels/.\n\nTippi startet und stoppt den mlx_lm.server selbständig im Hintergrund — wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt, die erste Transformation ist sofort da.";
+"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.\n\nDanach ein Modell-Preset passend zum RAM auswählen (8 / 16 / 32 GB). Modelle werden beim ersten Einsatz automatisch geladen und liegen in ~/MLXModels/.\n\nWenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist sofort da.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 "settings.help.troubleBody" = "Hotkey loest nicht aus? Bedienungshilfen-Berechtigung erteilen: Systemeinstellungen, Datenschutz & Sicherheit, Bedienungshilfen. Tippi ist auch ueber das Menueleisten-Icon ausloesbar. Falls ein neuer Hotkey nicht reagiert: App neu starten.";
 
