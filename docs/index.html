@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tippi — System-wide AI writing assistant for macOS</title>
+<meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 6 AI providers, fully local option via MLX. macOS only.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Tippi — System-wide AI writing assistant for macOS">
+<meta property="og:description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, fully local option.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://miwixyz.github.io/Tippi/">
+<meta property="og:image" content="https://miwixyz.github.io/Tippi/mascot.png">
+
+<style>
+  :root {
+    --accent: #3070F0;
+    --accent-hover: #1e5cd0;
+    --navy: #020B1D;
+    --navy-2: #0B1730;
+    --surface: #E5DEDA;
+    --mist: #EAF3FF;
+    --ink: #F7F2EA;
+    --ink-dim: #aab1c0;
+    --border: rgba(255,255,255,.08);
+    --radius: 12px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--navy);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* ── Nav ───────────────────────────────────────────────────────────────── */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(2,11,29,.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; }
+  .brand img { width: 28px; height: 28px; border-radius: 50%; }
+  .nav-links { display: flex; gap: 24px; font-size: 14px; color: var(--ink-dim); }
+  .nav-links a { color: var(--ink-dim); }
+  .nav-links a:hover { color: var(--ink); text-decoration: none; }
+
+  /* ── Hero ──────────────────────────────────────────────────────────────── */
+  .hero {
+    padding: 88px 0 64px;
+    text-align: center;
+    background: radial-gradient(ellipse 70% 50% at 50% 0%,
+                rgba(48,112,240,.18) 0%, transparent 60%);
+  }
+  .hero img.mascot {
+    width: 112px; height: 112px; border-radius: 50%;
+    margin-bottom: 28px;
+    box-shadow: 0 12px 40px rgba(48,112,240,.3);
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 60px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin-bottom: 18px;
+  }
+  h1 .accent { color: var(--accent); }
+  .hero p.sub {
+    font-size: clamp(18px, 2vw, 22px);
+    color: var(--ink-dim);
+    max-width: 640px; margin: 0 auto 36px;
+  }
+  .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: white;
+    padding: 14px 24px;
+    border-radius: var(--radius);
+    font-weight: 600; font-size: 16px;
+    transition: background .15s ease, transform .1s ease;
+    border: none; cursor: pointer;
+  }
+  .btn:hover { background: var(--accent-hover); text-decoration: none; transform: translateY(-1px); }
+  .btn.ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink);
+  }
+  .btn.ghost:hover { background: rgba(255,255,255,.05); }
+  .hero small { display: block; margin-top: 18px; color: var(--ink-dim); font-size: 14px; }
+
+  /* ── Section structure ─────────────────────────────────────────────────── */
+  section { padding: 72px 0; border-top: 1px solid var(--border); }
+  section h2 {
+    font-size: clamp(28px, 4vw, 38px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  section p.lead {
+    font-size: 18px; color: var(--ink-dim);
+    max-width: 620px; margin: 0 auto 44px;
+    text-align: center;
+  }
+
+  /* ── How-it-works ──────────────────────────────────────────────────────── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .step {
+    background: var(--navy-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .step .n {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white; font-weight: 700;
+    display: grid; place-items: center;
+    margin-bottom: 18px;
+  }
+  .step h3 { font-size: 18px; margin-bottom: 8px; }
+  .step p { color: var(--ink-dim); font-size: 15px; }
+
+  /* ── Features grid ─────────────────────────────────────────────────────── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .feature {
+    background: var(--navy-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .feature .icon { font-size: 28px; margin-bottom: 12px; }
+  .feature h3 { font-size: 17px; margin-bottom: 8px; }
+  .feature p { color: var(--ink-dim); font-size: 14px; line-height: 1.5; }
+
+  /* ── Comparison table ──────────────────────────────────────────────────── */
+  .compare-wrap { overflow-x: auto; }
+  table.compare {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--navy-2);
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-width: 520px;
+  }
+  table.compare th, table.compare td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+  }
+  table.compare th { font-weight: 700; color: var(--ink); background: rgba(48,112,240,.08); }
+  table.compare tr:last-child td { border-bottom: none; }
+  table.compare td:first-child { color: var(--ink-dim); }
+  table.compare td.tippi { color: var(--ink); font-weight: 500; }
+
+  /* ── Privacy ───────────────────────────────────────────────────────────── */
+  .privacy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .privacy-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 18px;
+    background: var(--navy-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .privacy-item .check {
+    color: var(--accent);
+    font-weight: 700; font-size: 18px;
+    flex-shrink: 0;
+  }
+  .privacy-item p { font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+  .privacy-item strong { color: var(--ink); display: block; margin-bottom: 4px; }
+
+  /* ── Providers strip ───────────────────────────────────────────────────── */
+  .providers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .provider {
+    background: var(--navy-2);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: var(--radius);
+    text-align: center;
+  }
+  .provider .pname { font-weight: 600; margin-bottom: 4px; }
+  .provider .ptag { font-size: 12px; color: var(--ink-dim); }
+  .provider.local { border-color: rgba(48,112,240,.4); }
+  .provider.local .ptag { color: var(--accent); }
+
+  /* ── Builtins ──────────────────────────────────────────────────────────── */
+  .builtins {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .builtin {
+    background: var(--navy-2);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--ink-dim);
+  }
+  .builtin strong { color: var(--ink); display: block; font-size: 14px; font-weight: 500; }
+
+  /* ── Final CTA ─────────────────────────────────────────────────────────── */
+  .final {
+    text-align: center;
+    background: radial-gradient(ellipse 60% 60% at 50% 50%,
+                rgba(48,112,240,.12) 0%, transparent 70%);
+  }
+
+  /* ── Footer ────────────────────────────────────────────────────────────── */
+  footer {
+    padding: 36px 0;
+    border-top: 1px solid var(--border);
+    color: var(--ink-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+  footer a { color: var(--ink-dim); }
+  footer a:hover { color: var(--ink); }
+
+  /* ── Responsive ────────────────────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .nav-links { display: none; }
+    .steps { grid-template-columns: 1fr; }
+    section { padding: 56px 0; }
+    .hero { padding: 56px 0 40px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <img src="mascot.png" alt="Tippi">
+      <span>Tippi</span>
+    </div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+      <a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ───────────────────────────────────────────────────────────────── -->
+<header class="hero">
+  <div class="wrap">
+    <img src="mascot.png" class="mascot" alt="Tippi mascot">
+    <h1>Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
+    <p class="sub">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in. Open-source, BYOK, with a fully local option.</p>
+    <div class="cta-group">
+      <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
+        Download for macOS →
+      </a>
+      <a class="btn ghost" href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">
+        View source on GitHub
+      </a>
+    </div>
+    <small>Free · MIT licensed · Apple Silicon · macOS 15+</small>
+  </div>
+</header>
+
+<!-- ── How it works ──────────────────────────────────────────────────────── -->
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="lead">Three steps. One hotkey. Zero context switching.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Select text anywhere</h3>
+        <p>Mail, Safari, Notes, Slack, VS Code, Pages — any text field, any app on macOS.</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Press ⌥⌘T</h3>
+        <p>A small popup appears at your cursor. Pick one of 22 built-in prompts or your own custom ones.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>Replace in place</h3>
+        <p>Preview the AI's rewrite side-by-side with the original. Replace, append, copy, or regenerate.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Comparison ────────────────────────────────────────────────────────── -->
+<section>
+  <div class="wrap">
+    <h2>Why Tippi</h2>
+    <p class="lead">What you get that you don't get from cloud-only assistants.</p>
+    <div class="compare-wrap">
+      <table class="compare">
+        <thead>
+          <tr><th>What others do</th><th>What Tippi does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Open a new tab, paste your text, copy the answer back</td><td class="tippi">Works in every app, right at your cursor</td></tr>
+          <tr><td>Locked to one provider</td><td class="tippi">6 providers — pick what works for you</td></tr>
+          <tr><td>Cloud-only — your text leaves your Mac</td><td class="tippi">Two local engines (MLX, Ollama) — fully offline option</td></tr>
+          <tr><td>Subscription</td><td class="tippi">Free, open-source (MIT), bring your own key</td></tr>
+          <tr><td>Telemetry, analytics, "anonymized" data</td><td class="tippi">Zero telemetry, no analytics, no crash reports</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ──────────────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="wrap">
+    <h2>What's in the box</h2>
+    <p class="lead">Built to fit into your existing workflow, not replace it.</p>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">⚡</div>
+        <h3>System-wide hotkey</h3>
+        <p>Triggers in any app. No need to switch to a chat window or paste into a different tab.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🎯</div>
+        <h3>22 curated built-in prompts</h3>
+        <p>Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize, and more — plus your own custom prompts.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🎙️</div>
+        <h3>Voice input</h3>
+        <p>Push-to-talk dictation with Whisper running fully on-device. No audio leaves your Mac.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🏷️</div>
+        <h3>Smart variables</h3>
+        <p><code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code>, <code>{selected_text}</code> — your prompts adapt to context at trigger time.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📦</div>
+        <h3>One-click MLX setup</h3>
+        <p>Run AI fully locally on Apple Silicon. Tippi installs the toolchain from Settings — no Terminal required.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔄</div>
+        <h3>Auto-updates</h3>
+        <p>Sparkle 2 keeps Tippi current. Notarized DMG, signed with a Developer ID.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Providers ─────────────────────────────────────────────────────────── -->
+<section>
+  <div class="wrap">
+    <h2>Pick your AI provider</h2>
+    <p class="lead">Cloud, local, or any mix. Swap with one click in Settings.</p>
+    <div class="providers">
+      <div class="provider"><div class="pname">OpenAI</div><div class="ptag">cloud · BYOK</div></div>
+      <div class="provider"><div class="pname">Anthropic</div><div class="ptag">cloud · BYOK</div></div>
+      <div class="provider"><div class="pname">Google Gemini</div><div class="ptag">cloud · free tier</div></div>
+      <div class="provider"><div class="pname">Mistral</div><div class="ptag">EU cloud · BYOK</div></div>
+      <div class="provider local"><div class="pname">Ollama</div><div class="ptag">100% local</div></div>
+      <div class="provider local"><div class="pname">MLX</div><div class="ptag">100% local · Apple-Silicon-native</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Privacy ───────────────────────────────────────────────────────────── -->
+<section id="privacy">
+  <div class="wrap">
+    <h2>Privacy by design</h2>
+    <p class="lead">Your text never reaches anything except the AI provider you explicitly configured.</p>
+    <div class="privacy-grid">
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div><strong>No telemetry, ever</strong><p>No analytics, no crash reporting, no usage stats.</p></div>
+      </div>
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div><strong>No request history</strong><p>Once a response is rendered, neither input nor output is written to disk.</p></div>
+      </div>
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div><strong>API keys in Keychain</strong><p>Stored exclusively in the macOS Keychain. No iCloud sync, no plaintext config.</p></div>
+      </div>
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div><strong>Voice runs on-device</strong><p>Whisper transcribes audio locally. Nothing is sent to any network endpoint.</p></div>
+      </div>
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div><strong>Fully local option</strong><p>MLX and Ollama backends run on your Mac — no cloud round-trip at all.</p></div>
+      </div>
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div><strong>Open source</strong><p>Every line on GitHub. MIT licensed. Audit it yourself.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Built-ins showcase ────────────────────────────────────────────────── -->
+<section>
+  <div class="wrap">
+    <h2>22 prompts that ship with Tippi</h2>
+    <p class="lead">All language-aware. All editable. Build your own on top.</p>
+    <div class="builtins">
+      <div class="builtin"><strong>Improve</strong>Clearer, more natural prose</div>
+      <div class="builtin"><strong>Fix grammar</strong>Spelling + punctuation only</div>
+      <div class="builtin"><strong>Shorten</strong>~30% shorter, no info lost</div>
+      <div class="builtin"><strong>Lengthen</strong>~50% longer with context</div>
+      <div class="builtin"><strong>Make formal</strong>Business-ready tone</div>
+      <div class="builtin"><strong>Make casual</strong>Friend-to-friend tone</div>
+      <div class="builtin"><strong>Simplify</strong>Short sentences, no jargon</div>
+      <div class="builtin"><strong>Explain like I'm 10</strong>Everyday analogy</div>
+      <div class="builtin"><strong>Humanize</strong>Strip AI tells</div>
+      <div class="builtin"><strong>Summarize</strong>3 key bullet points</div>
+      <div class="builtin"><strong>TL;DR</strong>1–2 sentences max</div>
+      <div class="builtin"><strong>Bullet points</strong>Every thought as a bullet</div>
+      <div class="builtin"><strong>Key points</strong>Max 5 essence bullets</div>
+      <div class="builtin"><strong>Action items</strong>Verb-first to-do list</div>
+      <div class="builtin"><strong>Email reply</strong>Matched formality</div>
+      <div class="builtin"><strong>Adapt for app</strong>Tone matches current app</div>
+      <div class="builtin"><strong>LinkedIn post</strong>Hook + 2–3 hashtags</div>
+      <div class="builtin"><strong>Instagram caption</strong>Hook for "…more" cut</div>
+      <div class="builtin"><strong>Facebook post</strong>Conversational story</div>
+      <div class="builtin"><strong>Translate → DE</strong>Natural modern German</div>
+      <div class="builtin"><strong>Translate → EN</strong>Natural modern English</div>
+      <div class="builtin"><strong>Translate → ES</strong>Natural modern Spanish</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Final CTA ─────────────────────────────────────────────────────────── -->
+<section class="final">
+  <div class="wrap">
+    <h2>Try it in 60 seconds</h2>
+    <p class="lead">Download the DMG, grant Accessibility, add one API key (or install MLX with one click). Done.</p>
+    <div class="cta-group">
+      <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
+        Download Tippi →
+      </a>
+      <a class="btn ghost" href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">
+        Star on GitHub ★
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Open source · MIT licensed · Made by <a href="https://github.com/miwixyz" target="_blank" rel="noopener">Michael Wlr</a></p>
+    <p style="margin-top:8px"><a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">github.com/miwixyz/Tippi</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
