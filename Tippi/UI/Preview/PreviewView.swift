@@ -195,8 +195,16 @@ struct PreviewView: View {
         state = .loading
         task = Task { @MainActor in
             do {
+                let context = PromptVariableResolver.Context(
+                    selectedText: originalText,
+                    appName: sourceAppName ?? ""
+                )
+                let resolvedPrompt = PromptVariableResolver.resolve(
+                    template: prompt.systemPrompt,
+                    context: context
+                )
                 let result = try await LLMRouter.shared.complete(
-                    systemPrompt: prompt.systemPrompt,
+                    systemPrompt: resolvedPrompt,
                     userText: originalText
                 )
                 guard !Task.isCancelled else { return }

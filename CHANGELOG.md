@@ -2,6 +2,16 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.2.0] — unreleased
+
+### Added
+- **Prompt Variables** — Custom prompts can now include dynamic placeholders that are resolved at trigger time:
+  - `{clipboard}` — current clipboard content
+  - `{app_name}` — name of the source application (e.g. Mail, Safari)
+  - `{language}` — detected language of the selected text (e.g. German, English)
+  - `{selected_text}` — the captured text itself (useful when building context-aware system prompts)
+- **Variable hint** in Settings → Prompts editor — available variables are shown below the instruction field
+
 ## [1.1.11] — 2026-05-14
 
 ### Changed

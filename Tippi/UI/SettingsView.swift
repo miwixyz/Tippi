@@ -516,6 +516,10 @@ private struct PromptEditor: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
+            Text(String(localized: "settings.prompts.editor.variablesHint"))
+                .font(.caption)
+                .foregroundStyle(.tint)
+
             Spacer(minLength: 0)
 
             HStack {
