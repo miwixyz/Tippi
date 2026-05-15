@@ -40,7 +40,7 @@ final class MLXServerManager: ObservableObject {
     static let portKey   = "mlx.port"
 
     static var model: String {
-        get { UserDefaults.standard.string(forKey: modelKey) ?? "mlx-community/Qwen2.5-14B-Instruct-4bit" }
+        get { UserDefaults.standard.string(forKey: modelKey) ?? "mlx-community/Qwen3.5-2B-MLX-8bit" }
         set { UserDefaults.standard.set(newValue, forKey: modelKey) }
     }
     static var port: Int {

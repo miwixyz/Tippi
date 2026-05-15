@@ -269,8 +269,8 @@ private struct ProviderRow: View {
 
     static let mlxPresets: [MLXPreset] = [
         // 8 GB
-        MLXPreset(id: "qwen35-08b",    label: "Qwen3.5 0.8B — 8 GB",       repoID: "mlx-community/Qwen3.5-0.8B-MLX-8bit"),
-        MLXPreset(id: "qwen35-2b",     label: "Qwen3.5 2B — 8 GB",         repoID: "mlx-community/Qwen3.5-2B-MLX-8bit"),
+        MLXPreset(id: "qwen35-08b",    label: "Qwen3.5 0.8B — 8 GB",        repoID: "mlx-community/Qwen3.5-0.8B-MLX-8bit"),
+        MLXPreset(id: "qwen35-2b",     label: "Qwen3.5 2B — 8 GB ⭐ schnell", repoID: "mlx-community/Qwen3.5-2B-MLX-8bit"),
         // 16 GB
         MLXPreset(id: "qwen35-9b",     label: "Qwen3.5 9B — 16 GB ⭐",     repoID: "mlx-community/Qwen3.5-9B-MLX-8bit"),
         MLXPreset(id: "llama31-8b-4b", label: "Llama 3.1 8B 4bit — 16 GB", repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"),
