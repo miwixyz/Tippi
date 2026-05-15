@@ -2,6 +2,28 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.4.1] — 2026-05-15
+
+### Changed
+- **MLX server now auto-starts** — no more manual start required:
+  - Pre-warmed on app launch when MLX is your preferred provider — first transformation is instant instead of waiting 30–60s
+  - Auto-starts when you switch to MLX in Settings
+  - Auto-restarts with new settings when you change model or port and save
+- **Temperature 0.3** for MLX completions — more consistent rewrites, less creative drift
+- Manual Start / Stop button in Settings remains for power users (e.g. to free RAM)
+
+## [1.4.0] — 2026-05-15
+
+### Added
+- **MLX provider** — 6th AI backend: Tippi manages a local `mlx_lm.server` process on-demand
+  - No Ollama required, ~1.5–2× faster than Ollama on Apple Silicon
+  - OpenAI-compatible API to localhost
+  - 7 RAM-tiered model presets (8 / 16 / 32 GB) plus a custom field
+  - Configurable port, status indicator, manual Start / Stop in Settings
+  - Model ID resolved automatically from the running server via `/v1/models` — works with both HuggingFace repo IDs and local cache paths
+  - Fallback decoding for thinking-style models that return `reasoning` instead of `content`
+  - Default model: `Meta-Llama-3.1-8B-Instruct-4bit` (no chain-of-thought overhead, fast on M2 Pro 16 GB and up)
+
 ## [1.3.0] — 2026-05-15
 
 ### Added
