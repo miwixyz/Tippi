@@ -275,30 +275,47 @@ private struct ProviderRow: View {
     }
 
     /// Presets curated for Tippi's use case: fast text transformation, return
-    /// only the result. Models that emit chain-of-thought "reasoning" tokens
-    /// (Qwen3.5 family, DeepSeek-R1) are deliberately excluded — they produce
-    /// long internal monologues before any usable output, which is wrong for a
-    /// "fix this text" interaction.
+    /// only the result. Chain-of-thought / reasoning models (Qwen3.5 family,
+    /// DeepSeek-R1) are deliberately excluded — they produce long internal
+    /// monologues before usable output, which is wrong for a "fix this text"
+    /// interaction.
     ///
-    /// Each preset is labelled by the RAM tier of the target Mac, not the model
-    /// file size on disk.
+    /// Each preset is labelled by the RAM tier of the target Mac, not the
+    /// model's on-disk size. ⭐ marks the default for each tier.
     static let mlxPresets: [MLXPreset] = [
-        // 8 GB Mac → small, fast, no-thinking 3B-class model
+        // ── 8 GB Mac (small, fast, 3B-class) ────────────────────────────────
         MLXPreset(
             id: "llama32-3b",
-            label: "Llama 3.2 3B — 8 GB Mac (fast)",
+            label: "Llama 3.2 3B — 8 GB Mac ⭐ fast",
             repoID: "mlx-community/Llama-3.2-3B-Instruct-4bit"
         ),
-        // 16 GB Mac → 8B-class, our default — best balance of speed and quality
+        MLXPreset(
+            id: "phi4-mini",
+            label: "Phi-4-mini 3.8B — 8 GB Mac (Microsoft, 23 languages)",
+            repoID: "mlx-community/Phi-4-mini-instruct-4bit"
+        ),
+
+        // ── 16 GB Mac (mid-class, 4-8B) ─────────────────────────────────────
+        MLXPreset(
+            id: "gemma3-4b",
+            label: "Gemma 3 4B — 16 GB Mac (Google, 140+ languages)",
+            repoID: "mlx-community/gemma-3-4b-it-4bit"
+        ),
         MLXPreset(
             id: "llama31-8b-4b",
             label: "Llama 3.1 8B — 16 GB Mac ⭐ recommended",
             repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
         ),
-        // 32 GB Mac → 14B-class for highest quality
+        MLXPreset(
+            id: "qwen25-7b",
+            label: "Qwen 2.5 7B — 16 GB Mac (multilingual, strong German)",
+            repoID: "mlx-community/Qwen2.5-7B-Instruct-4bit"
+        ),
+
+        // ── 32 GB Mac (premium quality, 14B-class) ──────────────────────────
         MLXPreset(
             id: "qwen25-14b",
-            label: "Qwen2.5 14B — 32 GB Mac (best quality)",
+            label: "Qwen 2.5 14B — 32 GB Mac ⭐ premium",
             repoID: "mlx-community/Qwen2.5-14B-Instruct-4bit"
         ),
     ]

@@ -2,6 +2,15 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.3] — 2026-05-15
+
+### Changed
+- **MLX model presets expanded from 3 to 6**, all instruct (no chain-of-thought reasoning), spread across the three RAM tiers:
+  - 8 GB Mac: **Llama 3.2 3B** ⭐ fast · **Phi-4-mini 3.8B** (Microsoft, 23 languages)
+  - 16 GB Mac: **Gemma 3 4B** (Google, 140+ languages) · **Llama 3.1 8B** ⭐ recommended · **Qwen 2.5 7B** (multilingual, strong German)
+  - 32 GB Mac: **Qwen 2.5 14B** ⭐ premium
+- Each tier has at least one specialist alternative (multilingual coverage, Microsoft license) so users can match the model to their workflow without leaving the curated picker.
+
 ## [1.5.2] — 2026-05-15
 
 ### Changed
