@@ -15,7 +15,8 @@ struct LLMRouter {
         AnthropicProvider(),
         GeminiProvider(),
         MistralProvider(),
-        OllamaProvider()
+        OllamaProvider(),
+        MLXProvider()
     ]
 
     private var providers: [LLMProvider] { Self.allProviders }

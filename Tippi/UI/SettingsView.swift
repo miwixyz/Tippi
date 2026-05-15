@@ -252,6 +252,34 @@ private struct ProviderRow: View {
     @State private var hasKey: Bool = false
     @State private var savedFlash: Bool = false
 
+    // MLX-only
+    @ObservedObject private var mlxManager = MLXServerManager.shared
+    @State private var mlxPort: String = "\(MLXServerManager.port)"
+    @State private var mlxPreset: String = "custom"
+
+    private var isMLX: Bool { provider.id == "mlx" }
+
+    // MARK: - MLX model presets
+
+    struct MLXPreset: Identifiable {
+        let id: String
+        let label: String
+        let repoID: String
+    }
+
+    static let mlxPresets: [MLXPreset] = [
+        // 8 GB
+        MLXPreset(id: "qwen35-08b",    label: "Qwen3.5 0.8B — 8 GB",        repoID: "mlx-community/Qwen3.5-0.8B-MLX-8bit"),
+        MLXPreset(id: "qwen35-2b",     label: "Qwen3.5 2B — 8 GB ⭐ schnell", repoID: "mlx-community/Qwen3.5-2B-MLX-8bit"),
+        // 16 GB
+        MLXPreset(id: "qwen35-9b",     label: "Qwen3.5 9B — 16 GB ⭐",     repoID: "mlx-community/Qwen3.5-9B-MLX-8bit"),
+        MLXPreset(id: "llama31-8b-4b", label: "Llama 3.1 8B 4bit — 16 GB", repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"),
+        // 32 GB
+        MLXPreset(id: "llama31-8b-3b", label: "Llama 3.1 8B 3bit — 32 GB", repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-3bit"),
+        MLXPreset(id: "qwen25-14b",    label: "Qwen2.5 14B — 32 GB ⭐",    repoID: "mlx-community/Qwen2.5-14B-Instruct-4bit"),
+        MLXPreset(id: "deepseek-r1",   label: "DeepSeek-R1 7B — 32 GB",    repoID: "mlx-community/DeepSeek-R1-Distill-Qwen-7B-4bit"),
+    ]
+
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
@@ -272,13 +300,55 @@ private struct ProviderRow: View {
                         .textFieldStyle(.roundedBorder)
                 }
 
-                HStack {
-                    Text(String(localized: "settings.providers.model"))
-                        .font(.caption)
-                        .frame(width: 60, alignment: .leading)
-                    TextField(provider.defaultModel, text: $modelName)
-                        .textFieldStyle(.roundedBorder)
+                if isMLX {
+                    mlxModelPicker
+                } else {
+                    HStack {
+                        Text(String(localized: "settings.providers.model"))
+                            .font(.caption)
+                            .frame(width: 60, alignment: .leading)
+                        TextField(provider.defaultModel, text: $modelName)
+                            .textFieldStyle(.roundedBorder)
+                    }
                 }
+
+                // ── MLX extras ──────────────────────────────────────────────
+                if isMLX {
+                    HStack {
+                        Text(String(localized: "settings.providers.mlx.port"))
+                            .font(.caption)
+                            .frame(width: 60, alignment: .leading)
+                        TextField("8080", text: $mlxPort)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                        Spacer()
+                    }
+
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(mlxStatusColor)
+                            .frame(width: 8, height: 8)
+                        Text(mlxManager.state.displayLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if mlxManager.state.isRunning {
+                            Button(String(localized: "settings.providers.mlx.stop")) {
+                                mlxManager.stop()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        } else {
+                            Button(String(localized: "settings.providers.mlx.start")) {
+                                Task { try? await mlxManager.start() }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(mlxManager.state == .starting)
+                        }
+                    }
+                }
+                // ────────────────────────────────────────────────────────────
 
                 HStack {
                     if savedFlash {
@@ -296,6 +366,49 @@ private struct ProviderRow: View {
         }
         .onAppear(perform: load)
         .onChange(of: refreshTick) { _, _ in load() }
+    }
+
+    private var mlxModelPicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(String(localized: "settings.providers.model"))
+                    .font(.caption)
+                    .frame(width: 60, alignment: .leading)
+                Picker("", selection: $mlxPreset) {
+                    ForEach(Self.mlxPresets) { preset in
+                        Text(preset.label).tag(preset.id)
+                    }
+                    Divider()
+                    Text(String(localized: "settings.providers.mlx.custom")).tag("custom")
+                }
+                .labelsHidden()
+                .onChange(of: mlxPreset) { _, newPreset in
+                    if let preset = Self.mlxPresets.first(where: { $0.id == newPreset }) {
+                        modelName = preset.repoID
+                    }
+                }
+            }
+            if mlxPreset == "custom" {
+                TextField("mlx-community/…", text: $modelName)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.leading, 60)
+                    .font(.caption)
+            } else {
+                Text(modelName)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 60)
+            }
+        }
+    }
+
+    private var mlxStatusColor: Color {
+        switch mlxManager.state {
+        case .running:  return .green
+        case .starting: return .orange
+        case .failed:   return .red
+        case .stopped:  return .gray
+        }
     }
 
     private var statusBadge: some View {
@@ -331,6 +444,16 @@ private struct ProviderRow: View {
             hasKey = true
         }
         modelName = UserDefaults.standard.string(forKey: "defaultModel.\(provider.id)") ?? ""
+        if isMLX {
+            mlxPort = "\(MLXServerManager.port)"
+            if let match = Self.mlxPresets.first(where: { $0.repoID == modelName || $0.repoID == (UserDefaults.standard.string(forKey: "defaultModel.mlx") ?? MLXServerManager.model) }) {
+                mlxPreset = match.id
+                modelName = match.repoID
+            } else {
+                mlxPreset = "custom"
+                if modelName.isEmpty { modelName = MLXServerManager.model }
+            }
+        }
     }
 
     private func save() {
@@ -342,6 +465,15 @@ private struct ProviderRow: View {
             UserDefaults.standard.removeObject(forKey: "defaultModel.\(provider.id)")
         } else {
             UserDefaults.standard.set(trimmedModel, forKey: "defaultModel.\(provider.id)")
+        }
+        if isMLX, let p = Int(mlxPort.trimmingCharacters(in: .whitespaces)), p > 0 {
+            let modelChanged = !trimmedModel.isEmpty && trimmedModel != MLXServerManager.model
+            let portChanged  = p != MLXServerManager.port
+            if !trimmedModel.isEmpty { MLXServerManager.model = trimmedModel }
+            MLXServerManager.port = p
+            if (modelChanged || portChanged) && mlxManager.state.isRunning {
+                mlxManager.stop()
+            }
         }
         load()
         savedFlash = true
@@ -359,6 +491,7 @@ private struct ProviderRow: View {
         case "gemini":    return String(localized: "settings.providers.hint.gemini")
         case "mistral":   return String(localized: "settings.providers.hint.mistral")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
+        case "mlx":       return String(localized: "settings.providers.hint.mlx")
         default:          return ""
         }
     }

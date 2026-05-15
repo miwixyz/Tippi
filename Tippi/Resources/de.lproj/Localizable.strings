@@ -190,6 +190,11 @@
 "settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Key bei console.mistral.ai. Standard: mistral-small-latest (EU-Hosting möglich).";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
+"settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Einmalig installieren: uv tool install mlx-lm. Modelle liegen in ~/MLXModels/. Schneller als Ollama auf Apple Silicon — keine Cloud, kein Key.";
+"settings.providers.mlx.port" = "Port";
+"settings.providers.mlx.custom" = "Eigenes Modell…";
+"settings.providers.mlx.start" = "Server starten";
+"settings.providers.mlx.stop" = "Server stoppen";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT-Lizenz";
 "settings.hotkeys.restartHint" = "Falls der neue Hotkey nicht sofort reagiert, Tippi neu starten.";
 "settings.tab.help" = "Hilfe";

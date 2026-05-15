@@ -188,6 +188,11 @@
 "settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Get a key at console.mistral.ai. Default: mistral-small-latest (EU hosting available).";
 "settings.providers.hint.ollama" = "Install Ollama from ollama.com. Pull a model first: `ollama pull llama3.3`. Runs locally, no key, no cloud.";
+"settings.providers.hint.mlx" = "Tippi starts mlx_lm.server automatically. Install once: uv tool install mlx-lm. Models live in ~/MLXModels/. Faster than Ollama on Apple Silicon — no cloud, no key.";
+"settings.providers.mlx.port" = "Port";
+"settings.providers.mlx.custom" = "Custom…";
+"settings.providers.mlx.start" = "Start server";
+"settings.providers.mlx.stop" = "Stop server";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
 "settings.hotkeys.restartHint" = "If the new hotkey does not respond immediately, restart Tippi.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
