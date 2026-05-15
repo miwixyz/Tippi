@@ -292,7 +292,9 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.3    | ✅ Done | 5 new built-in prompts (Formal, Casual, Simplify, Summarize, Adapt for App); Import/Export custom prompts as `.tippipack`; all built-ins use `{language}` |
 | v1.4    | ✅ Done | MLX provider — Tippi manages a local `mlx_lm.server`; ~1.5–2× faster than Ollama on Apple Silicon; 7 RAM-tiered model presets; auto model-ID resolution |
 | v1.4.1  | ✅ Done | MLX auto-start (on app launch, provider switch, settings save); temperature 0.3 for more consistent rewrites |
-| v1.5    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
+| v1.4.2  | ✅ Done | In-app Help and About reflect all 6 providers; new MLX help section; release-time drift check between code and Help/About strings |
+| v1.5    | Planned | In-app MLX installer — one-click setup for `uv` + `mlx_lm.server` from Settings, no Terminal required; makes the local MLX provider usable by non-technical users |
+| v1.6    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
 | v2.0    | Planned | Cross-platform (Windows) |
 
 ---
