@@ -252,6 +252,12 @@ private struct ProviderRow: View {
     @State private var hasKey: Bool = false
     @State private var savedFlash: Bool = false
 
+    // MLX-only
+    @ObservedObject private var mlxManager = MLXServerManager.shared
+    @State private var mlxPort: String = "\(MLXServerManager.port)"
+
+    private var isMLX: Bool { provider.id == "mlx" }
+
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
@@ -280,6 +286,44 @@ private struct ProviderRow: View {
                         .textFieldStyle(.roundedBorder)
                 }
 
+                // ── MLX extras ──────────────────────────────────────────────
+                if isMLX {
+                    HStack {
+                        Text(String(localized: "settings.providers.mlx.port"))
+                            .font(.caption)
+                            .frame(width: 60, alignment: .leading)
+                        TextField("8080", text: $mlxPort)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                        Spacer()
+                    }
+
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(mlxStatusColor)
+                            .frame(width: 8, height: 8)
+                        Text(mlxManager.state.displayLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if mlxManager.state.isRunning {
+                            Button(String(localized: "settings.providers.mlx.stop")) {
+                                mlxManager.stop()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        } else {
+                            Button(String(localized: "settings.providers.mlx.start")) {
+                                Task { try? await mlxManager.start() }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(mlxManager.state == .starting)
+                        }
+                    }
+                }
+                // ────────────────────────────────────────────────────────────
+
                 HStack {
                     if savedFlash {
                         Text(String(localized: "settings.providers.savedFlash"))
@@ -296,6 +340,15 @@ private struct ProviderRow: View {
         }
         .onAppear(perform: load)
         .onChange(of: refreshTick) { _, _ in load() }
+    }
+
+    private var mlxStatusColor: Color {
+        switch mlxManager.state {
+        case .running:  return .green
+        case .starting: return .orange
+        case .failed:   return .red
+        case .stopped:  return .gray
+        }
     }
 
     private var statusBadge: some View {
@@ -331,6 +384,7 @@ private struct ProviderRow: View {
             hasKey = true
         }
         modelName = UserDefaults.standard.string(forKey: "defaultModel.\(provider.id)") ?? ""
+        if isMLX { mlxPort = "\(MLXServerManager.port)" }
     }
 
     private func save() {
@@ -342,6 +396,15 @@ private struct ProviderRow: View {
             UserDefaults.standard.removeObject(forKey: "defaultModel.\(provider.id)")
         } else {
             UserDefaults.standard.set(trimmedModel, forKey: "defaultModel.\(provider.id)")
+        }
+        if isMLX, let p = Int(mlxPort.trimmingCharacters(in: .whitespaces)), p > 0 {
+            let modelChanged = !trimmedModel.isEmpty && trimmedModel != MLXServerManager.model
+            let portChanged  = p != MLXServerManager.port
+            if !trimmedModel.isEmpty { MLXServerManager.model = trimmedModel }
+            MLXServerManager.port = p
+            if (modelChanged || portChanged) && mlxManager.state.isRunning {
+                mlxManager.stop()
+            }
         }
         load()
         savedFlash = true
@@ -359,6 +422,7 @@ private struct ProviderRow: View {
         case "gemini":    return String(localized: "settings.providers.hint.gemini")
         case "mistral":   return String(localized: "settings.providers.hint.mistral")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
+        case "mlx":       return String(localized: "settings.providers.hint.mlx")
         default:          return ""
         }
     }
