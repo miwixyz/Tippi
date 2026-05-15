@@ -156,6 +156,27 @@ final class MLXServerManager: ObservableObject {
     /// Falls back to the configured model string if the server is not yet running.
     static var activeModel: String { shared.activeModelID ?? model }
 
+    // MARK: - Auto-Start
+
+    /// Pre-warm the server in the background if MLX is the user's preferred provider
+    /// and the binary is installed. Safe to call from app launch — fails silently
+    /// if MLX isn't installed or another provider is preferred.
+    static func autoStartIfPreferred() {
+        guard isInstalled else { return }
+        guard LLMRouter.preferredProviderID == "mlx" else { return }
+        Task { @MainActor in
+            try? await shared.start()
+        }
+    }
+
+    /// Restart the server with the current configuration. Convenience for
+    /// Settings save flows where the user changed model/port and expects the
+    /// server to come back up automatically.
+    func restart() async throws -> Int {
+        if state.isRunning { stop() }
+        return try await start()
+    }
+
     // MARK: - Health polling
 
     /// Query /v1/models to get the exact model ID the server registered.

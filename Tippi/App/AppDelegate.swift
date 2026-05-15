@@ -40,6 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showWelcomeWindow()
         }
         startHotkey()
+
+        // Pre-warm the MLX server if it's the user's preferred provider.
+        // This avoids a 30–60s wait on first transformation after launch.
+        MLXServerManager.autoStartIfPreferred()
     }
 
     private func startGlobalKeyMonitor() {

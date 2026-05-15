@@ -231,6 +231,11 @@ private struct ProvidersTab: View {
                     .frame(width: 220)
                     .onChange(of: selectedProvider) { _, new in
                         LLMRouter.setPreferredProvider(new)
+                        // Pre-warm MLX server when user switches to it — avoids
+                        // a 30–60s wait on the first transformation.
+                        if new == "mlx" {
+                            MLXServerManager.autoStartIfPreferred()
+                        }
                     }
                 }
                 Text(String(localized: "settings.providers.default.hint"))
@@ -469,10 +474,13 @@ private struct ProviderRow: View {
         if isMLX, let p = Int(mlxPort.trimmingCharacters(in: .whitespaces)), p > 0 {
             let modelChanged = !trimmedModel.isEmpty && trimmedModel != MLXServerManager.model
             let portChanged  = p != MLXServerManager.port
+            let wasRunning   = mlxManager.state.isRunning
             if !trimmedModel.isEmpty { MLXServerManager.model = trimmedModel }
             MLXServerManager.port = p
-            if (modelChanged || portChanged) && mlxManager.state.isRunning {
-                mlxManager.stop()
+            // Auto-restart with new config when settings changed and server was up —
+            // user shouldn't have to click Start manually after every save.
+            if (modelChanged || portChanged) && wasRunning {
+                Task { try? await mlxManager.restart() }
             }
         }
         load()
