@@ -2,6 +2,17 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.0] — 2026-05-15
+
+### Added
+- **In-app MLX installer** — MLX is no longer Terminal-only. When you pick MLX as your provider in Settings and the toolchain isn't installed yet, Tippi shows a prominent "Install MLX…" button. A guided sheet handles the rest:
+  - Phase 1: installs `uv` (Astral's Python tool installer) via the official installer if missing
+  - Phase 2: installs `mlx-lm` via `uv tool install mlx-lm`
+  - Live log, status indicators per phase, copyable fallback command if anything fails
+  - No Terminal required for the typical happy path
+
+Makes the fastest local AI backend on Apple Silicon (~1.5–2× faster than Ollama) accessible to non-technical users.
+
 ## [1.4.2] — 2026-05-15
 
 ### Changed
