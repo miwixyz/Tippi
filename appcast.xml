@@ -3,6 +3,15 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>1.2.0</title>
+            <pubDate>Fri, 15 May 2026 12:58:17 +0200</pubDate>
+            <sparkle:version>47</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.2.0/Tippi-1.2.0.dmg" length="4611879" type="application/octet-stream" sparkle:edSignature="uK5ySOaVodYroIzGQ24X4OV07ifS1QFBPFH9RkeYwiekNiPm6AD/PbIut5jDrrZUllQdIKT9GY0WsVjYI5umAQ=="/>
+        </item>
+        <item>
             <title>1.1.11</title>
             <pubDate>Wed, 13 May 2026 20:48:39 +0200</pubDate>
             <sparkle:version>43</sparkle:version>
@@ -10,24 +19,6 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.11/Tippi-1.1.11.dmg" length="4608641" type="application/octet-stream" sparkle:edSignature="JAWSz/2y4qjkUiTT/dy0X6D8DFuroOQCIOUoqnE3XjSUE6nXCx+qoOXKPj9da2Ro/a84Nzhe2XGBLJRDKdtgDg=="/>
-        </item>
-        <item>
-            <title>1.1.10</title>
-            <pubDate>Wed, 13 May 2026 20:03:19 +0200</pubDate>
-            <sparkle:version>41</sparkle:version>
-            <sparkle:shortVersionString>1.1.10</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.10/Tippi-1.1.10.dmg" length="4605638" type="application/octet-stream" sparkle:edSignature="gU/vnb58EyoorZhOx9V8U3XGIcjPwQneAwkiYbUXJJ8QxPxh2oiWdomrxpeS3+BnBhr3q3RhB3/og2aRzC0KBQ=="/>
-        </item>
-        <item>
-            <title>1.1.9</title>
-            <pubDate>Wed, 13 May 2026 19:46:50 +0200</pubDate>
-            <sparkle:version>39</sparkle:version>
-            <sparkle:shortVersionString>1.1.9</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.1.9/Tippi-1.1.9.dmg" length="4592061" type="application/octet-stream" sparkle:edSignature="tpFfteRRvgrRZe/YDdAplgEMCWomaLRkN4oipuFVOnOyb2zBjHl8nAivViCp23RqTUW/Mex6csCG2KX9zOciDA=="/>
         </item>
     </channel>
 </rss>
