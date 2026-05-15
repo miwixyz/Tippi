@@ -18,7 +18,12 @@
 "prompt.makeCasual" = "Locker";
 "prompt.simplify" = "Vereinfachen";
 "prompt.summarize" = "Zusammenfassen";
-"prompt.adaptForApp" = "App-Angepasst";
+"prompt.adaptForApp" = "Für App anpassen";
+"prompt.humanize" = "Menschlicher";
+"prompt.tldr" = "TL;DR";
+"prompt.bulletpoints" = "Bulletpoints";
+"prompt.keypoints" = "Stichpunkte";
+"prompt.todos" = "To-Dos";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Willkommen bei Tippi";

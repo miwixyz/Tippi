@@ -18,6 +18,11 @@
 "prompt.simplify" = "Simplify";
 "prompt.summarize" = "Summarize";
 "prompt.adaptForApp" = "Adapt for App";
+"prompt.humanize" = "Humanize";
+"prompt.tldr" = "TL;DR";
+"prompt.bulletpoints" = "Bullet points";
+"prompt.keypoints" = "Key points";
+"prompt.todos" = "Action items";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Welcome to Tippi";

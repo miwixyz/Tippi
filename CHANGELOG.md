@@ -2,6 +2,27 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.4] — 2026-05-15
+
+### Added
+- **5 new built-in prompts**:
+  - **Humanize** — strips AI tells (corporate buzzwords, hedge phrases, em-dash flow, bombastic adjectives) so text reads like a human wrote it
+  - **TL;DR** — 1–2 plain-prose sentences, no labels, no bullets
+  - **Bullet points** — converts every distinct thought into its own bullet, no condensing
+  - **Key points** — extracts max 5 short essence-bullets (verdichtet)
+  - **Action items** — pulls every to-do, each bullet starts with an action verb
+
+### Changed
+- **All 11 existing built-in prompts rewritten** for sharper, more reliable output on smaller local models:
+  - Explicit negative instructions (no `Here is the improved text:` intros, no quote-wrapping, no commentary)
+  - Hard `{language}` enforcement to prevent accidental English translation
+  - Concrete thresholds where vague before (`max 5 points`, `1–2 sentences`, `roughly 30% shorter`)
+  - Tighter `Return ONLY …` clauses for single-block parseable output
+- **`Adapt for App` renamed to `Für App anpassen` (DE) / `Adapt for App` (EN)** for clarity; expanded its built-in app list (Slack/WhatsApp/Telegram/Discord/iMessage · Mail/Outlook/Gmail/Spark · Notes/Notion/Obsidian/Bear · LinkedIn).
+
+### Total
+16 curated built-in prompts. Custom prompts in the Prompts tab are unaffected.
+
 ## [1.5.3] — 2026-05-15
 
 ### Changed
