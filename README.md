@@ -20,7 +20,7 @@
 
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
 - **6 built-in prompts** — Improve, Fix Grammar, Translate → DE, Translate → EN, Shorten, Lengthen
-- **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list")
+- **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
 - **5 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5-mini`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
@@ -140,6 +140,45 @@ Settings → Prompts → "New prompt":
 
 Custom prompts appear in the popup alongside the built-ins. They use the same default provider.
 
+#### Prompt variables
+
+Use `{placeholders}` in your prompt instructions — Tippi resolves them at trigger time:
+
+| Variable | Resolves to |
+|----------|-------------|
+| `{clipboard}` | Current clipboard content |
+| `{app_name}` | App you triggered Tippi in (e.g. `Mail`, `Safari`, `Slack`) |
+| `{language}` | Detected language of your selected text (e.g. `German`, `English`) |
+| `{selected_text}` | The selected text itself — useful when you need to reference it explicitly inside the system prompt |
+
+**App-aware tone** — one prompt, adapts to where you're writing:
+```
+Rewrite the following text for {app_name}.
+In Slack: casual, max 2 sentences.
+In Mail: formal with greeting.
+Return only the result.
+```
+
+**Clipboard as style reference** — copy a sample text first, then select what you want to rewrite:
+```
+Match the tone and style of this reference from my clipboard:
+{clipboard}
+
+Rewrite the selected text in that style. Return only the result.
+```
+
+**Always stay in the right language** — works for any language, no hardcoding:
+```
+Improve the following text. Stay in {language}. Return only the improved version.
+```
+
+**Context-aware reply** — copy an email/message, then select your draft:
+```
+Context from clipboard: {clipboard}
+
+This is a draft reply. Polish it so it fits the context above. Return only the improved reply.
+```
+
 ### Voice / Whisper model
 
 Settings → Voice → Download Model. Three sizes available:
@@ -219,7 +258,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 |---------|--------|------------|
 | v1.0.x  | ✅ Done | System-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
 | v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, brand refresh (mascot icon, `#3070F0` accent, `#020B1D` navy, adaptive dark/light bg), bug fixes through v1.1.11 |
-| v1.2    | Planned | Prompt variables (`{clipboard}`, `{language}`, `{app_name}`), prompt chains |
+| v1.2    | ✅ Done | Prompt variables — `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` in custom prompts |
 | v1.3    | Planned | MLX provider — Tippi manages a local `mlx_lm.server`; faster than Ollama on Apple Silicon |
 | v1.4    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
 | v2.0    | Planned | Cross-platform (Windows) |

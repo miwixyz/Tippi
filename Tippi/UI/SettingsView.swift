@@ -563,6 +563,11 @@ private struct HelpTab: View {
                     body: String(localized: "settings.help.promptsBody")
                 )
                 helpSection(
+                    icon: "curlybraces",
+                    title: String(localized: "settings.help.variablesTitle"),
+                    body: String(localized: "settings.help.variablesBody")
+                )
+                helpSection(
                     icon: "key",
                     title: String(localized: "settings.help.apiTitle"),
                     body: String(localized: "settings.help.apiBody")

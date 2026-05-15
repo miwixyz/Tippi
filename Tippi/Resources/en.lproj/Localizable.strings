@@ -179,6 +179,8 @@
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.promptsTitle" = "Custom prompts";
 "settings.help.promptsBody" = "Go to the Prompts tab to add your own. Each prompt needs a title, an SF Symbol name, and an instruction for the AI. The selected text is sent automatically — no placeholder needed.";
+"settings.help.variablesTitle" = "Prompt variables";
+"settings.help.variablesBody" = "Use {placeholders} in your prompt instructions — Tippi fills them in at trigger time:\n\n{clipboard} — your current clipboard content\n{app_name} — the app you're writing in (e.g. Mail, Safari, Slack)\n{language} — detected language of your selected text (e.g. German)\n{selected_text} — the selected text itself\n\nExample — app-aware tone:\n\"Rewrite for {app_name}. In Slack: casual, max 2 sentences. In Mail: formal.\"\n\nExample — clipboard as style reference (copy a sample text first):\n\"Match the tone of this reference: {clipboard}\"\n\nExample — always stay in the right language:\n\"Improve the text. Stay in {language}. Return only the result.\"";
 "settings.help.apiTitle" = "AI providers & keys";
 "settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports OpenAI, Anthropic, Gemini, Mistral, and Ollama (local, free). Keys are stored securely in the macOS Keychain.";
 "settings.help.troubleTitle" = "Troubleshooting";
