@@ -28,7 +28,7 @@
   - **Google Gemini** (default: `gemini-2.5-flash`)
   - **Mistral** (default: `mistral-small-latest`, EU hosting available)
   - **Ollama** (local, fully offline)
-  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, with 7 RAM-tiered model presets (8 / 16 / 32 GB) and auto-start on launch when MLX is your preferred provider
+  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, with 7 RAM-tiered model presets (8 / 16 / 32 GB) and auto-start on launch when MLX is your preferred provider. **One-click installation from Settings — no Terminal required.**
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Voice Instruction** — select text, trigger the hotkey, then press the mic button in the popup and speak a command (e.g. "make this shorter"); Tippi applies it via AI directly — no prompt picker needed
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
@@ -54,7 +54,7 @@
 - At least one AI provider:
   - An API key for OpenAI, Anthropic, Google Gemini, or Mistral, **or**
   - [Ollama](https://ollama.com) installed locally (free, no key required), **or**
-  - [MLX](https://github.com/ml-explore/mlx-lm) installed locally via `uv tool install mlx-lm` — Tippi will start and manage the server itself
+  - **MLX** — no manual install needed; Settings → Providers → MLX → "Install MLX…" handles everything (`uv` + `mlx-lm`) from the app
 - **Voice features** (optional): a Whisper model downloaded via Settings → Voice (in-app download, no manual install)
 
 ---
@@ -293,7 +293,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.4    | ✅ Done | MLX provider — Tippi manages a local `mlx_lm.server`; ~1.5–2× faster than Ollama on Apple Silicon; 7 RAM-tiered model presets; auto model-ID resolution |
 | v1.4.1  | ✅ Done | MLX auto-start (on app launch, provider switch, settings save); temperature 0.3 for more consistent rewrites |
 | v1.4.2  | ✅ Done | In-app Help and About reflect all 6 providers; new MLX help section; release-time drift check between code and Help/About strings |
-| v1.5    | Planned | In-app MLX installer — one-click setup for `uv` + `mlx_lm.server` from Settings, no Terminal required; makes the local MLX provider usable by non-technical users |
+| v1.5    | ✅ Done | In-app MLX installer — one-click setup for `uv` + `mlx_lm.server` from Settings, no Terminal required; makes the local MLX provider usable by non-technical users |
 | v1.6    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
 | v2.0    | Planned | Cross-platform (Windows) |
 
