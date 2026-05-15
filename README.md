@@ -28,7 +28,7 @@
   - **Google Gemini** (default: `gemini-2.5-flash`)
   - **Mistral** (default: `mistral-small-latest`, EU hosting available)
   - **Ollama** (local, fully offline)
-  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, with 7 RAM-tiered model presets (8 / 16 / 32 GB) and auto-start on launch when MLX is your preferred provider. **One-click installation from Settings — no Terminal required.**
+  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, with 6 curated RAM-tiered model presets (Llama 3.2 3B · Phi-4-mini · Gemma 3 4B · Llama 3.1 8B · Qwen 2.5 7B · Qwen 2.5 14B), auto-start on launch when MLX is your preferred provider, and **one-click installation from Settings — no Terminal required**.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Voice Instruction** — select text, trigger the hotkey, then press the mic button in the popup and speak a command (e.g. "make this shorter"); Tippi applies it via AI directly — no prompt picker needed
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
