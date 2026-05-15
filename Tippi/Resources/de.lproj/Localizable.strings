@@ -149,6 +149,7 @@
 "settings.prompts.editor.symbolHint" = "Symbol-Namen findest du bei developer.apple.com/sf-symbols (z.B. paperplane, lightbulb, text.bubble).";
 "settings.prompts.editor.systemLabel" = "Anweisung an die KI:";
 "settings.prompts.editor.systemHint" = "Beschreibe genau, was die KI tun soll. Dein markierter Text wird automatisch als Benutzer-Nachricht angehängt.";
+"settings.prompts.editor.variablesHint" = "Variablen: {clipboard} · {app_name} · {language} · {selected_text}";
 "settings.general.autostart" = "Tippi beim Anmelden starten";
 "settings.general.updates" = "Auf Updates prüfen";
 "settings.hotkeys.placeholder" = "Hotkey-Konfiguration folgt in der nächsten Phase.";

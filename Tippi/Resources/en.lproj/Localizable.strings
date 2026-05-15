@@ -148,6 +148,7 @@
 "settings.prompts.editor.symbolHint" = "Find symbol names at developer.apple.com/sf-symbols (e.g. paperplane, lightbulb, text.bubble).";
 "settings.prompts.editor.systemLabel" = "Instructions for the AI:";
 "settings.prompts.editor.systemHint" = "Describe exactly what the AI should do. Your selected text will be passed in as the user message.";
+"settings.prompts.editor.variablesHint" = "Variables: {clipboard} · {app_name} · {language} · {selected_text}";
 "settings.general.autostart" = "Launch Tippi at login";
 "settings.general.updates" = "Check for updates";
 "settings.hotkeys.placeholder" = "Hotkey configuration coming in the next phase.";
