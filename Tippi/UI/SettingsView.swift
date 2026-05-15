@@ -255,8 +255,26 @@ private struct ProviderRow: View {
     // MLX-only
     @ObservedObject private var mlxManager = MLXServerManager.shared
     @State private var mlxPort: String = "\(MLXServerManager.port)"
+    @State private var mlxPreset: String = "custom"
 
     private var isMLX: Bool { provider.id == "mlx" }
+
+    // MARK: - MLX model presets
+
+    struct MLXPreset: Identifiable {
+        let id: String
+        let label: String
+        let repoID: String
+    }
+
+    static let mlxPresets: [MLXPreset] = [
+        MLXPreset(id: "gemma3-4b",  label: "Gemma 3 4B — 8 GB",     repoID: "mlx-community/gemma-3-4b-it-4bit"),
+        MLXPreset(id: "qwen3-8b",   label: "Qwen3 8B — 8–16 GB",    repoID: "mlx-community/Qwen3-8B-4bit"),
+        MLXPreset(id: "llama31-8b", label: "Llama 3.1 8B — 16 GB",  repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"),
+        MLXPreset(id: "qwen25-14b", label: "Qwen2.5 14B — 32 GB ⭐", repoID: "mlx-community/Qwen2.5-14B-Instruct-4bit"),
+        MLXPreset(id: "qwen3-14b",  label: "Qwen3 14B — 32 GB",     repoID: "mlx-community/Qwen3-14B-4bit"),
+        MLXPreset(id: "gptoss-20b", label: "GPT OSS 20B — 32 GB",   repoID: "mlx-community/GPT-OSS-20B-4bit"),
+    ]
 
     var body: some View {
         GroupBox {
@@ -278,12 +296,16 @@ private struct ProviderRow: View {
                         .textFieldStyle(.roundedBorder)
                 }
 
-                HStack {
-                    Text(String(localized: "settings.providers.model"))
-                        .font(.caption)
-                        .frame(width: 60, alignment: .leading)
-                    TextField(provider.defaultModel, text: $modelName)
-                        .textFieldStyle(.roundedBorder)
+                if isMLX {
+                    mlxModelPicker
+                } else {
+                    HStack {
+                        Text(String(localized: "settings.providers.model"))
+                            .font(.caption)
+                            .frame(width: 60, alignment: .leading)
+                        TextField(provider.defaultModel, text: $modelName)
+                            .textFieldStyle(.roundedBorder)
+                    }
                 }
 
                 // ── MLX extras ──────────────────────────────────────────────
@@ -342,6 +364,40 @@ private struct ProviderRow: View {
         .onChange(of: refreshTick) { _, _ in load() }
     }
 
+    private var mlxModelPicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(String(localized: "settings.providers.model"))
+                    .font(.caption)
+                    .frame(width: 60, alignment: .leading)
+                Picker("", selection: $mlxPreset) {
+                    ForEach(Self.mlxPresets) { preset in
+                        Text(preset.label).tag(preset.id)
+                    }
+                    Divider()
+                    Text(String(localized: "settings.providers.mlx.custom")).tag("custom")
+                }
+                .labelsHidden()
+                .onChange(of: mlxPreset) { _, newPreset in
+                    if let preset = Self.mlxPresets.first(where: { $0.id == newPreset }) {
+                        modelName = preset.repoID
+                    }
+                }
+            }
+            if mlxPreset == "custom" {
+                TextField("mlx-community/…", text: $modelName)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.leading, 60)
+                    .font(.caption)
+            } else {
+                Text(modelName)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 60)
+            }
+        }
+    }
+
     private var mlxStatusColor: Color {
         switch mlxManager.state {
         case .running:  return .green
@@ -384,7 +440,16 @@ private struct ProviderRow: View {
             hasKey = true
         }
         modelName = UserDefaults.standard.string(forKey: "defaultModel.\(provider.id)") ?? ""
-        if isMLX { mlxPort = "\(MLXServerManager.port)" }
+        if isMLX {
+            mlxPort = "\(MLXServerManager.port)"
+            if let match = Self.mlxPresets.first(where: { $0.repoID == modelName || $0.repoID == (UserDefaults.standard.string(forKey: "defaultModel.mlx") ?? MLXServerManager.model) }) {
+                mlxPreset = match.id
+                modelName = match.repoID
+            } else {
+                mlxPreset = "custom"
+                if modelName.isEmpty { modelName = MLXServerManager.model }
+            }
+        }
     }
 
     private func save() {
