@@ -261,6 +261,8 @@ private struct ProviderRow: View {
     @ObservedObject private var mlxManager = MLXServerManager.shared
     @State private var mlxPort: String = "\(MLXServerManager.port)"
     @State private var mlxPreset: String = "custom"
+    @State private var showingMLXSetup: Bool = false
+    @State private var mlxIsInstalled: Bool = MLXServerManager.isInstalled
 
     private var isMLX: Bool { provider.id == "mlx" }
 
@@ -319,38 +321,60 @@ private struct ProviderRow: View {
 
                 // ── MLX extras ──────────────────────────────────────────────
                 if isMLX {
-                    HStack {
-                        Text(String(localized: "settings.providers.mlx.port"))
-                            .font(.caption)
-                            .frame(width: 60, alignment: .leading)
-                        TextField("8080", text: $mlxPort)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                        Spacer()
-                    }
-
-                    HStack(spacing: 8) {
-                        Circle()
-                            .fill(mlxStatusColor)
-                            .frame(width: 8, height: 8)
-                        Text(mlxManager.state.displayLabel)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        if mlxManager.state.isRunning {
-                            Button(String(localized: "settings.providers.mlx.stop")) {
-                                mlxManager.stop()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                        } else {
-                            Button(String(localized: "settings.providers.mlx.start")) {
-                                Task { try? await mlxManager.start() }
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .disabled(mlxManager.state == .starting)
+                    if mlxIsInstalled {
+                        HStack {
+                            Text(String(localized: "settings.providers.mlx.port"))
+                                .font(.caption)
+                                .frame(width: 60, alignment: .leading)
+                            TextField("8080", text: $mlxPort)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 80)
+                            Spacer()
                         }
+
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(mlxStatusColor)
+                                .frame(width: 8, height: 8)
+                            Text(mlxManager.state.displayLabel)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            if mlxManager.state.isRunning {
+                                Button(String(localized: "settings.providers.mlx.stop")) {
+                                    mlxManager.stop()
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            } else {
+                                Button(String(localized: "settings.providers.mlx.start")) {
+                                    Task { try? await mlxManager.start() }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(mlxManager.state == .starting)
+                            }
+                        }
+                    } else {
+                        // Not installed → friendly one-click setup card.
+                        HStack(spacing: 12) {
+                            Image(systemName: "shippingbox")
+                                .font(.title2)
+                                .foregroundStyle(.tint)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(String(localized: "mlx.install.notInstalled"))
+                                    .font(.callout)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Spacer()
+                            Button(String(localized: "mlx.install.button")) {
+                                showingMLXSetup = true
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding(8)
+                        .background(.tint.opacity(0.06))
+                        .cornerRadius(6)
                     }
                 }
                 // ────────────────────────────────────────────────────────────
@@ -371,6 +395,14 @@ private struct ProviderRow: View {
         }
         .onAppear(perform: load)
         .onChange(of: refreshTick) { _, _ in load() }
+        .sheet(isPresented: $showingMLXSetup, onDismiss: {
+            // After the user finishes the install (or cancels), re-check disk
+            // state so the UI flips from the "Install MLX" card to the normal
+            // Start/Stop controls without needing an app restart.
+            mlxIsInstalled = MLXServerManager.isInstalled
+        }) {
+            MLXSetupSheet()
+        }
     }
 
     private var mlxModelPicker: some View {
