@@ -14,10 +14,19 @@
 
 set -euo pipefail
 
-# Load env from file if present
+# Load env from file if present (release.env hat Vorrang vor Keychain — explicit override pro Repo möglich)
 if [ -f release.env ]; then
     # shellcheck disable=SC1091
     set -a; source release.env; set +a
+fi
+
+# ─── Keychain-Fallback (Migration 2026-05-17) ─────────────────────────────────
+# Wenn release.env die Vars nicht gesetzt hat: macOS Keychain konsultieren.
+# Doku: ~/MWs2ndBrain/04 Ressourcen/KI-Wissen/API-Keys – Inventory.md
+KEYS_SH="$HOME/MWs2ndBrain/04 Ressourcen/KI-Wissen/keys.sh"
+if [ -x "$KEYS_SH" ]; then
+    DEVELOPER_ID="${DEVELOPER_ID:-$(bash "$KEYS_SH" get TIPPI_DEVELOPER_ID 2>/dev/null || true)}"
+    NOTARY_PROFILE="${NOTARY_PROFILE:-$(bash "$KEYS_SH" get TIPPI_NOTARY_PROFILE 2>/dev/null || true)}"
 fi
 
 VERSION="${VERSION:-1.0.0}"
