@@ -120,6 +120,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         let menubarImage = NSImage(named: "tippi-menubar-black")
         menubarImage?.isTemplate = true
+        // Scale icon to menu bar thickness so it renders consistently on both
+        // standard (22pt) and notched (24pt+) menu bars. Without this the
+        // fixed 18pt asset looks tiny on notched MacBooks.
+        let thickness = NSStatusBar.system.thickness
+        let iconSize = max(16, thickness - 4)
+        menubarImage?.size = NSSize(width: iconSize, height: iconSize)
         item.button?.image = menubarImage
 
         let menu = NSMenu()
