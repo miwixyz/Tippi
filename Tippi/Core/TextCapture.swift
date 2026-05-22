@@ -1,5 +1,8 @@
 import AppKit
 import ApplicationServices
+import os
+
+private let captureLog = Logger(subsystem: "com.tippi.app", category: "capture")
 
 struct CapturedText {
     let text: String
@@ -11,19 +14,19 @@ struct CapturedText {
 enum TextCapture {
     static func captureSelectedText(sourceApp: NSRunningApplication?) async -> CapturedText? {
         let app = resolvedSourceApp(sourceApp)
-        NSLog("Tippi: TextCapture app=\(app?.localizedName ?? "nil") trusted=\(AXIsProcessTrusted())")
+        captureLog.notice("capture start app=\(app?.localizedName ?? "nil", privacy: .public) trusted=\(AXIsProcessTrusted())")
 
         // Phase 1: do not activate — front app still owns the selection (right after hotkey).
         if let text = await readViaPasteboard(), !text.isEmpty {
-            NSLog("Tippi: TextCapture pasteboard (no activate) ok (\(text.count) chars)")
+            captureLog.notice("pasteboard (no activate) ok \(text.count) chars")
             return CapturedText(text: text, sourceApp: app, usedClipboardFallback: true)
         }
         if let app, let text = readViaAccessibility(in: app), !text.isEmpty {
-            NSLog("Tippi: TextCapture AX (no activate) ok (\(text.count) chars)")
+            captureLog.notice("AX (no activate) ok \(text.count) chars")
             return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
         }
         if let app, let text = readViaSystemEvents(in: app), !text.isEmpty {
-            NSLog("Tippi: TextCapture System Events (no activate) ok (\(text.count) chars)")
+            captureLog.notice("System Events (no activate) ok \(text.count) chars")
             return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
         }
 
@@ -33,24 +36,24 @@ enum TextCapture {
             try? await Task.sleep(nanoseconds: 150_000_000)
 
             if let text = readViaAccessibility(in: app), !text.isEmpty {
-                NSLog("Tippi: TextCapture AX ok (\(text.count) chars)")
+                captureLog.notice("AX ok \(text.count) chars")
                 return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
             }
             if let text = readViaSystemEvents(in: app), !text.isEmpty {
-                NSLog("Tippi: TextCapture System Events ok (\(text.count) chars)")
+                captureLog.notice("System Events ok \(text.count) chars")
                 return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
             }
             if let text = await readViaAccessibilityCopyAction(in: app), !text.isEmpty {
-                NSLog("Tippi: TextCapture AXCopy ok (\(text.count) chars)")
+                captureLog.notice("AXCopy ok \(text.count) chars")
                 return CapturedText(text: text, sourceApp: app, usedClipboardFallback: true)
             }
             if let text = await readViaPasteboard(), !text.isEmpty {
-                NSLog("Tippi: TextCapture pasteboard ok (\(text.count) chars)")
+                captureLog.notice("pasteboard ok \(text.count) chars")
                 return CapturedText(text: text, sourceApp: app, usedClipboardFallback: true)
             }
         }
 
-        NSLog("Tippi: TextCapture failed")
+        captureLog.notice("capture FAILED")
         return nil
     }
 
@@ -245,11 +248,22 @@ enum TextCapture {
     // MARK: - Pasteboard
 
     private static func readViaPasteboard() async -> String? {
+        let pb = NSPasteboard.general
         let snapshot = PasteboardSnapshot.capture()
+        let beforeCount = pb.changeCount
         simulateCopy()
         try? await Task.sleep(nanoseconds: 120_000_000)
 
-        let captured = NSPasteboard.general.string(forType: .string)?
+        // A real ⌘C always bumps changeCount. If it didn't change, nothing was
+        // selected or the app ignored the synthetic ⌘C (common in Electron/Chromium) —
+        // returning the unchanged clipboard would hand back stale, unrelated content.
+        guard pb.changeCount != beforeCount else {
+            snapshot.restore()
+            captureLog.notice("pasteboard: changeCount unchanged — synthetic ⌘C produced no copy")
+            return nil
+        }
+
+        let captured = pb.string(forType: .string)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         snapshot.restore()
 

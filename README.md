@@ -149,6 +149,10 @@ A faster path for pure dictation, with no popup. Enable it in **Settings → Voi
 
 Avoid combos macOS reserves (e.g. ⌥⌘D toggles the Dock) — Tippi can't receive a system-claimed shortcut.
 
+### App compatibility
+
+Tippi reads and writes text via the Accessibility API, falling back to a clipboard (⌘C/⌘V) round-trip. This covers native macOS apps (Mail, Notes, Safari, TextEdit, Pages) and Microsoft Office fully. **Dictation (insert at cursor) and text capture work everywhere, including Electron/Chromium apps** such as Obsidian, Claude, ChatGPT, Slack, and VS Code. One limitation: **transforming and replacing a *selection* in Electron/Chromium apps is unreliable** — those editors drop the live selection when the picker appears and ignore Accessibility text writes, so the result is appended instead of replacing. Use dictation there, or transform in a native app.
+
 ---
 
 ## Configuration

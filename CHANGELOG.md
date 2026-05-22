@@ -2,6 +2,16 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.7.2] — 2026-05-22
+
+### Fixed
+- **Double paste in Electron/Chromium apps** (Obsidian, Claude, ChatGPT, Slack, VS Code): the synthetic ⌘V was posted to two event taps, so those apps pasted the text twice. Dictation and the clipboard fallback now post a single ⌘V. **Dictation now works correctly in Electron apps.**
+- **Stale clipboard mistaken for the selection**: when a synthetic ⌘C produced no copy (nothing selected, or the app ignored it), capture returned whatever happened to be on the clipboard. Capture now checks the clipboard change-count and discards a no-op copy instead of handing back unrelated content.
+- **AX writes that report success but do nothing** (Electron/Chromium ignore them): insertion now verifies the element value actually changed and falls back to the clipboard path instead of silently failing.
+
+### Known limitation
+- Transforming and **replacing selected text in Electron/Chromium apps is not reliable** — those editors drop the live selection the moment the action picker appears and ignore Accessibility text writes, so the result is appended rather than replacing. Dictation (insert at cursor) and replacing in native apps (Mail, Notes, TextEdit, Pages, Word) work as expected.
+
 ## [1.7.1] — 2026-05-22
 
 ### Fixed

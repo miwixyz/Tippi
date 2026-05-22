@@ -1,22 +1,26 @@
 import AppKit
 import ApplicationServices
+import os
+
+private let insertLog = Logger(subsystem: "com.tippi.app", category: "insert")
 
 @MainActor
 enum TextInsertion {
     static func replace(with text: String, in app: NSRunningApplication?) async {
         if let app, replaceSelectionViaAccessibility(with: text, in: app) {
-            NSLog("Tippi: TextInsertion AX replace ok")
+            insertLog.notice("AX replace ok (\(text.count) chars)")
             return
         }
         if replaceSelectionViaAccessibility(with: text) {
-            NSLog("Tippi: TextInsertion AX replace (focused) ok")
+            insertLog.notice("AX replace (focused) ok")
             return
         }
 
-        NSLog("Tippi: TextInsertion AX replace failed — falling back to clipboard+paste")
+        insertLog.notice("AX replace failed → clipboard+paste fallback")
         app?.activate(options: [.activateIgnoringOtherApps])
         try? await Task.sleep(nanoseconds: 150_000_000)
         await paste(text: text)
+        insertLog.notice("clipboard paste done")
     }
 
     static func replace(with text: String) async {
@@ -92,6 +96,8 @@ enum TextInsertion {
     static func replaceViaElement(_ element: AXUIElement, range: CFRange, with text: String) -> Bool {
         guard AXIsProcessTrusted() else { return false }
 
+        let valueBefore = axStringValue(element)
+
         var mutableRange = range
         if let axRange = AXValueCreate(.cfRange, &mutableRange) {
             AXUIElementSetAttributeValue(
@@ -106,8 +112,23 @@ enum TextInsertion {
             kAXSelectedTextAttribute as CFString,
             text as CFTypeRef
         )
-        NSLog("Tippi: replaceViaElement → \(result.rawValue == 0 ? "ok" : "err(\(result.rawValue))")")
-        return result == .success
+        let valueAfter = axStringValue(element)
+
+        // Electron/Chromium apps return .success for an AX text write but silently
+        // ignore it. Detect that: if the element exposed its value and it did not
+        // change, the write was a no-op → report failure so the caller falls back.
+        let noOp = valueBefore != nil && valueAfter != nil && valueBefore == valueAfter
+        let effective = result == .success && !noOp
+        insertLog.notice("replaceViaElement set=\(result.rawValue, privacy: .public) noOp=\(noOp, privacy: .public) effective=\(effective, privacy: .public)")
+        return effective
+    }
+
+    private static func axStringValue(_ element: AXUIElement) -> String? {
+        var valueRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef) == .success else {
+            return nil
+        }
+        return valueRef as? String
     }
 
     private static func replaceSelectionViaAccessibility(with text: String, in app: NSRunningApplication) -> Bool {
@@ -150,11 +171,22 @@ enum TextInsertion {
     }
 
     private static func setSelectedText(_ text: String, on element: AXUIElement) -> Bool {
-        AXUIElementSetAttributeValue(
+        let before = axStringValue(element)
+        let ok = AXUIElementSetAttributeValue(
             element,
             kAXSelectedTextAttribute as CFString,
             text as CFTypeRef
         ) == .success
+        guard ok else { return false }
+
+        // Treat a value-unchanged write as a failure so the caller falls back to ⌘V
+        // (Electron/Chromium report success but ignore AX text writes).
+        let after = axStringValue(element)
+        if let before, let after, before == after {
+            insertLog.notice("setSelectedText no-op (value unchanged)")
+            return false
+        }
+        return true
     }
 
     private static func findElementWithSelection(in element: AXUIElement, depth: Int) -> AXUIElement? {
@@ -208,14 +240,15 @@ enum TextInsertion {
         let src = CGEventSource(stateID: .hidSystemState)
         let vKey: CGKeyCode = 9 // V
 
-        for tap in [CGEventTapLocation.cghidEventTap, .cgAnnotatedSessionEventTap] {
-            let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
-            down?.flags = .maskCommand
-            down?.post(tap: tap)
+        // Post to a single tap only. Posting to both cghidEventTap and
+        // cgAnnotatedSessionEventTap makes Electron/Chromium apps process the ⌘V
+        // twice, pasting the text two times.
+        let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
+        down?.flags = .maskCommand
+        down?.post(tap: .cghidEventTap)
 
-            let up = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: false)
-            up?.flags = .maskCommand
-            up?.post(tap: tap)
-        }
+        let up = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: false)
+        up?.flags = .maskCommand
+        up?.post(tap: .cghidEventTap)
     }
 }

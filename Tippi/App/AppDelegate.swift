@@ -613,10 +613,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func replaceCapturedSelection(with text: String, sourceApp: NSRunningApplication?) async {
         if let el = lastSelectionElement, let range = lastSelectionRange,
            TextInsertion.replaceViaElement(el, range: range, with: text) {
-            NSLog("Tippi: preview replaced via captured AX range")
-        } else {
-            await TextInsertion.replace(with: text, in: sourceApp)
+            return
         }
+        await TextInsertion.replace(with: text, in: sourceApp)
     }
 
     private func pasteBack(_ text: String, into app: NSRunningApplication?) async {
