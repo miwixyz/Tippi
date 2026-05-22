@@ -298,6 +298,15 @@
 "voice.error.noBinary" = "whisper-cli not found. Please reinstall Tippi.";
 "voice.error.noModel" = "Whisper model not found. Download one in Settings → Voice.";
 
+"dictation.toast.inserted" = "Dictation inserted";
+"dictation.toast.micDenied" = "Microphone access denied";
+"dictation.indicator.recording" = "Recording…";
+"dictation.indicator.transcribing" = "Transcribing…";
+"settings.voice.dictation.title" = "Dictation Mode";
+"settings.voice.dictation.body" = "Press the dictation hot key to start recording, press again to stop — Tippi transcribes and inserts the text at your cursor. No popup, no text selection needed.";
+"settings.voice.dictation.enable" = "Enable dictation hot key";
+"settings.voice.dictation.needsModel" = "Download a Whisper model above to use dictation.";
+
 "voice.model.noModel" = "No model downloaded";
 "voice.model.download" = "Download";
 "voice.model.cancel" = "Cancel";
@@ -310,4 +319,4 @@
 "settings.about.feature5" = "Voice Input — local Whisper transcription, no cloud";
 "settings.about.github" = "github.com/miwixyz/Tippi";
 "settings.help.voiceTitle" = "Voice Input";
-"settings.help.voiceBody" = "Press ⌥⌘T with no text selected: a mic button appears in the popup. Hold to record, release to transcribe — Whisper runs fully on-device. The transcript appears in the popup; pick an AI prompt or tap \"Insert directly\" to paste as-is.\n\nVoice Instruction: select text first, trigger Tippi, then press the mic button and speak your command (e.g. \"make this shorter\"). Tippi applies it via AI immediately.\n\nDownload a model in Settings → Voice before first use.";
+"settings.help.voiceBody" = "Press ⌥⌘T with no text selected: a mic button appears in the popup. Hold to record, release to transcribe — Whisper runs fully on-device. The transcript appears in the popup; pick an AI prompt or tap \"Insert directly\" to paste as-is.\n\nVoice Instruction: select text first, trigger Tippi, then press the mic button and speak your command (e.g. \"make this shorter\"). Tippi applies it via AI immediately.\n\nDictation mode: enable it in Settings → Voice → Dictation Mode and pick a hotkey (default ⌃⌥⌘M). Press the hotkey to start recording, press again to stop — Whisper transcribes locally and inserts the text at the cursor, with no popup. Avoid system-reserved combos like ⌥⌘D (Dock).\n\nDownload a model in Settings → Voice before first use.";

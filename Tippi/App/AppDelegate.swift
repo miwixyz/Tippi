@@ -10,6 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let hotkeyManager = HotkeyManager()
     let keyMonitor = GlobalKeyMonitor(combo: KeyComboStore.load())
     let audioRecorder = AudioRecorder()
+    /// Second Carbon hot key (id 2) for dictation mode. Distinct from the main
+    /// trigger (id 1) and the safety hot key (id 99).
+    let dictationHotkeyManager = HotkeyManager(id: 2)
+    let dictationController = DictationController()
 
     private var statusItem: NSStatusItem?
     private var welcomeWindowController: NSWindowController?
@@ -40,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyManager.update(trigger: loadHotkeyTrigger())
         registerSafetyHotKey()
         startGlobalKeyMonitor()
+        restartDictationHotkey()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -310,6 +315,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await self.handleTriggered(from: .hotkey)
             }
         }
+    }
+
+    /// (Re)registers the dictation hot key. Call after the setting or model
+    /// state changes. No-op (and stops any prior registration) when dictation
+    /// is disabled or no Whisper model is configured.
+    func restartDictationHotkey() {
+        dictationHotkeyManager.stop()
+        guard DictationSettings.isEnabled, WhisperConfig.isConfigured else {
+            NSLog("Tippi: dictation hot key inactive (enabled=\(DictationSettings.isEnabled), configured=\(WhisperConfig.isConfigured))")
+            return
+        }
+
+        let combo = DictationSettings.combo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+
+        dictationHotkeyManager.update(
+            trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
+        )
+        dictationHotkeyManager.start { [weak self] in
+            guard let self else { return }
+            Task { @MainActor in
+                let target = self.resolvedSourceAppForCapture()
+                await self.dictationController.toggle(targetApp: target)
+            }
+        }
+        NSLog("Tippi: dictation hot key registered (\(combo.displayString))")
     }
 
     /// Manual trigger from menubar.
@@ -594,6 +630,25 @@ private func safetyHotKeyCallback(
 ) -> OSStatus {
     guard let userData else { return noErr }
     let delegate = Unmanaged<AppDelegate>.fromOpaque(userData).takeUnretainedValue()
+
+    // Carbon delivers every hot-key event to all handlers — only react to the
+    // safety hot key (id 99), otherwise we'd open the popup on the dictation key too.
+    var firedID = EventHotKeyID()
+    if let event,
+       GetEventParameter(
+           event,
+           EventParamName(kEventParamDirectObject),
+           EventParamType(typeEventHotKeyID),
+           nil,
+           MemoryLayout<EventHotKeyID>.size,
+           nil,
+           &firedID
+       ) == noErr {
+        // eventNotHandledErr (not noErr) on mismatch so Carbon keeps propagating to
+        // the other handlers — noErr would swallow the event and break the other keys.
+        guard firedID.id == 99 else { return OSStatus(eventNotHandledErr) }
+    }
+
     Task { @MainActor in
         NSLog("Tippi: safety hotkey fired")
         delegate.triggerManually()

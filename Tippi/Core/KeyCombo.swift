@@ -21,6 +21,11 @@ struct KeyCombo: Codable, Equatable {
     /// Default: ⌥⌘T (Option + Command + T). Easy two-hand combo, rarely conflicts.
     static let `default` = KeyCombo(keyCode: 17, modifiers: [.option, .command])
 
+    /// Dictation default: ⌃⌥⌘M (Control + Option + Command + M — M for microphone).
+    /// A distinct key from the main trigger; ⌥⌘D is a reserved system shortcut
+    /// (Dock auto-hide) and ⌃⌥⌘D collides with the common ⌃⌥⇧⌘D main combo.
+    static let dictationDefault = KeyCombo(keyCode: 46, modifiers: [.control, .option, .command])
+
     var displayString: String {
         var parts: [String] = []
         let m = modifiers

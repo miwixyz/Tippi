@@ -20,8 +20,15 @@ final class HotkeyManager: ObservableObject {
     private var carbonHotKeyRef: EventHotKeyRef?
     private var carbonEventHandler: EventHandlerRef?
 
-    init(trigger: HotkeyTrigger = .default) {
+    /// Unique Carbon hot-key id for this instance. Carbon dispatches every
+    /// `kEventHotKeyPressed` event to *all* installed handlers, so each handler
+    /// must check the `EventHotKeyID` and only fire for its own id. The main
+    /// trigger uses 1, dictation uses 2 (see AppDelegate).
+    let hotKeyID: UInt32
+
+    init(trigger: HotkeyTrigger = .default, id: UInt32 = 1) {
         self.currentTrigger = trigger
+        self.hotKeyID = id
     }
 
     func start(onTrigger: @escaping @MainActor () -> Void) {
@@ -172,12 +179,12 @@ final class HotkeyManager: ObservableObject {
     // MARK: - Carbon (Normal Combo)
 
     private func registerCarbonHotKey(keyCode: UInt32, modifierFlags: UInt32) {
-        let hotKeyID = EventHotKeyID(signature: OSType(0x54505049), id: 1) // 'TPPI'
+        let eventHotKeyID = EventHotKeyID(signature: OSType(0x54505049), id: hotKeyID) // 'TPPI'
         var ref: EventHotKeyRef?
         let status = RegisterEventHotKey(
             keyCode,
             modifierFlags,
-            hotKeyID,
+            eventHotKeyID,
             GetApplicationEventTarget(),
             0,
             &ref
@@ -224,7 +231,9 @@ final class HotkeyManager: ObservableObject {
     }
 }
 
-// Stateless C-compatible callback for Carbon
+// Stateless C-compatible callback for Carbon.
+// Carbon delivers every hot-key-pressed event to all installed handlers, so we
+// read the EventHotKeyID and only fire when it matches this manager's id.
 private func carbonHotKeyEventHandler(
     _ callRef: EventHandlerCallRef?,
     _ event: EventRef?,
@@ -232,6 +241,27 @@ private func carbonHotKeyEventHandler(
 ) -> OSStatus {
     guard let userData else { return noErr }
     let manager = Unmanaged<HotkeyManager>.fromOpaque(userData).takeUnretainedValue()
+
+    var firedID = EventHotKeyID()
+    let getStatus: OSStatus = event.map {
+        GetEventParameter(
+            $0,
+            EventParamName(kEventParamDirectObject),
+            EventParamType(typeEventHotKeyID),
+            nil,
+            MemoryLayout<EventHotKeyID>.size,
+            nil,
+            &firedID
+        )
+    } ?? OSStatus(eventParameterNotFoundErr)
+
+    if getStatus == noErr {
+        // Only handle our own hot key. Return eventNotHandledErr (not noErr) on a
+        // mismatch so Carbon propagates the event to the other installed handlers —
+        // returning noErr would swallow it and the matching handler would never fire.
+        guard firedID.id == manager.hotKeyID else { return OSStatus(eventNotHandledErr) }
+    }
+
     Task { @MainActor in manager.fireTrigger() }
     return noErr
 }

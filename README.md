@@ -34,6 +34,7 @@
   - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Llama 3.2 3B Fast/Balanced preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Voice Instruction** — select text, trigger the hotkey, then press the mic button in the popup and speak a command (e.g. "make this shorter"); Tippi applies it via AI directly — no prompt picker needed
+- **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating indicator shows recording / transcribing state
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
 - **Preview before applying** — side-by-side original vs. AI suggestion, then Replace / Append / Copy / Regenerate
 - **Auto-updates via Sparkle 2** — menu bar → "Check for Updates…", automatic check at launch
@@ -141,6 +142,12 @@ Press **⌥⌘T** with no text selected. A small popup with a mic button appears
 **Voice Instruction:** select text first, then hold the mic button in the popup and speak your instruction (e.g. "translate this to English"). Tippi applies it via AI — no prompt menu step.
 
 To enable voice, download a Whisper model first: Settings → Voice → Download Model.
+
+### 4b. Dictation mode (v1.7+)
+
+A faster path for pure dictation, with no popup. Enable it in **Settings → Voice → Dictation Mode** and pick a hotkey (default **⌃⌥⌘M**). Then, in any text field: press the hotkey to start recording (a floating "Recording…" indicator appears), press it again to stop. Whisper transcribes locally and the text is inserted at the cursor.
+
+Avoid combos macOS reserves (e.g. ⌥⌘D toggles the Dock) — Tippi can't receive a system-claimed shortcut.
 
 ---
 

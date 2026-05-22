@@ -998,6 +998,8 @@ private struct VoiceTab: View {
     @EnvironmentObject var permissions: PermissionsManager
     @StateObject private var modelManager = WhisperModelManager()
     @AppStorage("voice.language") private var language: String = "auto"
+    @State private var dictationEnabled: Bool = DictationSettings.isEnabled
+    @State private var dictationCombo: KeyCombo = DictationSettings.combo
 
     var body: some View {
         ScrollView {
@@ -1005,11 +1007,48 @@ private struct VoiceTab: View {
                 microphoneSection
                 modelSection
                 languageSection
+                dictationSection
                 advancedSection
             }
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    // MARK: Dictation hot key
+
+    private var dictationSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(String(localized: "settings.voice.dictation.title"))
+                    .font(.headline)
+                Text(String(localized: "settings.voice.dictation.body"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle(String(localized: "settings.voice.dictation.enable"), isOn: $dictationEnabled)
+                    .onChange(of: dictationEnabled) { _, new in
+                        DictationSettings.isEnabled = new
+                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                    }
+
+                if dictationEnabled {
+                    if !WhisperConfig.isConfigured {
+                        Label(String(localized: "settings.voice.dictation.needsModel"),
+                              systemImage: "exclamationmark.circle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    HotkeyRecorderField(combo: $dictationCombo)
+                        .onChange(of: dictationCombo) { _, new in
+                            DictationSettings.combo = new
+                            (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                        }
+                }
+            }
+            .padding(6)
+        }
     }
 
     // MARK: Microphone

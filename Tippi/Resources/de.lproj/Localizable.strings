@@ -299,6 +299,15 @@
 "voice.error.noBinary" = "whisper-cli nicht gefunden. Tippi bitte neu installieren.";
 "voice.error.noModel" = "Whisper-Modell nicht gefunden. In Einstellungen → Sprache herunterladen.";
 
+"dictation.toast.inserted" = "Diktat eingefügt";
+"dictation.toast.micDenied" = "Mikrofon-Zugriff verweigert";
+"dictation.indicator.recording" = "Aufnahme …";
+"dictation.indicator.transcribing" = "Transkribiere …";
+"settings.voice.dictation.title" = "Diktat-Modus";
+"settings.voice.dictation.body" = "Diktat-Hotkey drücken zum Aufnehmen, erneut drücken zum Stoppen — Tippi transkribiert und fügt den Text an der Cursor-Position ein. Kein Popup, keine Textmarkierung nötig.";
+"settings.voice.dictation.enable" = "Diktat-Hotkey aktivieren";
+"settings.voice.dictation.needsModel" = "Whisper-Modell oben herunterladen, um Diktat zu nutzen.";
+
 "voice.model.noModel" = "Kein Modell heruntergeladen";
 "voice.model.download" = "Laden";
 "voice.model.cancel" = "Abbrechen";
@@ -311,4 +320,4 @@
 "settings.about.feature5" = "Spracheingabe — lokale Whisper-Transkription, keine Cloud";
 "settings.about.github" = "github.com/miwixyz/Tippi";
 "settings.help.voiceTitle" = "Spracheingabe";
-"settings.help.voiceBody" = "⌥⌘T ohne markierten Text drücken: ein Mikrofon-Button erscheint im Popup. Halten zum Aufnehmen, loslassen zum Transkribieren — Whisper läuft vollständig auf dem Gerät. Das Transkript erscheint im Popup; KI-Prompt wählen oder „Direkt einfügen“ tippen.\n\nSprachbefehl: zuerst Text markieren, Tippi auslösen, dann Mikrofon-Button halten und Anweisung sprechen (z.B. „Mach das kürzer“). Tippi wendet sie sofort per KI an.\n\nVor dem ersten Einsatz ein Modell unter Einstellungen → Sprache herunterladen.";
+"settings.help.voiceBody" = "⌥⌘T ohne markierten Text drücken: ein Mikrofon-Button erscheint im Popup. Halten zum Aufnehmen, loslassen zum Transkribieren — Whisper läuft vollständig auf dem Gerät. Das Transkript erscheint im Popup; KI-Prompt wählen oder „Direkt einfügen“ tippen.\n\nSprachbefehl: zuerst Text markieren, Tippi auslösen, dann Mikrofon-Button halten und Anweisung sprechen (z.B. „Mach das kürzer“). Tippi wendet sie sofort per KI an.\n\nDiktat-Modus: in Einstellungen → Sprache → Diktat-Modus aktivieren und Hotkey wählen (Standard ⌃⌥⌘M). Hotkey drücken zum Aufnehmen, erneut drücken zum Stoppen — Whisper transkribiert lokal und fügt den Text an der Cursor-Position ein, ohne Popup. Vom System belegte Combos wie ⌥⌘D (Dock) meiden.\n\nVor dem ersten Einsatz ein Modell unter Einstellungen → Sprache herunterladen.";

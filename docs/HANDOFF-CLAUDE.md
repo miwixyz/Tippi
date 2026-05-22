@@ -1,9 +1,30 @@
 # Tippi — Übergabe an Claude Code
 
-**Stand:** 2026-05-22 · **Version:** 1.6.0 (Build 95) · **Branch:** `main`  
+**Stand:** 2026-05-22 · **Version:** 1.7.0 (Build 96) · **Branch:** `main`  
 **Repo:** https://github.com/miwixyz/Tippi · **Lokal:** `~/Coding/Tippi/`
 
-Dieses Dokument fasst die Session **v1.6 PopClip-Ersatz / lokale Schnellaktionen** und alle Folge-Fixes für Texterfassung zusammen. Es ist die Einstiegslektüre für Claude Code (oder einen anderen Agenten) beim Weitermachen.
+Dieses Dokument fasst die Sessions **v1.6 lokale Schnellaktionen** und **v1.7 Diktat-Modus** plus alle Folge-Fixes zusammen. Einstiegslektüre für Claude Code beim Weitermachen.
+
+---
+
+## 0. v1.7 — Diktat-Modus (zuletzt geliefert)
+
+Dedizierter zweiter Hotkey (Standard **⌃⌥⌘M**) für reines Diktat **ohne Popup**:
+
+```
+Diktat-Hotkey (1×)  → DictationController.toggle → AudioRecorder.start → RecordingIndicator „Aufnahme…"
+Diktat-Hotkey (2×)  → recorder.stop → WhisperTranscriber.transcribe → TextInsertion.replace(in: targetApp)
+                      → RecordingIndicator hide + Toast „Diktat eingefügt"
+```
+
+**Neue/geänderte Dateien:** `Core/DictationController.swift` (State-Machine + `DictationSettings`), `UI/RecordingIndicatorWindow.swift` (Floating-Puls, non-activating), `Core/HotkeyManager.swift` (id-Param + ID-aware Carbon-Handler), `App/AppDelegate.swift` (2. HotkeyManager id=2 + `restartDictationHotkey()` + Safety-Callback id=99-Check), `UI/SettingsView.swift` (Diktat-Sektion im Voice-Tab), `Core/KeyCombo.swift` (`dictationDefault`).
+
+**Debug-Learnings (Hotkey, macOS 26):**
+- **Carbon liefert jedes `kEventHotKeyPressed` an ALLE Handler.** Handler MUSS `EventHotKeyID` lesen (`GetEventParameter` / `kEventParamDirectObject` / `typeEventHotKeyID`) und nur eigene id verarbeiten. IDs: 1=Haupt, 2=Diktat, 99=Safety.
+- **Bei id-Mismatch `eventNotHandledErr` zurückgeben, NICHT `noErr`.** `noErr` = „handled" → stoppt die Handler-Chain → passender Handler wird nie erreicht → alle Combos tot.
+- **⌥⌘D ist System-reserviert** (Dock-Ausblenden, symbolic hotkey id 52) → App-Hotkey kriegt die Combo nie. Default-Combos gegen System-Shortcuts prüfen.
+- **Diktat-Combo deutlich vom Haupt-Hotkey trennen** — ⌃⌥⌘D vs. ⌃⌥⇧⌘D (nur Shift) ist beim Tippen ununterscheidbar. Eigene Taste (M) gewählt.
+- **Insert ohne Popup = kein Focus-Steal** → AX `replace(in: targetApp)` setzt Text am Caret (leere Selektion = Insert), Clipboard-Fallback nur wenn AX `trusted=false`.
 
 ---
 

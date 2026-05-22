@@ -2,6 +2,16 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.7.0] — 2026-05-22
+
+### Added
+- **Dictation mode**: a dedicated hot key (default **⌃⌥⌘M**) starts recording, pressing it again stops recording, transcribes locally via Whisper, and inserts the text at the cursor — no popup, no text selection required.
+- **Recording indicator**: a floating, non-activating indicator shows "Recording…" (pulsing) and "Transcribing…" status at the bottom of the active screen during dictation.
+- **Dictation settings** (Settings → Voice): enable toggle plus a configurable hot key, gated on a downloaded Whisper model.
+
+### Fixed
+- **Carbon hot keys now check their `EventHotKeyID`**: handlers previously fired for every hot-key event, which would have caused the new dictation key and the main trigger to cross-fire. Each handler now reacts only to its own id (main = 1, dictation = 2, safety = 99).
+
 ## [1.6.0] — 2026-05-22
 
 ### Added
