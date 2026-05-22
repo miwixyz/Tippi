@@ -22,6 +22,7 @@ All notable changes to Tippi will be documented in this file.
 - **Voice recording cleanup** now stops recordings when the popup closes and prevents `whisper-cli` subprocess hangs with cancellation, stderr draining, and timeout handling.
 - **Local provider fallback** now skips unavailable Ollama/MLX providers instead of blocking the local demo fallback.
 - **Release pipeline** now derives the default version from `project.yml`, parses notarization JSON robustly, fails closed on GitHub release upload errors, and avoids fragile `head` pipes in signing checks.
+- **Release version drift protection** now fails the release if `release.env VERSION` does not match `project.yml` `MARKETING_VERSION`.
 - **Localization drift** fixed for the English update-menu label and duplicate Voice model title.
 
 ## [1.5.5] — 2026-05-15

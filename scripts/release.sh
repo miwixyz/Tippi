@@ -14,10 +14,15 @@
 
 set -euo pipefail
 
-# Load env from file if present (release.env hat Vorrang vor Keychain — explicit override pro Repo möglich)
+# Load env from file if present. An explicit VERSION in the shell wins so
+# stale release.env files cannot silently downgrade a release.
+ENV_VERSION="${VERSION:-}"
 if [ -f release.env ]; then
     # shellcheck disable=SC1091
     set -a; source release.env; set +a
+fi
+if [ -n "${ENV_VERSION}" ]; then
+    VERSION="${ENV_VERSION}"
 fi
 
 # ─── Keychain-Fallback (Migration 2026-05-17) ─────────────────────────────────
@@ -46,6 +51,11 @@ if [ -z "${DEVELOPER_ID}" ]; then
 fi
 if [ -z "${VERSION}" ]; then
     echo "✗ VERSION not set and MARKETING_VERSION could not be read from project.yml."
+    exit 1
+fi
+if [ "${VERSION}" != "${PROJECT_VERSION}" ]; then
+    echo "✗ VERSION (${VERSION}) does not match project.yml MARKETING_VERSION (${PROJECT_VERSION})."
+    echo "  Update release.env or run with VERSION=${PROJECT_VERSION}."
     exit 1
 fi
 
