@@ -5,7 +5,7 @@ help:
 	@echo ""
 	@echo "  make generate         Generate Tippi.xcodeproj from project.yml (XcodeGen)"
 	@echo "  make open             Generate + open in Xcode"
-	@echo "  make build            Build Release configuration (local ad-hoc signed)"
+	@echo "  make build            Build Release configuration (Developer ID signed — stable TCC identity)"
 	@echo "  make clean            Remove generated project and build artifacts"
 	@echo "  make icons            Open icons/ folder"
 	@echo ""
@@ -25,7 +25,7 @@ build: generate
 	@if pgrep -x Tippi >/dev/null 2>&1; then echo "Stopping running Tippi before rebuild..."; pkill -x Tippi; sleep 1; fi
 	rm -rf build/Build/Products/Release/Tippi.app
 	xcodebuild -project Tippi.xcodeproj -scheme Tippi -configuration Release -derivedDataPath ./build build
-	codesign --force --deep --sign - --entitlements Tippi/Resources/Tippi.entitlements build/Build/Products/Release/Tippi.app
+	codesign --force --deep --sign "Developer ID Application: Michael Wildenauer (LTKJ6Z2VYB)" --entitlements Tippi/Resources/Tippi.entitlements build/Build/Products/Release/Tippi.app
 
 clean:
 	rm -rf Tippi.xcodeproj build/ DerivedData/ dist/

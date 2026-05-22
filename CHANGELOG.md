@@ -20,6 +20,8 @@ All notable changes to Tippi will be documented in this file.
 - **“No text captured”** when selection was visible: capture no longer waits on mic permission before reading text; pasteboard detection accepts identical clipboard content after copy; System Events + full window AX tree for TextEdit and similar apps.
 - **Greyed-out / no-op quick actions**: popup closes before paste; selection is re-captured after closing the popup when the initial capture failed; paste runs synchronously in the action handler.
 - **Popup showed quick actions without working text**: orange hint when capture failed; buttons stay clickable and retry capture on tap.
+- **Local quick actions appended instead of replacing on macOS 26**: the popup steals focus and collapses the source app's selection, so the clipboard `⌘V` fallback pasted after the original text. The focused element and selection range are now captured at trigger time (selection still live) and the result is re-selected and replaced via the Accessibility API — works cross-app without bringing the source app to front.
+- **Accessibility permission lost on every rebuild**: `make build` now signs with the Developer ID certificate instead of ad-hoc, giving a stable TCC identity (Team ID + bundle ID) so the granted Accessibility permission persists across local builds instead of resetting with each new code hash.
 
 ## [1.5.7] — 2026-05-22
 

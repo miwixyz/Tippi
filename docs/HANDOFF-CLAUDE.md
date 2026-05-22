@@ -26,9 +26,11 @@ PopClip-ähnliche Aktionen **im Tippi-Popup** (nicht automatisch beim Markieren)
 | Datei | Rolle |
 |-------|--------|
 | `Tippi/Core/LocalTextAction.swift` | Modelle, Transformer, RichTextFormatter, `LocalQuickActionSettings` |
-| `Tippi/App/AppDelegate.swift` | `runLocalAction`, Capture vor Popup, Hotkey-Default `combo` |
-| `Tippi/Core/TextCapture.swift` | Mehrstufige Erfassung (Pasteboard zuerst, AX-Baum, System Events) |
-| `Tippi/Core/TextInsertion.swift` | Einfügen per AX in Quell-App + dual-tap ⌘V |
+| `Tippi/App/AppDelegate.swift` | `runLocalAction`, Capture + Selektions-Range vor Popup, Hotkey-Default `combo` |
+| `Tippi/Core/TextCapture.swift` | Mehrstufige Erfassung (Pasteboard zuerst, AX-Baum, System Events) + `captureFocusedSelectionRange` |
+| `Tippi/Core/TextInsertion.swift` | `replaceViaElement` (AX re-select + replace), AX-Suche, dual-tap ⌘V Fallback |
+| `Tippi/UI/ToastWindow.swift` | Bestätigungs-Toast nach Schnellaktion (nahe Cursor, 1,5s + Fade) |
+| `Makefile` | `make build` signiert mit Developer ID (stabile TCC-Identität) |
 | `Tippi/UI/PromptPopup/PromptPopupView.swift` | Sektion Schnellaktionen, async Handler |
 | `Tippi/UI/PromptPopup/PromptPopupController.swift` | async `onLocalAction` |
 | `Tippi/UI/SettingsView.swift` | Toggle + Help |
@@ -49,16 +51,20 @@ PopClip-ähnliche Aktionen **im Tippi-Popup** (nicht automatisch beim Markieren)
 ```
 Hotkey / Menü „Tippi auslösen…“
   → handleTriggered()
-  → TextCapture.captureSelectedText(sourceApp)   // VOR Popup, VOR Mic-Permission
+  → TextCapture.captureSelectedText(sourceApp)        // VOR Popup, VOR Mic-Permission
+  → TextCapture.captureFocusedSelectionRange(in:)      // AX-Element + CFRange, Selektion noch live
+      → speichern in lastSelectionElement / lastSelectionRange
   → popupController.show(localActions, captured?, onLocalAction async)
-  
+
 Klick Schnellaktion
   → runLocalAction()
-  → cap = captured ?? re-capture nach popup.close()
-  → performLocalAction → popup.close → pasteBack → TextInsertion.replace(in: app)
+  → popup.close()
+  → TextInsertion.replaceViaElement(el, range, text)   // re-selektieren + ersetzen via AX
+      → fallback: TextInsertion.replace(in: app)        // AX-Suche, dann dual-tap ⌘V
+  → ToastWindowController.show(action.title)
 ```
 
-**Wichtig:** `captured` im Closure ist der Stand **beim Öffnen** des Popups. Klick mit offenem Popup verliert oft die Markierung → `runLocalAction` schließt Popup und erfasst neu.
+**Wichtig:** Das Popup ruft `NSApp.activate` → Tippi wird aktiv → Quell-App-Selektion **kollabiert**. Deshalb wird die `CFRange` **vor** dem Popup gegriffen (Selektion noch live) und nach der Aktion via `kAXSelectedTextRangeAttribute` re-selektiert, dann via `kAXSelectedTextAttribute` ersetzt. AX-Set läuft cross-app **ohne** frontmost — kein Focus-Wechsel, kein ⌘V nötig im Erfolgsfall.
 
 ---
 
@@ -80,7 +86,7 @@ Logging: `Tippi: TextCapture …` in Konsole.app filtern.
 | Thema | Detail |
 |-------|--------|
 | Kein PopClip-Modus | Kein Auto-Popup bei Markierung — by design |
-| Test-Build TCC | `make build` = ad-hoc signiert → Bedienungshilfen pro Build-Pfad neu setzen |
+| Test-Build TCC | `make build` = **Developer ID signiert** (Team `LTKJ6Z2VYB`) → stabile TCC-Identität, Grant bleibt über Builds. Nur **eine** `com.tippi.app` darf existieren (Duplikat in `/Applications` → LaunchServices-Konflikt). Via `open` starten, nicht raw-Binary (bricht TCC auf macOS 26). |
 | Spotlight / Suchfelder | Oft keine zuverlässige AX-Selection — **TextEdit** zum Testen |
 | Automation | System-Events-Fallback kann **Automation → System Events** brauchen |
 | Veröffentlichung | v1.6.0 ist im Repo, Release/DMG/Appcast ggf. noch nicht ausgerollt |

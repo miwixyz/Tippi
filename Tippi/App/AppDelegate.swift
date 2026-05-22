@@ -15,6 +15,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var welcomeWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
     private var lastNonTippiApp: NSRunningApplication?
+    /// Focused text element + selection range captured at trigger time (before the popup
+    /// steals focus). Used to re-select and replace for local quick actions.
+    private var lastSelectionElement: AXUIElement?
+    private var lastSelectionRange: CFRange?
     private let popupController = PromptPopupController()
     private let previewWindowController = PreviewWindowController()
     private var cancellables = Set<AnyCancellable>()
@@ -387,6 +391,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Capture before any delay — while TextEdit (etc.) still owns the selection.
         let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
 
+        // Grab the focused element + selection range now (selection still live).
+        // The popup will collapse the selection, so we need this to replace later.
+        if let sourceApp,
+           let sel = TextCapture.captureFocusedSelectionRange(in: sourceApp) {
+            lastSelectionElement = sel.element
+            lastSelectionRange = sel.range
+            NSLog("Tippi: captured selection range loc=\(sel.range.location) len=\(sel.range.length)")
+        } else {
+            lastSelectionElement = nil
+            lastSelectionRange = nil
+        }
+
         if source == .hotkey {
             try? await Task.sleep(nanoseconds: 40_000_000)
         }
@@ -502,13 +518,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch action.perform(on: cap.text) {
         case .plainReplacement(let text):
             popupController.close()
-            try? await Task.sleep(nanoseconds: 80_000_000)
-            await pasteBack(text, into: cap.sourceApp)
+            if let el = lastSelectionElement, let range = lastSelectionRange,
+               TextInsertion.replaceViaElement(el, range: range, with: text) {
+                NSLog("Tippi: local action replaced via captured AX range")
+            } else {
+                await TextInsertion.replace(with: text, in: cap.sourceApp)
+            }
+            ToastWindowController.shared.show(message: action.title)
             return nil
         case .richReplacement(let attributed, let fallback):
             popupController.close()
-            try? await Task.sleep(nanoseconds: 80_000_000)
-            await pasteBack(attributed, fallbackPlainText: fallback, into: cap.sourceApp)
+            if let el = lastSelectionElement, let range = lastSelectionRange,
+               TextInsertion.replaceViaElement(el, range: range, with: fallback) {
+                NSLog("Tippi: local action (rich→plain) replaced via captured AX range")
+            } else {
+                await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: cap.sourceApp)
+            }
+            ToastWindowController.shared.show(message: action.title)
             return nil
         case .info(let message):
             return message

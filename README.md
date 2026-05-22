@@ -84,12 +84,14 @@ make open
 
 Then build and run in Xcode (⌘R). Note: an unsigned build will have TCC permission quirks. For a stable signed build see [Building a release](#building-a-release) below.
 
-For a local command-line build, `make build` writes to `build/Build/Products/Release/` and ad-hoc signs the app for local testing:
+For a local command-line build, `make build` writes to `build/Build/Products/Release/` and signs the app with your Developer ID certificate so the granted Accessibility permission survives rebuilds (a stable TCC identity tied to Team ID + bundle ID):
 
 ```bash
 make build
 open build/Build/Products/Release/Tippi.app
 ```
+
+> Launch via `open` (or Finder), not by running the inner `Contents/MacOS/Tippi` binary directly — on macOS 26 a direct-binary launch breaks the bundle's TCC identity and Accessibility reads as not-granted.
 
 ---
 
@@ -128,7 +130,7 @@ With text selected, the popup shows **Quick actions** above the AI prompts — i
 | Join Lines | Multi-line selection → single line |
 | Characters / Words | Count only (inline message, text unchanged) |
 
-Toggle visibility: **Settings → General → Show local quick actions**.
+A short confirmation toast appears near the cursor after a quick action runs. Toggle visibility: **Settings → General → Show local quick actions**.
 
 **Best results:** native editors (**TextEdit**, **Notes**, Mail compose). Spotlight/search fields and some web inputs may not expose selection to Accessibility — use **TextEdit** to verify permissions.
 
@@ -161,12 +163,14 @@ This route always works because macOS does the binding, not Tippi.
 
 ### Local build permissions (test builds)
 
-`make build` produces an ad-hoc signed app at `build/Build/Products/Release/Tippi.app`. macOS treats each rebuild as a new binary for TCC:
+`make build` signs with your Developer ID certificate, so the Accessibility grant has a stable TCC identity (Team ID + bundle ID) and persists across rebuilds — you grant it once.
 
-1. **System Settings → Privacy & Security → Accessibility** → enable **Tippi** (the build you are actually running).
-2. If quick actions still fail in TextEdit: grant **Automation** → Tippi may control **System Events** (AppleScript fallback).
-3. Restart Tippi after toggling permissions (`pkill -x Tippi` then reopen).
-4. Reset if stuck: `tccutil reset Accessibility com.tippi.app`
+1. **System Settings → Privacy & Security → Accessibility** → enable **Tippi**. If Tippi is not listed, add it via **+** → `build/Build/Products/Release/Tippi.app`.
+2. Make sure only **one** `Tippi.app` with bundle ID `com.tippi.app` exists. A second copy (e.g. an old release in `/Applications`) creates a LaunchServices conflict that can bind the grant to the wrong bundle. Remove duplicates.
+3. Launch via `open` / Finder, **not** the inner `Contents/MacOS/Tippi` binary — a direct-binary launch breaks the bundle's TCC identity on macOS 26.
+4. If quick actions still fail in TextEdit: grant **Automation** → Tippi may control **System Events** (AppleScript fallback).
+5. Restart Tippi after toggling permissions (`pkill -x Tippi` then reopen).
+6. Reset if stuck: `tccutil reset Accessibility com.tippi.app`
 
 ### Default AI model
 

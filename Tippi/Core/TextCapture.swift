@@ -54,6 +54,32 @@ enum TextCapture {
         return nil
     }
 
+    /// Grabs the focused text element + its current selection range while the selection
+    /// is still live (before the popup steals focus). Used to re-select and replace
+    /// after a local quick action, since the popup collapses the source app's selection.
+    static func captureFocusedSelectionRange(
+        in app: NSRunningApplication
+    ) -> (element: AXUIElement, range: CFRange)? {
+        guard AXIsProcessTrusted() else { return nil }
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        guard let focused = focusedElement(in: appElement) else { return nil }
+
+        var rangeRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(
+            focused,
+            kAXSelectedTextRangeAttribute as CFString,
+            &rangeRef
+        ) == .success, let rangeValue = rangeRef else {
+            return nil
+        }
+
+        var range = CFRange()
+        guard AXValueGetValue(rangeValue as! AXValue, .cfRange, &range), range.length > 0 else {
+            return nil
+        }
+        return (focused, range)
+    }
+
     private static func resolvedSourceApp(_ sourceApp: NSRunningApplication?) -> NSRunningApplication? {
         if let sourceApp, sourceApp.bundleIdentifier != Bundle.main.bundleIdentifier {
             return sourceApp

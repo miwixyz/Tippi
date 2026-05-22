@@ -13,6 +13,7 @@ enum TextInsertion {
             return
         }
 
+        NSLog("Tippi: TextInsertion AX replace failed — falling back to clipboard+paste")
         app?.activate(options: [.activateIgnoringOtherApps])
         try? await Task.sleep(nanoseconds: 150_000_000)
         await paste(text: text)
@@ -83,6 +84,30 @@ enum TextInsertion {
         try? await Task.sleep(nanoseconds: 400_000_000)
 
         snapshot.restore()
+    }
+
+    /// Re-selects `range` on `element` then replaces it with `text`, all via Accessibility.
+    /// Works cross-app without the source app being frontmost. Used by local quick actions
+    /// where the popup collapsed the live selection — we restore it from the captured range.
+    static func replaceViaElement(_ element: AXUIElement, range: CFRange, with text: String) -> Bool {
+        guard AXIsProcessTrusted() else { return false }
+
+        var mutableRange = range
+        if let axRange = AXValueCreate(.cfRange, &mutableRange) {
+            AXUIElementSetAttributeValue(
+                element,
+                kAXSelectedTextRangeAttribute as CFString,
+                axRange
+            )
+        }
+
+        let result = AXUIElementSetAttributeValue(
+            element,
+            kAXSelectedTextAttribute as CFString,
+            text as CFTypeRef
+        )
+        NSLog("Tippi: replaceViaElement → \(result.rawValue == 0 ? "ok" : "err(\(result.rawValue))")")
+        return result == .success
     }
 
     private static func replaceSelectionViaAccessibility(with text: String, in app: NSRunningApplication) -> Bool {
