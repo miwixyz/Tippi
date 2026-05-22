@@ -11,14 +11,5 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.5.7/Tippi-1.5.7.dmg" length="4762575" type="application/octet-stream" sparkle:edSignature="ERu+Fak2tzGy+3gKRcwWh/+Ym9oAeHdVEGnnyhmEcRhSpobL6QlkZEnagOmCm0xlvw2H2NFlHJu9MrKE/fgfDA=="/>
         </item>
-        <item>
-            <title>1.5.6</title>
-            <pubDate>Sun, 17 May 2026 14:06:14 +0200</pubDate>
-            <sparkle:version>90</sparkle:version>
-            <sparkle:shortVersionString>1.5.6</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.5.6/Tippi-1.5.6.dmg" length="4748435" type="application/octet-stream" sparkle:edSignature="CX32tLZo8a8CZKduGpzYZ/eWlBO5yetC9CZYYCpYu7s8BHmUDj2pVOhJeaiFp2MMy4fd8sukcQCSqbUKQNzzBw=="/>
-        </item>
     </channel>
 </rss>
