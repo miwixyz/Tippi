@@ -299,6 +299,7 @@
 "voice.error.noBinary" = "whisper-cli nicht gefunden. Tippi bitte neu installieren.";
 "voice.error.noModel" = "Whisper-Modell nicht gefunden. In Einstellungen → Sprache herunterladen.";
 
+"insert.clipboardFallback" = "In Zwischenablage kopiert — ⌘V zum Einfügen";
 "dictation.toast.inserted" = "Diktat eingefügt";
 "dictation.toast.micDenied" = "Mikrofon-Zugriff verweigert";
 "dictation.indicator.recording" = "Aufnahme …";

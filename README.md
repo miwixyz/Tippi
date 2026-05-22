@@ -151,7 +151,7 @@ Avoid combos macOS reserves (e.g. ⌥⌘D toggles the Dock) — Tippi can't rece
 
 ### App compatibility
 
-Tippi reads and writes text via the Accessibility API, falling back to a clipboard (⌘C/⌘V) round-trip. This covers native macOS apps (Mail, Notes, Safari, TextEdit, Pages) and Microsoft Office fully. **Dictation (insert at cursor) and text capture work everywhere, including Electron/Chromium apps** such as Obsidian, Claude, ChatGPT, Slack, and VS Code. One limitation: **transforming and replacing a *selection* in Electron/Chromium apps is unreliable** — those editors drop the live selection when the picker appears and ignore Accessibility text writes, so the result is appended instead of replacing. Use dictation there, or transform in a native app.
+Tippi reads and writes text via the Accessibility API, falling back to a clipboard (⌘C/⌘V) round-trip. This covers native macOS apps (Mail, Notes, Safari, TextEdit, Pages) and Microsoft Office fully. **Dictation (insert at cursor) and text capture work everywhere, including Electron/Chromium apps** such as Obsidian, Claude, ChatGPT, Slack, and VS Code. One limitation: **transforming and replacing a *selection* in Electron/Chromium apps cannot be done in place** — those editors drop the live selection when the picker appears and ignore Accessibility text writes. Tippi detects this and, instead of appending, copies the result to the clipboard and shows a "Copied — press ⌘V to insert" toast. Use dictation there, or transform in a native app for in-place replacement.
 
 ---
 

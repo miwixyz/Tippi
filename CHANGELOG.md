@@ -2,6 +2,11 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.7.3] — 2026-05-22
+
+### Changed
+- **Transforming a selection in apps that ignore Accessibility writes** (Electron/Chromium: Obsidian, Claude, ChatGPT, Slack, VS Code) no longer appends the result next to the original. Tippi detects the ignored write, copies the result to the clipboard, and shows a "Copied — press ⌘V to insert" toast — so nothing unexpected is written into the document. Native apps still replace in place; dictation still inserts at the cursor everywhere.
+
 ## [1.7.2] — 2026-05-22
 
 ### Fixed

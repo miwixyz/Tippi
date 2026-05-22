@@ -93,8 +93,18 @@ enum TextInsertion {
     /// Re-selects `range` on `element` then replaces it with `text`, all via Accessibility.
     /// Works cross-app without the source app being frontmost. Used by local quick actions
     /// where the popup collapsed the live selection — we restore it from the captured range.
-    static func replaceViaElement(_ element: AXUIElement, range: CFRange, with text: String) -> Bool {
-        guard AXIsProcessTrusted() else { return false }
+    enum AXReplaceOutcome {
+        /// AX write took effect — text replaced.
+        case replaced
+        /// AX reported success but the value did not change (Electron/Chromium
+        /// ignore AX text writes). The selection is also gone, so a ⌘V would append.
+        case ignored
+        /// AX could not be used (not trusted, or write returned an error).
+        case unavailable
+    }
+
+    static func replaceViaElement(_ element: AXUIElement, range: CFRange, with text: String) -> AXReplaceOutcome {
+        guard AXIsProcessTrusted() else { return .unavailable }
 
         let valueBefore = axStringValue(element)
 
@@ -112,15 +122,18 @@ enum TextInsertion {
             kAXSelectedTextAttribute as CFString,
             text as CFTypeRef
         )
-        let valueAfter = axStringValue(element)
+        guard result == .success else {
+            insertLog.notice("replaceViaElement → unavailable (set=\(result.rawValue, privacy: .public))")
+            return .unavailable
+        }
 
-        // Electron/Chromium apps return .success for an AX text write but silently
-        // ignore it. Detect that: if the element exposed its value and it did not
-        // change, the write was a no-op → report failure so the caller falls back.
+        // If the element exposed its value and it did not change, the write was a
+        // no-op (Electron/Chromium). The selection has also collapsed, so a clipboard
+        // ⌘V would append rather than replace → caller should hand off via clipboard.
+        let valueAfter = axStringValue(element)
         let noOp = valueBefore != nil && valueAfter != nil && valueBefore == valueAfter
-        let effective = result == .success && !noOp
-        insertLog.notice("replaceViaElement set=\(result.rawValue, privacy: .public) noOp=\(noOp, privacy: .public) effective=\(effective, privacy: .public)")
-        return effective
+        insertLog.notice("replaceViaElement → \(noOp ? "ignored" : "replaced", privacy: .public)")
+        return noOp ? .ignored : .replaced
     }
 
     private static func axStringValue(_ element: AXUIElement) -> String? {

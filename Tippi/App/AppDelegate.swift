@@ -560,23 +560,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch action.perform(on: cap.text) {
         case .plainReplacement(let text):
             popupController.close()
-            if let el = lastSelectionElement, let range = lastSelectionRange,
-               TextInsertion.replaceViaElement(el, range: range, with: text) {
-                NSLog("Tippi: local action replaced via captured AX range")
+            let message: String
+            if let el = lastSelectionElement, let range = lastSelectionRange {
+                switch TextInsertion.replaceViaElement(el, range: range, with: text) {
+                case .replaced:
+                    message = action.title
+                case .ignored:
+                    // App ignored the AX write and the selection is gone (Electron) —
+                    // hand the result off via the clipboard instead of appending.
+                    TextInsertion.copy(text)
+                    message = String(localized: "insert.clipboardFallback")
+                case .unavailable:
+                    await TextInsertion.replace(with: text, in: cap.sourceApp)
+                    message = action.title
+                }
             } else {
                 await TextInsertion.replace(with: text, in: cap.sourceApp)
+                message = action.title
             }
-            ToastWindowController.shared.show(message: action.title)
+            ToastWindowController.shared.show(message: message)
             return nil
         case .richReplacement(let attributed, let fallback):
             popupController.close()
-            if let el = lastSelectionElement, let range = lastSelectionRange,
-               TextInsertion.replaceViaElement(el, range: range, with: fallback) {
-                NSLog("Tippi: local action (rich→plain) replaced via captured AX range")
+            let message: String
+            if let el = lastSelectionElement, let range = lastSelectionRange {
+                switch TextInsertion.replaceViaElement(el, range: range, with: fallback) {
+                case .replaced:
+                    message = action.title
+                case .ignored:
+                    TextInsertion.copy(fallback)
+                    message = String(localized: "insert.clipboardFallback")
+                case .unavailable:
+                    await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: cap.sourceApp)
+                    message = action.title
+                }
             } else {
                 await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: cap.sourceApp)
+                message = action.title
             }
-            ToastWindowController.shared.show(message: action.title)
+            ToastWindowController.shared.show(message: message)
             return nil
         case .info(let message):
             return message
@@ -611,9 +633,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// collapsed the live selection), re-selecting and replacing via Accessibility.
     /// Falls back to focused-element replace / clipboard paste when no range was captured.
     private func replaceCapturedSelection(with text: String, sourceApp: NSRunningApplication?) async {
-        if let el = lastSelectionElement, let range = lastSelectionRange,
-           TextInsertion.replaceViaElement(el, range: range, with: text) {
-            return
+        if let el = lastSelectionElement, let range = lastSelectionRange {
+            switch TextInsertion.replaceViaElement(el, range: range, with: text) {
+            case .replaced:
+                return
+            case .ignored:
+                // App ignored the AX write and the selection is gone (Electron) —
+                // hand the result off via the clipboard instead of appending.
+                TextInsertion.copy(text)
+                ToastWindowController.shared.show(message: String(localized: "insert.clipboardFallback"))
+                return
+            case .unavailable:
+                break
+            }
         }
         await TextInsertion.replace(with: text, in: sourceApp)
     }
