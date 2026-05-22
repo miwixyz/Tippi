@@ -7,7 +7,7 @@ alwaysApply: true
 
 System-wide AI writing assistant for macOS. Text select → hotkey → AI transform → replace in original app.
 
-**Repo:** `~/Coding/Tippi/` | **v1.5.7 stable** | MIT open-source
+**Repo:** `~/Coding/Tippi/` | **v1.6.0 stable** | MIT open-source
 
 ---
 
@@ -37,6 +37,7 @@ Tippi/
 │   ├── KeyCombo.swift              # Key combination model
 │   ├── TextCapture.swift           # AX API first, ⌘C pasteboard fallback
 │   ├── TextInsertion.swift         # Replace selected text in source app
+│   ├── LocalTextAction.swift       # PopClip-style local quick actions (v1.6)
 │   ├── KeychainStore.swift         # API key storage (macOS Keychain)
 │   ├── PermissionsManager.swift    # Accessibility + Input Monitoring permissions
 │   ├── PromptVariableResolver.swift # {clipboard}, {app_name}, {language}, {selected_text}

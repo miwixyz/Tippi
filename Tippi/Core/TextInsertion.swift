@@ -3,19 +3,46 @@ import ApplicationServices
 
 @MainActor
 enum TextInsertion {
-    /// Replace the current selection in the focused app with `text`.
-    static func replace(with text: String) async {
+    static func replace(with text: String, in app: NSRunningApplication?) async {
+        if let app, replaceSelectionViaAccessibility(with: text, in: app) {
+            NSLog("Tippi: TextInsertion AX replace ok")
+            return
+        }
+        if replaceSelectionViaAccessibility(with: text) {
+            NSLog("Tippi: TextInsertion AX replace (focused) ok")
+            return
+        }
+
+        app?.activate(options: [.activateIgnoringOtherApps])
+        try? await Task.sleep(nanoseconds: 150_000_000)
         await paste(text: text)
     }
 
-    /// Append `text` immediately after the current selection / cursor.
-    /// Phase 2: equivalent to `replace` (pastes at cursor).
-    /// Phase 3 will move the cursor to selection-end via AX before pasting.
+    static func replace(with text: String) async {
+        await replace(with: text, in: nil)
+    }
+
+    static func replace(with attributedText: NSAttributedString, fallbackPlainText: String, in app: NSRunningApplication?) async {
+        if let app, replaceSelectionViaAccessibility(with: fallbackPlainText, in: app) {
+            return
+        }
+        if replaceSelectionViaAccessibility(with: fallbackPlainText) {
+            return
+        }
+
+        app?.activate(options: [.activateIgnoringOtherApps])
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        await paste(attributedText: attributedText, fallbackPlainText: fallbackPlainText)
+    }
+
+    static func replace(with attributedText: NSAttributedString, fallbackPlainText: String) async {
+        await replace(with: attributedText, fallbackPlainText: fallbackPlainText, in: nil)
+    }
+
     static func append(_ text: String) async {
         await paste(text: text)
     }
 
-    /// Copy `text` to the clipboard without pasting.
     static func copy(_ text: String) {
         let pb = NSPasteboard.general
         pb.clearContents()
@@ -25,21 +52,60 @@ enum TextInsertion {
     // MARK: - Paste roundtrip
 
     private static func paste(text: String) async {
-        if replaceSelectionViaAccessibility(with: text) {
-            return
-        }
-
         let pb = NSPasteboard.general
         let snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
         pb.setString(text, forType: .string)
 
-        try? await Task.sleep(nanoseconds: 30_000_000) // 30 ms — settle clipboard
+        try? await Task.sleep(nanoseconds: 40_000_000)
         simulatePaste()
-        try? await Task.sleep(nanoseconds: 750_000_000) // let slower target apps consume the pasteboard
+        try? await Task.sleep(nanoseconds: 400_000_000)
 
         snapshot.restore()
+    }
+
+    private static func paste(attributedText: NSAttributedString, fallbackPlainText: String) async {
+        let pb = NSPasteboard.general
+        let snapshot = PasteboardSnapshot.capture()
+
+        pb.clearContents()
+        if let rtf = try? attributedText.data(
+            from: NSRange(location: 0, length: attributedText.length),
+            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        ) {
+            pb.setData(rtf, forType: .rtf)
+        }
+        pb.setString(fallbackPlainText, forType: .string)
+
+        try? await Task.sleep(nanoseconds: 40_000_000)
+        simulatePaste()
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
+        snapshot.restore()
+    }
+
+    private static func replaceSelectionViaAccessibility(with text: String, in app: NSRunningApplication) -> Bool {
+        guard AXIsProcessTrusted() else { return false }
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+
+        if let focused = focusedElement(in: appElement),
+           setSelectedText(text, on: focused) {
+            return true
+        }
+
+        var windowsRef: CFTypeRef?
+        if AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef) == .success,
+           let windows = windowsRef as? [AXUIElement] {
+            for window in windows {
+                if let element = findElementWithSelection(in: window, depth: 0),
+                   setSelectedText(text, on: element) {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 
     private static func replaceSelectionViaAccessibility(with text: String) -> Bool {
@@ -47,32 +113,84 @@ enum TextInsertion {
 
         let systemWide = AXUIElementCreateSystemWide()
         var focusedRef: CFTypeRef?
-        let focusStatus = AXUIElementCopyAttributeValue(
+        guard AXUIElementCopyAttributeValue(
             systemWide,
             kAXFocusedUIElementAttribute as CFString,
             &focusedRef
-        )
-        guard focusStatus == .success, let focusedRaw = focusedRef else { return false }
+        ) == .success, let focusedRaw = focusedRef else {
+            return false
+        }
 
-        let focused = focusedRaw as! AXUIElement
-        let status = AXUIElementSetAttributeValue(
-            focused,
+        return setSelectedText(text, on: focusedRaw as! AXUIElement)
+    }
+
+    private static func setSelectedText(_ text: String, on element: AXUIElement) -> Bool {
+        AXUIElementSetAttributeValue(
+            element,
             kAXSelectedTextAttribute as CFString,
             text as CFTypeRef
-        )
-        return status == .success
+        ) == .success
+    }
+
+    private static func findElementWithSelection(in element: AXUIElement, depth: Int) -> AXUIElement? {
+        guard depth <= 14 else { return nil }
+
+        var rangeRef: CFTypeRef?
+        let hasRange = AXUIElementCopyAttributeValue(
+            element,
+            kAXSelectedTextRangeAttribute as CFString,
+            &rangeRef
+        ) == .success
+
+        var selectedRef: CFTypeRef?
+        let hasSelected = AXUIElementCopyAttributeValue(
+            element,
+            kAXSelectedTextAttribute as CFString,
+            &selectedRef
+        ) == .success
+
+        if hasSelected || hasRange {
+            return element
+        }
+
+        var childrenRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &childrenRef) == .success,
+              let children = childrenRef as? [AXUIElement] else {
+            return nil
+        }
+
+        for child in children {
+            if let match = findElementWithSelection(in: child, depth: depth + 1) {
+                return match
+            }
+        }
+        return nil
+    }
+
+    private static func focusedElement(in appElement: AXUIElement) -> AXUIElement? {
+        var focusedRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(
+            appElement,
+            kAXFocusedUIElementAttribute as CFString,
+            &focusedRef
+        ) == .success, let focusedRaw = focusedRef else {
+            return nil
+        }
+        return (focusedRaw as! AXUIElement)
     }
 
     private static func simulatePaste() {
         let src = CGEventSource(stateID: .hidSystemState)
         let vKey: CGKeyCode = 9 // V
 
-        let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
-        down?.flags = .maskCommand
-        down?.post(tap: .cgAnnotatedSessionEventTap)
+        for tap in [CGEventTapLocation.cghidEventTap, .cgAnnotatedSessionEventTap] {
+            let down = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: true)
+            down?.flags = .maskCommand
+            down?.post(tap: tap)
 
-        let up = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: false)
-        up?.flags = .maskCommand
-        up?.post(tap: .cgAnnotatedSessionEventTap)
+            let up = CGEvent(keyboardEventSource: src, virtualKey: vKey, keyDown: false)
+            up?.flags = .maskCommand
+            up?.post(tap: tap)
+        }
     }
 }

@@ -99,9 +99,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func loadHotkeyTrigger() -> HotkeyTrigger {
         let defaults = UserDefaults.standard
-        let mode = defaults.string(forKey: "hotkeyMode") ?? "doubleTap"
+        // Carbon combo (default ⌥⌘T) works without Input Monitoring; double-tap needs an event tap.
+        let mode = defaults.string(forKey: "hotkeyMode") ?? "combo"
         let modString = defaults.string(forKey: "hotkeyModifier") ?? ModifierKey.rightOption.rawValue
-        guard let mod = ModifierKey(rawValue: modString) else { return .default }
+        guard let mod = ModifierKey(rawValue: modString) else { return comboTriggerFromStore() }
         switch mode {
         case "hold":
             let raw = defaults.integer(forKey: "hotkeyHoldMs")
@@ -109,9 +110,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case "doubleTap":
             let raw = defaults.integer(forKey: "hotkeyDoubleTapMs")
             return .doubleTap(modifier: mod, thresholdMs: raw > 0 ? raw : 300)
+        case "combo":
+            return comboTriggerFromStore()
         default:
-            return .default
+            return comboTriggerFromStore()
         }
+    }
+
+    private func comboTriggerFromStore() -> HotkeyTrigger {
+        let combo = KeyComboStore.load()
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
+        return .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
     }
 
     // MARK: - Menu bar
@@ -346,6 +360,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.runModal()
     }
 
+    private func resolvedSourceAppForCapture() -> NSRunningApplication? {
+        if let app = lastNonTippiApp,
+           app.bundleIdentifier != Bundle.main.bundleIdentifier {
+            return app
+        }
+        if let front = NSWorkspace.shared.frontmostApplication,
+           front.bundleIdentifier != Bundle.main.bundleIdentifier {
+            return front
+        }
+        return lastNonTippiApp
+    }
+
     private enum TriggerSource { case hotkey, manual }
 
     private func handleTriggered(from source: TriggerSource) async {
@@ -355,16 +381,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // For hotkey: brief pause so the trigger modifier finishes releasing.
-        if source == .hotkey {
-            try? await Task.sleep(nanoseconds: 60_000_000)
-        }
-
-        let sourceApp = lastNonTippiApp
+        let sourceApp = resolvedSourceAppForCapture()
         NSLog("Tippi: source app = \(sourceApp?.localizedName ?? "nil")")
+
+        // Capture before any delay — while TextEdit (etc.) still owns the selection.
         let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
+
+        if source == .hotkey {
+            try? await Task.sleep(nanoseconds: 40_000_000)
+        }
         let mouseLocation = NSEvent.mouseLocation
         let prompts = DemoPrompt.all
+        let localActions = LocalQuickActionSettings.isEnabled ? LocalTextAction.all : []
+        let localActionsReady = captured != nil
+        let captureSourceApp = sourceApp
 
         if let captured {
             NSLog("Tippi: captured \(captured.text.count) chars from \(captured.sourceApp?.localizedName ?? "?")")
@@ -372,23 +402,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("Tippi: no text captured — showing popup with voice option")
         }
 
-        // Resolve mic permission before showing popup.
-        let micReady: Bool
-        if WhisperConfig.isConfigured {
-            micReady = await AudioRecorder.requestPermission()
-        } else {
-            micReady = false
-        }
-
         popupController.show(
             at: mouseLocation,
             prompts: prompts,
+            localActions: localActions,
+            localActionsReady: localActionsReady,
             onSelect: { [weak self] prompt in
                 guard let self, let captured else { return }
                 self.showPreview(prompt: prompt, captured: captured)
             },
+            onLocalAction: { [weak self] action async in
+                guard let self else { return nil }
+                return await self.runLocalAction(
+                    action,
+                    captured: captured,
+                    sourceApp: captureSourceApp
+                )
+            },
             onDismiss: { /* nothing — user cancelled */ },
-            audioRecorder: micReady ? audioRecorder : nil,
+            audioRecorder: WhisperConfig.isConfigured ? audioRecorder : nil,
             // When text is selected, mic = voice instruction; otherwise = dictation
             voiceMode: captured != nil ? .voicePrompt : .dictate,
             onVoiceTranscribed: { [weak self] transcribedText in
@@ -417,11 +449,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
 
-        // If no text AND voice not available → show the original alert as fallback.
-        if captured == nil && !micReady && !WhisperConfig.isConfigured {
-            popupController.close()
-            await showNoTextAlert()
-        }
     }
 
     /// Re-shows the popup pre-loaded with dictated text.
@@ -434,8 +461,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popupController.show(
             at: mouseLocation,
             prompts: prompts,
+            localActions: LocalQuickActionSettings.isEnabled ? LocalTextAction.all : [],
+            localActionsReady: true,
             onSelect: { [weak self] prompt in
                 self?.showPreview(prompt: prompt, captured: captured)
+            },
+            onLocalAction: { [weak self] action async in
+                guard let self else { return nil }
+                return await self.runLocalAction(
+                    action,
+                    captured: captured,
+                    sourceApp: captured.sourceApp
+                )
             },
             onDismiss: { },
             onDirectInsert: { [weak self] in
@@ -445,6 +482,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         )
+    }
+
+    private func runLocalAction(
+        _ action: LocalTextAction,
+        captured: CapturedText?,
+        sourceApp: NSRunningApplication?
+    ) async -> String? {
+        var cap = captured
+        if cap == nil {
+            popupController.close()
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            cap = await TextCapture.captureSelectedText(sourceApp: sourceApp)
+        }
+        guard let cap else {
+            return String(localized: "local.action.noSelection")
+        }
+
+        switch action.perform(on: cap.text) {
+        case .plainReplacement(let text):
+            popupController.close()
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            await pasteBack(text, into: cap.sourceApp)
+            return nil
+        case .richReplacement(let attributed, let fallback):
+            popupController.close()
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            await pasteBack(attributed, fallbackPlainText: fallback, into: cap.sourceApp)
+            return nil
+        case .info(let message):
+            return message
+        }
     }
 
     private func showPreview(prompt: DemoPrompt, captured: CapturedText) {
@@ -471,9 +539,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func pasteBack(_ text: String, into app: NSRunningApplication?) async {
-        app?.activate()
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        await TextInsertion.replace(with: text)
+        await TextInsertion.replace(with: text, in: app)
+    }
+
+    private func pasteBack(
+        _ attributedText: NSAttributedString,
+        fallbackPlainText: String,
+        into app: NSRunningApplication?
+    ) async {
+        await TextInsertion.replace(with: attributedText, fallbackPlainText: fallbackPlainText, in: app)
     }
 
     private func showNoTextAlert() async {

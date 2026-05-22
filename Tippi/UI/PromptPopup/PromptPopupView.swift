@@ -14,7 +14,10 @@ enum VoiceMode {
 
 struct PromptPopupView: View {
     let prompts: [DemoPrompt]
+    let localActions: [LocalTextAction]
+    let localActionsReady: Bool
     let onSelect: (DemoPrompt) -> Void
+    let onLocalAction: (LocalTextAction) async -> String?
     let onDismiss: () -> Void
     var onDirectInsert: (() -> Void)? = nil
     var audioRecorder: AudioRecorder? = nil
@@ -23,11 +26,15 @@ struct PromptPopupView: View {
 
     // -1 means the "Direkt einfügen" row is highlighted (only when onDirectInsert != nil)
     @State private var selectedIndex: Int
+    @State private var localActionMessage: String?
     @FocusState private var focused: Bool
 
     init(
         prompts: [DemoPrompt],
+        localActions: [LocalTextAction] = [],
+        localActionsReady: Bool = true,
         onSelect: @escaping (DemoPrompt) -> Void,
+        onLocalAction: @escaping (LocalTextAction) async -> String? = { _ in nil },
         onDismiss: @escaping () -> Void,
         onDirectInsert: (() -> Void)? = nil,
         audioRecorder: AudioRecorder? = nil,
@@ -35,7 +42,10 @@ struct PromptPopupView: View {
         voiceMode: VoiceMode = .dictate
     ) {
         self.prompts = prompts
+        self.localActions = localActions
+        self.localActionsReady = localActionsReady
         self.onSelect = onSelect
+        self.onLocalAction = onLocalAction
         self.onDismiss = onDismiss
         self.onDirectInsert = onDirectInsert
         self.audioRecorder = audioRecorder
@@ -60,7 +70,17 @@ struct PromptPopupView: View {
                     .padding(.horizontal, 10)
                     .padding(.top, 2)
             }
-            list
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if !localActions.isEmpty {
+                        localActionsSection
+                        Divider()
+                            .padding(.horizontal, 10)
+                    }
+                    list
+                }
+            }
+            .frame(maxHeight: 420)
             if audioRecorder != nil || !WhisperConfig.isConfigured {
                 Divider()
                 VoiceSection(
@@ -145,6 +165,80 @@ struct PromptPopupView: View {
             }
         }
         .padding(.vertical, 6)
+    }
+
+    private var localActionsSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(String(localized: "local.actions.title"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+
+            if !localActionsReady {
+                Text(String(localized: "local.actions.needsSelection"))
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 12)
+            }
+
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                alignment: .leading,
+                spacing: 4
+            ) {
+                ForEach(localActions) { action in
+                    LocalActionButton(action: action) {
+                        Task { @MainActor in
+                            let message = await onLocalAction(action)
+                            localActionMessage = message
+                            if message == nil {
+                                onDismiss()
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 6)
+
+            if let localActionMessage {
+                Text(localActionMessage)
+                    .font(.caption)
+                    .foregroundStyle(.tint)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 2)
+                    .transition(.opacity)
+            }
+        }
+        .padding(.bottom, 6)
+    }
+}
+
+private struct LocalActionButton: View {
+    let action: LocalTextAction
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Image(systemName: action.symbol)
+                    .frame(width: 14)
+                    .foregroundStyle(Color.accentColor)
+                Text(action.title)
+                    .font(.caption)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 7)
+            .padding(.vertical, 5)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.secondary.opacity(0.08))
+        )
     }
 }
 

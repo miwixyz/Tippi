@@ -13,7 +13,10 @@ final class PromptPopupController {
     func show(
         at point: NSPoint,
         prompts: [DemoPrompt],
+        localActions: [LocalTextAction] = [],
+        localActionsReady: Bool = true,
         onSelect: @escaping (DemoPrompt) -> Void,
+        onLocalAction: @escaping (LocalTextAction) async -> String? = { _ in nil },
         onDismiss: @escaping () -> Void,
         audioRecorder: AudioRecorder? = nil,
         voiceMode: VoiceMode = .dictate,
@@ -25,10 +28,13 @@ final class PromptPopupController {
 
         let view = PromptPopupView(
             prompts: prompts,
+            localActions: localActions,
+            localActionsReady: localActionsReady,
             onSelect: { [weak self] prompt in
                 self?.close()
                 onSelect(prompt)
             },
+            onLocalAction: onLocalAction,
             onDismiss: { [weak self] in
                 self?.close()
                 onDismiss()

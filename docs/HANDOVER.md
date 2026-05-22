@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: Mai 2026 · Version: 1.1.7
+Stand: Mai 2026 · Version: **1.6.0** (siehe auch `docs/HANDOFF-CLAUDE.md` für die aktuelle Agenten-Übergabe)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist die **vollständige technische und betriebliche Übergabe** für das Projekt Tippi. Es ist primär für deinen eigenen Vault gedacht und dient als Referenz wenn du nach Monaten zurückkommst oder das Projekt jemandem übergibst.

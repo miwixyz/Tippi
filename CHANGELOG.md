@@ -2,6 +2,25 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.6.0] — 2026-05-22
+
+### Added
+- **PopClip-style local quick actions** in the Tippi popup for selected text: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Brackets, Join Lines, Character Count, and Word Count.
+- **Rich-text formatting path** for Bold/Italic/Underline/Strikethrough using RTF pasteboard data, with Markdown/plain-text fallback for apps that do not accept rich text.
+- **Quick action counts** show character and word counts inline without changing the selected text.
+- **Settings toggle** (Settings → General) to show or hide local quick actions.
+- **Help tab section** (EN + DE) explaining local quick actions, permissions, and troubleshooting.
+
+### Changed
+- **Default modifier hotkey** for legacy `HotkeyManager` is now **⌥⌘T combo mode** instead of double-tap Option, so the documented shortcut works without Input Monitoring.
+- **Text capture order**: clipboard `⌘C` runs before activating the source app, while the front app still owns the selection (immediately after hotkey).
+- **Text insertion** targets the source app via Accessibility tree search, then falls back to dual-tap `⌘V` paste.
+
+### Fixed
+- **“No text captured”** when selection was visible: capture no longer waits on mic permission before reading text; pasteboard detection accepts identical clipboard content after copy; System Events + full window AX tree for TextEdit and similar apps.
+- **Greyed-out / no-op quick actions**: popup closes before paste; selection is re-captured after closing the popup when the initial capture failed; paste runs synchronously in the action handler.
+- **Popup showed quick actions without working text**: orange hint when capture failed; buttons stay clickable and retry capture on tap.
+
 ## [1.5.7] — 2026-05-22
 
 ### Changed

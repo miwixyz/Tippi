@@ -29,6 +29,7 @@ struct SettingsView: View {
 private struct GeneralSettingsTab: View {
     @State private var autostart: Bool = false
     @State private var autostartStatus: String = ""
+    @AppStorage(LocalQuickActionSettings.showActionsKey) private var showLocalQuickActions: Bool = true
 
     var body: some View {
         Form {
@@ -42,6 +43,13 @@ private struct GeneralSettingsTab: View {
                         .font(.caption)
                         .foregroundStyle(autostartStatus.hasPrefix("⚠️") ? Color.orange : Color.secondary)
                 }
+            }
+
+            Section {
+                Toggle(String(localized: "settings.general.localActions"), isOn: $showLocalQuickActions)
+                Text(String(localized: "settings.general.localActions.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(24)
@@ -872,6 +880,11 @@ private struct HelpTab: View {
                     icon: "text.bubble",
                     title: String(localized: "settings.help.promptsTitle"),
                     body: String(localized: "settings.help.promptsBody")
+                )
+                helpSection(
+                    icon: "bolt",
+                    title: String(localized: "settings.help.localActionsTitle"),
+                    body: String(localized: "settings.help.localActionsBody")
                 )
                 helpSection(
                     icon: "curlybraces",

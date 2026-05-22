@@ -24,6 +24,7 @@
 - **22 built-in prompts** — Improve, Fix Grammar, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Humanize, Summarize, TL;DR, Bullet points, Key points, Action items, Explain like I'm 10, Email reply, LinkedIn post, Instagram caption, Facebook post, Adapt for App, Translate → DE, Translate → EN, Translate → ES; language-aware prompts use `{language}`
 - **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
+- **PopClip-style local quick actions** — instantly format or transform selected text without an AI call: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Brackets, Join Lines, Character Count, and Word Count
 - **6 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5-mini`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
@@ -113,6 +114,24 @@ In any app: select some text → press **⌥⌘T** (the default global hotkey).
 
 Tippi's prompt menu appears at your cursor. Pick a transformation. The preview window shows your original and the AI suggestion side by side. Click **Ersetzen** (Replace) or press Enter — done.
 
+**Important:** Tippi is **not** PopClip — marking text alone does **not** open the menu. You must press the hotkey (or use the menu bar → **Trigger Tippi…**).
+
+### 3b. Local quick actions (v1.6+)
+
+With text selected, the popup shows **Quick actions** above the AI prompts — instant, local transforms (no API call):
+
+| Action | Effect |
+|--------|--------|
+| Bold / Italic / Underline / Strike | Rich text where supported; Markdown-style fallback in plain-text apps |
+| Uppercase / Lowercase / Capitalize | Case changes |
+| Underscore / Hyphenate / Brackets | `hello world` → `hello_world`, `hello-world`, `(hello world)` |
+| Join Lines | Multi-line selection → single line |
+| Characters / Words | Count only (inline message, text unchanged) |
+
+Toggle visibility: **Settings → General → Show local quick actions**.
+
+**Best results:** native editors (**TextEdit**, **Notes**, Mail compose). Spotlight/search fields and some web inputs may not expose selection to Accessibility — use **TextEdit** to verify permissions.
+
 ### 4. Voice Input (bonus)
 
 Press **⌥⌘T** with no text selected. A small popup with a mic button appears. Hold the button to record, release to transcribe. Whisper processes your audio locally. The popup shows the transcript — pick an AI prompt to transform it, or click "Insert directly" to paste as-is.
@@ -137,6 +156,17 @@ If the in-app hotkey doesn't fire on your machine (self-signed builds can hit ma
 4. Shortcut: your choice
 
 This route always works because macOS does the binding, not Tippi.
+
+**Safety hotkey:** **⌃⌥⌘T** (Control + Option + Command + T) always registers via Carbon and does not require Input Monitoring.
+
+### Local build permissions (test builds)
+
+`make build` produces an ad-hoc signed app at `build/Build/Products/Release/Tippi.app`. macOS treats each rebuild as a new binary for TCC:
+
+1. **System Settings → Privacy & Security → Accessibility** → enable **Tippi** (the build you are actually running).
+2. If quick actions still fail in TextEdit: grant **Automation** → Tippi may control **System Events** (AppleScript fallback).
+3. Restart Tippi after toggling permissions (`pkill -x Tippi` then reopen).
+4. Reset if stuck: `tccutil reset Accessibility com.tippi.app`
 
 ### Default AI model
 
