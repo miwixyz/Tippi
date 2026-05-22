@@ -21,7 +21,7 @@
 ## Features
 
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
-- **11 built-in prompts** — Improve, Fix Grammar, Translate → DE, Translate → EN, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Summarize, Adapt for App; all language-aware via `{language}`
+- **22 built-in prompts** — Improve, Fix Grammar, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Humanize, Summarize, TL;DR, Bullet points, Key points, Action items, Explain like I'm 10, Email reply, LinkedIn post, Instagram caption, Facebook post, Adapt for App, Translate → DE, Translate → EN, Translate → ES; language-aware prompts use `{language}`
 - **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
 - **6 AI providers** — choose any combination, switch freely:
@@ -30,7 +30,7 @@
   - **Google Gemini** (default: `gemini-2.5-flash`)
   - **Mistral** (default: `mistral-small-latest`, EU hosting available)
   - **Ollama** (local, fully offline)
-  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, with 6 curated RAM-tiered model presets (Llama 3.2 3B · Phi-4-mini · Gemma 3 4B · Llama 3.1 8B · Qwen 2.5 7B · Qwen 2.5 14B), auto-start on launch when MLX is your preferred provider, and **one-click installation from Settings — no Terminal required**.
+  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Llama 3.2 3B Fast/Balanced preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Voice Instruction** — select text, trigger the hotkey, then press the mic button in the popup and speak a command (e.g. "make this shorter"); Tippi applies it via AI directly — no prompt picker needed
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
@@ -82,6 +82,13 @@ make open
 ```
 
 Then build and run in Xcode (⌘R). Note: an unsigned build will have TCC permission quirks. For a stable signed build see [Building a release](#building-a-release) below.
+
+For a local command-line build, `make build` writes to `build/Build/Products/Release/` and ad-hoc signs the app for local testing:
+
+```bash
+make build
+open build/Build/Products/Release/Tippi.app
+```
 
 ---
 

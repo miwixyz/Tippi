@@ -41,11 +41,12 @@ final class MLXServerManager: ObservableObject {
     // MARK: - Configuration keys
 
     // Uses same key convention as LLMRouter for model ("defaultModel.mlx")
+    static let defaultModel = "mlx-community/Llama-3.2-3B-Instruct-4bit"
     static let modelKey  = "defaultModel.mlx"
     static let portKey   = "mlx.port"
 
     static var model: String {
-        get { UserDefaults.standard.string(forKey: modelKey) ?? "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit" }
+        get { UserDefaults.standard.string(forKey: modelKey) ?? defaultModel }
         set { UserDefaults.standard.set(newValue, forKey: modelKey) }
     }
     static var port: Int {
@@ -75,18 +76,13 @@ final class MLXServerManager: ObservableObject {
             throw MLXError.serverNotFound
         }
 
-        // Clean up any orphaned mlx_lm.server from a previous Tippi session.
-        // Symptom this prevents: Tippi crashes / quits → server keeps running →
-        // next launch finds the port still bound, our new Process silently
-        // fails to bind it, waitForHealth happily talks to the zombie, and
-        // every transformation hangs because the zombie may be loading a
-        // different model than the user configured.
-        //
-        // We are the sole manager of this binary on this machine; any running
-        // instance is ours to reclaim. Worst case for a user who hand-started
-        // mlx_lm.server outside Tippi: it gets restarted with their currently
-        // configured model — annoying but recoverable.
-        Self.killOrphanProcesses()
+        // If a compatible server is already listening on the configured port,
+        // use it instead of killing user-owned MLX processes.
+        if let existingModelID = await fetchActiveModelID(port: port) {
+            activeModelID = existingModelID
+            state = .running(port: port)
+            return port
+        }
 
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: binary.path)
@@ -165,27 +161,6 @@ final class MLXServerManager: ObservableObject {
 
     static var isInstalled: Bool { resolvedBinary() != nil }
 
-    /// Synchronously kill any leftover `mlx_lm.server` processes from previous
-    /// Tippi sessions and wait long enough for the port to actually free up.
-    /// Called at the top of `start()`.
-    private static func killOrphanProcesses() {
-        let pkill = Process()
-        pkill.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
-        pkill.arguments = ["-f", "mlx_lm.server"]
-        pkill.standardOutput = FileHandle.nullDevice
-        pkill.standardError  = FileHandle.nullDevice
-        do {
-            try pkill.run()
-            pkill.waitUntilExit()
-        } catch {
-            // pkill missing or denied — fine, we'll try to spawn anyway.
-            return
-        }
-        // pkill returns immediately; the OS still needs a beat to release
-        // the listening port before our new Process can bind it.
-        Thread.sleep(forTimeInterval: 0.8)
-    }
-
     /// The model ID that the running server actually registered (from /v1/models).
     /// Falls back to the configured model string if the server is not yet running.
     static var activeModel: String { shared.activeModelID ?? model }
@@ -217,23 +192,32 @@ final class MLXServerManager: ObservableObject {
     /// When the server is started with a local cache path the ID differs from the
     /// HuggingFace repo string — using this value prevents 404 errors in completions.
     private func fetchActiveModelID(port: Int) async -> String? {
-        let url = URL(string: "http://localhost:\(port)/v1/models")!
-        guard let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
-        struct ModelsResponse: Decodable {
-            struct ModelEntry: Decodable { let id: String }
-            let data: [ModelEntry]
-        }
-        return try? JSONDecoder().decode(ModelsResponse.self, from: data).data.first?.id
+        guard let response = await fetchModels(port: port) else { return nil }
+        return response.data.first?.id
     }
 
     private func waitForHealth(port: Int, timeout: TimeInterval) async throws -> Int {
-        let url      = URL(string: "http://localhost:\(port)/v1/models")!
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if let _ = try? await URLSession.shared.data(from: url) { return port }
+            if process?.isRunning == false {
+                throw MLXError.startupTimeout
+            }
+            if await fetchModels(port: port) != nil { return port }
             try await Task.sleep(nanoseconds: 1_000_000_000) // 1 s
         }
         throw MLXError.startupTimeout
+    }
+
+    private func fetchModels(port: Int) async -> ModelsResponse? {
+        let url = URL(string: "http://localhost:\(port)/v1/models")!
+        guard let (data, response) = try? await URLSession.shared.data(from: url),
+              let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode),
+              let decoded = try? JSONDecoder().decode(ModelsResponse.self, from: data),
+              !decoded.data.isEmpty else {
+            return nil
+        }
+        return decoded
     }
 
     private func waitUntilRunning() async throws -> Int {
@@ -245,6 +229,11 @@ final class MLXServerManager: ObservableObject {
         }
         throw MLXError.startupTimeout
     }
+}
+
+private struct ModelsResponse: Decodable {
+    struct ModelEntry: Decodable { let id: String }
+    let data: [ModelEntry]
 }
 
 // MARK: - MLXError

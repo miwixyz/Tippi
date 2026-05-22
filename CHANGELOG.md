@@ -2,6 +2,28 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.5.7] — 2026-05-22
+
+### Changed
+- **Local MLX speed optimized**: the default local MLX model is now Llama 3.2 3B Fast/Balanced instead of the slower 8B quality preset.
+- **Local generation budget capped dynamically** so MLX transformations avoid slow runaway completions while still allowing longer rewrites when the selected text is longer.
+- **Local provider timeouts tightened** for faster fallback when Ollama or a running local model does not respond.
+
+### Added
+- **Preview latency badge** now shows how long the AI generation took, making local model speed visible while testing presets.
+- **MLX Help and README guidance** now explain the Fast/Balanced default and when to choose larger quality presets.
+
+## [1.5.6] — 2026-05-22
+
+### Fixed
+- **Local build output path**: `make build` now stops a running local Tippi, writes to `build/Build/Products/Release`, and ad-hoc signs the app so Sparkle loads correctly during local testing.
+- **Sparkle version ordering** fixed for local builds: `CURRENT_PROJECT_VERSION` is now higher than the public `1.5.6` appcast build, so update checks no longer offer an older public release over a newer local build.
+- **Runtime safety hardening** for text capture, pasteback, voice recording, local provider fallback, MLX server detection, and release publishing.
+- **Voice recording cleanup** now stops recordings when the popup closes and prevents `whisper-cli` subprocess hangs with cancellation, stderr draining, and timeout handling.
+- **Local provider fallback** now skips unavailable Ollama/MLX providers instead of blocking the local demo fallback.
+- **Release pipeline** now derives the default version from `project.yml`, parses notarization JSON robustly, fails closed on GitHub release upload errors, and avoids fragile `head` pipes in signing checks.
+- **Localization drift** fixed for the English update-menu label and duplicate Voice model title.
+
 ## [1.5.5] — 2026-05-15
 
 ### Added

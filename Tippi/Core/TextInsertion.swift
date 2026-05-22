@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 
 @MainActor
 enum TextInsertion {
@@ -24,6 +25,10 @@ enum TextInsertion {
     // MARK: - Paste roundtrip
 
     private static func paste(text: String) async {
+        if replaceSelectionViaAccessibility(with: text) {
+            return
+        }
+
         let pb = NSPasteboard.general
         let snapshot = PasteboardSnapshot.capture()
 
@@ -32,9 +37,30 @@ enum TextInsertion {
 
         try? await Task.sleep(nanoseconds: 30_000_000) // 30 ms — settle clipboard
         simulatePaste()
-        try? await Task.sleep(nanoseconds: 250_000_000) // 250 ms — let target app paste
+        try? await Task.sleep(nanoseconds: 750_000_000) // let slower target apps consume the pasteboard
 
         snapshot.restore()
+    }
+
+    private static func replaceSelectionViaAccessibility(with text: String) -> Bool {
+        guard AXIsProcessTrusted() else { return false }
+
+        let systemWide = AXUIElementCreateSystemWide()
+        var focusedRef: CFTypeRef?
+        let focusStatus = AXUIElementCopyAttributeValue(
+            systemWide,
+            kAXFocusedUIElementAttribute as CFString,
+            &focusedRef
+        )
+        guard focusStatus == .success, let focusedRaw = focusedRef else { return false }
+
+        let focused = focusedRaw as! AXUIElement
+        let status = AXUIElementSetAttributeValue(
+            focused,
+            kAXSelectedTextAttribute as CFString,
+            text as CFTypeRef
+        )
+        return status == .success
     }
 
     private static func simulatePaste() {

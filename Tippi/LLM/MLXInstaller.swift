@@ -54,10 +54,19 @@ final class MLXInstaller {
                 let needsUV = await MainActor.run { !Self.isUVInstalled }
                 if needsUV {
                     continuation.yield(.phaseChanged(.installingUV))
-                    continuation.yield(.log("Installing uv via Astral's official installer (https://astral.sh)…"))
+                    guard let brewPath = await MainActor.run(body: { Self.resolvedBrewPath() }) else {
+                        continuation.yield(.log("✗ uv is not installed and Homebrew was not found."))
+                        continuation.yield(.log("Install uv manually, then reopen this sheet: https://docs.astral.sh/uv/getting-started/installation/"))
+                        continuation.yield(.phaseChanged(.failed(String(localized: "mlx.install.error.uv"))))
+                        continuation.yield(.finished(success: false))
+                        continuation.finish()
+                        return
+                    }
+
+                    continuation.yield(.log("Installing uv via Homebrew…"))
                     do {
                         try await runShell(
-                            "curl -LsSf https://astral.sh/uv/install.sh | sh",
+                            "\"\(brewPath)\" install uv",
                             onLine: { continuation.yield(.log($0)) }
                         )
                         continuation.yield(.log("✓ uv installed"))
@@ -125,6 +134,18 @@ final class MLXInstaller {
         return nil
     }
 
+    private static let brewCandidates: [String] = [
+        "/opt/homebrew/bin/brew",
+        "/usr/local/bin/brew",
+    ]
+
+    private static func resolvedBrewPath() -> String? {
+        for path in brewCandidates {
+            if FileManager.default.isExecutableFile(atPath: path) { return path }
+        }
+        return nil
+    }
+
     // MARK: - Shell runner
 
     /// Run a shell command and stream stdout/stderr line by line.
@@ -133,46 +154,94 @@ final class MLXInstaller {
         _ command: String,
         onLine: @escaping @Sendable (String) -> Void
     ) async throws {
-        let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: "/bin/sh")
-        proc.arguments = ["-c", command]
-        let pipe = Pipe()
-        proc.standardOutput = pipe
-        proc.standardError = pipe
+        let runner = ShellProcessRunner()
 
-        // Ensure user's HOME and a sensible PATH are present so curl, sh, and
-        // tools installed in ~/.local/bin are reachable.
-        var env = ProcessInfo.processInfo.environment
-        let extraPath = "\(NSHomeDirectory())/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-        env["PATH"] = (env["PATH"].map { "\(extraPath):\($0)" }) ?? extraPath
-        env["HOME"] = NSHomeDirectory()
-        proc.environment = env
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+                let proc = Process()
+                proc.executableURL = URL(fileURLWithPath: "/bin/sh")
+                proc.arguments = ["-c", command]
+                let pipe = Pipe()
+                proc.standardOutput = pipe
+                proc.standardError = pipe
 
-        // Line-buffered streaming.
-        let buffer = LineBuffer()
-        pipe.fileHandleForReading.readabilityHandler = { handle in
-            let data = handle.availableData
-            guard !data.isEmpty else { return }
-            buffer.feed(data) { line in onLine(line) }
-        }
+                // Ensure user's HOME and a sensible PATH are present so tools
+                // installed in ~/.local/bin are reachable.
+                var env = ProcessInfo.processInfo.environment
+                let extraPath = "\(NSHomeDirectory())/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+                env["PATH"] = (env["PATH"].map { "\(extraPath):\($0)" }) ?? extraPath
+                env["HOME"] = NSHomeDirectory()
+                proc.environment = env
 
-        try proc.run()
-        // Wait off the main actor.
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            DispatchQueue.global(qos: .utility).async {
-                proc.waitUntilExit()
-                cont.resume()
+                let buffer = LineBuffer()
+                pipe.fileHandleForReading.readabilityHandler = { handle in
+                    let data = handle.availableData
+                    guard !data.isEmpty else { return }
+                    buffer.feed(data) { line in onLine(line) }
+                }
+
+                runner.process = proc
+
+                do {
+                    try proc.run()
+                } catch {
+                    pipe.fileHandleForReading.readabilityHandler = nil
+                    runner.resume(cont, throwing: error)
+                    return
+                }
+
+                DispatchQueue.global(qos: .utility).async {
+                    proc.waitUntilExit()
+                    pipe.fileHandleForReading.readabilityHandler = nil
+                    buffer.flush { line in onLine(line) }
+
+                    if proc.terminationStatus == 0 {
+                        runner.resume(cont)
+                    } else {
+                        runner.resume(
+                            cont,
+                            throwing: NSError(
+                                domain: "MLXInstaller",
+                                code: Int(proc.terminationStatus),
+                                userInfo: [NSLocalizedDescriptionKey: "exit \(proc.terminationStatus)"]
+                            )
+                        )
+                    }
+                }
             }
+        } onCancel: {
+            runner.terminate()
         }
-        pipe.fileHandleForReading.readabilityHandler = nil
-        buffer.flush { line in onLine(line) }
+    }
+}
 
-        if proc.terminationStatus != 0 {
-            throw NSError(
-                domain: "MLXInstaller",
-                code: Int(proc.terminationStatus),
-                userInfo: [NSLocalizedDescriptionKey: "exit \(proc.terminationStatus)"]
-            )
+private final class ShellProcessRunner: @unchecked Sendable {
+    private let lock = NSLock()
+    private var didResume = false
+    var process: Process?
+
+    func terminate() {
+        lock.lock()
+        let proc = process
+        lock.unlock()
+        if proc?.isRunning == true {
+            proc?.terminate()
+        }
+    }
+
+    func resume(_ continuation: CheckedContinuation<Void, Error>, throwing error: Error? = nil) {
+        lock.lock()
+        guard !didResume else {
+            lock.unlock()
+            return
+        }
+        didResume = true
+        lock.unlock()
+
+        if let error {
+            continuation.resume(throwing: error)
+        } else {
+            continuation.resume()
         }
     }
 }

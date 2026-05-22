@@ -35,10 +35,26 @@ enum PromptVariableResolver {
 
     /// Replace all known `{token}` placeholders in `template` with their resolved values.
     static func resolve(template: String, context: Context) -> String {
-        template
-            .replacingOccurrences(of: "{clipboard}",     with: context.clipboardText)
-            .replacingOccurrences(of: "{app_name}",      with: context.appName)
-            .replacingOccurrences(of: "{language}",      with: context.language)
-            .replacingOccurrences(of: "{selected_text}", with: context.selectedText)
+        let values = [
+            "{clipboard}": context.clipboardText,
+            "{app_name}": context.appName,
+            "{language}": context.language,
+            "{selected_text}": context.selectedText
+        ]
+
+        var resolved = ""
+        var cursor = template.startIndex
+        while cursor < template.endIndex {
+            if let match = values.first(where: { token, _ in
+                template[cursor...].hasPrefix(token)
+            }) {
+                resolved += match.value
+                cursor = template.index(cursor, offsetBy: match.key.count)
+            } else {
+                resolved.append(template[cursor])
+                cursor = template.index(after: cursor)
+            }
+        }
+        return resolved
     }
 }

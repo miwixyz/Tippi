@@ -208,7 +208,10 @@ struct PreviewView: View {
                     userText: originalText
                 )
                 guard !Task.isCancelled else { return }
-                state = .ready(text: result.text, providerInfo: result.providerDisplay)
+                state = .ready(
+                    text: result.text,
+                    providerInfo: "\(result.providerDisplay) · \(formatDuration(result.duration))"
+                )
             } catch LLMError.noProviderConfigured, LLMError.noAPIKey {
                 guard !Task.isCancelled else { return }
                 let fallback = prompt.transform(originalText)
@@ -223,5 +226,12 @@ struct PreviewView: View {
     private func cancel() {
         task?.cancel()
         onCancel()
+    }
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        if duration < 10 {
+            return String(format: "%.1fs", duration)
+        }
+        return "\(Int(duration.rounded()))s"
     }
 }

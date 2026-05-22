@@ -13,12 +13,14 @@ enum TextCapture {
     /// Tries the Accessibility API first; falls back to a transparent
     /// pasteboard ⌘C round-trip if AX cannot read the selection.
     static func captureSelectedText(sourceApp: NSRunningApplication?) async -> CapturedText? {
+        let focusedApp = focusedRunningApplication() ?? sourceApp
+
         if let text = readViaAccessibility(), !text.isEmpty {
-            return CapturedText(text: text, sourceApp: sourceApp, usedClipboardFallback: false)
+            return CapturedText(text: text, sourceApp: focusedApp, usedClipboardFallback: false)
         }
 
         if let text = await readViaPasteboard(), !text.isEmpty {
-            return CapturedText(text: text, sourceApp: sourceApp, usedClipboardFallback: true)
+            return CapturedText(text: text, sourceApp: focusedApp, usedClipboardFallback: true)
         }
 
         return nil
@@ -49,6 +51,24 @@ enum TextCapture {
         return selectedRef as? String
     }
 
+    private static func focusedRunningApplication() -> NSRunningApplication? {
+        guard AXIsProcessTrusted() else { return nil }
+
+        let systemWide = AXUIElementCreateSystemWide()
+        var appRef: CFTypeRef?
+        let status = AXUIElementCopyAttributeValue(
+            systemWide,
+            kAXFocusedApplicationAttribute as CFString,
+            &appRef
+        )
+        guard status == .success, let appRaw = appRef else { return nil }
+
+        var pid: pid_t = 0
+        let pidStatus = AXUIElementGetPid(appRaw as! AXUIElement, &pid)
+        guard pidStatus == .success, pid > 0 else { return nil }
+        return NSRunningApplication(processIdentifier: pid)
+    }
+
     // MARK: - Pasteboard fallback
 
     private static func readViaPasteboard() async -> String? {
@@ -61,6 +81,11 @@ enum TextCapture {
         let deadline = Date().addingTimeInterval(0.3)
         while pb.changeCount == changeCountBefore && Date() < deadline {
             try? await Task.sleep(nanoseconds: 10_000_000) // 10 ms
+        }
+
+        guard pb.changeCount != changeCountBefore else {
+            snapshot.restore()
+            return nil
         }
 
         let captured = pb.string(forType: .string)

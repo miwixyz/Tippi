@@ -16,12 +16,13 @@ struct GeminiProvider: LLMProvider {
 
         let useModel = model.isEmpty ? defaultModel : model
         let url = URL(string:
-            "https://generativelanguage.googleapis.com/v1beta/models/\(useModel):generateContent?key=\(apiKey)"
+            "https://generativelanguage.googleapis.com/v1beta/models/\(useModel):generateContent"
         )!
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = 30
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         struct Part: Encodable { let text: String }

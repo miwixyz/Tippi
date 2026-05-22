@@ -11,7 +11,7 @@ struct OllamaProvider: LLMProvider {
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
-        request.timeoutInterval = 60
+        request.timeoutInterval = 20
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         struct Message: Encodable { let role: String; let content: String }

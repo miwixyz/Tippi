@@ -201,7 +201,7 @@
 "settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Key bei console.mistral.ai. Standard: mistral-small-latest (EU-Hosting möglich).";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
-"settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Einmalig installieren: uv tool install mlx-lm. Modelle liegen in ~/MLXModels/. Schneller als Ollama auf Apple Silicon — keine Cloud, kein Key.";
+"settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Standard: Llama 3.2 3B Fast/Balanced für niedrigere Latenz; 8B/14B-Presets wählen, wenn Qualität wichtiger ist als Tempo. Keine Cloud, kein Key.";
 "settings.providers.mlx.port" = "Port";
 "settings.providers.mlx.custom" = "Eigenes Modell…";
 "settings.providers.mlx.start" = "Server starten";
@@ -245,7 +245,7 @@
 "mlx.install.copyCommand" = "Befehl kopieren";
 
 "settings.help.mlxTitle" = "MLX — lokale KI auf Apple Silicon";
-"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.\n\nDanach ein Modell-Preset passend zum RAM auswählen (8 / 16 / 32 GB). Modelle werden beim ersten Einsatz automatisch geladen und liegen in ~/MLXModels/.\n\nWenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist sofort da.";
+"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.\n\nFür Tempo ist Llama 3.2 3B Fast/Balanced das Standard-Preset. Wähle Llama 3.1 8B, Qwen 7B oder Qwen 14B nur, wenn Qualität wichtiger ist als Latenz. Tippi begrenzt lokale Antwortlängen gegen langsame Ausreißer und zeigt die echte Generierungszeit im Vorschau-Badge.\n\nWenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 "settings.help.troubleBody" = "Hotkey loest nicht aus? Bedienungshilfen-Berechtigung erteilen: Systemeinstellungen, Datenschutz & Sicherheit, Bedienungshilfen. Tippi ist auch ueber das Menueleisten-Icon ausloesbar. Falls ein neuer Hotkey nicht reagiert: App neu starten.";
 

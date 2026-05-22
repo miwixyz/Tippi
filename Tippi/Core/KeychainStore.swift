@@ -17,7 +17,7 @@ enum KeychainError: LocalizedError {
 
 /// Stores BYOK API keys for each LLM provider in the macOS Keychain.
 /// Items are scoped to `com.tippi.app` and the account `provider.<name>`,
-/// accessible after first unlock and **not** synced via iCloud.
+/// accessible only while the device is unlocked and **not** synced via iCloud.
 enum KeychainStore {
     static let service = "com.tippi.app"
 
@@ -39,7 +39,7 @@ enum KeychainStore {
 
         let attributes: [String: Any] = [
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
 
         let updateStatus = SecItemUpdate(baseQuery as CFDictionary, attributes as CFDictionary)

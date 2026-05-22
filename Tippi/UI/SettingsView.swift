@@ -281,12 +281,12 @@ private struct ProviderRow: View {
     /// interaction.
     ///
     /// Each preset is labelled by the RAM tier of the target Mac, not the
-    /// model's on-disk size. ⭐ marks the default for each tier.
+    /// model's on-disk size. ⭐ marks the recommended default for speed.
     static let mlxPresets: [MLXPreset] = [
         // ── 8 GB Mac (small, fast, 3B-class) ────────────────────────────────
         MLXPreset(
             id: "llama32-3b",
-            label: "Llama 3.2 3B — 8 GB Mac ⭐ fast",
+            label: "Llama 3.2 3B — Fast/Balanced ⭐ default",
             repoID: "mlx-community/Llama-3.2-3B-Instruct-4bit"
         ),
         MLXPreset(
@@ -303,7 +303,7 @@ private struct ProviderRow: View {
         ),
         MLXPreset(
             id: "llama31-8b-4b",
-            label: "Llama 3.1 8B — 16 GB Mac ⭐ recommended",
+            label: "Llama 3.1 8B — Quality (slower)",
             repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
         ),
         MLXPreset(
@@ -516,7 +516,7 @@ private struct ProviderRow: View {
         modelName = UserDefaults.standard.string(forKey: "defaultModel.\(provider.id)") ?? ""
         if isMLX {
             mlxPort = "\(MLXServerManager.port)"
-            if let match = Self.mlxPresets.first(where: { $0.repoID == modelName || $0.repoID == (UserDefaults.standard.string(forKey: "defaultModel.mlx") ?? MLXServerManager.model) }) {
+            if let match = Self.mlxPresets.first(where: { $0.repoID == modelName || $0.repoID == (UserDefaults.standard.string(forKey: "defaultModel.mlx") ?? MLXServerManager.defaultModel) }) {
                 mlxPreset = match.id
                 modelName = match.repoID
             } else {

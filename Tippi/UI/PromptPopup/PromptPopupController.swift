@@ -6,6 +6,7 @@ final class PromptPopupController {
     private var panel: NSPanel?
     private var globalMouseMonitor: Any?
     private var resignKeyObserver: NSObjectProtocol?
+    private weak var audioRecorder: AudioRecorder?
 
     var isOpen: Bool { panel != nil }
 
@@ -20,6 +21,7 @@ final class PromptPopupController {
         onDirectInsert: (() -> Void)? = nil
     ) {
         guard panel == nil else { return }
+        self.audioRecorder = audioRecorder
 
         let view = PromptPopupView(
             prompts: prompts,
@@ -112,6 +114,10 @@ final class PromptPopupController {
         }
         panel?.orderOut(nil)
         panel = nil
+        if audioRecorder?.isRecording == true {
+            _ = audioRecorder?.stop()
+        }
+        audioRecorder = nil
     }
 
     private func positionPanel(_ panel: NSPanel, near point: NSPoint) {

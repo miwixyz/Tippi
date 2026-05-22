@@ -1,0 +1,217 @@
+---
+description: Tippi project rules — Swift macOS app, always apply
+alwaysApply: true
+---
+
+# Tippi — Cursor Rules
+
+System-wide AI writing assistant for macOS. Text select → hotkey → AI transform → replace in original app.
+
+**Repo:** `~/Coding/Tippi/` | **v1.5.7 stable** | MIT open-source
+
+---
+
+## Tech Stack
+
+- **Language:** Swift 5.10+ (Apple Silicon only — arm64)
+- **UI:** SwiftUI + AppKit bridges
+- **Min macOS:** 15.0 Sequoia
+- **Build:** XcodeGen (`project.yml` → `Tippi.xcodeproj`) — never edit `.xcodeproj` directly
+- **Signing:** Developer ID + Hardened Runtime + Notarization (no App Store)
+- **Sandbox:** OFF (required for cross-app text capture via Accessibility API)
+- **Dependencies:** Sparkle 2 only (via SPM, auto-updates)
+
+---
+
+## Module Structure
+
+```
+Tippi/
+├── App/
+│   ├── TippiApp.swift              # @main, NSApplication setup
+│   └── AppDelegate.swift           # Hotkey trigger, MenuBar, Sparkle, pre-warm
+├── Core/
+│   ├── HotkeyManager.swift         # Carbon RegisterEventHotKey + NSEvent global monitor
+│   ├── GlobalKeyMonitor.swift      # Global event tap
+│   ├── HotkeyTrigger.swift         # Trigger coordination
+│   ├── KeyCombo.swift              # Key combination model
+│   ├── TextCapture.swift           # AX API first, ⌘C pasteboard fallback
+│   ├── TextInsertion.swift         # Replace selected text in source app
+│   ├── KeychainStore.swift         # API key storage (macOS Keychain)
+│   ├── PermissionsManager.swift    # Accessibility + Input Monitoring permissions
+│   ├── PromptVariableResolver.swift # {clipboard}, {app_name}, {language}, {selected_text}
+│   ├── PasteboardSnapshot.swift    # Save/restore pasteboard for fallback path
+│   └── TippiColors.swift           # Brand colors
+├── LLM/
+│   ├── LLMProvider.swift           # Protocol (id, displayName, defaultModel, requiresAPIKey, complete())
+│   ├── LLMRouter.swift             # Provider registry + routing (preferred → fallback chain)
+│   ├── OpenAIProvider.swift
+│   ├── AnthropicProvider.swift
+│   ├── GeminiProvider.swift
+│   ├── MistralProvider.swift
+│   ├── OllamaProvider.swift        # Local, requiresAPIKey = false
+│   ├── MLXProvider.swift           # Local MLX via mlx_lm.server, requiresAPIKey = false
+│   ├── MLXServerManager.swift      # mlx_lm.server lifecycle (on-demand start/stop)
+│   └── MLXInstaller.swift          # One-click uv + mlx-lm install from Settings
+├── UI/
+│   ├── PromptPopup/
+│   │   ├── DemoPrompt.swift        # Built-in prompts + custom prompt model (builtIn static array)
+│   │   ├── PromptPopupController.swift  # NSPanel positioned at cursor
+│   │   └── PromptPopupView.swift
+│   ├── Preview/
+│   │   ├── PreviewView.swift       # Original vs AI suggestion side-by-side
+│   │   └── PreviewWindowController.swift  # NSWindowDelegate
+│   ├── SettingsView.swift          # All settings tabs
+│   ├── WelcomeView.swift
+│   ├── HotkeyRecorderField.swift
+│   └── MLXSetupSheet.swift
+└── Voice/
+    ├── AudioRecorder.swift
+    ├── WhisperModelManager.swift
+    └── WhisperTranscriber.swift
+```
+
+---
+
+## Key Architectural Patterns
+
+### LLM Provider Protocol
+Adding a new provider = implement `LLMProvider` + register in `LLMRouter.allProviders`:
+
+```swift
+// LLMProvider.swift
+protocol LLMProvider: Sendable {
+    var id: String { get }
+    var displayName: String { get }
+    var defaultModel: String { get }
+    var requiresAPIKey: Bool { get }
+    func complete(systemPrompt: String, userText: String, model: String) async throws -> String
+}
+```
+
+Register in `LLMRouter.allProviders` (order = default priority). API keys stored via `KeychainStore.saveAPIKey(for: id)`.
+
+### Text Capture Flow
+`TextCapture.captureSelectedText()` → AX API (`AXUIElementCopyAttributeValue`) first → if empty, `PasteboardSnapshot` + synthetic ⌘C roundtrip. Always restore pasteboard after.
+
+### Prompt Variables (v1.2.0+)
+`{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` — resolved in `PromptVariableResolver` before LLM call.
+
+### Threading
+UI code is `@MainActor`. LLM calls are `async`/`await`. `AppDelegate` is `@MainActor final class`.
+
+---
+
+## Build & Release
+
+```bash
+make open          # XcodeGen generate + open in Xcode
+make build         # Release build (local ad-hoc signed)
+make release       # Full: prepare-binary + sign + notarize + DMG + appcast update
+```
+
+**Before `make release`:**
+- `release.env` may exist (gitignored): `DEVELOPER_ID`, `NOTARY_PROFILE`, optional `VERSION`
+- If `VERSION` is not set, release scripts read `MARKETING_VERSION` from `project.yml`
+- `xcrun notarytool store-credentials tippi-notary` must be set up
+- Sparkle CLI at `~/Developer/sparkle-tools/bin/generate_appcast`
+
+**Version bump:** update `project.yml` `MARKETING_VERSION`, `CHANGELOG.md`, README/version docs, and in-app Help if user-visible behavior changed. `release.env VERSION` is only an explicit override and must not drift from `project.yml`.
+
+**Never edit `.xcodeproj` directly** — always edit `project.yml` and run `make generate`.
+
+---
+
+## Critical Pitfalls — Do Not Repeat
+
+### Signing order (Sparkle nested bundles)
+Re-sign in this exact order or notarization fails with "Sparkle XPC components not signed":
+1. XPC binaries (Installer, Downloader, Autoupdate, Updater)
+2. XPC bundles (.xpc, Updater.app)
+3. Sparkle.framework
+4. Outer .app
+
+Already implemented in `scripts/release.sh` — do not modify signing order.
+
+### SIGPIPE with codesign + head
+Never pipe `codesign --verify --deep --strict` output through `head`. SIGPIPE → exit 141 → `set -euo pipefail` kills the build. Use: `codesign --verify --deep --strict "${APP_PATH}" && echo "✓"`.
+
+### Localizable.strings encoding
+Never use `cat >>` to append to `.strings` files — corrupts encoding. Use Edit tool or direct write. If corrupted: `git checkout HEAD -- path/to/Localizable.strings`.
+
+### Hotkey modifier matching
+Only `.command`, `.shift`, `.option`, `.control` — do not compare against raw `deviceIndependentFlagsMask` (includes Caps Lock and Function → false matches).
+
+### TCC permissions + unsigned builds
+macOS TCC resets on each new unsigned build (Designated Requirement changes). Developer ID signing = stable identity = no resets. All production builds must be signed.
+
+### `get-task-allow` blocks notarization
+`com.apple.security.get-task-allow=true` → Apple rejects. Must be explicitly `false` in entitlements + re-sign with `codesign --force --entitlements` after `xcodebuild`.
+
+### XcodeGen SPM syntax
+Use `from: 2.0.0`, not `majorVersion: 2` — XcodeGen doesn't understand the latter.
+
+---
+
+## Brand Colors
+
+| Token | Hex | Use |
+|---|---|---|
+| Brand Blue (Accent) | `#3070F0` | Buttons, active tabs, links |
+| Brand Navy (Background) | `#020B1D` | Window background (dark) |
+| Brand Surface | `#E5DEDA` | Light mode surfaces |
+| Brand Mist Blue | `#EAF3FF` | Suggestion column, preview bg (light) |
+
+Colors defined in `TippiColors.swift`.
+
+---
+
+## Localization
+
+`en.lproj/Localizable.strings` + `de.lproj/Localizable.strings`. Both must stay in sync. New strings → add to both files immediately. Every new provider must appear in Help strings (EN + DE) — enforced by drift check in `scripts/release.sh`.
+
+---
+
+## Key Constants
+
+- **Bundle ID:** `com.tippi.app`
+- **Team ID:** `LTKJ6Z2VYB`
+- **Hotkey default:** ⌥⌘T
+- **UserDefaults key (provider):** `defaultProvider`
+- **UserDefaults key (model):** `defaultModel.<providerID>`
+- **Appcast (Gist):** `https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/appcast.xml`
+
+---
+
+## Useful Reset Commands
+
+```bash
+# Reset TCC permissions
+tccutil reset Accessibility com.tippi.app
+tccutil reset ListenEvent com.tippi.app
+
+# Reset UserDefaults (custom prompts, settings — Keychain untouched)
+defaults delete com.tippi.app
+
+# Full uninstall
+rm -rf /Applications/Tippi.app && defaults delete com.tippi.app 2>/dev/null
+```
+
+---
+
+## Coding Conventions
+
+- Karpathy principles: surgical changes, no speculative features, no overengineering
+- Minimal diff — only touch what the task requires
+- New LLM provider: implement protocol → register in `allProviders` → add to Help strings (EN+DE) → add to `project.yml` if new file → `make generate`
+- New built-in prompt: add to `DemoPrompt.builtIn` static array in `DemoPrompt.swift`
+- For every user-visible feature, provider, prompt, setting, release-flow change, or behavior change, update documentation in the same task:
+  - `README.md`
+  - in-app Help strings (`Tippi/Resources/en.lproj/Localizable.strings` + `de.lproj/Localizable.strings`)
+  - `CHANGELOG.md`
+  - project version numbers (`project.yml` `MARKETING_VERSION`, and any matching public docs)
+  - Vault (`~/MWs2ndBrain/02 Projekte/Tippi.md`) when available/relevant
+- Before finishing, explicitly check whether README, in-app Help, CHANGELOG, localization, and version numbers need updates. Do not leave them for later.
+- `CHANGELOG.md` is the single source of truth for version history
+- `README.md` is the single source of truth for feature lists and provider counts
+- `release.env` is gitignored — never commit it

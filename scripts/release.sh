@@ -29,7 +29,8 @@ if [ -x "$KEYS_SH" ]; then
     NOTARY_PROFILE="${NOTARY_PROFILE:-$(bash "$KEYS_SH" get TIPPI_NOTARY_PROFILE 2>/dev/null || true)}"
 fi
 
-VERSION="${VERSION:-1.0.0}"
+PROJECT_VERSION="$(awk -F'"' '/MARKETING_VERSION:/ { print $2; exit }' project.yml)"
+VERSION="${VERSION:-${PROJECT_VERSION}}"
 APP_NAME="Tippi"
 BUNDLE_ID="com.tippi.app"
 APP_BUNDLE="${APP_NAME}.app"
@@ -41,6 +42,10 @@ NOTARY_PROFILE="${NOTARY_PROFILE:-tippi-notary}"
 if [ -z "${DEVELOPER_ID}" ]; then
     echo "✗ DEVELOPER_ID not set. Add to release.env or export it."
     echo "  Example: DEVELOPER_ID='Developer ID Application: Michael Wildenauer (54PMA7GFAN)'"
+    exit 1
+fi
+if [ -z "${VERSION}" ]; then
+    echo "✗ VERSION not set and MARKETING_VERSION could not be read from project.yml."
     exit 1
 fi
 
@@ -202,7 +207,7 @@ xcrun notarytool submit "${DMG_PATH}" \
     --wait \
     --output-format json > "${DIST_DIR}/notarization.json"
 
-STATUS=$(grep -o '"status":"[^"]*"' "${DIST_DIR}/notarization.json" | head -1 | cut -d'"' -f4)
+STATUS="$(/usr/bin/plutil -extract status raw -o - "${DIST_DIR}/notarization.json")"
 if [ "${STATUS}" != "Accepted" ]; then
     echo "✗ Notarization status: ${STATUS}"
     cat "${DIST_DIR}/notarization.json"
@@ -213,7 +218,8 @@ echo "  ✓ Notarization accepted"
 # 8. Staple
 echo "▶ [7/7] Stapling notarization ticket..."
 xcrun stapler staple "${DMG_PATH}" >/dev/null
-spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 2>&1 | head -2
+SPCTL_OUTPUT="$(spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 2>&1)"
+echo "${SPCTL_OUTPUT}" | awk 'NR <= 2 { print }'
 
 # 9. GitHub Release — upload DMG first so the download URL exists for the appcast
 echo "▶ [8/9] Creating GitHub release..."
@@ -221,11 +227,16 @@ GH_RELEASE_URL="https://github.com/miwixyz/Tippi/releases/download/v${VERSION}"
 # Extract release notes for this version from CHANGELOG.md
 # (macOS BSD head has no -n -1 support; use awk to skip header + stop at next entry)
 RELEASE_NOTES="$(awk "/^## \[${VERSION}\]/{found=1;next} found && /^## \[/{exit} found{print}" CHANGELOG.md)"
-gh release create "v${VERSION}" "${DMG_PATH}" \
-    --title "Tippi ${VERSION}" \
-    --notes "${RELEASE_NOTES}" 2>/dev/null \
-    && echo "  ✓ GitHub Release v${VERSION} erstellt" \
-    || echo "  ⚠ GitHub Release existiert bereits oder Fehler — appcast wird trotzdem generiert"
+if gh release view "v${VERSION}" >/dev/null 2>&1; then
+    gh release upload "v${VERSION}" "${DMG_PATH}" --clobber
+    echo "  ✓ GitHub Release v${VERSION} aktualisiert"
+else
+    gh release create "v${VERSION}" "${DMG_PATH}" \
+        --title "Tippi ${VERSION}" \
+        --notes "${RELEASE_NOTES}"
+    echo "  ✓ GitHub Release v${VERSION} erstellt"
+fi
+gh release view "v${VERSION}" >/dev/null
 
 # 10. Generate appcast.xml — DMGs are hosted on GitHub Releases, not Gist
 echo "▶ [9/9] Generating appcast.xml..."

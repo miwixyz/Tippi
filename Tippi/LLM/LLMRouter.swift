@@ -3,6 +3,7 @@ import Foundation
 struct CompletionResult {
     let text: String
     let providerDisplay: String  // e.g. "OpenAI / gpt-4o-mini"
+    let duration: TimeInterval
 }
 
 /// Catalogue of registered providers and where to route requests.
@@ -51,6 +52,7 @@ struct LLMRouter {
             }
             do {
                 let modelName = model(for: provider.id, fallback: provider.defaultModel)
+                let start = Date()
                 let text = try await provider.complete(
                     systemPrompt: systemPrompt,
                     userText: userText,
@@ -58,10 +60,16 @@ struct LLMRouter {
                 )
                 return CompletionResult(
                     text: text,
-                    providerDisplay: "\(provider.displayName) / \(modelName)"
+                    providerDisplay: "\(provider.displayName) / \(modelName)",
+                    duration: Date().timeIntervalSince(start)
                 )
             } catch LLMError.noAPIKey {
                 continue
+            } catch {
+                if isUnavailableLocalProvider(provider, error: error) {
+                    continue
+                }
+                throw error
             }
         }
 
@@ -82,6 +90,26 @@ struct LLMRouter {
         return providers.sorted { a, b in
             if a.id == preferred { return true }
             if b.id == preferred { return false }
+            return false
+        }
+    }
+
+    private func isUnavailableLocalProvider(_ provider: LLMProvider, error: Error) -> Bool {
+        guard !provider.requiresAPIKey else { return false }
+
+        if let mlxError = error as? MLXError {
+            switch mlxError {
+            case .serverNotFound, .startupTimeout, .launchFailed:
+                return true
+            }
+        }
+
+        let nsError = error as NSError
+        guard nsError.domain == NSURLErrorDomain else { return false }
+        switch URLError.Code(rawValue: nsError.code) {
+        case .cannotConnectToHost, .networkConnectionLost, .notConnectedToInternet, .timedOut:
+            return true
+        default:
             return false
         }
     }

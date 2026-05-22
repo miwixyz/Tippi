@@ -200,6 +200,7 @@ private struct VoiceSection: View {
 
     private enum State { case idle, recording, transcribing, failed(String) }
     @SwiftUI.State private var voiceState: State = .idle
+    @SwiftUI.State private var transcriptionTask: Task<Void, Never>?
     @ObservedObject private var recorder: AudioRecorder
 
     init(audioRecorder: AudioRecorder?, mode: VoiceMode, onTranscribed: @escaping (String) -> Void) {
@@ -219,6 +220,13 @@ private struct VoiceSection: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
+        .onDisappear {
+            transcriptionTask?.cancel()
+            transcriptionTask = nil
+            if audioRecorder?.isRecording == true {
+                _ = audioRecorder?.stop()
+            }
+        }
     }
 
     // MARK: Setup banner
@@ -366,15 +374,18 @@ private struct VoiceSection: View {
         }
         voiceState = .transcribing
 
-        Task {
+        transcriptionTask?.cancel()
+        transcriptionTask = Task {
             do {
                 let text = try await WhisperTranscriber.transcribe(wavURL: wavURL)
                 await MainActor.run {
+                    guard !Task.isCancelled else { return }
                     voiceState = .idle
                     onTranscribed(text)
                 }
             } catch {
                 await MainActor.run {
+                    guard !Task.isCancelled else { return }
                     voiceState = .failed(error.localizedDescription)
                 }
             }

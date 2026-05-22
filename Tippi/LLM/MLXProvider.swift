@@ -3,7 +3,7 @@ import Foundation
 struct MLXProvider: LLMProvider {
     let id           = "mlx"
     let displayName  = "MLX (local)"
-    let defaultModel = "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
+    let defaultModel = "mlx-community/Llama-3.2-3B-Instruct-4bit"
     let requiresAPIKey = false
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
@@ -13,7 +13,7 @@ struct MLXProvider: LLMProvider {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 120  // local models can be slow on first token
+        request.timeoutInterval = 90  // startup is handled separately; keep running requests bounded
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         struct Message: Encodable { let role: String; let content: String }
@@ -36,7 +36,7 @@ struct MLXProvider: LLMProvider {
         //
         // Since MLXServerManager always launches mlx_lm.server with
         // `--model <configured>`, that exact ID is guaranteed to be valid.
-        let resolvedModel = await MainActor.run { MLXServerManager.model }
+        let resolvedModel = await MainActor.run { MLXServerManager.activeModel }
         let body = Body(
             model: resolvedModel,
             messages: [
@@ -44,7 +44,7 @@ struct MLXProvider: LLMProvider {
                 Message(role: "user",   content: userText)
             ],
             stream: false,
-            max_tokens: 2048,
+            max_tokens: maxTokens(for: userText),
             temperature: 0.3
         )
         request.httpBody = try JSONEncoder().encode(body)
@@ -71,5 +71,12 @@ struct MLXProvider: LLMProvider {
         let text = first.message.content ?? first.message.reasoning ?? ""
         guard !text.isEmpty else { throw LLMError.invalidResponse }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func maxTokens(for userText: String) -> Int {
+        // Most Tippi operations rewrite or summarize; a capped dynamic budget
+        // keeps local models from drifting into slow, overly long completions.
+        let approximateInputTokens = max(1, userText.count / 4)
+        return min(768, max(256, approximateInputTokens * 2))
     }
 }

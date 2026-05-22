@@ -96,8 +96,8 @@ final class WhisperModelManager: NSObject, ObservableObject {
                         return
                     }
 
-                    // Clear any manual model path override so auto-detection picks this up
-                    UserDefaults.standard.removeObject(forKey: "voice.whisperModelPath")
+                    // Make the downloaded model the active model explicitly.
+                    WhisperConfig.modelPath = model.localURL.path
                 } catch {
                     self.downloadError = error.localizedDescription
                 }

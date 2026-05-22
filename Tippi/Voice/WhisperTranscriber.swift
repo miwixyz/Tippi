@@ -155,32 +155,107 @@ struct WhisperTranscriber {
     // MARK: - Private
 
     private static func runProcess(binary: String, arguments: [String]) async throws {
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: binary)
-            process.arguments     = arguments
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+                try await runProcessUntilExit(binary: binary, arguments: arguments)
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: 120_000_000_000)
+                throw WhisperError.processFailed("Timed out after 120 seconds.")
+            }
 
-            let errPipe = Pipe()
-            process.standardOutput = Pipe()  // discard progress chatter
-            process.standardError  = errPipe
+            guard let result = try await group.next() else { return }
+            group.cancelAll()
+            return result
+        }
+    }
 
-            process.terminationHandler = { proc in
-                if proc.terminationStatus == 0 {
-                    cont.resume()
-                } else {
-                    let msg = String(
-                        data: errPipe.fileHandleForReading.readDataToEndOfFile(),
-                        encoding: .utf8
-                    ) ?? "exit \(proc.terminationStatus)"
-                    cont.resume(throwing: WhisperError.processFailed(msg.trimmingCharacters(in: .whitespacesAndNewlines)))
+    private static func runProcessUntilExit(binary: String, arguments: [String]) async throws {
+        let runner = ProcessRunner()
+
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: binary)
+                process.arguments = arguments
+                process.standardOutput = FileHandle.nullDevice
+
+                let errPipe = Pipe()
+                process.standardError = errPipe
+                errPipe.fileHandleForReading.readabilityHandler = { handle in
+                    runner.appendError(handle.availableData)
+                }
+
+                runner.process = process
+                process.terminationHandler = { proc in
+                    errPipe.fileHandleForReading.readabilityHandler = nil
+                    if proc.terminationStatus == 0 {
+                        runner.resume(cont)
+                    } else {
+                        let msg = runner.errorMessage(fallback: "exit \(proc.terminationStatus)")
+                        runner.resume(cont, throwing: WhisperError.processFailed(msg))
+                    }
+                }
+
+                do {
+                    try process.run()
+                } catch {
+                    errPipe.fileHandleForReading.readabilityHandler = nil
+                    runner.resume(cont, throwing: WhisperError.processFailed(error.localizedDescription))
                 }
             }
+        } onCancel: {
+            runner.terminate()
+        }
+    }
+}
 
-            do {
-                try process.run()
-            } catch {
-                cont.resume(throwing: WhisperError.processFailed(error.localizedDescription))
-            }
+private final class ProcessRunner: @unchecked Sendable {
+    private let lock = NSLock()
+    private var didResume = false
+    private var errorData = Data()
+    var process: Process?
+
+    func appendError(_ data: Data) {
+        guard !data.isEmpty else { return }
+        lock.lock()
+        if errorData.count < 16_384 {
+            errorData.append(data.prefix(16_384 - errorData.count))
+        }
+        lock.unlock()
+    }
+
+    func errorMessage(fallback: String) -> String {
+        lock.lock()
+        let data = errorData
+        lock.unlock()
+        let message = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return message.isEmpty ? fallback : message
+    }
+
+    func terminate() {
+        lock.lock()
+        let proc = process
+        lock.unlock()
+        if proc?.isRunning == true {
+            proc?.terminate()
+        }
+    }
+
+    func resume(_ continuation: CheckedContinuation<Void, Error>, throwing error: Error? = nil) {
+        lock.lock()
+        guard !didResume else {
+            lock.unlock()
+            return
+        }
+        didResume = true
+        lock.unlock()
+
+        if let error {
+            continuation.resume(throwing: error)
+        } else {
+            continuation.resume()
         }
     }
 }
