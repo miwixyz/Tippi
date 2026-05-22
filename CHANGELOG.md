@@ -2,6 +2,12 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.7.1] — 2026-05-22
+
+### Fixed
+- **Voice Instruction answered the text instead of transforming it**: the spoken instruction is now wrapped in a hardened system prompt that treats the selected text strictly as content to transform and never answers or replies to a question contained in it.
+- **"Replace" appended instead of replacing in the AI preview**: the preview's Replace/Append now reuse the selection range captured at trigger time and replace via the Accessibility API (the same fix already applied to local quick actions in 1.6), instead of falling back to a clipboard paste after the preview window stole focus and collapsed the selection.
+
 ## [1.7.0] — 2026-05-22
 
 ### Added
