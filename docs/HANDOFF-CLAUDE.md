@@ -1,9 +1,9 @@
 # Tippi — Übergabe an Claude Code
 
-**Stand:** 2026-05-22 · **Version:** 1.7.0 (Build 96) · **Branch:** `main`  
+**Stand:** 2026-05-22 · **Version:** 1.7.3 (Build 102) · **Branch:** `main`  
 **Repo:** https://github.com/miwixyz/Tippi · **Lokal:** `~/Coding/Tippi/`
 
-Dieses Dokument fasst die Sessions **v1.6 lokale Schnellaktionen** und **v1.7 Diktat-Modus** plus alle Folge-Fixes zusammen. Einstiegslektüre für Claude Code beim Weitermachen.
+Dieses Dokument fasst die Sessions **v1.6 lokale Schnellaktionen**, **v1.7 Diktat-Modus** und die **v1.7.1–1.7.3 Cross-App-Härtung** zusammen. Einstiegslektüre für Claude Code beim Weitermachen.
 
 ---
 
@@ -25,6 +25,17 @@ Diktat-Hotkey (2×)  → recorder.stop → WhisperTranscriber.transcribe → Tex
 - **⌥⌘D ist System-reserviert** (Dock-Ausblenden, symbolic hotkey id 52) → App-Hotkey kriegt die Combo nie. Default-Combos gegen System-Shortcuts prüfen.
 - **Diktat-Combo deutlich vom Haupt-Hotkey trennen** — ⌃⌥⌘D vs. ⌃⌥⇧⌘D (nur Shift) ist beim Tippen ununterscheidbar. Eigene Taste (M) gewählt.
 - **Insert ohne Popup = kein Focus-Steal** → AX `replace(in: targetApp)` setzt Text am Caret (leere Selektion = Insert), Clipboard-Fallback nur wenn AX `trusted=false`.
+
+### v1.7.1–1.7.3 — Cross-App-Härtung (Capture/Insert)
+
+Aus einer langen Debug-Session mit Electron/Chromium-Apps (Obsidian, Claude, ChatGPT, Slack, VS Code):
+
+- **`log` ist im zsh-Profil überschrieben** → `log show`/`log stream` direkt liefern „too many arguments". Immer **`/usr/bin/log`** nutzen. NSLog dieser App landet primär auf stderr; für `open`-Launches → **os_log** (`Logger(subsystem: "com.tippi.app", category: "capture"|"insert")`), abfragen mit `/usr/bin/log show --predicate 'subsystem == "com.tippi.app"'`.
+- **Doppel-⌘V**: `simulatePaste` an *zwei* Event-Taps (`cghidEventTap` + `cgAnnotatedSessionEventTap`) → Electron fügt **zweimal** ein. Fix: nur **ein** Tap. (Betraf Diktat-Insert + Clipboard-Fallback.)
+- **Stale Clipboard als „Selektion"**: synthetisches ⌘C ohne Effekt (Electron / nichts markiert) → `readViaPasteboard` gab alten Clipboard-Inhalt zurück. Fix: `NSPasteboard.changeCount` vor/nach prüfen; unverändert → `nil`.
+- **AX-Write lügt**: Electron gibt `.success` für `kAXSelectedTextAttribute`-Set zurück, ignoriert ihn aber. Fix: `kAXValue` vor/nach vergleichen. `replaceViaElement` → Enum `replaced` / `ignored` / `unavailable`.
+- **Transform-Replace in Electron unmöglich in-place**: Selektion kollabiert beim Popup-Erscheinen (`liveSelLen=0`), AX-Range-Set ist No-Op, Tastatur-Re-Select unzuverlässig. **Lösung (v1.7.3):** bei `ignored` → Ergebnis in Clipboard + Toast „⌘V zum Einfügen" statt Append. Nativ ersetzt in-place, Diktat fügt am Cursor ein.
+- **Status:** Capture + Diktat funktionieren überall inkl. Electron. Transform-Replace: nativ in-place, Electron via Clipboard.
 
 ---
 
