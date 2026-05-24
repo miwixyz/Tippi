@@ -2,6 +2,23 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.8.0] — 2026-05-24
+
+### Added
+- **Dictation polish** (opt-in): after Whisper transcribes your dictation, Tippi can send the raw text through an LLM provider to remove filler words ("um", "uh", "äh", "ähm", "halt", "also"), add punctuation, and fix obvious self-corrections — then insert the polished text at your cursor. Toggle in **Settings → Voice → Dictation Mode → "Polish transcript with AI"**. Default OFF. The polishing prompt is fully editable and language-agnostic (keeps your source language).
+- **Polish-provider override**: pick a separate provider + model just for the polish step (e.g. Groq for dictation, OpenAI for everything else). Default "use active provider"; switching to Groq + Llama 3.1 8B Instant typically takes polish latency from 2–5 s down to well under 1 s — Pismo-class speed.
+- **Groq provider** (new): OpenAI-compatible chat completions on Groq's LPU hardware. Llama 3.1 8B Instant (~800 tok/s) and Llama 3.3 70B Versatile (~270 tok/s) preset out of the box. Free tier available at console.groq.com.
+- **Scaleway provider** (new, **EU-hosted Paris**): OpenAI-compatible chat completions on Scaleway's Generative APIs. Llama 3.1 8B Instruct (~300 tok/s), Llama 3.3 70B Instruct (~250 tok/s) and Mistral Nemo 12B preset out of the box. Combines Groq-class speed with GDPR/DSGVO compliance — the right default for German-language dictation polish that must not leave the EU. Free tier ~1M tokens/month at console.scaleway.com.
+- **Curated model picker**: every hosted provider (OpenAI / Anthropic / Gemini / Mistral / Groq) now offers a dropdown of current, suitable models with a fastest/balanced/premium label, plus a "Custom…" option for IDs Tippi doesn't ship yet. Deprecated IDs (gpt-3.5, claude-3, gemini-1.5) removed.
+- **Graceful fallback**: if the LLM call fails (no API key, network error, empty response) the raw Whisper transcript is inserted instead — dictation never breaks because of LLM trouble.
+- **Skip-short heuristic**: utterances shorter than 20 characters ("ja", "ok", "danke") bypass the polish step entirely, so single-word dictations stay instant.
+
+### Changed
+- **OpenAI default model is now `gpt-4o-mini`** (was `gpt-5-mini`). The gpt-5 reasoning family adds thinking-token latency that's wrong for Tippi's "fix this short text, return the result" UX. Users who want reasoning can still pick gpt-5/gpt-5-nano/gpt-5-mini from the model dropdown.
+
+### Fixed
+- **OpenAI reasoning-family models (gpt-5*, o1*, o3*, o4*) no longer fail with `400 Unsupported value: 'temperature' does not support 0.3 with this model`.** Tippi previously hardcoded `temperature=0.3` for every OpenAI call; reasoning models only accept the default value. The `temperature` field is now omitted for those models and kept at 0.3 for gpt-4o*, gpt-4*, gpt-3.5*. Affected every Tippi feature using the OpenAI provider — not just the new dictation polish.
+
 ## [1.7.3] — 2026-05-22
 
 ### Changed
