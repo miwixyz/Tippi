@@ -2,6 +2,11 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.8.1] — 2026-05-24
+
+### Added
+- **Menubar quick switcher for the dictation language**: a new "Dictation Language" submenu in Tippi's menubar lets you change Whisper's source language (Auto / Deutsch / English / Español / Français / 日本語) in one click — no more opening Settings just to switch between German calls during the day and Spanish calls in the evening. The active language is checkmarked; the picker in Settings → Voice → Language continues to work and stays in sync.
+
 ## [1.8.0] — 2026-05-24
 
 ### Added
