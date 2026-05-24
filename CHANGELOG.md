@@ -2,6 +2,16 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.8.2] — 2026-05-24
+
+### Added
+- **In-app Help: new "Links & resources" section** listing every Tippi resource in one place — GitHub repository, landing page (miwixyz.github.io/Tippi/), one-pager (docs/ONE-PAGER.md), changelog, and latest release with DMG download. All entries render as clickable Markdown links.
+- **About tab now exposes three links** — GitHub · Landing page · One-pager (was: GitHub only).
+
+### Changed
+- **Voice Help section expanded** to cover the v1.8.0 dictation polish (opt-in LLM smoothing, polish-provider override, skip-short heuristic, graceful fallback) and the v1.8.1 menubar dictation-language quick switcher. Previously these features only existed in the CHANGELOG and the Settings UI — now they're discoverable from the in-app Help where users actually look.
+- **Help bodies are now rendered as inline Markdown** via `AttributedString`. URLs formatted as `[label](url)` are clickable; plain text remains selectable. Falls back to verbatim text on parse failure — no crashes if a localization slip introduces malformed Markdown.
+
 ## [1.8.1] — 2026-05-24
 
 ### Added
