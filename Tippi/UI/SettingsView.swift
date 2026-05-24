@@ -970,6 +970,11 @@ private struct HelpTab: View {
                     title: String(localized: "settings.help.voiceTitle"),
                     body: String(localized: "settings.help.voiceBody")
                 )
+                helpSection(
+                    icon: "link",
+                    title: String(localized: "settings.help.linksTitle"),
+                    body: String(localized: "settings.help.linksBody")
+                )
             }
             .padding(24)
         }
@@ -985,14 +990,33 @@ private struct HelpTab: View {
                     .frame(width: 24)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title).font(.headline)
-                    Text(body)
+                    // Parse the body as inline Markdown so [label](url) renders
+                    // as a clickable link. Falls back to plain text on parse
+                    // failure. `inlineOnlyPreservingWhitespace` keeps paragraph
+                    // breaks intact (the bodies use \n\n between paragraphs).
+                    Text(markdownAttributedString(from: body))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
                 }
             }
             .padding(6)
         }
+    }
+
+    /// Convert the help-body string into an AttributedString with Markdown
+    /// links activated. The Foundation parser is strict — if it fails for
+    /// any reason, we fall back to the verbatim text rather than crashing
+    /// or hiding content.
+    private func markdownAttributedString(from body: String) -> AttributedString {
+        let options = AttributedString.MarkdownParsingOptions(
+            interpretedSyntax: .inlineOnlyPreservingWhitespace
+        )
+        if let attributed = try? AttributedString(markdown: body, options: options) {
+            return attributed
+        }
+        return AttributedString(body)
     }
 }
 
@@ -1035,9 +1059,19 @@ private struct AboutTab: View {
                 Text(String(localized: "settings.about.copyright"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Link(String(localized: "settings.about.github"), destination: URL(string: "https://github.com/miwixyz/Tippi")!)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 14) {
+                    Link(String(localized: "settings.about.github"),
+                         destination: URL(string: "https://github.com/miwixyz/Tippi")!)
+                    Text("·").foregroundStyle(.tertiary)
+                    Link(String(localized: "settings.about.landingPage"),
+                         destination: URL(string: "https://miwixyz.github.io/Tippi/")!)
+                    Text("·").foregroundStyle(.tertiary)
+                    Link(String(localized: "settings.about.onePager"),
+                         destination: URL(string: "https://github.com/miwixyz/Tippi/blob/main/docs/ONE-PAGER.md")!)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
             .padding(24)
             .frame(maxWidth: .infinity)
