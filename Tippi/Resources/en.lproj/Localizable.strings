@@ -233,7 +233,7 @@
 "settings.hotkeys.restartHint" = "If the new hotkey does not respond immediately, restart Tippi.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
 "settings.about.feature1" = "Works in every app system-wide";
-"settings.about.feature2" = "Bring Your Own Key — 6 AI providers (4 cloud + 2 local)";
+"settings.about.feature2" = "Bring Your Own Key — 8 AI providers (6 cloud + 2 local)";
 "settings.about.feature3" = "No telemetry, no cloud storage";
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
@@ -249,7 +249,7 @@
 "settings.help.importExportTitle" = "Share & import prompts";
 "settings.help.importExportBody" = "Export your custom prompts as a .tippipack file to share them with teammates or keep a backup.\n\nExport all — click \"Export All\" at the top of the Prompts tab.\nExport one — click the ↑ icon next to any prompt.\nImport — click \"Import\", select a .tippipack file, then choose Merge (keeps your existing prompts) or Replace (replaces them).\n\nImported prompts always get fresh IDs, so they never conflict with existing ones.";
 "settings.help.apiTitle" = "AI providers & keys";
-"settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 6 providers — OpenAI, Anthropic, Gemini, Mistral (cloud, BYOK), plus Ollama and MLX (both fully local, free, no key needed). Keys are stored securely in the macOS Keychain.";
+"settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 8 providers — OpenAI, Anthropic, Gemini, Mistral, Scaleway (EU, Paris) and Groq (cloud, BYOK), plus Ollama and MLX (both fully local, free, no key needed). Keys are stored securely in the macOS Keychain.";
 
 /* MLX in-app installer */
 "mlx.install.title" = "Set up MLX";
