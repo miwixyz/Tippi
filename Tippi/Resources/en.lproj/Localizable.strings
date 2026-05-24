@@ -1,6 +1,7 @@
 /* Menubar */
 "menu.trigger" = "Trigger Tippi…";
 "menu.checkForUpdates" = "Check for Updates…";
+"menu.dictationLanguage" = "Dictation Language";
 "menu.welcome" = "Welcome…";
 "menu.settings" = "Settings…";
 "menu.quit" = "Quit Tippi";

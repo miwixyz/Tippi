@@ -1,6 +1,7 @@
 /* Menubar */
 "menu.trigger" = "Tippi auslösen…";
 "menu.checkForUpdates" = "Nach Updates suchen…";
+"menu.dictationLanguage" = "Diktat-Sprache";
 "menu.welcome" = "Willkommen…";
 "menu.settings" = "Einstellungen…";
 "menu.quit" = "Tippi beenden";

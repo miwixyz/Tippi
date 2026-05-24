@@ -16,6 +16,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let dictationController = DictationController()
 
     private var statusItem: NSStatusItem?
+    /// Menubar "Dictation language" entry. Stored so the checkmark can be
+    /// refreshed when the user picks a language from its submenu.
+    private var dictationLanguageMenuItem: NSMenuItem?
     private var welcomeWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
     private var lastNonTippiApp: NSRunningApplication?
@@ -172,6 +175,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
+        // ── Dictation language quick switcher ──────────────────────────
+        // Mirrors the picker in Settings → Voice → Language, but lets the
+        // user change Whisper's source language in one click without
+        // opening Settings — useful when switching between German, English
+        // and Spanish during the day.
+        let languageItem = NSMenuItem(
+            title: String(localized: "menu.dictationLanguage"),
+            action: nil,
+            keyEquivalent: ""
+        )
+        languageItem.submenu = buildDictationLanguageSubmenu()
+        menu.addItem(languageItem)
+        dictationLanguageMenuItem = languageItem
+
+        menu.addItem(.separator())
+
         menu.addItem(
             withTitle: String(localized: "menu.welcome"),
             action: #selector(showWelcomeWindow),
@@ -201,6 +220,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func checkForUpdates(_ sender: Any?) {
         updaterController?.checkForUpdates(sender)
+    }
+
+    // MARK: - Dictation language quick switcher
+
+    /// Languages exposed in the menubar submenu. Single source of truth for
+    /// the (code, native label) pairs — kept in sync with `languageSection`
+    /// in `SettingsView.swift`. Add a new entry in both places.
+    private static let dictationLanguages: [(code: String, label: String)] = [
+        ("auto", String(localized: "settings.voice.language.auto")),
+        ("de",   "Deutsch"),
+        ("en",   "English"),
+        ("es",   "Español"),
+        ("fr",   "Français"),
+        ("ja",   "日本語"),
+    ]
+
+    private func buildDictationLanguageSubmenu() -> NSMenu {
+        let submenu = NSMenu()
+        let active = WhisperConfig.language
+        for (code, label) in Self.dictationLanguages {
+            let item = NSMenuItem(
+                title: label,
+                action: #selector(setDictationLanguage(_:)),
+                keyEquivalent: ""
+            )
+            item.representedObject = code
+            item.state = (code == active) ? .on : .off
+            item.target = self
+            submenu.addItem(item)
+        }
+        return submenu
+    }
+
+    @objc func setDictationLanguage(_ sender: NSMenuItem) {
+        guard let code = sender.representedObject as? String else { return }
+        WhisperConfig.language = code
+        NSLog("Tippi: dictation language set to \(code)")
+        // Rebuild the submenu so the checkmark moves to the new selection
+        // next time the menu opens.
+        dictationLanguageMenuItem?.submenu = buildDictationLanguageSubmenu()
     }
 
     @objc func showWelcomeWindow() {
