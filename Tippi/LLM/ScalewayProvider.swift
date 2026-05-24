@@ -1,17 +1,21 @@
 import Foundation
 
-struct OpenAIProvider: LLMProvider {
-    let id = "openai"
-    let displayName = "OpenAI"
-    /// Default = `gpt-4o-mini`: fast, cheap, non-reasoning — best fit for
-    /// Tippi's "fix this short text, return the result" use case. The
-    /// gpt-5* reasoning family adds thinking-token latency that hurts the
-    /// dictation/transform UX. Users can opt into reasoning in the model
-    /// picker.
-    let defaultModel = "gpt-4o-mini"
+/// Scaleway Generative APIs — EU-hosted (Paris) chat completions endpoint
+/// with OpenAI-compatible request/response schema. Backs Llama 3.x and
+/// Mistral-derived models on dedicated EU infrastructure → covers both
+/// speed and GDPR/DSGVO requirements that hosted US providers can't.
+///
+/// Llama 3.1 8B Instruct on Scaleway clocks ~300 tokens/sec, Llama 3.3 70B
+/// ~250 tokens/sec — Groq-class throughput while staying on EU soil.
+struct ScalewayProvider: LLMProvider {
+    let id = "scaleway"
+    let displayName = "Scaleway (EU)"
+    /// Default = Llama 3.1 8B Instruct: fastest on Scaleway, sub-second
+    /// polish, acceptable German. Pick the 70B preset for premium quality.
+    let defaultModel = "llama-3.1-8b-instruct"
     let requiresAPIKey = true
 
-    private let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
+    private let endpoint = URL(string: "https://api.scaleway.ai/v1/chat/completions")!
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
         let apiKey: String? = await MainActor.run {
@@ -31,32 +35,15 @@ struct OpenAIProvider: LLMProvider {
         struct Body: Encodable {
             let model: String
             let messages: [Message]
-            let temperature: Double?
-
-            enum CodingKeys: String, CodingKey { case model, messages, temperature }
-
-            func encode(to encoder: Encoder) throws {
-                var c = encoder.container(keyedBy: CodingKeys.self)
-                try c.encode(model, forKey: .model)
-                try c.encode(messages, forKey: .messages)
-                // Reasoning-family models (gpt-5*, o1*, o3*, o4*) reject custom
-                // temperature values — only the API default (1.0) is allowed.
-                // Omit the field entirely for those, send 0.3 for everything else
-                // (gpt-4o*, gpt-4*, gpt-3.5*).
-                if let temperature { try c.encode(temperature, forKey: .temperature) }
-            }
+            let temperature: Double
         }
-
-        let modelName = model.isEmpty ? defaultModel : model
-        let supportsCustomTemperature = !Self.isReasoningModel(modelName)
-
         let body = Body(
-            model: modelName,
+            model: model.isEmpty ? defaultModel : model,
             messages: [
                 Message(role: "system", content: systemPrompt),
                 Message(role: "user", content: userText)
             ],
-            temperature: supportsCustomTemperature ? 0.3 : nil
+            temperature: 0.3
         )
         request.httpBody = try JSONEncoder().encode(body)
 
@@ -81,16 +68,5 @@ struct OpenAIProvider: LLMProvider {
             throw LLMError.invalidResponse
         }
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// OpenAI's reasoning-family models (gpt-5*, o1*, o3*, o4*) reject any
-    /// `temperature` value other than the default (1.0). Use this to decide
-    /// whether to send a custom temperature at all.
-    private static func isReasoningModel(_ name: String) -> Bool {
-        let lower = name.lowercased()
-        return lower.hasPrefix("gpt-5")
-            || lower.hasPrefix("o1")
-            || lower.hasPrefix("o3")
-            || lower.hasPrefix("o4")
     }
 }

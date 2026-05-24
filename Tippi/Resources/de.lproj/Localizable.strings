@@ -218,10 +218,12 @@
 "settings.providers.keySaved" = "Key gespeichert";
 "settings.providers.noKey" = "Noch kein Key";
 "settings.providers.localBadge" = "Lokal — kein Key nötig";
-"settings.providers.hint.openai" = "Key bei platform.openai.com → API keys. Standard: gpt-5-mini (schnell, günstig, Stand Mai 2026).";
+"settings.providers.hint.openai" = "Key bei platform.openai.com → API keys. Standard: gpt-4o-mini (schnell, ohne Reasoning — am besten für Tippi). Für Reasoning auf gpt-5* wechseln (höhere Latenz).";
 "settings.providers.hint.anthropic" = "Key bei console.anthropic.com. Standard: claude-haiku-4-5 — sehr stark bei deutschem Text.";
 "settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.5-flash.";
-"settings.providers.hint.mistral" = "Key bei console.mistral.ai. Standard: mistral-small-latest (EU-Hosting möglich).";
+"settings.providers.hint.mistral" = "Key bei console.mistral.ai. EU-Hosting (Paris) → DSGVO-sauber. Exzellente Deutsch-/Französisch-Qualität. Standard: mistral-small-latest (schnell, perfekt für Diktat-Glättung).";
+"settings.providers.hint.scaleway" = "Key bei console.scaleway.com → Generative APIs. EU-Hosting (Paris) für Llama 3.x / Mistral auf Scaleway-Infrastruktur — Groq-Klasse Speed mit DSGVO. Gratis-Tier (~1M Token/Monat). Standard: Llama 3.1 8B Instruct.";
+"settings.providers.hint.groq" = "Gratis-Key bei console.groq.com. Schnellster Hosted-Anbieter — Antworten unter 1 s dank LPU-Hardware. Ideal für Diktat-Glättung. Standard: Llama 3.1 8B Instant.";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
 "settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Standard: Llama 3.2 3B Fast/Balanced für niedrigere Latenz; 8B/14B-Presets wählen, wenn Qualität wichtiger ist als Tempo. Keine Cloud, kein Key.";
 "settings.providers.mlx.port" = "Port";
@@ -308,6 +310,13 @@
 "settings.voice.dictation.body" = "Diktat-Hotkey drücken zum Aufnehmen, erneut drücken zum Stoppen — Tippi transkribiert und fügt den Text an der Cursor-Position ein. Kein Popup, keine Textmarkierung nötig.";
 "settings.voice.dictation.enable" = "Diktat-Hotkey aktivieren";
 "settings.voice.dictation.needsModel" = "Whisper-Modell oben herunterladen, um Diktat zu nutzen.";
+"settings.voice.dictation.postProcess.enable" = "Transkript per KI glätten (Füllwörter raus, Satzzeichen rein)";
+"settings.voice.dictation.postProcess.body" = "Nachdem Whisper dein Diktat transkribiert hat, schickt Tippi den Rohtext durch deinen aktiven KI-Anbieter — entfernt Füllwörter (äh, ähm, halt, also), ergänzt Satzzeichen und korrigiert offensichtliche Versprecher. Kostet 1–3 s zusätzliche Latenz. Schlägt der KI-Aufruf fehl, wird stattdessen das Roh-Transkript eingefügt — Diktat bricht nie ab.";
+"settings.voice.dictation.postProcess.promptLabel" = "Glättungs-Prompt (wird als System-Prompt genutzt):";
+"settings.voice.dictation.postProcess.reset" = "Auf Standard zurücksetzen";
+"settings.voice.dictation.postProcess.providerLabel" = "Glätten via:";
+"settings.voice.dictation.postProcess.providerActive" = "Aktiven Provider nutzen";
+"settings.providers.customModel" = "Eigenes Modell…";
 
 "voice.model.noModel" = "Kein Modell heruntergeladen";
 "voice.model.download" = "Laden";

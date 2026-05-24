@@ -16,6 +16,8 @@ struct LLMRouter {
         AnthropicProvider(),
         GeminiProvider(),
         MistralProvider(),
+        ScalewayProvider(),
+        GroqProvider(),
         OllamaProvider(),
         MLXProvider()
     ]
@@ -74,6 +76,41 @@ struct LLMRouter {
         }
 
         throw LLMError.noProviderConfigured
+    }
+
+    /// Variant of `complete` that targets a specific provider + model — used
+    /// by the dictation polish path when the user has chosen a "polish
+    /// provider override" different from the chat provider. Falls back to
+    /// the normal `complete` if the specified provider is unknown or has no
+    /// API key configured.
+    func complete(
+        systemPrompt: String,
+        userText: String,
+        forceProviderID: String,
+        forceModel: String
+    ) async throws -> CompletionResult {
+        guard !forceProviderID.isEmpty,
+              let provider = Self.allProviders.first(where: { $0.id == forceProviderID }) else {
+            return try await complete(systemPrompt: systemPrompt, userText: userText)
+        }
+        if provider.requiresAPIKey {
+            let hasKey = await MainActor.run { hasAPIKey(for: provider.id) }
+            guard hasKey else {
+                return try await complete(systemPrompt: systemPrompt, userText: userText)
+            }
+        }
+        let modelName = forceModel.isEmpty ? provider.defaultModel : forceModel
+        let start = Date()
+        let text = try await provider.complete(
+            systemPrompt: systemPrompt,
+            userText: userText,
+            model: modelName
+        )
+        return CompletionResult(
+            text: text,
+            providerDisplay: "\(provider.displayName) / \(modelName)",
+            duration: Date().timeIntervalSince(start)
+        )
     }
 
     @MainActor

@@ -351,13 +351,7 @@ private struct ProviderRow: View {
                 if isMLX {
                     mlxModelPicker
                 } else {
-                    HStack {
-                        Text(String(localized: "settings.providers.model"))
-                            .font(.caption)
-                            .frame(width: 60, alignment: .leading)
-                        TextField(provider.defaultModel, text: $modelName)
-                            .textFieldStyle(.roundedBorder)
-                    }
+                    curatedModelPicker
                 }
 
                 // ── MLX extras ──────────────────────────────────────────────
@@ -443,6 +437,64 @@ private struct ProviderRow: View {
             mlxIsInstalled = MLXServerManager.isInstalled
         }) {
             MLXSetupSheet()
+        }
+    }
+
+    /// Curated dropdown for hosted providers (OpenAI/Anthropic/Gemini/
+    /// Mistral/Groq). Falls back to a free-form text field for Ollama
+    /// (whatever the user has pulled locally) and for unknown providers.
+    /// The "Custom…" sentinel always lets the user type a model ID that
+    /// isn't in the curated list (new releases between Tippi updates).
+    @ViewBuilder
+    private var curatedModelPicker: some View {
+        let presets = ProviderModelPresets.presets(for: provider.id)
+
+        if presets.isEmpty {
+            HStack {
+                Text(String(localized: "settings.providers.model"))
+                    .font(.caption)
+                    .frame(width: 60, alignment: .leading)
+                TextField(provider.defaultModel, text: $modelName)
+                    .textFieldStyle(.roundedBorder)
+            }
+        } else {
+            let isCustom = !modelName.isEmpty && !presets.contains(where: { $0.id == modelName })
+            let pickerSelection = Binding<String>(
+                get: {
+                    if modelName.isEmpty { return provider.defaultModel }
+                    return isCustom ? "__custom__" : modelName
+                },
+                set: { newValue in
+                    if newValue == "__custom__" {
+                        // keep current modelName (user will edit in TextField)
+                        if !isCustom { modelName = "" }
+                    } else {
+                        modelName = newValue
+                    }
+                }
+            )
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(String(localized: "settings.providers.model"))
+                        .font(.caption)
+                        .frame(width: 60, alignment: .leading)
+                    Picker("", selection: pickerSelection) {
+                        ForEach(presets) { preset in
+                            Text(preset.label).tag(preset.id)
+                        }
+                        Divider()
+                        Text(String(localized: "settings.providers.customModel")).tag("__custom__")
+                    }
+                    .labelsHidden()
+                }
+                if isCustom || pickerSelection.wrappedValue == "__custom__" {
+                    TextField(provider.defaultModel, text: $modelName)
+                        .textFieldStyle(.roundedBorder)
+                        .padding(.leading, 60)
+                        .font(.caption)
+                }
+            }
         }
     }
 
@@ -571,6 +623,8 @@ private struct ProviderRow: View {
         case "anthropic": return String(localized: "settings.providers.hint.anthropic")
         case "gemini":    return String(localized: "settings.providers.hint.gemini")
         case "mistral":   return String(localized: "settings.providers.hint.mistral")
+        case "scaleway":  return String(localized: "settings.providers.hint.scaleway")
+        case "groq":      return String(localized: "settings.providers.hint.groq")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
         case "mlx":       return String(localized: "settings.providers.hint.mlx")
         default:          return ""
@@ -1000,6 +1054,10 @@ private struct VoiceTab: View {
     @AppStorage("voice.language") private var language: String = "auto"
     @State private var dictationEnabled: Bool = DictationSettings.isEnabled
     @State private var dictationCombo: KeyCombo = DictationSettings.combo
+    @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
+    @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
+    @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
+    @State private var dictationPolishModel: String = DictationSettings.postProcessModelOverride
 
     var body: some View {
         ScrollView {
@@ -1045,9 +1103,111 @@ private struct VoiceTab: View {
                             DictationSettings.combo = new
                             (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
                         }
+
+                    Divider().padding(.vertical, 4)
+
+                    Toggle(String(localized: "settings.voice.dictation.postProcess.enable"),
+                           isOn: $dictationPostProcess)
+                        .onChange(of: dictationPostProcess) { _, new in
+                            DictationSettings.postProcessEnabled = new
+                        }
+
+                    Text(String(localized: "settings.voice.dictation.postProcess.body"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if dictationPostProcess {
+                        polishProviderPicker
+
+                        Text(String(localized: "settings.voice.dictation.postProcess.promptLabel"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextEditor(text: $dictationPostProcessPrompt)
+                            .font(.system(.body, design: .monospaced))
+                            .frame(minHeight: 100, maxHeight: 180)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            )
+                            .onChange(of: dictationPostProcessPrompt) { _, new in
+                                DictationSettings.postProcessPrompt = new
+                            }
+                        Button(String(localized: "settings.voice.dictation.postProcess.reset")) {
+                            dictationPostProcessPrompt = DictationSettings.defaultPostProcessPrompt
+                            DictationSettings.postProcessPrompt = DictationSettings.defaultPostProcessPrompt
+                        }
+                        .controlSize(.small)
+                    }
                 }
             }
             .padding(6)
+        }
+    }
+
+    /// Provider+model override for the polish step only. Default is
+    /// "use the same provider as everything else"; switching to Groq +
+    /// Llama 3.1 8B Instant typically takes polish latency from 2–5 s
+    /// (OpenAI/MLX) to well under 1 s.
+    private var polishProviderPicker: some View {
+        // Sentinel value for "no override" since Picker can't bind to nil.
+        let useActive = "__active__"
+        let providerBinding = Binding<String>(
+            get: { dictationPolishProvider.isEmpty ? useActive : dictationPolishProvider },
+            set: { new in
+                let value = (new == useActive) ? "" : new
+                dictationPolishProvider = value
+                DictationSettings.postProcessProviderOverride = value
+                // Auto-pick the fastest non-reasoning model on the new provider.
+                if !value.isEmpty,
+                   let fastest = ProviderModelPresets.defaultPolishModel(for: value) {
+                    dictationPolishModel = fastest
+                    DictationSettings.postProcessModelOverride = fastest
+                } else {
+                    dictationPolishModel = ""
+                    DictationSettings.postProcessModelOverride = ""
+                }
+            }
+        )
+
+        let modelPresets = ProviderModelPresets.presets(for: dictationPolishProvider)
+        let modelBinding = Binding<String>(
+            get: { dictationPolishModel },
+            set: { new in
+                dictationPolishModel = new
+                DictationSettings.postProcessModelOverride = new
+            }
+        )
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(String(localized: "settings.voice.dictation.postProcess.providerLabel"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: providerBinding) {
+                    Text(String(localized: "settings.voice.dictation.postProcess.providerActive"))
+                        .tag(useActive)
+                    Divider()
+                    ForEach(LLMRouter.allProviders, id: \.id) { provider in
+                        Text(provider.displayName).tag(provider.id)
+                    }
+                }
+                .labelsHidden()
+            }
+
+            if !dictationPolishProvider.isEmpty && !modelPresets.isEmpty {
+                HStack {
+                    Text(String(localized: "settings.providers.model"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Picker("", selection: modelBinding) {
+                        ForEach(modelPresets) { preset in
+                            Text(preset.label).tag(preset.id)
+                        }
+                    }
+                    .labelsHidden()
+                }
+            }
         }
     }
 

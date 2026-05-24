@@ -217,10 +217,12 @@
 "settings.providers.keySaved" = "Key saved";
 "settings.providers.noKey" = "No key yet";
 "settings.providers.localBadge" = "Local — no key needed";
-"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default: gpt-5-mini (fast, cheap, May 2026).";
+"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default: gpt-4o-mini (fast, non-reasoning — best for Tippi). Switch to gpt-5* for reasoning at higher latency.";
 "settings.providers.hint.anthropic" = "Get a key at console.anthropic.com. Default: claude-haiku-4-5 — excellent for German text.";
 "settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.5-flash.";
-"settings.providers.hint.mistral" = "Get a key at console.mistral.ai. Default: mistral-small-latest (EU hosting available).";
+"settings.providers.hint.mistral" = "Get a key at console.mistral.ai. EU-hosted (Paris) → GDPR-clean. Excellent German/French quality. Default: mistral-small-latest (fast, great for dictation polish).";
+"settings.providers.hint.scaleway" = "Get a key at console.scaleway.com → Generative APIs. EU-hosted (Paris) Llama 3.x / Mistral models on Scaleway infrastructure — Groq-class speed with GDPR compliance. Free tier (~1M tokens/month). Default: Llama 3.1 8B Instruct.";
+"settings.providers.hint.groq" = "Get a free key at console.groq.com. Fastest hosted provider — sub-second responses on LPU hardware. Ideal for dictation polish. Default: Llama 3.1 8B Instant.";
 "settings.providers.hint.ollama" = "Install Ollama from ollama.com. Pull a model first: `ollama pull llama3.3`. Runs locally, no key, no cloud.";
 "settings.providers.hint.mlx" = "Tippi starts mlx_lm.server automatically. Default: Llama 3.2 3B Fast/Balanced for lower latency; pick 8B/14B presets when quality matters more than speed. No cloud, no key.";
 "settings.providers.mlx.port" = "Port";
@@ -307,6 +309,13 @@
 "settings.voice.dictation.body" = "Press the dictation hot key to start recording, press again to stop — Tippi transcribes and inserts the text at your cursor. No popup, no text selection needed.";
 "settings.voice.dictation.enable" = "Enable dictation hot key";
 "settings.voice.dictation.needsModel" = "Download a Whisper model above to use dictation.";
+"settings.voice.dictation.postProcess.enable" = "Polish transcript with AI (removes fillers, adds punctuation)";
+"settings.voice.dictation.postProcess.body" = "After Whisper transcribes your dictation, Tippi sends the raw text through your active LLM provider to remove filler words (\"um\", \"uh\", \"äh\"), add punctuation, and fix obvious self-corrections. Adds 1–3 s of latency. If the LLM call fails, the raw transcript is inserted instead — dictation never breaks.";
+"settings.voice.dictation.postProcess.promptLabel" = "Polishing prompt (used as system prompt):";
+"settings.voice.dictation.postProcess.reset" = "Reset to default";
+"settings.voice.dictation.postProcess.providerLabel" = "Polish via:";
+"settings.voice.dictation.postProcess.providerActive" = "Use active provider";
+"settings.providers.customModel" = "Custom…";
 
 "voice.model.noModel" = "No model downloaded";
 "voice.model.download" = "Download";
