@@ -2,7 +2,7 @@
 
 All notable changes to Tippi will be documented in this file.
 
-## [1.9.0] — TBD
+## [1.9.0] — 2026-06-01
 
 ### Added
 - **Encrypted local History (opt-in)** — every AI transformation can now be logged to a local SQLite database, with the `input` and `output` fields encrypted at rest using AES-GCM (CryptoKit). The 256-bit key is generated lazily on first use and lives in your macOS Keychain (`com.tippi.app` / `history.encryption.key`, `WhenUnlockedThisDeviceOnly`, **no iCloud sync**). Default OFF — Tippi writes nothing to disk until you toggle it on.
