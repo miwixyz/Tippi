@@ -42,10 +42,11 @@
 - **Autostart at login**
 - **Dark Mode + Light Mode** — fully adaptive UI; all surfaces use macOS semantic materials and system colors; brand palette has explicit dark-mode variants
 - **DE + EN UI**
+- **Encrypted local History (opt-in, v1.9+)** — turn it on in Settings → History to keep a searchable log of every AI transformation. The `input` and `output` fields are encrypted at rest with AES-GCM via CryptoKit; the 256-bit key lives in your macOS Keychain (no iCloud sync). Browse entries side-by-side in a detail sheet, export the full set as JSON or CSV, or wipe everything with a confirmation. Default **OFF** — nothing is written to disk until you opt in.
 - **Privacy-first**:
   - **BYOK** (bring your own API key) — keys stored in macOS Keychain only
   - **No telemetry, no analytics, no crash reporting**
-  - **No request history saved** — your text never leaves your Mac except to the AI provider you chose
+  - **No request history by default** — opt-in encrypted local History (AES-GCM, Keychain key, no cloud). When off (default) your text never leaves your Mac except to the AI provider you chose.
   - **Voice processing fully local** — Whisper runs on-device, no audio sent anywhere
   - **Open source** under MIT
 

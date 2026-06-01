@@ -208,6 +208,7 @@ struct PreviewView: View {
                     userText: originalText
                 )
                 guard !Task.isCancelled else { return }
+                logToHistory(result: result)
                 state = .ready(
                     text: result.text,
                     providerInfo: "\(result.providerDisplay) · \(formatDuration(result.duration))"
@@ -233,5 +234,26 @@ struct PreviewView: View {
             return String(format: "%.1fs", duration)
         }
         return "\(Int(duration.rounded()))s"
+    }
+
+    /// Append a successful AI transformation to the encrypted local history.
+    /// Silently no-ops when the user has not enabled History recording.
+    /// Errors are logged but never surfaced — history is a best-effort side
+    /// effect of the main transform flow.
+    private func logToHistory(result: CompletionResult) {
+        do {
+            try HistoryStore.shared.append(
+                appName: sourceAppName ?? "Unknown",
+                promptTitle: prompt.title,
+                provider: result.providerID,
+                model: result.model,
+                language: nil,
+                latencyMs: Int((result.duration * 1000).rounded()),
+                input: originalText,
+                output: result.text
+            )
+        } catch {
+            NSLog("Tippi: history append failed — \(error.localizedDescription)")
+        }
     }
 }

@@ -18,6 +18,9 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.0.0
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: 7.0.0
 
 targets:
   Tippi:
@@ -27,6 +30,8 @@ targets:
     dependencies:
       - package: Sparkle
         product: Sparkle
+      - package: GRDB
+        product: GRDB
     sources:
       - path: Tippi
         excludes:

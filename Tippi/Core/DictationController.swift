@@ -214,6 +214,20 @@ final class DictationController: ObservableObject {
                 return raw
             }
             NSLog("Tippi: dictation post-processed via \(result.providerDisplay) in \(String(format: "%.2f", result.duration))s")
+            do {
+                try HistoryStore.shared.append(
+                    appName: "Dictation",
+                    promptTitle: "Dictation polish",
+                    provider: result.providerID,
+                    model: result.model,
+                    language: nil,
+                    latencyMs: Int((result.duration * 1000).rounded()),
+                    input: trimmed,
+                    output: polished
+                )
+            } catch {
+                NSLog("Tippi: history append failed — \(error.localizedDescription)")
+            }
             return polished
         } catch {
             NSLog("Tippi: dictation post-process failed — \(error.localizedDescription) — keeping raw")

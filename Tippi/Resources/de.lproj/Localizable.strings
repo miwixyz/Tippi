@@ -331,6 +331,29 @@
 "settings.voice.advanced.title" = "Erweitert";
 "settings.voice.advanced.body" = "whisper-cli ist in Tippi eingebettet — keine Installation nötig. Der Pfad unten dient zur Information oder als manueller Override.";
 "settings.voice.advanced.noBinary" = "Nicht gefunden — Tippi neu installieren";
+
+"settings.tab.history" = "Verlauf";
+
+/* History-Tab */
+"settings.history.toggle.label" = "Transformations-Verlauf aufzeichnen";
+"settings.history.toggle.on.hint" = "Tippi speichert jede KI-Transformation lokal, verschlüsselt mit AES-GCM. Der Schlüssel liegt in deinem Schlüsselbund — ohne entsperrten Mac liest Tippi den Verlauf nicht.";
+"settings.history.toggle.off.hint" = "Verlauf ist aus. Nichts wird auf die Platte geschrieben. Aktivieren, wenn du frühere Transformationen durchsuchen, exportieren oder nachschlagen willst.";
+"settings.history.section.entries" = "Aktuelle Einträge";
+"settings.history.empty" = "Noch keine Einträge — die nächste Transformation erscheint hier.";
+"settings.history.delete" = "Eintrag löschen";
+"settings.history.deleteAll" = "Alle löschen";
+"settings.history.deleteAll.confirm.title" = "Gesamten Verlauf löschen?";
+"settings.history.deleteAll.confirm.body" = "Entfernt jeden Eintrag aus der lokalen Datenbank. Der Schlüssel im Schlüsselbund bleibt erhalten. Diese Aktion lässt sich nicht rückgängig machen.";
+"settings.history.deleteAll.confirm.cancel" = "Abbrechen";
+"settings.history.deleteAll.confirm.ok" = "Alle löschen";
+"settings.history.export.json" = "JSON exportieren…";
+"settings.history.export.csv" = "CSV exportieren…";
+"settings.history.count.entries" = "%d Einträge";
+"settings.history.detail.input" = "Eingabe";
+"settings.history.detail.output" = "Ausgabe";
+
+"settings.help.historyTitle" = "Verlauf";
+"settings.help.historyBody" = "**Einstellungen → Verlauf → Transformations-Verlauf aufzeichnen** aktivieren, um jede KI-Transformation lokal mitzuschreiben. Der Verlauf ist opt-in und standardmäßig AUS: nichts wird auf die Platte geschrieben, bevor du den Toggle umlegst.\n\nWenn aktiv, speichert jeder Eintrag Zeitstempel, Quell-App, Prompt-Titel, Provider, Modell und Latenz im Klartext (damit Liste und Filter performant bleiben) — aber Eingabe- und Ausgabetext werden vor dem Schreiben in die Datenbank mit AES-GCM (CryptoKit) verschlüsselt. Der 256-Bit-Schlüssel wird beim ersten Schreiben generiert und im macOS-Schlüsselbund abgelegt (Service `com.tippi.app`, Account `history.encryption.key`, `WhenUnlockedThisDeviceOnly`, kein iCloud-Sync).\n\nIm Verlauf-Tab kannst du: jeden Eintrag öffnen und Eingabe/Ausgabe nebeneinander sehen, einen Eintrag per Rechtsklick löschen, den vollständigen entschlüsselten Verlauf via Save-Panel als JSON oder CSV exportieren oder den gesamten Verlauf mit **Alle löschen** wegwerfen. „Alle löschen“ behält den Schlüssel im Schlüsselbund — der nächste Eintrag verwendet ihn wieder. Für einen kompletten Reset zusätzlich den Eintrag in der Schlüsselbundverwaltung.app löschen — Tippi erzeugt beim nächsten Eintrag einen neuen.\n\nDateien: die Datenbank liegt unter `~/Library/Application Support/Tippi/history.db`. Da Tippi ohne App-Sandbox läuft (nötig für cross-app Text-Capture), ist dieser Pfad aus dem Finder erreichbar — der Schutz im Ruhezustand kommt von macOS FileVault plus dem AES-GCM-Chiffrat für die Inhaltsfelder.";
 "settings.about.feature5" = "Spracheingabe — lokale Whisper-Transkription, keine Cloud";
 "settings.about.github" = "GitHub";
 "settings.about.landingPage" = "Landing Page";

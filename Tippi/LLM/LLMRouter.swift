@@ -4,6 +4,10 @@ struct CompletionResult {
     let text: String
     let providerDisplay: String  // e.g. "OpenAI / gpt-4o-mini"
     let duration: TimeInterval
+    /// Stable provider id (e.g. "openai", "anthropic", "mlx") — useful for logging.
+    let providerID: String
+    /// Concrete model name used for this call.
+    let model: String
 }
 
 /// Catalogue of registered providers and where to route requests.
@@ -63,7 +67,9 @@ struct LLMRouter {
                 return CompletionResult(
                     text: text,
                     providerDisplay: "\(provider.displayName) / \(modelName)",
-                    duration: Date().timeIntervalSince(start)
+                    duration: Date().timeIntervalSince(start),
+                    providerID: provider.id,
+                    model: modelName
                 )
             } catch LLMError.noAPIKey {
                 continue
@@ -109,7 +115,9 @@ struct LLMRouter {
         return CompletionResult(
             text: text,
             providerDisplay: "\(provider.displayName) / \(modelName)",
-            duration: Date().timeIntervalSince(start)
+            duration: Date().timeIntervalSince(start),
+            providerID: provider.id,
+            model: modelName
         )
     }
 

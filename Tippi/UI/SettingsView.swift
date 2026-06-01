@@ -15,6 +15,8 @@ struct SettingsView: View {
                 .tabItem { Label(String(localized: "settings.tab.prompts"), systemImage: "text.bubble") }
             VoiceTab()
                 .tabItem { Label(String(localized: "settings.tab.voice"), systemImage: "mic") }
+            HistoryTab()
+                .tabItem { Label(String(localized: "settings.tab.history"), systemImage: "clock.arrow.circlepath") }
             HelpTab()
                 .tabItem { Label(String(localized: "settings.tab.help"), systemImage: "questionmark.circle") }
             AboutTab()
@@ -969,6 +971,11 @@ private struct HelpTab: View {
                     icon: "mic",
                     title: String(localized: "settings.help.voiceTitle"),
                     body: String(localized: "settings.help.voiceBody")
+                )
+                helpSection(
+                    icon: "clock.arrow.circlepath",
+                    title: String(localized: "settings.help.historyTitle"),
+                    body: String(localized: "settings.help.historyBody")
                 )
                 helpSection(
                     icon: "link",

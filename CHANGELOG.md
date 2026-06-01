@@ -2,6 +2,21 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.9.0] — TBD
+
+### Added
+- **Encrypted local History (opt-in)** — every AI transformation can now be logged to a local SQLite database, with the `input` and `output` fields encrypted at rest using AES-GCM (CryptoKit). The 256-bit key is generated lazily on first use and lives in your macOS Keychain (`com.tippi.app` / `history.encryption.key`, `WhenUnlockedThisDeviceOnly`, **no iCloud sync**). Default OFF — Tippi writes nothing to disk until you toggle it on.
+- **Settings → History tab** — turn recording on/off, browse the 200 most recent entries (newest first), open any entry in a side-by-side input/output detail sheet, delete individual rows from a context menu, or wipe the whole store with a confirmation dialog.
+- **JSON + CSV export** — full decrypted dump from the History tab via standard `NSSavePanel`. Files are named `tippi-history-YYYY-MM-DD-HHMMSS.{json,csv}`. CSV escaping is RFC 4180-compliant (fields with commas, quotes, or newlines are double-quoted).
+- **In-app Help section for History** (EN + DE) — explains the opt-in design, where the key lives, and how to wipe or export.
+
+### Changed
+- **Privacy claim updated**: "No request history saved" is no longer correct now that opt-in history exists. The README and About tab now say "No request history by default — opt-in encrypted local History (AES-GCM, Keychain key, no cloud)".
+- **`CompletionResult` exposes `providerID` and `model` separately** in addition to `providerDisplay`, so callers (PreviewView, DictationController) can log structured metadata to History without parsing the human-readable display string.
+
+### Technical
+- **GRDB 7.x added as SPM dependency** (`groue/GRDB.swift`, `from: 7.0.0`) for the SQLite layer. System SQLite is used — **not SQLCipher**, because GRDB+SQLCipher SPM integration would require either CocoaPods, a GRDB fork, or manual `xcframework` linking. Field-level CryptoKit encryption gives the same effective security for Tippi's threat model (Keychain is the single point of failure either way), keeps the build pipeline clean, and adds zero non-Apple crypto code.
+
 ## [1.8.2] — 2026-05-24
 
 ### Added

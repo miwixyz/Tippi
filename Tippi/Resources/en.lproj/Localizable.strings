@@ -280,6 +280,28 @@
 
 /* Voice Input */
 "settings.tab.voice" = "Voice";
+"settings.tab.history" = "History";
+
+/* History tab */
+"settings.history.toggle.label" = "Record transformation history";
+"settings.history.toggle.on.hint" = "Tippi saves every AI transformation locally, encrypted with AES-GCM. The key lives in your Keychain — Tippi cannot read history without your unlocked Mac.";
+"settings.history.toggle.off.hint" = "History is off. Nothing is written to disk. Turn this on if you want to browse, export, or revisit past transformations.";
+"settings.history.section.entries" = "Recent entries";
+"settings.history.empty" = "No entries yet — the next transformation will appear here.";
+"settings.history.delete" = "Delete entry";
+"settings.history.deleteAll" = "Delete all";
+"settings.history.deleteAll.confirm.title" = "Delete all history?";
+"settings.history.deleteAll.confirm.body" = "This removes every entry from the local database. The encryption key in your Keychain is preserved. This cannot be undone.";
+"settings.history.deleteAll.confirm.cancel" = "Cancel";
+"settings.history.deleteAll.confirm.ok" = "Delete all";
+"settings.history.export.json" = "Export JSON…";
+"settings.history.export.csv" = "Export CSV…";
+"settings.history.count.entries" = "%d entries";
+"settings.history.detail.input" = "Input";
+"settings.history.detail.output" = "Output";
+
+"settings.help.historyTitle" = "History";
+"settings.help.historyBody" = "Turn on **Settings → History → Record transformation history** to keep a local log of every AI transformation Tippi performs for you. The history is opt-in and default OFF: nothing is written to disk until you flip the toggle.\n\nWhen on, each entry stores the timestamp, the source app, the prompt title, the provider and model used, and the latency in plaintext (so the list and filters stay fast) — but the actual input and output text are encrypted with AES-GCM (CryptoKit) before they ever touch the database file. The 256-bit encryption key is generated on first use and stored in your macOS Keychain (service `com.tippi.app`, account `history.encryption.key`, `WhenUnlockedThisDeviceOnly`, no iCloud sync).\n\nIn the History tab you can: open any entry to see input and output side-by-side, right-click a row to delete it, export the full decrypted history as JSON or CSV via a standard save panel, or wipe everything with **Delete all**. \"Delete all\" preserves the Keychain key — the next write will reuse it. If you want a full reset, also delete the key from Keychain Access.app, then Tippi generates a fresh one on the next entry.\n\nFiles: the database lives at `~/Library/Application Support/Tippi/history.db`. Because Tippi runs without an App Sandbox (required for cross-app text capture), this path is reachable from Finder — your at-rest file protection is macOS FileVault plus the AES-GCM ciphertext for the content fields.";
 "settings.voice.mic.title" = "Microphone Access";
 "settings.voice.mic.grant" = "Grant Access";
 "settings.voice.binary.title" = "whisper-cli binary";
