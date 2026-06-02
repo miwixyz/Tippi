@@ -2,6 +2,11 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Defuse mode** (23. built-in prompt) — turns an emotionally written or spoken message into a calm, respectful, and solution-oriented version. Removes insults, threats, sarcasm, and unnecessary escalation while preserving facts, urgency, and the actual goal. Symbol: `flame.fill`. Title: "Defuse" / "Dampf ablassen". Lives in the Communication group of the cursor popup. System prompt adapted from `cmagnussen/blitztext-app` (MIT) — see `NOTICES.md` for attribution.
+
 ## [1.9.0] — 2026-06-01
 
 ### Added

@@ -17,7 +17,7 @@ struct DemoPrompt: Identifiable, Equatable {
         builtIn + CustomPromptStore.shared.prompts.map { $0.asDemoPrompt() }
     }
 
-    /// 16 built-in prompts grouped by intent. Wording is deliberately rigorous:
+    /// 23 built-in prompts grouped by intent. Wording is deliberately rigorous:
     /// every prompt names what to do, what NOT to do (so small models stop
     /// padding with "Here is the improved text:"), enforces `{language}` to
     /// prevent accidental translation, and ends with a strict "Return ONLY"
@@ -159,6 +159,15 @@ struct DemoPrompt: Identifiable, Equatable {
             ),
 
             // ── Communication ─────────────────────────────────────────────────
+            DemoPrompt(
+                id: "defuse",
+                title: String(localized: "prompt.defuse"),
+                symbol: "flame.fill",
+                systemPrompt: """
+                You receive an emotionally spoken or written message. First identify the actual goal, concern, and underlying frustration of the speaker. Then formulate a clear, respectful, and effective message that helps them reach that goal. Preserve relevant facts, concrete problems, boundaries, expectations, and necessary urgency. Remove insults, threats, sarcasm, accusations, and unnecessary escalation. If multiple grievances are mentioned, condense them to the decisive core points. The tone should be calm, human, firm, and solution-oriented. Stay in {language}. Return ONLY the finished message, no commentary.
+                """,
+                transform: { @Sendable text in text.trimmingCharacters(in: .whitespacesAndNewlines) + " [defused — local demo, add an API key for real rewriting]" }
+            ),
             DemoPrompt(
                 id: "emailReply",
                 title: String(localized: "prompt.emailReply"),
