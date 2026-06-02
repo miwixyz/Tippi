@@ -6,6 +6,7 @@ All notable changes to Tippi will be documented in this file.
 
 ### Added
 - **Defuse mode** (23. built-in prompt) — turns an emotionally written or spoken message into a calm, respectful, and solution-oriented version. Removes insults, threats, sarcasm, and unnecessary escalation while preserving facts, urgency, and the actual goal. Symbol: `flame.fill`. Title: "Defuse" / "Dampf ablassen". Lives in the Communication group of the cursor popup. System prompt adapted from `cmagnussen/blitztext-app` (MIT) — see `NOTICES.md` for attribution.
+- **Add emojis mode** (24. built-in prompt) — places fitting emojis throughout the text at medium density (roughly every 1–2 sentences), preserves style and meaning, fixes obvious typos. Symbol: `face.smiling`. Title: "Add emojis" / "Emojis einfügen". Lives in the Tone & style group. System prompt adapted from `cmagnussen/blitztext-app` (MIT, medium-density variant) — see `NOTICES.md` for attribution. Users wanting lighter/heavier emoji density can copy this as a Custom prompt and adjust the wording.
 
 ## [1.9.0] — 2026-06-01
 

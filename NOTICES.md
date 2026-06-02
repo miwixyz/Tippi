@@ -5,16 +5,20 @@ code, prompts, or design ideas have been adapted into Tippi. Each entry stays
 under its original license; downstream redistribution must preserve these
 notices.
 
-## Blitztext App — "Defuse" mode prompt
+## Blitztext App — "Defuse" and "Add emojis" mode prompts
 
 - **Source repository:** https://github.com/cmagnussen/blitztext-app
 - **Original maintainer:** Christian Magnussen / Blackboat Internet GmbH
 - **License:** MIT
-- **Adapted:** the German system prompt for the "Dampf ablassen" workflow
-  (`BlitztextMac/Features/Workflows/WorkflowProtocol.swift`,
-  `DampfAblassenSettings.systemPrompt`).
-- **Where it lives in Tippi:** the `defuse` built-in prompt in
-  `Tippi/UI/PromptPopup/DemoPrompt.swift`. The wording was translated to
+- **Adapted prompts:**
+  1. The German system prompt for the "Dampf ablassen" workflow
+     (`BlitztextMac/Features/Workflows/WorkflowProtocol.swift`,
+     `DampfAblassenSettings.systemPrompt`).
+  2. The German emoji-density prompt builder for the "Emoji-Text" workflow
+     (`BlitztextMac/Services/LLMService.swift`, `buildEmojiSystemPrompt`,
+     medium-density variant).
+- **Where they live in Tippi:** the `defuse` and `addEmojis` built-in prompts
+  in `Tippi/UI/PromptPopup/DemoPrompt.swift`. The wording was translated to
   English, parameterised with `{language}`, and aligned to Tippi's "Return
   ONLY" output convention; the underlying communicative intent and structure
   are preserved.

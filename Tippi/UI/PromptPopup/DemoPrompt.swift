@@ -17,7 +17,7 @@ struct DemoPrompt: Identifiable, Equatable {
         builtIn + CustomPromptStore.shared.prompts.map { $0.asDemoPrompt() }
     }
 
-    /// 23 built-in prompts grouped by intent. Wording is deliberately rigorous:
+    /// 24 built-in prompts grouped by intent. Wording is deliberately rigorous:
     /// every prompt names what to do, what NOT to do (so small models stop
     /// padding with "Here is the improved text:"), enforces `{language}` to
     /// prevent accidental translation, and ends with a strict "Return ONLY"
@@ -98,6 +98,15 @@ struct DemoPrompt: Identifiable, Equatable {
                 Rewrite the following AI-generated or stiff text to sound like a real person wrote it. Remove these AI tells: corporate buzzwords, hedge phrases ("it's important to note", "as we navigate", "in today's world"), em-dashes used as flow connectors, generic openings, passive voice, three-item list sentences, and bombastic adjectives ("seamless", "robust", "comprehensive"). Use varied sentence length and natural word choice. Keep the original message. Stay in {language}. Return ONLY the rewritten text.
                 """,
                 transform: { @Sendable text in text + " [humanized — local demo]" }
+            ),
+            DemoPrompt(
+                id: "addEmojis",
+                title: String(localized: "prompt.addEmojis"),
+                symbol: "face.smiling",
+                systemPrompt: """
+                Add fitting emojis to the following text. Place them regularly, roughly every 1–2 sentences. Fix obvious spelling and grammar errors along the way. Preserve the style and meaning of the original text. Stay in {language}. Return ONLY the text with emojis, no explanations.
+                """,
+                transform: { @Sendable text in text.trimmingCharacters(in: .whitespacesAndNewlines) + " ✨ [local demo — add an API key for real emoji placement]" }
             ),
 
             // ── Structure (list-formatting) ───────────────────────────────────
