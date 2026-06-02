@@ -47,8 +47,9 @@ docs/                    ← HANDOVER.md, ONE-PAGER.md, website source for GitHu
 dist/                    ← built DMGs (gitignored)
 build/                   ← Xcode build artifacts (gitignored)
 appcast.xml              ← Sparkle update feed (committed; also pushed to Gist on release)
-project.yml              ← XcodeGen definition — MARKETING_VERSION lives here
-release.env              ← VERSION (gitignored, source of truth for release.sh)
+project.yml              ← XcodeGen definition — single source of truth for VERSION (MARKETING_VERSION)
+release.env              ← DEVELOPER_ID / NOTARY_PROFILE only (gitignored; no VERSION)
+scripts/bump-version.sh  ← patches project.yml + CHANGELOG stub for new releases
 Makefile                 ← convenience wrappers (make build, make release, make open)
 ```
 
@@ -80,7 +81,7 @@ make release        # full pipeline: build + notarize + DMG + GitHub Release + S
 
 `release.sh` is strict. It will abort if:
 
-1. **`release.env` VERSION ≠ `project.yml` MARKETING_VERSION** — both must match before release. Bump both.
+1. **`release.env` must NOT define VERSION** — project.yml MARKETING_VERSION is the single source of truth (since 2026-06-02). `release.sh` aborts if release.env still carries a VERSION. Bump via `./scripts/bump-version.sh X.Y.Z` (patches project.yml + CHANGELOG stub).
 2. **Help strings don't mention all providers** — `settings.help.apiBody` (en + de) must list every provider in `LLMRouter.allProviders`. `settings.about.feature2` must match the provider count. When adding a new provider, update both languages.
 3. **Sparkle CLI missing** — needs `~/Developer/sparkle-tools/bin/generate_appcast`. If missing, appcast step is silently skipped (auto-updates break).
 4. **Notarization not set up** — needs `xcrun notarytool store-credentials tippi-notary`.
@@ -104,7 +105,7 @@ make release        # full pipeline: build + notarize + DMG + GitHub Release + S
 | Change hotkey default | `KeyCombo.dictationDefault` / `KeyCombo.default` in `KeyCombo.swift` |
 | Add menubar entry | `setupMenuBar()` in `AppDelegate.swift` |
 | Add settings tab | new private struct in `SettingsView.swift`, register in `SettingsView.body` TabView |
-| New release | edit `CHANGELOG.md` → bump `release.env` VERSION + `project.yml` MARKETING_VERSION + CURRENT_PROJECT_VERSION → `make release` |
+| New release | `make bump VERSION=X.Y.Z` (patches project.yml + CHANGELOG stub) → edit CHANGELOG entries → commit → `make release` |
 
 ## Anti-footguns
 

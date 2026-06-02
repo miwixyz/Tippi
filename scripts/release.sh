@@ -4,7 +4,9 @@
 # Required env vars (or release.env in repo root):
 #   DEVELOPER_ID         e.g. "Developer ID Application: Michael Wildenauer (54PMA7GFAN)"
 #   NOTARY_PROFILE       Keychain profile name for notarytool (default: tippi-notary)
-#   VERSION              Release version tag, e.g. 1.0.0 (default: read from project.yml)
+#
+# VERSION is always read from project.yml MARKETING_VERSION (single source of truth
+# since 2026-06-02). Bump it via: ./scripts/bump-version.sh X.Y.Z
 #
 # Setup notarytool profile once with:
 #   xcrun notarytool store-credentials tippi-notary \
@@ -14,15 +16,16 @@
 
 set -euo pipefail
 
-# Load env from file if present. An explicit VERSION in the shell wins so
-# stale release.env files cannot silently downgrade a release.
-ENV_VERSION="${VERSION:-}"
+# release.env (gitignored) optionally provides DEVELOPER_ID / NOTARY_PROFILE.
+# It must NOT carry VERSION — project.yml is the single source of truth.
 if [ -f release.env ]; then
     # shellcheck disable=SC1091
     set -a; source release.env; set +a
-fi
-if [ -n "${ENV_VERSION}" ]; then
-    VERSION="${ENV_VERSION}"
+    if [ -n "${VERSION:-}" ]; then
+        echo "✗ release.env still defines VERSION. Remove that line — project.yml is the single source of truth."
+        echo "  Bump via: ./scripts/bump-version.sh X.Y.Z"
+        exit 1
+    fi
 fi
 
 # ─── Keychain-Fallback (Migration 2026-05-17) ─────────────────────────────────
@@ -34,8 +37,7 @@ if [ -x "$KEYS_SH" ]; then
     NOTARY_PROFILE="${NOTARY_PROFILE:-$(bash "$KEYS_SH" get TIPPI_NOTARY_PROFILE 2>/dev/null || true)}"
 fi
 
-PROJECT_VERSION="$(awk -F'"' '/MARKETING_VERSION:/ { print $2; exit }' project.yml)"
-VERSION="${VERSION:-${PROJECT_VERSION}}"
+VERSION="$(awk -F'"' '/MARKETING_VERSION:/ { print $2; exit }' project.yml)"
 APP_NAME="Tippi"
 BUNDLE_ID="com.tippi.app"
 APP_BUNDLE="${APP_NAME}.app"
@@ -45,17 +47,13 @@ DEVELOPER_ID="${DEVELOPER_ID:-}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-tippi-notary}"
 
 if [ -z "${DEVELOPER_ID}" ]; then
-    echo "✗ DEVELOPER_ID not set. Add to release.env or export it."
+    echo "✗ DEVELOPER_ID not set. Add to release.env, export it, or store in Keychain (TIPPI_DEVELOPER_ID)."
     echo "  Example: DEVELOPER_ID='Developer ID Application: Michael Wildenauer (54PMA7GFAN)'"
     exit 1
 fi
 if [ -z "${VERSION}" ]; then
-    echo "✗ VERSION not set and MARKETING_VERSION could not be read from project.yml."
-    exit 1
-fi
-if [ "${VERSION}" != "${PROJECT_VERSION}" ]; then
-    echo "✗ VERSION (${VERSION}) does not match project.yml MARKETING_VERSION (${PROJECT_VERSION})."
-    echo "  Update release.env or run with VERSION=${PROJECT_VERSION}."
+    echo "✗ MARKETING_VERSION could not be read from project.yml."
+    echo "  Bump via: ./scripts/bump-version.sh X.Y.Z"
     exit 1
 fi
 

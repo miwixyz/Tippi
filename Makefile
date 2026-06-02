@@ -1,4 +1,4 @@
-.PHONY: help generate open build clean lint icons prepare-binary release release-dry-run
+.PHONY: help generate open build clean lint icons prepare-binary release release-dry-run bump
 
 help:
 	@echo "Tippi — Make Targets"
@@ -11,6 +11,7 @@ help:
 	@echo ""
 	@echo "  make prepare-binary   Copy whisper-cli + dylibs from Homebrew, fix rpaths"
 	@echo "                        Run once per build machine (needs: brew install whisper-cpp)"
+	@echo "  make bump VERSION=X.Y.Z   Patch project.yml + CHANGELOG.md stub (no commit)"
 	@echo "  make release          prepare-binary + build + sign + notarize + DMG"
 	@echo "  make release-dry-run  Show release env without running"
 
@@ -40,7 +41,14 @@ release: prepare-binary
 	@./scripts/release.sh
 
 release-dry-run:
-	@echo "DEVELOPER_ID:   $${DEVELOPER_ID:-(not set — load from release.env)}"
+	@echo "DEVELOPER_ID:   $${DEVELOPER_ID:-(not set — load from release.env or Keychain)}"
 	@echo "NOTARY_PROFILE: $${NOTARY_PROFILE:-tippi-notary}"
-	@echo "VERSION:        $${VERSION:-$$(awk -F'\"' '/MARKETING_VERSION:/ { print $$2; exit }' project.yml)}"
+	@echo "VERSION:        $$(awk -F'\"' '/MARKETING_VERSION:/ { print $$2; exit }' project.yml) (from project.yml)"
 	@test -f release.env && echo "release.env: found" || echo "release.env: NOT found"
+
+bump:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make bump VERSION=X.Y.Z [COMMIT=1]"; \
+		exit 2; \
+	fi
+	@./scripts/bump-version.sh $(VERSION) $(if $(COMMIT),--commit,)
