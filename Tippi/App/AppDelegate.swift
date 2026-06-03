@@ -34,6 +34,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var safetyHotKeyRef: EventHotKeyRef?
     private var safetyHotKeyHandler: EventHandlerRef?
 
+    /// True while `handleTriggered` is mid-flight. Closes the race window that
+    /// previously let multiple redundant trigger paths (Carbon main + Carbon
+    /// safety + NSEvent global+local) all pass the `popupController.isOpen`
+    /// guard before any of them actually opened the popup, then race on the
+    /// AX-selection capture and popup-open. User-visible symptom was a 2–5 s
+    /// freeze on every hotkey press. Mutated on `@MainActor` only.
+    private var isHandlingTrigger = false
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
         updaterController = SPUStandardUpdaterController(
@@ -475,10 +483,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func handleTriggered(from source: TriggerSource) async {
         NSLog("Tippi: handleTriggered from=\(source)")
-        guard !popupController.isOpen && !previewWindowController.isOpen else {
-            NSLog("Tippi: popup or preview already open — ignoring")
+        guard !isHandlingTrigger,
+              !popupController.isOpen,
+              !previewWindowController.isOpen else {
+            NSLog("Tippi: handleTriggered ignored (in-flight=\(isHandlingTrigger), popup=\(popupController.isOpen), preview=\(previewWindowController.isOpen))")
             return
         }
+        isHandlingTrigger = true
+        defer { isHandlingTrigger = false }
 
         let sourceApp = resolvedSourceAppForCapture()
         NSLog("Tippi: source app = \(sourceApp?.localizedName ?? "nil")")
