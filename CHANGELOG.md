@@ -2,6 +2,11 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.10.2] — 2026-06-03
+
+### Fixed
+- **App froze for 2–5 s on every hotkey press.** Tippi registers three redundant trigger paths by design — a Carbon main hotkey (id 1), a Carbon safety hotkey (id 99, hardcoded ⌃⌥⌘T for "always works without Input Monitoring"), and an `NSEvent` global+local monitor. When the user-configured combo coincides with the safety, or when the same combo is reachable through several paths, a single keystroke dispatched several async `handleTriggered` calls in parallel. The existing `popupController.isOpen` guard didn't help, because all racing callers reached it before any of them had actually opened the popup. The competing calls then collided on the Accessibility selection-capture and the popup-open phase, and the UI stalled until the losers gave up. Tippi now sets a synchronous in-flight flag on `@MainActor` before any `await`, with a `defer` that releases it on every return path. A future repro can be diagnosed straight from Console.app — the ignore branch logs `in-flight=…`, `popup=…`, `preview=…`.
+
 ## [1.10.1] — 2026-06-03
 
 ### Fixed
