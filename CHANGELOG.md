@@ -2,6 +2,12 @@
 
 All notable changes to Tippi will be documented in this file.
 
+## [1.10.1] — 2026-06-03
+
+### Fixed
+- **Hotkey recorder swallowed keystrokes after switching settings tabs.** SwiftUI's `TabView` mounts every tab eagerly. If you had ever opened the recorder in one tab (e.g. **Hotkeys**) and then moved to another (e.g. **Voice** → Dictation), the first recorder's `NSEvent.addLocalMonitor` was still installed and — because monitors dispatch LIFO — silently consumed the keystroke you meant for the second recorder. The visible field stayed in "press now" forever. New behavior: starting a recording forces any previously-started recorder to release its monitor first, so only the recorder you actually clicked is listening.
+- **Recording a dictation hotkey no longer overwrites your prompt hotkey.** The recorder used to hardcode `KeyComboStore.save(combo)` — the prompt-hotkey store — regardless of which combo binding it was attached to. Setting a new dictation combo in **Voice** therefore wiped out the prompt-hotkey in `tippi.hotkeyCombo.v1` as a side-effect (the dictation store got written via the parent's `.onChange`, so the dictation combo itself was correct, but the prompt combo silently followed it). The recorder no longer touches any store; persistence is fully delegated to the parent view's `.onChange` handler, where it already happened.
+
 ## [1.10.0] — 2026-06-02
 
 ### Added
