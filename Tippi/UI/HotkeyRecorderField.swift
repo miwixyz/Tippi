@@ -8,6 +8,15 @@ struct HotkeyRecorderField: View {
     @State private var recording = false
     @State private var monitor: Any?
 
+    /// Cleanup closure of whichever recorder most-recently started recording.
+    /// SwiftUI `TabView` mounts all tabs eagerly, so an invisible-tab recorder
+    /// from a previous interaction can still own the local key monitor and
+    /// swallow keystrokes meant for the currently-visible recorder
+    /// (NSEvent monitors dispatch LIFO). The next `startRecording()` calls
+    /// this before installing its own monitor, forcing the prior recorder
+    /// to release. Discovered 2026-06-03 during dictation-hotkey debug.
+    private static var releasePrior: (() -> Void)?
+
     var body: some View {
         Button(action: toggleRecording) {
             HStack(spacing: 8) {
@@ -52,8 +61,13 @@ struct HotkeyRecorderField: View {
     }
 
     private func startRecording() {
+        // Force any other recorder (e.g. from an eager-mounted invisible tab)
+        // to release its local key monitor first — otherwise its LIFO-priority
+        // callback would swallow our keystroke.
+        Self.releasePrior?()
+
         recording = true
-        monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { event in
+        let installed = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { event in
             let relevant: NSEvent.ModifierFlags = [.command, .shift, .option, .control]
             let mods = event.modifierFlags.intersection(relevant)
             if event.keyCode == 53 { // Escape — cancel recording
@@ -64,15 +78,23 @@ struct HotkeyRecorderField: View {
                 return event
             }
             combo = KeyCombo(keyCode: event.keyCode, modifiers: mods)
-            KeyComboStore.save(combo)
+            // Persistence is the caller's responsibility, propagated via the
+            // parent's `.onChange(of: combo)` handler. Hardcoding any specific
+            // store here would silently overwrite it whenever this field is
+            // bound to a different store (e.g. dictation vs. prompt).
             stopRecording()
             return nil
         }
+        monitor = installed
+        Self.releasePrior = { NSEvent.removeMonitor(installed) }
     }
 
     private func stopRecording() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
         recording = false
+        // Leave Self.releasePrior alone — another instance may have replaced
+        // it. A second removeMonitor() call against an invalid token is a
+        // harmless no-op, so we don't need closure-identity tracking here.
     }
 }
