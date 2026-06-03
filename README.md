@@ -342,15 +342,19 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | Version | Status | Highlights |
 |---------|--------|------------|
 | v1.0.x  | ✅ Done | System-wide hotkey, popup, preview, 5 providers, custom prompts, autostart |
-| v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, brand refresh (mascot icon, `#3070F0` accent, `#020B1D` navy, adaptive dark/light bg), bug fixes through v1.1.11 |
-| v1.2    | ✅ Done | Prompt variables — `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` in custom prompts |
-| v1.3    | ✅ Done | 5 new built-in prompts (Formal, Casual, Simplify, Summarize, Adapt for App); Import/Export custom prompts as `.tippipack`; all built-ins use `{language}` |
-| v1.4    | ✅ Done | MLX provider — Tippi manages a local `mlx_lm.server`; ~1.5–2× faster than Ollama on Apple Silicon; 7 RAM-tiered model presets; auto model-ID resolution |
-| v1.4.1  | ✅ Done | MLX auto-start (on app launch, provider switch, settings save); temperature 0.3 for more consistent rewrites |
-| v1.4.2  | ✅ Done | In-app Help and About reflect all 6 providers; new MLX help section; release-time drift check between code and Help/About strings |
-| v1.5    | ✅ Done | In-app MLX installer — one-click setup for `uv` + `mlx_lm.server` from Settings, no Terminal required; makes the local MLX provider usable by non-technical users |
-| v1.6    | Planned | Encrypted local history (opt-in, SQLite + SQLCipher) |
-| v2.0    | Planned | Cross-platform (Windows) |
+| v1.1.x  | ✅ Done | Voice Input, Voice Instruction, in-app Whisper download, Sparkle 2 auto-updates, brand refresh (mascot icon, `#3070F0` accent, `#020B1D` navy, adaptive dark/light bg) |
+| v1.2    | ✅ Done | Prompt variables — `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` |
+| v1.3    | ✅ Done | New built-in prompts (Formal, Casual, Simplify, Summarize, Adapt for App); Import/Export custom prompts as `.tippipack` |
+| v1.4.x  | ✅ Done | MLX provider — local `mlx_lm.server`, ~1.5–2× faster than Ollama on Apple Silicon; auto-start + temperature tuning; Help/About drift check |
+| v1.5.x  | ✅ Done | In-app MLX installer (one-click `uv` + `mlx_lm.server` from Settings); broader built-in prompt catalogue |
+| v1.6    | ✅ Done | Voice mode refinements + dictation hotkey stabilisation |
+| v1.7.x  | ✅ Done | Provider routing improvements, completion result metadata (`providerID`/`model`) |
+| v1.8.x  | ✅ Done | Settings polish + multi-provider quality-of-life fixes |
+| v1.9    | ✅ Done | Encrypted local **History** (opt-in, GRDB + CryptoKit AES-GCM field encryption, Keychain-backed 256-bit key, JSON/CSV export) — pivot away from SQLCipher |
+| v1.10.x | ✅ Done | Defuse + Add-Emojis modes from Blitztext-App (v1.10.0); HotkeyRecorder TabView-race fix + Carbon-trigger persistence fix (v1.10.1); atomic `isHandlingTrigger`-flag against triple-trigger race that caused 2–5 s UI freeze (v1.10.2 — current) |
+| v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
+
+Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).
 
 ---
 
