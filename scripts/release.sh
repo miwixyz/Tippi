@@ -64,6 +64,38 @@ echo "  Notary:      ${NOTARY_PROFILE}"
 # BUILD_NUMBER is set later (after git rev-list), printed during build step
 echo ""
 
+# CHANGELOG sanity: fail fast if release notes for this version are missing or
+# still contain the placeholder stub from bump-version.sh. Mirrors Hex's
+# "changesets fail-fast" pattern — releases must carry real notes.
+echo "▶ [CHANGELOG] Verifying release notes for ${VERSION}..."
+if [ ! -f CHANGELOG.md ]; then
+    echo "  ✗ CHANGELOG.md not found in repo root."
+    exit 1
+fi
+if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+    echo "  ✗ No '## [${VERSION}]' section in CHANGELOG.md."
+    echo "    Run: ./scripts/bump-version.sh ${VERSION}   (stamps the header stub)"
+    exit 1
+fi
+CHANGELOG_BODY="$(awk "/^## \[${VERSION}\]/{found=1;next} found && /^## \[/{exit} found{print}" CHANGELOG.md)"
+# Strip whitespace + blank lines for the emptiness check.
+CHANGELOG_CONTENT="$(echo "${CHANGELOG_BODY}" | sed '/^[[:space:]]*$/d')"
+if [ -z "${CHANGELOG_CONTENT}" ]; then
+    echo "  ✗ '## [${VERSION}]' section in CHANGELOG.md is empty."
+    echo "    Add release notes before running ./scripts/release.sh."
+    exit 1
+fi
+# Block the bump-version.sh placeholder stub. If the only content of the
+# section is "- _Add release notes here._", the section was never filled in.
+if [ "$(echo "${CHANGELOG_CONTENT}" | wc -l | tr -d ' ')" = "1" ] && \
+   echo "${CHANGELOG_CONTENT}" | grep -qE '^[[:space:]]*-[[:space:]]*_Add release notes here\._[[:space:]]*$'; then
+    echo "  ✗ '## [${VERSION}]' still contains the bump-version.sh placeholder ('_Add release notes here._')."
+    echo "    Write the actual release notes in CHANGELOG.md before running ./scripts/release.sh."
+    exit 1
+fi
+echo "  ✓ Release notes present ($(echo "${CHANGELOG_CONTENT}" | wc -l | tr -d ' ') lines)"
+echo ""
+
 # 0. Pre-release sanity: docs ↔ code drift check.
 # Catches features that were shipped in code but never reflected in user-facing
 # help texts. Fails the release if any provider or built-in prompt is mentioned
