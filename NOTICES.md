@@ -5,6 +5,25 @@ code, prompts, or design ideas have been adapted into Tippi. Each entry stays
 under its original license; downstream redistribution must preserve these
 notices.
 
+## FluidAudio — Parakeet speech-to-text engine (optional)
+
+Tippi's optional "Parakeet v3" dictation engine is built on FluidAudio and the
+NVIDIA Parakeet TDT model, both downloaded/loaded at runtime. Neither is bundled
+in the app; the Swift package is linked as a dependency and the CoreML model is
+fetched from Hugging Face on first use.
+
+- **FluidAudio** — Swift SDK (CoreML/ANE inference)
+  - Source: https://github.com/FluidInference/FluidAudio
+  - License: **Apache License 2.0**
+- **NVIDIA Parakeet TDT 0.6B v3** — multilingual ASR model
+  - Source: https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
+  - CoreML conversion: https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml
+  - License: **CC-BY-4.0** — © NVIDIA. Use of the model is governed by the
+    CC-BY-4.0 license; commercial use is permitted with attribution.
+
+The default dictation engine remains whisper.cpp (bundled). Parakeet is opt-in
+under Settings → Voice → Speech engine.
+
 ## Blitztext App — "Defuse" and "Add emojis" mode prompts
 
 - **Source repository:** https://github.com/cmagnussen/blitztext-app

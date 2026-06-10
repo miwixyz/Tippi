@@ -1067,6 +1067,11 @@ private struct AboutTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
+                Text(String(localized: "settings.about.acknowledgements"))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 HStack(spacing: 14) {
                     Link(String(localized: "settings.about.github"),
                          destination: URL(string: "https://github.com/miwixyz/Tippi")!)
@@ -1141,6 +1146,9 @@ private struct VoiceTab: View {
                     .onChange(of: engine) { _, new in
                         SpeechEngine.current = SpeechEngine.Kind(rawValue: new) ?? .whisper
                         parakeetStatus.refreshFromDisk()
+                        // Switching to Parakeet can make dictation available
+                        // without a Whisper model — re-register the hot key.
+                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
                     }
                 }
 
@@ -1224,7 +1232,7 @@ private struct VoiceTab: View {
                     }
 
                 if dictationEnabled {
-                    if !WhisperConfig.isConfigured {
+                    if SpeechEngine.current == .whisper && !WhisperConfig.isConfigured {
                         Label(String(localized: "settings.voice.dictation.needsModel"),
                               systemImage: "exclamationmark.circle")
                             .font(.caption)

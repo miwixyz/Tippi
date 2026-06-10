@@ -397,11 +397,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// (Re)registers the dictation hot key. Call after the setting or model
     /// state changes. No-op (and stops any prior registration) when dictation
-    /// is disabled or no Whisper model is configured.
+    /// is disabled or the selected speech engine isn't ready.
     func restartDictationHotkey() {
         dictationHotkeyManager.stop()
-        guard DictationSettings.isEnabled, WhisperConfig.isConfigured else {
-            NSLog("Tippi: dictation hot key inactive (enabled=\(DictationSettings.isEnabled), configured=\(WhisperConfig.isConfigured))")
+        guard DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady else {
+            NSLog("Tippi: dictation hot key inactive (enabled=\(DictationSettings.isEnabled), engineReady=\(SpeechEngine.isCurrentEngineReady))")
             return
         }
 
@@ -554,7 +554,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 )
             },
             onDismiss: { /* nothing — user cancelled */ },
-            audioRecorder: WhisperConfig.isConfigured ? audioRecorder : nil,
+            audioRecorder: SpeechEngine.isCurrentEngineReady ? audioRecorder : nil,
             // When text is selected, mic = voice instruction; otherwise = dictation
             voiceMode: captured != nil ? .voicePrompt : .dictate,
             onVoiceTranscribed: { [weak self] transcribedText in

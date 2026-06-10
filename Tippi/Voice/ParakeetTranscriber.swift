@@ -21,6 +21,17 @@ enum SpeechEngine {
         get { Kind(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .whisper }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: key) }
     }
+
+    /// Whether the currently-selected engine can transcribe — gates the
+    /// dictation hot key and the popup mic. Whisper needs a downloaded model;
+    /// Parakeet self-downloads its CoreML model on first use, so it is always
+    /// considered ready (the first dictation triggers the download).
+    static var isCurrentEngineReady: Bool {
+        switch current {
+        case .whisper:  return WhisperConfig.isConfigured
+        case .parakeet: return true
+        }
+    }
 }
 
 // MARK: - Facade

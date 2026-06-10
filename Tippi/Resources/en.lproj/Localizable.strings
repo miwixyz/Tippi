@@ -233,6 +233,7 @@
 "settings.providers.mlx.start" = "Start server";
 "settings.providers.mlx.stop" = "Stop server";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
+"settings.about.acknowledgements" = "Speech-to-text by whisper.cpp (MIT). Optional Parakeet engine by FluidAudio (Apache 2.0) and the NVIDIA Parakeet TDT model (CC-BY-4.0). Auto-updates by Sparkle. See NOTICES.md.";
 "settings.hotkeys.restartHint" = "If the new hotkey does not respond immediately, restart Tippi.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
 "settings.about.feature1" = "Works in every app system-wide";

@@ -234,6 +234,7 @@
 "settings.providers.mlx.start" = "Server starten";
 "settings.providers.mlx.stop" = "Server stoppen";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT-Lizenz";
+"settings.about.acknowledgements" = "Spracherkennung via whisper.cpp (MIT). Optionale Parakeet-Engine via FluidAudio (Apache 2.0) und dem NVIDIA-Parakeet-TDT-Modell (CC-BY-4.0). Auto-Updates via Sparkle. Siehe NOTICES.md.";
 "settings.hotkeys.restartHint" = "Falls der neue Hotkey nicht sofort reagiert, Tippi neu starten.";
 "settings.tab.help" = "Hilfe";
 "settings.about.description" = "Text in einer beliebigen App markieren, ⌥⌘T drücken — KI transformiert ihn direkt an Ort und Stelle.";
