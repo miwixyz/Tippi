@@ -152,7 +152,10 @@ struct LLMRouter {
         let nsError = error as NSError
         guard nsError.domain == NSURLErrorDomain else { return false }
         switch URLError.Code(rawValue: nsError.code) {
-        case .cannotConnectToHost, .networkConnectionLost, .notConnectedToInternet, .timedOut:
+        // .timedOut is deliberately NOT here: a slow local model that is still
+        // generating must surface as an error — falling through would silently
+        // send the user's text to the next (cloud) provider.
+        case .cannotConnectToHost, .networkConnectionLost, .notConnectedToInternet:
             return true
         default:
             return false

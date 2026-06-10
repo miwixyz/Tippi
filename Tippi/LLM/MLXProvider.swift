@@ -63,11 +63,15 @@ struct MLXProvider: LLMProvider {
                 let reasoning: String?  // Thinking-Modelle (Qwen3.5 etc.) liefern reasoning statt content
             }
             let message: Msg
+            let finish_reason: String?
         }
         struct ResponseBody: Decodable { let choices: [Choice] }
 
         let decoded = try JSONDecoder().decode(ResponseBody.self, from: data)
         guard let first = decoded.choices.first else { throw LLMError.invalidResponse }
+        // A truncated rewrite must never be inserted — it would silently
+        // destroy the tail of the user's selection.
+        guard first.finish_reason != "length" else { throw LLMError.truncated }
         let text = first.message.content ?? first.message.reasoning ?? ""
         guard !text.isEmpty else { throw LLMError.invalidResponse }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -77,6 +81,6 @@ struct MLXProvider: LLMProvider {
         // Most Tippi operations rewrite or summarize; a capped dynamic budget
         // keeps local models from drifting into slow, overly long completions.
         let approximateInputTokens = max(1, userText.count / 4)
-        return min(768, max(256, approximateInputTokens * 2))
+        return min(2048, max(256, approximateInputTokens * 2))
     }
 }

@@ -14,10 +14,15 @@ struct GeminiProvider: LLMProvider {
             throw LLMError.noAPIKey(provider: displayName)
         }
 
+        // The model name comes from a free-form settings text field — percent-
+        // encode it so e.g. a stray space can't produce a nil URL (crash).
         let useModel = model.isEmpty ? defaultModel : model
-        let url = URL(string:
-            "https://generativelanguage.googleapis.com/v1beta/models/\(useModel):generateContent"
-        )!
+        guard let encodedModel = useModel.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+              let url = URL(string:
+                  "https://generativelanguage.googleapis.com/v1beta/models/\(encodedModel):generateContent"
+              ) else {
+            throw LLMError.invalidResponse
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

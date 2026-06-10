@@ -18,6 +18,7 @@ enum LLMError: LocalizedError {
     case noAPIKey(provider: String)
     case httpError(status: Int, body: String)
     case invalidResponse
+    case truncated
     case cancelled
 
     var errorDescription: String? {
@@ -30,6 +31,8 @@ enum LLMError: LocalizedError {
             return "\(provider(forStatus: status)) (HTTP \(status)): \(body.prefix(240))"
         case .invalidResponse:
             return "Could not parse the AI response."
+        case .truncated:
+            return "The AI response was cut off (output length limit reached). Try a shorter text."
         case .cancelled:
             return "Cancelled."
         }

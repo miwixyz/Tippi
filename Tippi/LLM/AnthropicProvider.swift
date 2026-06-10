@@ -32,7 +32,7 @@ struct AnthropicProvider: LLMProvider {
         }
         let body = Body(
             model: model.isEmpty ? defaultModel : model,
-            max_tokens: 2048,
+            max_tokens: 8192,
             system: systemPrompt,
             messages: [Message(role: "user", content: userText)]
         )
@@ -50,8 +50,12 @@ struct AnthropicProvider: LLMProvider {
         struct ResponseBody: Decodable {
             struct Block: Decodable { let type: String; let text: String? }
             let content: [Block]
+            let stop_reason: String?
         }
         let decoded = try JSONDecoder().decode(ResponseBody.self, from: data)
+        // A truncated rewrite must never be inserted — it would silently
+        // destroy the tail of the user's selection.
+        guard decoded.stop_reason != "max_tokens" else { throw LLMError.truncated }
         let text = decoded.content.compactMap { block in
             block.type == "text" ? block.text : nil
         }.joined()
