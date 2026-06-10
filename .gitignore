@@ -43,4 +43,5 @@ Tippi/Helpers/
 # Local environment for signing
 .env.local
 release.env
+release.env.*
 graphify-out/
