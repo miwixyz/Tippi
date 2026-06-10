@@ -66,7 +66,6 @@ enum TextInsertion {
         let snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
-        pb.declareTypes([.string, concealedType], owner: nil)
         pb.setString(text, forType: .string)
         pb.setString("", forType: concealedType)
 
@@ -82,7 +81,6 @@ enum TextInsertion {
         let snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
-        pb.declareTypes([.rtf, .string, concealedType], owner: nil)
         if let rtf = try? attributedText.data(
             from: NSRange(location: 0, length: attributedText.length),
             documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
@@ -122,14 +120,15 @@ enum TextInsertion {
 
         // The range was captured at trigger time; the LLM round-trip takes
         // seconds. If the user edited the document meanwhile, the range points
-        // at different text — verify before overwriting it. Compared trimmed,
-        // because some capture paths trim surrounding whitespace.
+        // at different text. Diagnose-only for now: AXStringForRange proved
+        // unreliable as a hard gate in the 2026-06-10 field test (false
+        // mismatches blocked legitimate replaces), so we log instead of
+        // refusing until the mismatch sources are understood.
         if let expectedText,
            let current = axString(for: range, in: element),
            current.trimmingCharacters(in: .whitespacesAndNewlines)
                != expectedText.trimmingCharacters(in: .whitespacesAndNewlines) {
-            insertLog.notice("replaceViaElement → ignored (range content changed since capture)")
-            return .ignored
+            insertLog.notice("replaceViaElement: range content differs from capture (len \(current.count) vs \(expectedText.count)) — proceeding anyway")
         }
 
         let valueBefore = axStringValue(element)

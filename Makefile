@@ -24,8 +24,11 @@ open: generate
 
 build: generate
 	@if pgrep -x Tippi >/dev/null 2>&1; then echo "Stopping running Tippi before rebuild..."; pkill -x Tippi; sleep 1; fi
+	@test -f Tippi/Helpers/whisper-cli || { echo "Tippi/Helpers/whisper-cli missing — run 'make prepare-binary' first (dictation needs it)"; exit 1; }
 	rm -rf build/Build/Products/Release/Tippi.app
 	xcodebuild -project Tippi.xcodeproj -scheme Tippi -configuration Release -derivedDataPath ./build build
+	cp Tippi/Helpers/whisper-cli build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli
+	chmod +x build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli
 	codesign --force --deep --sign "Developer ID Application: Michael Wildenauer (LTKJ6Z2VYB)" --entitlements Tippi/Resources/Tippi.entitlements build/Build/Products/Release/Tippi.app
 
 clean:
