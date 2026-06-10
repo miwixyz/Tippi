@@ -44,6 +44,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        // Cap synchronous AX calls at 2 s (process-wide via the system-wide
+        // element). Capture/insert traverse target apps with hundreds of AX
+        // IPC calls on the main thread — without this cap, one unresponsive
+        // app freezes Tippi for the default timeout per call.
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 2.0)
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
@@ -64,6 +69,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Pre-warm the MLX server if it's the user's preferred provider.
         // This avoids a 30–60s wait on first transformation after launch.
         MLXServerManager.autoStartIfPreferred()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // The mlx_lm.server child process would otherwise outlive the app,
+        // holding the model in RAM and blocking the port.
+        MLXServerManager.shared.stop()
     }
 
     private func startGlobalKeyMonitor() {
@@ -633,7 +644,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popupController.close()
             let message: String
             if let el = lastSelectionElement, let range = lastSelectionRange {
-                switch TextInsertion.replaceViaElement(el, range: range, with: text) {
+                switch TextInsertion.replaceViaElement(el, range: range, with: text, expecting: cap.text) {
                 case .replaced:
                     message = action.title
                 case .ignored:
@@ -655,7 +666,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popupController.close()
             let message: String
             if let el = lastSelectionElement, let range = lastSelectionRange {
-                switch TextInsertion.replaceViaElement(el, range: range, with: fallback) {
+                switch TextInsertion.replaceViaElement(el, range: range, with: fallback, expecting: cap.text) {
                 case .replaced:
                     message = action.title
                 case .ignored:
@@ -683,13 +694,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             sourceApp: captured.sourceApp,
             onReplace: { [weak self] suggestion in
                 Task { @MainActor in
-                    await self?.replaceCapturedSelection(with: suggestion, sourceApp: captured.sourceApp)
+                    await self?.replaceCapturedSelection(with: suggestion, originalText: captured.text, sourceApp: captured.sourceApp)
                 }
             },
             onAppend: { [weak self] suggestion in
                 let combined = "\(captured.text) \(suggestion)"
                 Task { @MainActor in
-                    await self?.replaceCapturedSelection(with: combined, sourceApp: captured.sourceApp)
+                    await self?.replaceCapturedSelection(with: combined, originalText: captured.text, sourceApp: captured.sourceApp)
                 }
             },
             onCopy: { suggestion in
@@ -703,9 +714,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// range captured at trigger time (before the popup/preview stole focus and
     /// collapsed the live selection), re-selecting and replacing via Accessibility.
     /// Falls back to focused-element replace / clipboard paste when no range was captured.
-    private func replaceCapturedSelection(with text: String, sourceApp: NSRunningApplication?) async {
+    private func replaceCapturedSelection(with text: String, originalText: String?, sourceApp: NSRunningApplication?) async {
         if let el = lastSelectionElement, let range = lastSelectionRange {
-            switch TextInsertion.replaceViaElement(el, range: range, with: text) {
+            switch TextInsertion.replaceViaElement(el, range: range, with: text, expecting: originalText) {
             case .replaced:
                 return
             case .ignored:

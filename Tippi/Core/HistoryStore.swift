@@ -223,6 +223,13 @@ final class HistoryStore: @unchecked Sendable {
     }
 
     private static func csvEscape(_ s: String) -> String {
+        // Neutralize spreadsheet formula injection: input/output contain
+        // LLM/captured text, and Excel/Numbers execute fields starting with
+        // these characters as formulas when the CSV is opened.
+        var s = s
+        if let first = s.first, "=+-@".contains(first) {
+            s = "'" + s
+        }
         if s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r") {
             let escaped = s.replacingOccurrences(of: "\"", with: "\"\"")
             return "\"\(escaped)\""

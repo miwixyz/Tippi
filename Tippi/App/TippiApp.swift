@@ -9,6 +9,7 @@ struct TippiApp: App {
             SettingsView()
                 .environmentObject(appDelegate.permissions)
                 .environmentObject(appDelegate.hotkeyManager)
+                .environmentObject(appDelegate.keyMonitor)
         }
     }
 }

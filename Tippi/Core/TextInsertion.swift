@@ -56,12 +56,19 @@ enum TextInsertion {
 
     // MARK: - Paste roundtrip
 
+    /// Marker type from nspasteboard.org: clipboard managers (Maccy, Paste,
+    /// Alfred, …) skip pasteboard entries carrying it. Our paste roundtrip is
+    /// transient by nature — the AI result must not end up in their archives.
+    private static let concealedType = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
+
     private static func paste(text: String) async {
         let pb = NSPasteboard.general
         let snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
+        pb.declareTypes([.string, concealedType], owner: nil)
         pb.setString(text, forType: .string)
+        pb.setString("", forType: concealedType)
 
         try? await Task.sleep(nanoseconds: 40_000_000)
         simulatePaste()
@@ -75,6 +82,7 @@ enum TextInsertion {
         let snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
+        pb.declareTypes([.rtf, .string, concealedType], owner: nil)
         if let rtf = try? attributedText.data(
             from: NSRange(location: 0, length: attributedText.length),
             documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
@@ -82,6 +90,7 @@ enum TextInsertion {
             pb.setData(rtf, forType: .rtf)
         }
         pb.setString(fallbackPlainText, forType: .string)
+        pb.setString("", forType: concealedType)
 
         try? await Task.sleep(nanoseconds: 40_000_000)
         simulatePaste()
@@ -103,8 +112,25 @@ enum TextInsertion {
         case unavailable
     }
 
-    static func replaceViaElement(_ element: AXUIElement, range: CFRange, with text: String) -> AXReplaceOutcome {
+    static func replaceViaElement(
+        _ element: AXUIElement,
+        range: CFRange,
+        with text: String,
+        expecting expectedText: String? = nil
+    ) -> AXReplaceOutcome {
         guard AXIsProcessTrusted() else { return .unavailable }
+
+        // The range was captured at trigger time; the LLM round-trip takes
+        // seconds. If the user edited the document meanwhile, the range points
+        // at different text — verify before overwriting it. Compared trimmed,
+        // because some capture paths trim surrounding whitespace.
+        if let expectedText,
+           let current = axString(for: range, in: element),
+           current.trimmingCharacters(in: .whitespacesAndNewlines)
+               != expectedText.trimmingCharacters(in: .whitespacesAndNewlines) {
+            insertLog.notice("replaceViaElement → ignored (range content changed since capture)")
+            return .ignored
+        }
 
         let valueBefore = axStringValue(element)
 
@@ -134,6 +160,23 @@ enum TextInsertion {
         let noOp = valueBefore != nil && valueAfter != nil && valueBefore == valueAfter
         insertLog.notice("replaceViaElement → \(noOp ? "ignored" : "replaced", privacy: .public)")
         return noOp ? .ignored : .replaced
+    }
+
+    /// Reads the text currently occupying `range` via the parameterized
+    /// AXStringForRange attribute. Returns nil when the app doesn't support it.
+    private static func axString(for range: CFRange, in element: AXUIElement) -> String? {
+        var mutableRange = range
+        guard let axRange = AXValueCreate(.cfRange, &mutableRange) else { return nil }
+        var out: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element,
+            kAXStringForRangeParameterizedAttribute as CFString,
+            axRange,
+            &out
+        ) == .success else {
+            return nil
+        }
+        return out as? String
     }
 
     private static func axStringValue(_ element: AXUIElement) -> String? {
