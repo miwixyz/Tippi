@@ -21,6 +21,9 @@ packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift
     from: 7.0.0
+  FluidAudio:
+    url: https://github.com/FluidInference/FluidAudio
+    from: 0.12.4
 
 targets:
   Tippi:
@@ -32,6 +35,8 @@ targets:
         product: Sparkle
       - package: GRDB
         product: GRDB
+      - package: FluidAudio
+        product: FluidAudio
     sources:
       - path: Tippi
         excludes:

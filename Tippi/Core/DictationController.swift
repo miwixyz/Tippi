@@ -158,11 +158,9 @@ final class DictationController: ObservableObject {
             state = .recording(url)
             RecordingIndicatorWindowController.shared.show(mode: .recording)
             NSLog("Tippi: dictation recording started")
-            // Warm the model's file cache while the user is speaking, so a
-            // cold first transcription doesn't stall on loading the model.
-            Task.detached(priority: .utility) {
-                WhisperTranscriber.prewarmModelCache()
-            }
+            // Warm the engine while the user is speaking, so a cold first
+            // transcription doesn't stall on loading the model.
+            SpeechTranscriber.prewarm()
         } catch {
             ToastWindowController.shared.show(message: error.localizedDescription)
             NSLog("Tippi: dictation start failed — \(error.localizedDescription)")
@@ -180,14 +178,19 @@ final class DictationController: ObservableObject {
 
     private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?) async {
         do {
-            let raw = try await WhisperTranscriber.transcribe(wavURL: wavURL)
+            let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
             let final = await postProcessIfEnabled(raw)
             try Task.checkCancellation()
             await TextInsertion.replace(with: final, in: targetApp)
             RecordingIndicatorWindowController.shared.hide()
-            ToastWindowController.shared.show(message: String(localized: "dictation.toast.inserted"))
-            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count))")
+            // Engine names are proper nouns — appended unlocalized so the user
+            // can verify which engine actually transcribed.
+            let engineName = SpeechEngine.current == .parakeet ? "Parakeet v3" : "Whisper"
+            ToastWindowController.shared.show(
+                message: String(localized: "dictation.toast.inserted") + " · " + engineName
+            )
+            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count)) via \(engineName)")
         } catch {
             RecordingIndicatorWindowController.shared.hide()
             if error is CancellationError || Task.isCancelled {

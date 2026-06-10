@@ -1099,11 +1099,14 @@ private struct VoiceTab: View {
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
     @State private var dictationPolishModel: String = DictationSettings.postProcessModelOverride
+    @State private var engine: String = SpeechEngine.current.rawValue
+    @ObservedObject private var parakeetStatus = ParakeetStatus.shared
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 microphoneSection
+                engineSection
                 modelSection
                 languageSection
                 dictationSection
@@ -1112,6 +1115,94 @@ private struct VoiceTab: View {
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    // MARK: Engine (spike: Parakeet v3 via FluidAudio)
+
+    private var engineSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "settings.voice.engine.title"))
+                            .font(.headline)
+                        Text(String(localized: "settings.voice.engine.hint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    Picker("", selection: $engine) {
+                        Text("Whisper").tag(SpeechEngine.Kind.whisper.rawValue)
+                        Text("Parakeet v3 (Beta)").tag(SpeechEngine.Kind.parakeet.rawValue)
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 180)
+                    .onChange(of: engine) { _, new in
+                        SpeechEngine.current = SpeechEngine.Kind(rawValue: new) ?? .whisper
+                        parakeetStatus.refreshFromDisk()
+                    }
+                }
+
+                if engine == SpeechEngine.Kind.parakeet.rawValue {
+                    Divider()
+                    parakeetStatusRow
+                }
+            }
+            .padding(6)
+        }
+        .onAppear { parakeetStatus.refreshFromDisk() }
+    }
+
+    @ViewBuilder
+    private var parakeetStatusRow: some View {
+        HStack(spacing: 8) {
+            switch parakeetStatus.phase {
+            case .notDownloaded:
+                Label(String(localized: "settings.voice.engine.status.notDownloaded"),
+                      systemImage: "exclamationmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                Spacer()
+                Button(String(localized: "settings.voice.engine.download")) {
+                    Task { await ParakeetTranscriber.shared.prewarm() }
+                }
+                .controlSize(.small)
+            case .downloading(let fraction):
+                Text(String(localized: "settings.voice.engine.status.downloading"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                ProgressView(value: fraction)
+                    .frame(maxWidth: 160)
+                Text("\(Int(fraction * 100)) %")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                Spacer()
+            case .loading:
+                ProgressView()
+                    .controlSize(.small)
+                Text(String(localized: "settings.voice.engine.status.loading"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            case .ready:
+                Label(String(localized: "settings.voice.engine.status.ready"),
+                      systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                Spacer()
+            case .failed(let message):
+                Label(message, systemImage: "xmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .lineLimit(2)
+                Spacer()
+                Button(String(localized: "settings.voice.engine.download")) {
+                    Task { await ParakeetTranscriber.shared.prewarm() }
+                }
+                .controlSize(.small)
+            }
+        }
     }
 
     // MARK: Dictation hot key
