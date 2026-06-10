@@ -123,17 +123,22 @@ final class DictationController: ObservableObject {
     /// the toggle would start a second recording on the same recorder.
     private var isStarting = false
 
+    /// In-flight transcription (transcribe → polish → insert); kept so a
+    /// hotkey press during `.transcribing` can cancel it.
+    private var transcriptionTask: Task<Void, Never>?
+
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
-    /// hot key fired — used as the AX target for insertion.
+    /// hot key fired — used as the AX target for insertion. A press while
+    /// transcription is running cancels it.
     func toggle(targetApp: NSRunningApplication?) async {
         switch state {
         case .idle:
             await start()
         case .recording(let url):
-            await stopAndInsert(wavURL: url, targetApp: targetApp)
+            beginTranscription(wavURL: url, targetApp: targetApp)
         case .transcribing:
-            // Ignore the toggle while a transcription is still running.
-            NSLog("Tippi: dictation toggle ignored — transcribing")
+            NSLog("Tippi: dictation cancel requested")
+            transcriptionTask?.cancel()
         }
     }
 
@@ -164,25 +169,38 @@ final class DictationController: ObservableObject {
         }
     }
 
-    private func stopAndInsert(wavURL: URL, targetApp: NSRunningApplication?) async {
+    private func beginTranscription(wavURL: URL, targetApp: NSRunningApplication?) {
         recorder.stop()
         state = .transcribing
         RecordingIndicatorWindowController.shared.show(mode: .transcribing)
+        transcriptionTask = Task { [weak self] in
+            await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp)
+        }
+    }
 
+    private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?) async {
         do {
             let raw = try await WhisperTranscriber.transcribe(wavURL: wavURL)
+            try Task.checkCancellation()
             let final = await postProcessIfEnabled(raw)
+            try Task.checkCancellation()
             await TextInsertion.replace(with: final, in: targetApp)
             RecordingIndicatorWindowController.shared.hide()
             ToastWindowController.shared.show(message: String(localized: "dictation.toast.inserted"))
             NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count))")
         } catch {
             RecordingIndicatorWindowController.shared.hide()
-            ToastWindowController.shared.show(message: error.localizedDescription)
-            NSLog("Tippi: dictation transcription failed — \(error.localizedDescription)")
+            if error is CancellationError || Task.isCancelled {
+                ToastWindowController.shared.show(message: String(localized: "dictation.toast.cancelled"))
+                NSLog("Tippi: dictation cancelled by user")
+            } else {
+                ToastWindowController.shared.show(message: error.localizedDescription)
+                NSLog("Tippi: dictation transcription failed — \(error.localizedDescription)")
+            }
         }
 
         state = .idle
+        transcriptionTask = nil
     }
 
     /// Run the raw Whisper transcript through the active LLM provider for
@@ -208,19 +226,34 @@ final class DictationController: ObservableObject {
         let modelOverride    = DictationSettings.postProcessModelOverride
 
         do {
-            let result: CompletionResult
-            if !providerOverride.isEmpty {
-                result = try await LLMRouter.shared.complete(
-                    systemPrompt: DictationSettings.postProcessPrompt,
-                    userText: trimmed,
-                    forceProviderID: providerOverride,
-                    forceModel: modelOverride
-                )
-            } else {
-                result = try await LLMRouter.shared.complete(
-                    systemPrompt: DictationSettings.postProcessPrompt,
-                    userText: trimmed
-                )
+            // Hard 30s cap: dictation must never hang on the polish step.
+            // A local provider cold-starting its server (MLX model load can
+            // take minutes) would otherwise leave the user staring at
+            // "Transcribing…" — past the cap the raw transcript is inserted.
+            let prompt = DictationSettings.postProcessPrompt
+            let result: CompletionResult = try await withThrowingTaskGroup(of: CompletionResult.self) { group in
+                group.addTask {
+                    if !providerOverride.isEmpty {
+                        return try await LLMRouter.shared.complete(
+                            systemPrompt: prompt,
+                            userText: trimmed,
+                            forceProviderID: providerOverride,
+                            forceModel: modelOverride
+                        )
+                    } else {
+                        return try await LLMRouter.shared.complete(
+                            systemPrompt: prompt,
+                            userText: trimmed
+                        )
+                    }
+                }
+                group.addTask {
+                    try await Task.sleep(nanoseconds: 30_000_000_000)
+                    throw LLMError.cancelled
+                }
+                guard let first = try await group.next() else { throw LLMError.cancelled }
+                group.cancelAll()
+                return first
             }
             let polished = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !polished.isEmpty else {
