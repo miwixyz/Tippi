@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.11.0] — 2026-06-10
+
+### Added
+- **Parakeet v3 speech engine (beta) for dictation.** Settings → Voice → **Speech engine** now offers a second, fully-local transcription engine alongside Whisper: NVIDIA's Parakeet TDT 0.6B v3, running on the Apple Neural Engine via [FluidAudio](https://github.com/FluidInference/FluidAudio) (CoreML). In our testing it transcribes German roughly **7× faster** than Whisper small with **about half the word-error rate** (FLEURS: 5.0 % vs 10.2 %), and — unlike Whisper — it does not hallucinate phrases during silence. It supports 25 European languages.
+  - **Whisper remains the default.** Parakeet is opt-in. Its ~600 MB CoreML model downloads from Hugging Face on first use; the engine section shows a live status row (not downloaded / downloading with progress / ready) and a **Download now** button so the download never surprises you mid-dictation. Once loaded, the model stays in memory for the app's lifetime, so there is no per-dictation cold start.
+  - Picking Parakeet no longer requires a Whisper model to be installed.
+  - The toast after each dictation now names the engine that transcribed.
+  - Licenses: FluidAudio is Apache 2.0; the Parakeet model is CC-BY-4.0 (© NVIDIA). FluidAudio links statically and the model is fetched at runtime — nothing model-related is bundled. See `NOTICES.md` and the About tab.
+
+### Changed
+- The Voice help section documents the engine switch, the model-download status, cancelling a dictation in progress, and the polish timeout.
+
+This release also carries forward everything in 1.10.3 (16 review fixes + the faster Whisper pipeline) for anyone updating from 1.10.2 or earlier.
+
 ## [1.10.3] — 2026-06-10
 
 Hardening release: 16 fixes from a full code review of the Core/App, LLM, UI, and Voice layers, plus a faster dictation pipeline. No new features.
