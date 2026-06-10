@@ -172,8 +172,13 @@ final class DictationController: ObservableObject {
             let final = await postProcessIfEnabled(raw)
             await TextInsertion.replace(with: final, in: targetApp)
             RecordingIndicatorWindowController.shared.hide()
-            ToastWindowController.shared.show(message: String(localized: "dictation.toast.inserted"))
-            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count))")
+            // Engine names are proper nouns — appended unlocalized so the user
+            // can verify which engine actually transcribed.
+            let engineName = SpeechEngine.current == .parakeet ? "Parakeet v3" : "Whisper"
+            ToastWindowController.shared.show(
+                message: String(localized: "dictation.toast.inserted") + " · " + engineName
+            )
+            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count)) via \(engineName)")
         } catch {
             RecordingIndicatorWindowController.shared.hide()
             ToastWindowController.shared.show(message: error.localizedDescription)

@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import FluidAudio
 
@@ -51,6 +52,39 @@ enum SpeechTranscriber {
     }
 }
 
+// MARK: - Parakeet model status (for Settings UI)
+
+/// Observable download/load state of the Parakeet model, so the Settings
+/// engine section can show whether Parakeet is actually usable instead of
+/// silently downloading 600 MB on the first dictation.
+@MainActor
+final class ParakeetStatus: ObservableObject {
+    static let shared = ParakeetStatus()
+
+    enum Phase: Equatable {
+        case notDownloaded
+        case downloading(Double)   // fraction 0…1
+        case loading               // CoreML compile / load into memory
+        case ready
+        case failed(String)
+    }
+
+    @Published var phase: Phase = .notDownloaded
+
+    /// Syncs the phase with what is on disk. No-op while a download/load is
+    /// in flight so live progress isn't clobbered.
+    func refreshFromDisk() {
+        switch phase {
+        case .downloading, .loading:
+            return
+        default:
+            break
+        }
+        let onDisk = AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory())
+        phase = onDisk ? .ready : .notDownloaded
+    }
+}
+
 // MARK: - Parakeet (FluidAudio / CoreML)
 
 actor ParakeetTranscriber {
@@ -66,9 +100,26 @@ actor ParakeetTranscriber {
         if let manager { return manager }
         if loadTask == nil {
             loadTask = Task {
-                let models = try await AsrModels.downloadAndLoad(version: .v3)
+                let onDisk = AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory())
+                await MainActor.run {
+                    ParakeetStatus.shared.phase = onDisk ? .loading : .downloading(0)
+                }
+                let models = try await AsrModels.downloadAndLoad(
+                    version: .v3,
+                    progressHandler: { progress in
+                        Task { @MainActor in
+                            switch progress.phase {
+                            case .listing, .downloading:
+                                ParakeetStatus.shared.phase = .downloading(progress.fractionCompleted)
+                            case .compiling:
+                                ParakeetStatus.shared.phase = .loading
+                            }
+                        }
+                    }
+                )
                 let mgr = AsrManager()
                 try await mgr.loadModels(models)
+                await MainActor.run { ParakeetStatus.shared.phase = .ready }
                 return mgr
             }
         }
@@ -79,6 +130,9 @@ actor ParakeetTranscriber {
         } catch {
             // Allow a retry on the next attempt (e.g. download failed offline).
             loadTask = nil
+            await MainActor.run {
+                ParakeetStatus.shared.phase = .failed(error.localizedDescription)
+            }
             throw error
         }
     }

@@ -316,6 +316,11 @@
 "settings.voice.model.hint" = "Download a model above. Models are stored in ~/Library/Application Support/Tippi/Models/.";
 "settings.voice.engine.title" = "Speech engine";
 "settings.voice.engine.hint" = "Parakeet v3 (beta) is faster and more accurate for European languages. The model (~600 MB) downloads on first use.";
+"settings.voice.engine.status.notDownloaded" = "Model not downloaded — dictation would download it on first use";
+"settings.voice.engine.status.downloading" = "Downloading model…";
+"settings.voice.engine.status.loading" = "Preparing model…";
+"settings.voice.engine.status.ready" = "Model ready — dictation uses Parakeet v3";
+"settings.voice.engine.download" = "Download now";
 "settings.voice.language.title" = "Language";
 "settings.voice.language.auto" = "Auto-detect";
 
