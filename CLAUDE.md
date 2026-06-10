@@ -2,7 +2,7 @@
 
 > **First-read map for AI coding agents.** Read this before grep/ls when starting work on Tippi. Keeps you grounded so you don't spend tokens re-discovering the repo every session.
 >
-> Last updated: 2026-05-24 (v1.8.1)
+> Last updated: 2026-06-10 (v1.10.2 + Review-Fixes)
 
 ## What this is
 
@@ -14,7 +14,7 @@ Open source, MIT, Developer ID signed, Sparkle auto-updates. BYOK with 8 provide
 
 | Layer | Choice |
 |---|---|
-| Language | Swift 6.x |
+| Language | Swift (SWIFT_VERSION 5.10 in project.yml) |
 | UI | SwiftUI + AppKit bridges |
 | Min macOS | 15.0 Sequoia |
 | Arch | Apple Silicon only (arm64) |
@@ -22,7 +22,7 @@ Open source, MIT, Developer ID signed, Sparkle auto-updates. BYOK with 8 provide
 | Sandbox | OFF (needed for cross-app text capture via Accessibility API) |
 | Signing | Developer ID + Hardened Runtime + Notarization |
 | Distribution | Custom DMG + Sparkle, no App Store |
-| Deps | Sparkle 2 (SPM) — only third-party dep |
+| Deps | Sparkle 2 + GRDB 7 (SPM); spike/parakeet-v3 branch adds FluidAudio |
 
 ## Entry points
 
@@ -89,7 +89,7 @@ make release        # full pipeline: build + notarize + DMG + GitHub Release + S
 
 ## Architecture key decisions (non-obvious)
 
-- **Text capture is AX-first, clipboard-fallback.** `AXUIElementCopyAttributeValue` for native apps. For Electron/Chromium apps (Obsidian, Claude, ChatGPT, Slack, VS Code) AX writes silently fail — fall back to clipboard + `Copy to clipboard` toast. See `Tippi/UI/Preview/PreviewWindowController.swift` and `TextInsertion.replace(...)`.
+- **Text capture is pasteboard-first (synthetic ⌘C with snapshot/restore), AX as fallback.** Insertion is AX-first with clipboard-paste fallback. For Electron/Chromium apps (Obsidian, Claude, ChatGPT, Slack, VS Code) AX writes silently fail — fall back to clipboard + `Copy to clipboard` toast. See `Tippi/Core/TextCapture.swift`, `Tippi/Core/TextInsertion.swift`.
 - **Selection range is captured BEFORE popup appears.** Popup steals focus → selection collapses. `lastSelectionElement` + `lastSelectionRange` stored in `AppDelegate` at trigger time, used to re-select for in-place replace.
 - **Hotkey: Carbon `RegisterEventHotKey` + NSEvent global monitor as backup.** Pure NSEvent loses events under certain TCC states. Carbon is the reliable path.
 - **Sparkle nested-bundle signing is inside-out.** Re-signing the outer app with `--entitlements` strips Sparkle's XPC signatures. Sign XPC binaries → XPC bundles → Sparkle.framework → outer app, in that order. Implemented in `scripts/release.sh`.
