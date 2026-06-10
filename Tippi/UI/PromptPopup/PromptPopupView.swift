@@ -456,6 +456,11 @@ private struct VoiceSection: View {
         do {
             try rec.start()
             voiceState = .recording
+            // Warm the model's file cache while the user is speaking, so a
+            // cold first transcription doesn't stall on loading the model.
+            Task.detached(priority: .utility) {
+                WhisperTranscriber.prewarmModelCache()
+            }
         } catch {
             voiceState = .failed(error.localizedDescription)
         }

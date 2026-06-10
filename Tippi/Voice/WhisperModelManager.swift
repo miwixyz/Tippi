@@ -62,23 +62,43 @@ final class WhisperModelManager: NSObject, ObservableObject {
         destinationURL = model.localURL
 
         let task = URLSession.shared.downloadTask(with: model.downloadURL) { [weak self] tempURL, response, error in
+            // URLSession only guarantees the temp file until this handler
+            // returns — stage it synchronously before hopping to the MainActor.
+            var stagedURL: URL?
+            if let tempURL {
+                let staging = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("tippi-model-\(UUID().uuidString).tmp")
+                if (try? FileManager.default.moveItem(at: tempURL, to: staging)) != nil {
+                    stagedURL = staging
+                }
+            }
+            let staged = stagedURL
+
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                guard let self else {
+                    if let staged { try? FileManager.default.removeItem(at: staged) }
+                    return
+                }
                 self.downloadingModel = nil
                 self.downloadProgress = 0
 
                 if let error {
-                    self.downloadError = error.localizedDescription
+                    if let staged { try? FileManager.default.removeItem(at: staged) }
+                    // A user-initiated cancel is not an error worth surfacing.
+                    if (error as NSError).code != NSURLErrorCancelled {
+                        self.downloadError = error.localizedDescription
+                    }
                     return
                 }
 
                 // Guard against CDN error pages returned as HTTP 200 HTML
                 if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                    if let staged { try? FileManager.default.removeItem(at: staged) }
                     self.downloadError = "Download failed: server returned HTTP \(http.statusCode). Try again later."
                     return
                 }
 
-                guard let tempURL,
+                guard let staged,
                       let dest = self.destinationURL else { return }
 
                 do {
@@ -86,7 +106,7 @@ final class WhisperModelManager: NSObject, ObservableObject {
                     if localFM.fileExists(atPath: dest.path) {
                         try localFM.removeItem(at: dest)
                     }
-                    try localFM.moveItem(at: tempURL, to: dest)
+                    try localFM.moveItem(at: staged, to: dest)
 
                     // Sanity-check: real models start at ~77 MB; anything smaller is an error page
                     let attrs = try localFM.attributesOfItem(atPath: dest.path)
@@ -125,6 +145,12 @@ final class WhisperModelManager: NSObject, ObservableObject {
     }
 
     func delete(_ model: WhisperModel) {
+        let wasActive = WhisperConfig.modelPath == model.localURL.path
         try? FileManager.default.removeItem(at: model.localURL)
+        // Clear a stored path pointing at the deleted file so the config
+        // falls back to auto-detecting any other installed model.
+        if wasActive {
+            WhisperConfig.modelPath = ""
+        }
     }
 }

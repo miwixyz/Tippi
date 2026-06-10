@@ -110,9 +110,33 @@ enum WhisperConfig {
 // MARK: - Transcriber
 
 struct WhisperTranscriber {
+    /// Reads the model file once so it sits in the OS file cache before
+    /// whisper-cli (a fresh process per transcription) loads it. A cold load
+    /// of the ~0.5 GB model otherwise adds many seconds to the first
+    /// dictation — calling this while the user is still speaking hides it.
+    static func prewarmModelCache() {
+        let path = WhisperConfig.modelPath
+        guard !path.isEmpty, let handle = FileHandle(forReadingAtPath: path) else { return }
+        defer { try? handle.close() }
+        while let chunk = try? handle.read(upToCount: 8 << 20), !chunk.isEmpty {
+            _ = chunk
+        }
+    }
+
     /// Runs whisper-cli on `wavURL` and returns the transcribed text.
     /// The WAV file is cleaned up on completion; the caller owns it until then.
     static func transcribe(wavURL: URL) async throws -> String {
+        // whisper-cli --output-txt writes a sidecar <name>.wav.txt (appends .txt to
+        // the full input filename, it does NOT strip the .wav extension first).
+        let txtURL = wavURL.appendingPathExtension("txt")
+
+        // The WAV contains the user's voice — it must be removed on EVERY exit
+        // path, including the guards and a process failure below.
+        defer {
+            try? FileManager.default.removeItem(at: wavURL)
+            try? FileManager.default.removeItem(at: txtURL)
+        }
+
         let binary    = WhisperConfig.binaryPath
         let modelPath = WhisperConfig.modelPath
         let language  = WhisperConfig.language
@@ -124,27 +148,21 @@ struct WhisperTranscriber {
             throw WhisperError.modelNotFound
         }
 
-        // whisper-cli --output-txt writes a sidecar <name>.wav.txt (appends .txt to
-        // the full input filename, it does NOT strip the .wav extension first).
-        let txtURL = wavURL.appendingPathExtension("txt")
-
         // Run the process and wait for it to finish.
+        // --flash-attn is mathematically exact (no quality change) and ~15%
+        // faster on Metal.
         try await runProcess(
             binary: binary,
             arguments: [
                 "--model",    modelPath,
                 "--language", language,
+                "--flash-attn",
                 "--output-txt",
                 "--file",     wavURL.path,
             ]
         )
 
         // Read sidecar file.
-        defer {
-            try? FileManager.default.removeItem(at: wavURL)
-            try? FileManager.default.removeItem(at: txtURL)
-        }
-
         let text = (try? String(contentsOf: txtURL, encoding: .utf8))?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
@@ -238,8 +256,15 @@ private final class ProcessRunner: @unchecked Sendable {
         lock.lock()
         let proc = process
         lock.unlock()
-        if proc?.isRunning == true {
-            proc?.terminate()
+        guard let proc, proc.isRunning else { return }
+        proc.terminate()
+        // whisper-cli can ignore SIGTERM (e.g. stuck in a Metal call), which
+        // would leave the caller waiting forever despite the timeout — escalate.
+        let pid = proc.processIdentifier
+        DispatchQueue.global().asyncAfter(deadline: .now() + 2) {
+            if proc.isRunning {
+                kill(pid, SIGKILL)
+            }
         }
     }
 

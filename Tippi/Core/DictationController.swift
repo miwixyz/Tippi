@@ -118,6 +118,11 @@ final class DictationController: ObservableObject {
 
     private let recorder = AudioRecorder()
 
+    /// Guards against a second hotkey press while `start()` is suspended in
+    /// the mic-permission prompt — `state` is still `.idle` at that point, so
+    /// the toggle would start a second recording on the same recorder.
+    private var isStarting = false
+
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion.
     func toggle(targetApp: NSRunningApplication?) async {
@@ -135,6 +140,10 @@ final class DictationController: ObservableObject {
     // MARK: - Private
 
     private func start() async {
+        guard !isStarting else { return }
+        isStarting = true
+        defer { isStarting = false }
+
         guard await AudioRecorder.requestPermission() else {
             ToastWindowController.shared.show(message: String(localized: "dictation.toast.micDenied"))
             return
@@ -144,6 +153,11 @@ final class DictationController: ObservableObject {
             state = .recording(url)
             RecordingIndicatorWindowController.shared.show(mode: .recording)
             NSLog("Tippi: dictation recording started")
+            // Warm the model's file cache while the user is speaking, so a
+            // cold first transcription doesn't stall on loading the model.
+            Task.detached(priority: .utility) {
+                WhisperTranscriber.prewarmModelCache()
+            }
         } catch {
             ToastWindowController.shared.show(message: error.localizedDescription)
             NSLog("Tippi: dictation start failed — \(error.localizedDescription)")
