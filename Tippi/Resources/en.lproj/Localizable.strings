@@ -337,6 +337,7 @@
 
 "insert.clipboardFallback" = "Copied to clipboard — press ⌘V to insert";
 "dictation.toast.inserted" = "Dictation inserted";
+"dictation.toast.cancelled" = "Dictation cancelled";
 "dictation.toast.micDenied" = "Microphone access denied";
 "dictation.indicator.recording" = "Recording…";
 "dictation.indicator.transcribing" = "Transcribing…";

@@ -316,6 +316,7 @@
 
 "insert.clipboardFallback" = "In Zwischenablage kopiert — ⌘V zum Einfügen";
 "dictation.toast.inserted" = "Diktat eingefügt";
+"dictation.toast.cancelled" = "Diktat abgebrochen";
 "dictation.toast.micDenied" = "Mikrofon-Zugriff verweigert";
 "dictation.indicator.recording" = "Aufnahme …";
 "dictation.indicator.transcribing" = "Transkribiere …";
