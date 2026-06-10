@@ -153,11 +153,9 @@ final class DictationController: ObservableObject {
             state = .recording(url)
             RecordingIndicatorWindowController.shared.show(mode: .recording)
             NSLog("Tippi: dictation recording started")
-            // Warm the model's file cache while the user is speaking, so a
-            // cold first transcription doesn't stall on loading the model.
-            Task.detached(priority: .utility) {
-                WhisperTranscriber.prewarmModelCache()
-            }
+            // Warm the engine while the user is speaking, so a cold first
+            // transcription doesn't stall on loading the model.
+            SpeechTranscriber.prewarm()
         } catch {
             ToastWindowController.shared.show(message: error.localizedDescription)
             NSLog("Tippi: dictation start failed — \(error.localizedDescription)")
@@ -170,7 +168,7 @@ final class DictationController: ObservableObject {
         RecordingIndicatorWindowController.shared.show(mode: .transcribing)
 
         do {
-            let raw = try await WhisperTranscriber.transcribe(wavURL: wavURL)
+            let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             let final = await postProcessIfEnabled(raw)
             await TextInsertion.replace(with: final, in: targetApp)
             RecordingIndicatorWindowController.shared.hide()

@@ -1099,11 +1099,13 @@ private struct VoiceTab: View {
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
     @State private var dictationPolishModel: String = DictationSettings.postProcessModelOverride
+    @State private var engine: String = SpeechEngine.current.rawValue
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 microphoneSection
+                engineSection
                 modelSection
                 languageSection
                 dictationSection
@@ -1112,6 +1114,34 @@ private struct VoiceTab: View {
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    // MARK: Engine (spike: Parakeet v3 via FluidAudio)
+
+    private var engineSection: some View {
+        GroupBox {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(String(localized: "settings.voice.engine.title"))
+                        .font(.headline)
+                    Text(String(localized: "settings.voice.engine.hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Picker("", selection: $engine) {
+                    Text("Whisper").tag(SpeechEngine.Kind.whisper.rawValue)
+                    Text("Parakeet v3 (Beta)").tag(SpeechEngine.Kind.parakeet.rawValue)
+                }
+                .pickerStyle(.menu)
+                .frame(width: 180)
+                .onChange(of: engine) { _, new in
+                    SpeechEngine.current = SpeechEngine.Kind(rawValue: new) ?? .whisper
+                }
+            }
+            .padding(6)
+        }
     }
 
     // MARK: Dictation hot key

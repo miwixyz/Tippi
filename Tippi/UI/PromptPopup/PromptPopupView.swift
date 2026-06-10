@@ -456,11 +456,9 @@ private struct VoiceSection: View {
         do {
             try rec.start()
             voiceState = .recording
-            // Warm the model's file cache while the user is speaking, so a
-            // cold first transcription doesn't stall on loading the model.
-            Task.detached(priority: .utility) {
-                WhisperTranscriber.prewarmModelCache()
-            }
+            // Warm the engine while the user is speaking, so a cold first
+            // transcription doesn't stall on loading the model.
+            SpeechTranscriber.prewarm()
         } catch {
             voiceState = .failed(error.localizedDescription)
         }
@@ -476,7 +474,7 @@ private struct VoiceSection: View {
         transcriptionTask?.cancel()
         transcriptionTask = Task {
             do {
-                let text = try await WhisperTranscriber.transcribe(wavURL: wavURL)
+                let text = try await SpeechTranscriber.transcribe(wavURL: wavURL)
                 await MainActor.run {
                     guard !Task.isCancelled else { return }
                     voiceState = .idle

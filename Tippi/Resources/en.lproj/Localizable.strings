@@ -314,6 +314,8 @@
 "settings.voice.model.title" = "Whisper Model";
 "settings.voice.model.placeholder" = "~/.cache/whisper/ggml-base.en.bin";
 "settings.voice.model.hint" = "Download a model above. Models are stored in ~/Library/Application Support/Tippi/Models/.";
+"settings.voice.engine.title" = "Speech engine";
+"settings.voice.engine.hint" = "Parakeet v3 (beta) is faster and more accurate for European languages. The model (~600 MB) downloads on first use.";
 "settings.voice.language.title" = "Language";
 "settings.voice.language.auto" = "Auto-detect";
 
