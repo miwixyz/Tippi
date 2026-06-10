@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.10.3] — 2026-06-10
+
+Hardening release: 16 fixes from a full code review of the Core/App, LLM, UI, and Voice layers, plus a faster dictation pipeline. No new features.
+
+### Fixed — privacy & data loss
+- **Local-provider timeouts no longer fall through to the cloud.** When Ollama/MLX timed out (easy with large non-streaming models), the router treated the provider as "unavailable" and silently retried with the next configured provider — which could be OpenAI. Text the user deliberately routed to a local model never leaves the Mac on a timeout anymore; the error is surfaced instead. The Ollama request timeout was also raised 20 s → 120 s to accommodate cold model loads.
+- **Voice recordings no longer linger in the temp directory.** The dictation WAV cleanup only ran after a successful transcription; any failure (missing binary/model, whisper-cli error, timeout) left the recording on disk. Cleanup now runs on every exit path.
+- **Truncated AI answers are never inserted.** Anthropic (max_tokens 2048 → 8192) and MLX (cap 768 → 2048) responses now check `stop_reason`/`finish_reason`; a cut-off rewrite throws a clear error instead of silently destroying the tail of the selection.
+- **Clipboard managers no longer archive Tippi's paste roundtrips.** The transient pasteboard writes used for inserting results now carry the `org.nspasteboard.ConcealedType` marker respected by Maccy, Paste, Alfred & co.
+- **History CSV export neutralizes spreadsheet formula injection** (`=`, `+`, `-`, `@` field prefixes).
+
+### Fixed — crashes & hangs
+- **Settings hotkey recorder crash (SIGSEGV).** Stopping a recording and then clicking any recorder again called `NSEvent.removeMonitor` twice on the same token (over-release). The cleanup hook now holds the token itself with identity-checked, idempotent removal. This was the cause of the crash logs from 2026-06-03 and 2026-06-10.
+- **Dictation can be cancelled.** Pressing the dictation hotkey while "Transcribing…" is shown cancels the in-flight pipeline (toast: "Dictation cancelled"). Previously the press was silently ignored.
+- **The AI polish step is capped at 30 seconds.** A slow polish provider (e.g. a large local model cold-starting) could hold "Transcribing…" for minutes; past the cap the raw transcript is inserted.
+- **whisper-cli gets SIGKILL if it ignores SIGTERM** — a hung Metal call can no longer leave dictation stuck in "Transcribing…" forever.
+- **An unresponsive target app can no longer freeze Tippi.** Accessibility calls are capped process-wide at 2 s.
+- **The ⌘, Settings scene no longer crashes** on the Hotkeys tab (missing GlobalKeyMonitor environment object).
+- **The MLX server is stopped on app quit** — it used to outlive Tippi, holding the model in RAM and blocking its port.
+
+### Fixed — reliability
+- **Whisper model downloads no longer race the temp file.** The URLSession download is staged synchronously before the async hop; intermittent "file doesn't exist" failures are gone. Cancelling a download no longer reports a spurious error, and deleting the active model now falls back to auto-detecting other installed models.
+- **Double-press at dictation start fixed** — a second hotkey press while the mic-permission prompt was open started a second recording on the same recorder.
+- **Gemini no longer crashes on a malformed model name** (free-form settings field is now percent-encoded instead of force-unwrapped).
+- **`make build` dev builds now bundle whisper-cli** — dictation in locally built (non-DMG) installs silently did nothing because the binary was only injected by the release pipeline.
+
+### Changed
+- **Dictation transcribes ~15 % faster:** whisper-cli now runs with `--flash-attn` (mathematically exact — output verified identical). The Whisper model file is additionally pre-warmed into the OS cache while you are still speaking, hiding the multi-second cold load on the first dictation after launch.
+
 All notable changes to Tippi will be documented in this file.
 
 ## [1.10.2] — 2026-06-03
