@@ -48,6 +48,15 @@ enum TextInsertion {
         await paste(text: text)
     }
 
+    /// Bypasses AX entirely and inserts `text` via clipboard + synthetic ⌘V.
+    /// Use when AX has already been attempted and confirmed to be a no-op
+    /// (e.g. `.ignored` outcome from `replaceViaElement`).
+    static func insertViaClipboard(_ text: String, into app: NSRunningApplication?) async {
+        app?.activate(options: [.activateIgnoringOtherApps])
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        await paste(text: text)
+    }
+
     static func copy(_ text: String) {
         let pb = NSPasteboard.general
         pb.clearContents()
@@ -142,6 +151,13 @@ enum TextInsertion {
             )
         }
 
+        // Capture selectedText *after* the range re-selection, before the write.
+        // Used as a secondary no-op detector for apps that don't expose kAXValueAttribute
+        // (Electron/Chromium) but do expose kAXSelectedTextAttribute.
+        var selectedBeforeRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedBeforeRef)
+        let selectedBefore = selectedBeforeRef as? String
+
         let result = AXUIElementSetAttributeValue(
             element,
             kAXSelectedTextAttribute as CFString,
@@ -157,6 +173,30 @@ enum TextInsertion {
         // ⌘V would append rather than replace → caller should hand off via clipboard.
         let valueAfter = axStringValue(element)
         let noOp = valueBefore != nil && valueAfter != nil && valueBefore == valueAfter
+
+        // Secondary checks when kAXValueAttribute is unavailable (non-native apps).
+        if !noOp, valueBefore == nil {
+            var selectedAfterRef: CFTypeRef?
+            AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedAfterRef)
+            let selectedAfter = selectedAfterRef as? String
+
+            // Case A: selectedText was non-empty and is unchanged → definite no-op.
+            if let before = selectedBefore, let after = selectedAfter, !before.isEmpty, before == after {
+                insertLog.notice("replaceViaElement → ignored (selectedText unchanged)")
+                return .ignored
+            }
+
+            // Case B: selection was empty/nil before AND after (focus-stole popup collapsed
+            // the selection; the app also ignored the range-restore attempt). We cannot
+            // confirm the write took effect. Pessimistically treat as .ignored so the caller
+            // falls through to clipboard paste — better than silently losing the result.
+            let emptyOrNil: (String?) -> Bool = { $0 == nil || $0 == "" }
+            if emptyOrNil(selectedBefore) && emptyOrNil(selectedAfter) {
+                insertLog.notice("replaceViaElement → ignored (unverifiable: selection collapsed, value attr unavailable)")
+                return .ignored
+            }
+        }
+
         insertLog.notice("replaceViaElement → \(noOp ? "ignored" : "replaced", privacy: .public)")
         return noOp ? .ignored : .replaced
     }
@@ -226,7 +266,13 @@ enum TextInsertion {
     }
 
     private static func setSelectedText(_ text: String, on element: AXUIElement) -> Bool {
-        let before = axStringValue(element)
+        let valueBefore = axStringValue(element)
+
+        // Secondary capture for apps that don't expose kAXValueAttribute.
+        var selectedBeforeRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedBeforeRef)
+        let selectedBefore = selectedBeforeRef as? String
+
         let ok = AXUIElementSetAttributeValue(
             element,
             kAXSelectedTextAttribute as CFString,
@@ -234,13 +280,36 @@ enum TextInsertion {
         ) == .success
         guard ok else { return false }
 
-        // Treat a value-unchanged write as a failure so the caller falls back to ⌘V
-        // (Electron/Chromium report success but ignore AX text writes).
-        let after = axStringValue(element)
-        if let before, let after, before == after {
-            insertLog.notice("setSelectedText no-op (value unchanged)")
+        // Primary check: if the full-value attribute is available and unchanged,
+        // the write was a no-op (Electron/Chromium ignore AX text writes).
+        let valueAfter = axStringValue(element)
+        if let before = valueBefore, let after = valueAfter {
+            if before == after {
+                insertLog.notice("setSelectedText no-op (value unchanged)")
+                return false
+            }
+            return true
+        }
+
+        // Secondary checks: kAXValueAttribute unavailable (non-native app).
+        var selectedAfterRef: CFTypeRef?
+        AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedAfterRef)
+        let selectedAfter = selectedAfterRef as? String
+
+        // Case A: non-empty selection unchanged → definite no-op.
+        if let before = selectedBefore, let after = selectedAfter, !before.isEmpty, before == after {
+            insertLog.notice("setSelectedText no-op (selectedText unchanged)")
             return false
         }
+
+        // Case B: both empty/nil → unverifiable (collapsed selection in non-native app).
+        // Pessimistically return false to trigger clipboard paste.
+        let emptyOrNil: (String?) -> Bool = { $0 == nil || $0 == "" }
+        if emptyOrNil(selectedBefore) && emptyOrNil(selectedAfter) {
+            insertLog.notice("setSelectedText no-op (unverifiable: selection collapsed, value attr unavailable)")
+            return false
+        }
+
         return true
     }
 

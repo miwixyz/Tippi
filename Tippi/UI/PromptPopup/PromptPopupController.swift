@@ -1,6 +1,16 @@
 import AppKit
 import SwiftUI
 
+/// Borderless non-activating panel that can become key without activating Tippi.
+/// The defaults `NSPanel` provides aren't enough for borderless windows — we need
+/// to explicitly opt-in to key-window status so SwiftUI's `.onKeyPress` modifiers
+/// receive events while the source app remains active (preserving its selection).
+private final class NonActivatingKeyPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+    override var acceptsFirstResponder: Bool { true }
+}
+
 @MainActor
 final class PromptPopupController {
     private var panel: NSPanel?
@@ -56,7 +66,7 @@ final class PromptPopupController {
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = [.intrinsicContentSize]
 
-        let panel = NSPanel(
+        let panel = NonActivatingKeyPanel(
             contentRect: NSRect(x: 0, y: 0, width: 290, height: 340),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -70,6 +80,7 @@ final class PromptPopupController {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.hidesOnDeactivate = false
+        panel.worksWhenModal = true
 
         // Layout first so fittingSize reflects actual content height
         hosting.view.layoutSubtreeIfNeeded()
@@ -105,7 +116,15 @@ final class PromptPopupController {
             }
         }
 
-        NSApp.activate(ignoringOtherApps: true)
+        // CRITICAL: do NOT call NSApp.activate here.
+        //
+        // Activating Tippi would steal focus from the source app, which collapses
+        // the user's selection in non-AppKit apps (Electron/Chromium, web views,
+        // Catalyst) — making AX-based replacement impossible afterwards.
+        //
+        // The non-activating panel + `canBecomeKey = true` override is what lets
+        // the popup receive keystrokes while the source app remains active with
+        // its selection intact.
         panel.makeKeyAndOrderFront(nil)
     }
 

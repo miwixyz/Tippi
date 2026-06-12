@@ -648,10 +648,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case .replaced:
                     message = action.title
                 case .ignored:
-                    // App ignored the AX write and the selection is gone (Electron) —
-                    // hand the result off via the clipboard instead of appending.
-                    TextInsertion.copy(text)
-                    message = String(localized: "insert.clipboardFallback")
+                    // AX write was silently discarded (Electron/Chromium). The selection
+                    // has collapsed, so we can't replace it — insert at current cursor
+                    // position via clipboard + ⌘V as best effort.
+                    await TextInsertion.insertViaClipboard(text, into: cap.sourceApp)
+                    message = action.title
                 case .unavailable:
                     await TextInsertion.replace(with: text, in: cap.sourceApp)
                     message = action.title
@@ -670,8 +671,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case .replaced:
                     message = action.title
                 case .ignored:
-                    TextInsertion.copy(fallback)
-                    message = String(localized: "insert.clipboardFallback")
+                    await TextInsertion.insertViaClipboard(fallback, into: cap.sourceApp)
+                    message = action.title
                 case .unavailable:
                     await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: cap.sourceApp)
                     message = action.title
