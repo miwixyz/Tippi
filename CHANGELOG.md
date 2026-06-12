@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.1] — 2026-06-12
+
+### Fixed
+- **Insertion in non-AppKit apps now works without manual ⌘V.** Triggering a transformation while text was selected in VS Code, Cursor, Chrome, Slack, Discord, Figma or any other Electron / Chromium / web-based app would either silently drop the result or only stage it on the clipboard, forcing you to paste by hand. The picker popup explicitly activated Tippi on show, which stole focus and collapsed the source app's selection; afterwards every fallback path was broken because the selection no longer existed to be replaced.
+  - The popup is now a true non-activating panel. Tippi never becomes the frontmost app during the picker — the source app stays active and its selection stays intact, so AX-based replacement and clipboard-paste fallback both have something to write into.
+  - When Accessibility text writes are silently discarded by an app (Electron's typical behaviour), Tippi now activates the source app and synthesises ⌘V instead of just putting the result on the clipboard. The text lands where it should without any extra keystroke.
+  - The no-op detection inside `replaceViaElement` and `setSelectedText` was extended to cover apps that don't expose `kAXValueAttribute` at all; previously those returned a false-positive "replaced" and the user saw nothing happen.
+
 ## [1.11.0] — 2026-06-10
 
 ### Added
