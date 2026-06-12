@@ -721,10 +721,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case .replaced:
                 return
             case .ignored:
-                // App ignored the AX write and the selection is gone (Electron) —
-                // hand the result off via the clipboard instead of appending.
-                TextInsertion.copy(text)
-                ToastWindowController.shared.show(message: String(localized: "insert.clipboardFallback"))
+                // AX write was silently discarded (Electron/Chromium). The captured
+                // selection is gone, so we can't replace it directly — activate the
+                // source app and synthesise ⌘V into the still-active selection
+                // (preserved because the popup + preview are non-activating).
+                await TextInsertion.insertViaClipboard(text, into: sourceApp)
                 return
             case .unavailable:
                 break
