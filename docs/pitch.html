@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tippi — Editorial Pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --accent:#3B8CFF; --navy:#10192B; --surface:#F7F2EA; --cream:#FFF8EE; --mist:#EAF3FF; --ink:#10192B; --slate:#1C2333; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--navy)}
+  h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;line-height:.95;letter-spacing:-.02em}
+
+  .deck{display:flex;height:100vh;width:100vw;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none}
+  .deck::-webkit-scrollbar{display:none}
+  .page{flex:0 0 100vw;width:100vw;height:100vh;scroll-snap-align:start;scroll-snap-stop:always;
+    position:relative;overflow:hidden;display:flex}
+  .dark{background:var(--navy);color:#fff}
+  .dark .muted{color:#7b8aa6}
+  .muted{color:#5b667d}
+
+  .eyebrow{font-size:.78rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase}
+  .stat{font-family:'Space Grotesk';font-weight:700;font-size:clamp(5rem,13vw,13rem);line-height:.85;letter-spacing:-.04em}
+  .half{flex:1;display:flex;flex-direction:column;justify-content:center;padding:clamp(2rem,5vw,5.5rem)}
+  .pad{padding:clamp(2rem,5vw,5.5rem)}
+  .pgnum{position:absolute;top:clamp(1.4rem,3vw,2.6rem);right:clamp(1.6rem,3vw,2.8rem);font-family:'Space Grotesk';font-weight:500;font-size:.85rem;letter-spacing:.1em;opacity:.5}
+
+  .p1{background:var(--navy)} .p2{background:var(--surface)} .p3{background:var(--accent);color:#fff}
+  .p4{background:var(--mist)} .p5{background:var(--cream)} .p6{background:var(--navy)} .p7{background:var(--surface)}
+  .p8{background:#EEF4FF} .p9{background:var(--slate)} .p10{background:var(--navy)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;width:100%;height:100%}
+  .quad{display:flex;flex-direction:column;justify-content:center;padding:clamp(1.6rem,4vw,3.6rem);border-right:1px solid rgba(0,0,0,.08);border-bottom:1px solid rgba(0,0,0,.08)}
+  .quad .stat{font-size:clamp(4rem,9vw,8.5rem)}
+
+  .kbd{display:inline-flex;align-items:center;gap:.4rem;font-family:'Space Grotesk';font-weight:700;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:14px;
+    padding:.5rem 1.1rem;font-size:clamp(2rem,5vw,4rem)}
+
+  .lead{font-size:clamp(1.4rem,2.4vw,2.1rem);line-height:1.28;font-weight:400;max-width:36ch}
+  .big{font-size:clamp(2.6rem,6vw,5.5rem);font-weight:700}
+  .label{font-size:1rem;font-weight:600;letter-spacing:.04em;margin-top:.6rem}
+  ul.clean{list-style:none}
+  ul.clean li{font-size:clamp(1.1rem,1.7vw,1.5rem);padding:.6rem 0;border-bottom:1px solid rgba(0,0,0,.1);font-weight:500;display:flex;align-items:center;gap:1rem}
+  .dark ul.clean li{border-color:rgba(255,255,255,.12)}
+
+  .ico{flex:0 0 auto;width:1.5em;height:1.5em;stroke:var(--accent);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:clamp(3.5rem,8vw,7rem);height:clamp(3.5rem,8vw,7rem);stroke-width:1.4}
+
+  .cmp{display:flex;flex-direction:column;justify-content:center;gap:.2rem;width:100%}
+  .crow{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,.14)}
+  .crow:last-child{border-bottom:1px solid rgba(255,255,255,.14)}
+  .crow>div{padding:clamp(.7rem,1.8vw,1.3rem) clamp(1.6rem,4vw,4rem);font-size:clamp(.95rem,1.5vw,1.35rem);display:flex;align-items:center}
+  .crow .them{color:#7b8aa6}
+  .crow .us{color:#fff;font-weight:600;border-left:1px solid rgba(255,255,255,.14);background:rgba(48,112,240,.12)}
+
+  .dots{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:11px;z-index:50}
+  .dots button{width:9px;height:9px;border-radius:50%;border:none;background:#fff;opacity:.32;cursor:pointer;transition:opacity .25s,transform .25s;padding:0}
+  .dots button.on{opacity:1;transform:scale(1.45)}
+  .hint{position:fixed;bottom:18px;right:24px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#fff;mix-blend-mode:difference;z-index:50;opacity:.55}
+  .tag{display:inline-block;font-weight:700;font-family:'Space Grotesk';font-size:clamp(1rem,1.4vw,1.2rem);letter-spacing:.02em}
+  @media(max-width:760px){ .page{flex-direction:column} .half{padding:2rem} .grid2{grid-template-columns:1fr;grid-template-rows:repeat(4,1fr)} }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 COVER -->
+  <section class="page p1 dark">
+    <div class="half">
+      <span class="eyebrow" style="color:var(--accent)">System-weiter KI-Schreibassistent · macOS</span>
+      <h1 style="font-size:clamp(5rem,18vw,17rem);margin:.18em 0 .1em">Tippi</h1>
+      <p class="lead" style="color:#c9d4ea">Text markieren. <b style="color:#fff">⌥⌘T</b> drücken. KI erledigt den Rest. Direkt da, wo du bist.</p>
+      <p class="muted" style="margin-top:2.2rem;font-size:.9rem;letter-spacing:.14em">OPEN SOURCE · MIT · KEINE TELEMETRIE</p>
+    </div>
+    <div class="half" style="flex:.85;background:var(--accent);align-items:center;justify-content:center">
+      <img src="mascot.png" alt="Tippi" style="width:clamp(180px,30vw,400px);height:auto;border-radius:22%;filter:drop-shadow(0 24px 48px rgba(0,0,0,.4))">
+    </div>
+    <span class="pgnum" style="color:#fff">01 — Tippi</span>
+  </section>
+
+  <!-- 2 PROBLEM -->
+  <section class="page p2">
+    <div class="half">
+      <span class="eyebrow" style="color:var(--accent)">Das Problem</span>
+      <h2 class="big" style="margin:.3em 0 .4em">Jeder KI-Assistent<br>reißt dich raus.</h2>
+      <p class="lead">Neuen Tab öffnen. Text einfügen. Warten. Antwort zurückkopieren. App wechseln. Den Faden verlieren. Jedes Mal aufs Neue.</p>
+    </div>
+    <div class="half" style="background:var(--ink);color:#fff;align-items:flex-start">
+      <span class="eyebrow muted">Kontextwechsel pro Bearbeitung</span>
+      <div class="stat" style="color:var(--accent)">3+</div>
+      <p class="label" style="color:#9fb0cf">Tabs, Copy-Paste &amp; App-Wechsel — für einen einzigen Satz</p>
+    </div>
+    <span class="pgnum">02 — Problem</span>
+  </section>
+
+  <!-- 3 SOLUTION STEPS -->
+  <section class="page p3">
+    <div class="pad" style="width:100%;display:flex;flex-direction:column;justify-content:center">
+      <span class="eyebrow" style="opacity:.8">Die Lösung · vier Schritte, null Kontextwechsel</span>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:2.2rem;border-top:1px solid rgba(255,255,255,.3)">
+        <div style="padding:2rem 1.4rem 2rem 0;border-right:1px solid rgba(255,255,255,.3)">
+          <div class="stat" style="font-size:clamp(3rem,6vw,6rem)">1</div>
+          <h3 style="font-size:1.5rem;margin:.6em 0 .3em">Markieren</h3>
+          <p style="opacity:.85">Text in jeder App markieren — Mail, Slack, VS Code.</p>
+        </div>
+        <div style="padding:2rem 1.4rem;border-right:1px solid rgba(255,255,255,.3)">
+          <div class="stat" style="font-size:clamp(3rem,6vw,6rem)">2</div>
+          <h3 style="font-size:1.5rem;margin:.6em 0 .3em">⌥⌘T</h3>
+          <p style="opacity:.85">Ein Hotkey. Das Popup öffnet direkt am Cursor.</p>
+        </div>
+        <div style="padding:2rem 1.4rem;border-right:1px solid rgba(255,255,255,.3)">
+          <div class="stat" style="font-size:clamp(3rem,6vw,6rem)">3</div>
+          <h3 style="font-size:1.5rem;margin:.6em 0 .3em">Wählen</h3>
+          <p style="opacity:.85">Verbessern, übersetzen, kürzen — oder dein eigener Prompt.</p>
+        </div>
+        <div style="padding:2rem 0 2rem 1.4rem">
+          <div class="stat" style="font-size:clamp(3rem,6vw,6rem)">4</div>
+          <h3 style="font-size:1.5rem;margin:.6em 0 .3em">Ersetzen</h3>
+          <p style="opacity:.85">Die Korrektur landet genau dort, wo dein Cursor war.</p>
+        </div>
+      </div>
+    </div>
+    <span class="pgnum" style="color:#fff">03 — So funktioniert's</span>
+  </section>
+
+  <!-- 4 FEATURES 2x2 -->
+  <section class="page p4">
+    <div class="grid2">
+      <div class="quad">
+        <span class="eyebrow muted">Eingebaute Prompts</span>
+        <div class="stat" style="color:var(--accent)">22</div>
+        <p class="label">Verbessern · Grammatik · Kürzen · Vermenschlichen · TL;DR · Mail-Antwort · Übersetzen DE/EN/ES…</p>
+      </div>
+      <div class="quad" style="border-right:none">
+        <span class="eyebrow muted">KI-Anbieter, deine Wahl</span>
+        <div class="stat" style="color:var(--accent)">6</div>
+        <p class="label">OpenAI · Claude · Gemini · Mistral · Ollama · MLX — frei wechseln, BYOK</p>
+      </div>
+      <div class="quad" style="border-bottom:none">
+        <span class="eyebrow muted">Sprache, komplett lokal</span>
+        <svg class="ico ico-lg" style="margin:.2em 0" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 19v3"/></svg>
+        <p class="label">Push-to-Talk-Diktat. Whisper läuft lokal — kein Audio verlässt deinen Mac.</p>
+      </div>
+      <div class="quad" style="border-right:none;border-bottom:none">
+        <span class="eyebrow muted">Mach es zu deinem</span>
+        <div class="big" style="color:var(--accent)">Eigene<br>Prompts</div>
+        <p class="label">{clipboard} · {app_name} · {language} — zur Laufzeit aufgelöst. Plus PopClip-artige lokale Quick-Actions.</p>
+      </div>
+    </div>
+    <span class="pgnum">04 — Funktionen</span>
+  </section>
+
+  <!-- 5 AUDIENCE -->
+  <section class="page p5">
+    <div class="half">
+      <span class="eyebrow" style="color:var(--accent)">Für wen</span>
+      <h2 class="big" style="margin:.3em 0 .4em">Wenn du<br>am Mac schreibst.</h2>
+      <p class="lead">Keine Nische. Tippi lebt in jedem Textfeld auf macOS — also passt es zu dem, der du ohnehin bist.</p>
+    </div>
+    <div class="half" style="justify-content:center">
+      <ul class="clean">
+        <li><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Schreibende &amp; Gründer in Mail</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Teams in Slack &amp; Notes</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Entwickler in VS Code &amp; Terminal</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Alle, die DE · EN · ES übersetzen</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Datenschutz-Bewusste, die es lokal wollen</li>
+      </ul>
+    </div>
+    <span class="pgnum">05 — Zielgruppe</span>
+  </section>
+
+  <!-- 6 COMPETITION (dark) -->
+  <section class="page p6 dark">
+    <div class="pad" style="width:100%;display:flex;flex-direction:column;justify-content:center">
+      <span class="eyebrow" style="color:var(--accent)">Die meisten KI-Assistenten &nbsp;vs&nbsp; Tippi</span>
+      <div class="cmp" style="margin-top:1.6rem">
+        <div class="crow"><div class="them">Neuer Tab, einfügen, zurückkopieren</div><div class="us">Arbeitet am Cursor, in jeder App</div></div>
+        <div class="crow"><div class="them">An einen Anbieter gebunden</div><div class="us">6 Anbieter, frei wechselbar</div></div>
+        <div class="crow"><div class="them">Nur Cloud — Daten verlassen den Mac</div><div class="us">Zwei lokale Engines — komplett offline möglich</div></div>
+        <div class="crow"><div class="them">Monatliches Abo</div><div class="us">Kostenlos, Open Source, eigener Key</div></div>
+        <div class="crow"><div class="them">Telemetrie &amp; „anonymisierte" Analytics</div><div class="us">Null Telemetrie. Keine.</div></div>
+      </div>
+    </div>
+    <span class="pgnum" style="color:#fff">06 — Wettbewerb</span>
+  </section>
+
+  <!-- 7 ORIGIN -->
+  <section class="page p7">
+    <div class="half" style="flex:1.1">
+      <span class="eyebrow" style="color:var(--accent)">Entstehung</span>
+      <h2 class="big" style="margin:.3em 0 .4em">Keine Analytics.<br>Kein Upsell.<br>Nur ein Werkzeug.</h2>
+      <p class="lead">Gebaut von einer Person, die es leid war, für eine 5-Sekunden-Frage die App zu verlassen. Darum verlangt Tippi nie ein Login, funkt nie nach Hause und legt den kompletten Quellcode auf GitHub offen. Jede Zeile prüfbar.</p>
+    </div>
+    <div class="half" style="background:var(--ink);color:#fff;align-items:flex-start">
+      <div class="stat" style="color:#fff;font-size:clamp(4rem,11vw,11rem)">MIT</div>
+      <p class="label" style="color:#9fb0cf">Open Source. Von Michael Wlr — github.com/miwixyz</p>
+    </div>
+    <span class="pgnum">07 — Entstehung</span>
+  </section>
+
+  <!-- 8 TRACTION -->
+  <section class="page p8">
+    <div class="half">
+      <span class="eyebrow" style="color:var(--accent)">Wo es steht</span>
+      <h2 class="big" style="margin:.3em 0 .5em">Ausgeliefert,<br>signiert, stabil.</h2>
+      <ul class="clean">
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Öffentlich &amp; Open Source seit v1.1.6</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Signiert &amp; notarisiert — Gatekeeper-sauber</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Auto-Updates via Sparkle 2</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>macOS 15 Sequoia · Apple Silicon</li>
+      </ul>
+    </div>
+    <div class="half" style="background:var(--accent);color:#fff;align-items:flex-start">
+      <span class="eyebrow" style="opacity:.85">Aktuelle Version</span>
+      <div class="stat" style="color:#fff">v1.11</div>
+      <p class="label">Parakeet v3 + Whisper Sprach-Engines · verschlüsselte lokale History · 60-Sekunden-Setup</p>
+    </div>
+    <span class="pgnum">08 — Stand</span>
+  </section>
+
+  <!-- 9 TECH (dark) -->
+  <section class="page p9 dark">
+    <div class="half" style="flex:1.05">
+      <span class="eyebrow" style="color:var(--accent)">Unter der Haube</span>
+      <h2 class="big" style="margin:.3em 0 .5em">Nativ. Lokal.<br>Privat by build.</h2>
+      <ul class="clean">
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Swift · SwiftUI · AppKit — kein Electron</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></svg>MLX — Apple-Silicon-nativ, ~1,5–2× schneller als Ollama</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>Whisper-Transkription 100 % auf dem Gerät</li>
+        <li><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>AES-GCM-History · Keys in der macOS-Keychain</li>
+      </ul>
+    </div>
+    <div class="half" style="align-items:flex-start;justify-content:center">
+      <span class="eyebrow muted">Ausgelieferte Telemetrie</span>
+      <div class="stat" style="color:var(--accent)">0</div>
+      <p class="label" style="color:#9fb0cf">Keine Analytics. Keine Crash-Reports. Der komplett lokale Pfad berührt nie die Cloud.</p>
+    </div>
+    <span class="pgnum" style="color:#fff">09 — Technik</span>
+  </section>
+
+  <!-- 10 BACK COVER (dark) -->
+  <section class="page p10 dark">
+    <div class="half" style="justify-content:center">
+      <span class="eyebrow" style="color:var(--accent)">In 60 Sekunden testen</span>
+      <h2 style="font-size:clamp(3rem,9vw,8rem);margin:.18em 0 .3em">Text markieren.<br>⌥⌘T.</h2>
+      <p class="lead" style="color:#c9d4ea">DMG laden, in „Programme" ziehen, einen Key hinzufügen — oder mit einem Klick komplett lokal starten.</p>
+      <p class="tag" style="color:var(--accent);margin-top:2.4rem">miwixyz.github.io/Tippi</p>
+      <p class="muted" style="margin-top:.6rem;font-size:.85rem;letter-spacing:.14em">OPEN SOURCE · MIT · KEINE TELEMETRIE</p>
+    </div>
+    <div class="half" style="flex:.8;background:var(--accent);align-items:center;justify-content:center">
+      <img src="mascot.png" alt="Tippi" style="width:clamp(180px,30vw,400px);height:auto;border-radius:22%;filter:drop-shadow(0 24px 48px rgba(0,0,0,.4))">
+    </div>
+    <span class="pgnum" style="color:#fff">10 — Tippi holen</span>
+  </section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="hint">← → zum Blättern</div>
+
+<script>
+  const deck=document.getElementById('deck');
+  const pages=[...deck.querySelectorAll('.page')];
+  const dotsWrap=document.getElementById('dots');
+  pages.forEach((_,i)=>{
+    const b=document.createElement('button');
+    b.setAttribute('aria-label','Seite '+(i+1));
+    b.onclick=()=>deck.scrollTo({left:i*window.innerWidth,behavior:'smooth'});
+    dotsWrap.appendChild(b);
+  });
+  const dots=[...dotsWrap.children];
+  function cur(){return Math.round(deck.scrollLeft/window.innerWidth)}
+  function sync(){const c=cur();dots.forEach((d,i)=>d.classList.toggle('on',i===c))}
+  deck.addEventListener('scroll',()=>requestAnimationFrame(sync),{passive:true});
+  function go(d){const n=Math.min(pages.length-1,Math.max(0,cur()+d));deck.scrollTo({left:n*window.innerWidth,behavior:'smooth'})}
+  addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(-1)}
+    if(e.key==='Home'){deck.scrollTo({left:0,behavior:'smooth'})}
+    if(e.key==='End'){deck.scrollTo({left:(pages.length-1)*window.innerWidth,behavior:'smooth'})}
+  });
+  addEventListener('resize',()=>deck.scrollTo({left:cur()*window.innerWidth}));
+  sync();
+</script>
+</body>
+</html>
