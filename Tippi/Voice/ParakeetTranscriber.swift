@@ -18,7 +18,11 @@ enum SpeechEngine {
     }
 
     static var current: Kind {
-        get { Kind(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .whisper }
+        // Default: Parakeet v3 — markedly faster and lower WER than Whisper
+        // small, stays in memory (no per-dictation cold start), and self-
+        // downloads its model on first use. Users who explicitly picked an
+        // engine keep their choice (a stored value overrides this default).
+        get { Kind(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .parakeet }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: key) }
     }
 

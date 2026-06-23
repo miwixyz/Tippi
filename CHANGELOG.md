@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.1] — 2026-06-23
+
+### Changed
+- **Parakeet v3 is now the default speech engine.** It transcribes markedly faster than Whisper small with about half the word-error rate for German and other European languages, stays in memory after first load (no per-dictation cold start), and self-downloads its ~600 MB CoreML model on first use. You can switch back to Whisper any time in Settings → Voice → Speech engine; if you had already picked an engine, your choice is preserved.
+
 ## [1.12.0] — 2026-06-23
 
 ### Added
