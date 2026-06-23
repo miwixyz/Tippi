@@ -30,10 +30,12 @@ That's it. That's the product.
 
 ## What's in the box
 
-- **22 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
+- **24 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
+- **Type or speak a free-form instruction** — select text, then type ("reply to this email", "translate to Spanish") or speak it; Tippi applies it via AI directly
+- **Streaming preview & iterative refine** — the result streams in token by token, then refine it in place ("shorter", "more formal") before replacing
 - **Custom prompts** with `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables that adapt to context at trigger time
-- **Voice input** — push-to-talk dictation with Whisper running fully on-device (no audio leaves your Mac)
-- **6 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
+- **Voice input** — push-to-talk dictation with Whisper or Parakeet running fully on-device (no audio leaves your Mac)
+- **8 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · Scaleway (EU) · Groq · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
 - **One-click MLX setup** from Settings — no Terminal needed
 - **Auto-updates** via Sparkle 2
 - **DE + EN UI**

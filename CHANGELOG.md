@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.12.0] — 2026-06-23
+
+### Added
+- **Give Tippi a free-form instruction — typed or spoken.** With text selected, the popup now has an input field at the bottom: type an instruction (e.g. "reply to this email politely", "translate to Spanish") and press Return, or tap the mic and speak it. Tippi follows it literally — transform instructions (translate, summarize, shorten) operate on the text as-is, reaction instructions (reply, respond) produce an answer. The field auto-focuses so you can type immediately; press ↓ to jump back to the prompt list. (The spoken path existed before; typing is new, and the underlying instruction prompt was rewritten to distinguish transform-vs-react so "translate a question" no longer answers the question.)
+- **Streaming preview.** Results now stream in token by token in the preview window instead of appearing all at once after a wait — perceived latency drops sharply. Real streaming for OpenAI, Mistral, Scaleway and Groq; other providers show the result in one piece.
+- **Iterative refine.** Once a result is ready, refine it in place: type a follow-up ("shorter", "more formal", "add a greeting") in the new Refine field and it rewrites the current result. Chain as many as you like.
+- **Preview keyboard shortcuts.** Return = Replace, ⌘C = Copy, ⌘Return = Append, ⌘R = Regenerate, Esc = Cancel.
+- **Optional provider fallback.** Providers tab → "Fall back to other providers on error": if the chosen provider fails (rate limit, server or network error), Tippi retries the next configured provider. Off by default (it sends your text to a second provider).
+
+### Changed
+- **Smarter default provider.** With no explicit default set, Tippi now uses the first provider you've actually added a key for, instead of always trying OpenAI first and falling through to a cold-starting local model.
+- **Truncated results are no longer discarded silently.** When a model hits its output length limit mid-stream, the partial text is kept and flagged "Cut off" so you can decide, rather than failing outright.
+- **Cloud request timeouts raised 30 s → 60 s** to accommodate reasoning models.
+- **Faster text capture/insertion.** Replaced fixed 150 ms focus-switch sleeps with an early-exit poll on the source app becoming active (≈15–30 ms for snappy apps; capped for slow ones).
+- **Faster repeat dictation.** The Whisper model cache is no longer re-read on every recording start once warmed; language detection only samples the first 500 characters.
+
+### Fixed
+- **Provider ordering used an invalid sort predicate** (undefined behaviour in Swift's `sort`) — replaced with a stable reorder.
+- **Truncated cloud responses were inserted silently.** OpenAI, Mistral, Scaleway, Groq and Gemini now detect `finish_reason`/`MAX_TOKENS` and surface a truncation instead of pasting a cut-off rewrite (previously only Anthropic and MLX did). Gemini no longer crashes on a SAFETY-blocked response.
+- **Mach port leak** in the Input-Monitoring permission probe (one leaked per check, run up to 10× at startup).
+- **Two separate audio recorders** (dictation hotkey vs. popup mic) could collide on the same hardware/temp file — now a single shared recorder.
+- **Cancelling a dictation left whisper-cli running** (CPU/Metal) until it finished; cancellation now reliably terminates it and a cancel-before-launch can't spawn an orphan.
+- **Temp recording WAVs could be orphaned** on certain exit paths; the recorder now clears its URL after handoff and stale recordings are swept at launch.
+- **MLX** no longer inserts a thinking model's raw reasoning text as the result, and warns when an already-running server on the port serves a different model than configured.
+- **Whisper model deletion** during an active download no longer races the download writing the file back.
+- Removed dead code and a deprecated `activate(ignoringOtherApps:)` call; replaced the brittle `objc_setAssociatedObject` download-progress retainer with a real property; hardened Accessibility type casts. The four OpenAI-compatible providers were de-duplicated into a shared request path (~200 LOC removed).
+- Removed an emoji from a UI status string (pictogram/text policy).
+
 ## [1.11.1] — 2026-06-12
 
 ### Fixed

@@ -23,8 +23,10 @@ enum PromptVariableResolver {
             self.appName = appName
             self.clipboardText = NSPasteboard.general.string(forType: .string) ?? ""
 
+            // Language detection only needs a sample — running it over a long
+            // selection wastes time for no accuracy gain.
             let recognizer = NLLanguageRecognizer()
-            recognizer.processString(selectedText)
+            recognizer.processString(String(selectedText.prefix(500)))
             if let code = recognizer.dominantLanguage?.rawValue {
                 self.language = Locale(identifier: "en").localizedString(forLanguageCode: code) ?? code
             } else {

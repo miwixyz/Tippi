@@ -104,13 +104,15 @@
 "preview.regenerate" = "Regenerate";
 "preview.retry" = "Try again";
 "preview.fallback.badge" = "Local demo · no API key";
+"preview.refine.placeholder" = "Refine: e.g. shorter, more formal, reply to it…";
+"preview.refine.apply" = "Refine";
+"preview.truncated.badge" = "Cut off (length limit)";
+"preview.truncated.empty" = "The response was cut off before any text arrived (output length limit). Try a shorter input.";
 
 "setup.tryIt.clickCount" = "Button clicked %d time(s) ✓";
 "setup.tryIt.hotkey.heading" = "Once permissions are granted, the global hotkey is:";
 
 /* Phase 2 demo alerts */
-"alert.noText.title" = "No text selected";
-"alert.noText.body" = "Select some text in any app, then trigger Tippi again.";
 "alert.preview.title" = "Tippi — Captured Text";
 "alert.preview.body" = "Captured text:\n\n%@\n\nSource app: %@\nMethod: %@\n\nPick a demo transformation to paste back, or copy to clipboard.";
 "alert.preview.uppercase" = "Replace with UPPERCASE (demo)";
@@ -214,6 +216,8 @@
 "settings.providers.empty" = "No key saved yet";
 "settings.providers.default" = "Default Provider";
 "settings.providers.default.hint" = "Tippi will try this provider first when you trigger a prompt. If no key is set, it falls through to the next configured one.";
+"settings.providers.fallback" = "Fall back to other providers on error";
+"settings.providers.fallback.hint" = "If the chosen provider fails (rate limit, server or network error), try the next configured provider. This sends your text to a second provider, so it is off by default.";
 "settings.providers.apiKey" = "API key (sk-…)";
 "settings.providers.model" = "Model:";
 "settings.providers.savedFlash" = "Saved ✓";
@@ -243,6 +247,10 @@
 "settings.tab.help" = "Help";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
+"settings.help.instructTitle" = "Give an instruction — type or speak";
+"settings.help.instructBody" = "Besides the built-in prompts, you can give Tippi a free-form instruction for the selected text. Trigger Tippi with text selected — an input field sits at the bottom of the popup. Type your instruction (e.g. \"reply to this email politely\", \"translate to Spanish\") and press Return, or tap the mic button and speak it. Tippi follows the instruction literally: transform instructions (translate, summarize, shorten) operate on the text as-is, while reaction instructions (reply, respond) produce an answer. The field auto-focuses so you can type right away; press ↓ to jump back to the prompt list.";
+"settings.help.previewTitle" = "Live preview & refine";
+"settings.help.previewBody" = "The result streams in token by token, so you see it forming instead of waiting for the whole answer. Once it's ready you can refine it in place: type a follow-up in the \"Refine\" field (e.g. \"shorter\", \"more formal\", \"add a greeting\") and it rewrites the current result — chain as many refinements as you like. Keyboard shortcuts in the preview: Return = Replace, ⌘C = Copy, ⌘Return = Append, ⌘R = Regenerate, Esc = Cancel. If a result hits the model's length limit it's kept but flagged \"Cut off\" so you don't replace a truncated text by accident.";
 "settings.help.promptsTitle" = "Custom prompts";
 "settings.help.promptsBody" = "Go to the Prompts tab to add your own. Each prompt needs a title, an SF Symbol name, and an instruction for the AI. The selected text is sent automatically — no placeholder needed.";
 "settings.help.localActionsTitle" = "Local quick actions";
@@ -253,7 +261,7 @@
 "settings.help.importExportTitle" = "Share & import prompts";
 "settings.help.importExportBody" = "Export your custom prompts as a .tippipack file to share them with teammates or keep a backup.\n\nExport all — click \"Export All\" at the top of the Prompts tab.\nExport one — click the ↑ icon next to any prompt.\nImport — click \"Import\", select a .tippipack file, then choose Merge (keeps your existing prompts) or Replace (replaces them).\n\nImported prompts always get fresh IDs, so they never conflict with existing ones.";
 "settings.help.apiTitle" = "AI providers & keys";
-"settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 8 providers — OpenAI, Anthropic, Gemini, Mistral, Scaleway (EU, Paris) and Groq (cloud, BYOK), plus Ollama and MLX (both fully local, free, no key needed). Keys are stored securely in the macOS Keychain.";
+"settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 8 providers — OpenAI, Anthropic, Gemini, Mistral, Scaleway (EU, Paris) and Groq (cloud, BYOK), plus Ollama and MLX (both fully local, free, no key needed). Keys are stored securely in the macOS Keychain.\n\nDefault provider: Tippi tries your chosen default first; if it has no key it falls through to the next configured one. With no explicit default it automatically uses the first provider you've added a key for, so a fresh install never stalls on a cold local model. Optional fallback (Providers tab): if your provider fails (rate limit, server or network error) Tippi can retry the next configured provider — off by default since it sends your text to a second provider.";
 
 "settings.help.linksTitle" = "Links & resources";
 "settings.help.linksBody" = "[GitHub repository](https://github.com/miwixyz/Tippi) — public, MIT-licensed, source code, issues, releases.\n\n[Landing page](https://miwixyz.github.io/Tippi/) — bilingual EN/DE, features, screenshots, download.\n\n[One-pager](https://github.com/miwixyz/Tippi/blob/main/docs/ONE-PAGER.md) — for Hacker News, Reddit, sharing with friends; what Tippi is in 60 seconds.\n\n[Changelog](https://github.com/miwixyz/Tippi/blob/main/CHANGELOG.md) — every change, every version.\n\n[Latest release](https://github.com/miwixyz/Tippi/releases/latest) — DMG download, release notes, checksums.";
@@ -331,6 +339,7 @@
 "voice.mic.transcribing" = "Transcribing…";
 "voice.directInsert" = "Insert directly";
 "voice.promptTitle" = "Voice instruction";
+"voice.instruction.placeholder" = "Or type instruction…";
 "voice.setup.banner.title" = "Voice Input not configured";
 "voice.setup.banner.body" = "Download a Whisper model in Settings → Voice to enable dictation.";
 "voice.error.noBinary" = "whisper-cli not found. Please reinstall Tippi.";

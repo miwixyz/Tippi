@@ -31,6 +31,7 @@ struct SettingsView: View {
 private struct GeneralSettingsTab: View {
     @State private var autostart: Bool = false
     @State private var autostartStatus: String = ""
+    @State private var autostartIsError = false
     @AppStorage(LocalQuickActionSettings.showActionsKey) private var showLocalQuickActions: Bool = true
 
     var body: some View {
@@ -43,7 +44,7 @@ private struct GeneralSettingsTab: View {
                 if !autostartStatus.isEmpty {
                     Text(autostartStatus)
                         .font(.caption)
-                        .foregroundStyle(autostartStatus.hasPrefix("⚠️") ? Color.orange : Color.secondary)
+                        .foregroundStyle(autostartIsError ? Color.orange : Color.secondary)
                 }
             }
 
@@ -60,16 +61,10 @@ private struct GeneralSettingsTab: View {
     }
 
     private func refresh() {
-        if #available(macOS 13.0, *) {
-            autostart = SMAppService.mainApp.status == .enabled
-        }
+        autostart = SMAppService.mainApp.status == .enabled
     }
 
     private func toggleAutostart(_ enabled: Bool) {
-        guard #available(macOS 13.0, *) else {
-            autostartStatus = "⚠️ Needs macOS 13+"
-            return
-        }
         do {
             if enabled {
                 try SMAppService.mainApp.register()
@@ -78,8 +73,10 @@ private struct GeneralSettingsTab: View {
                 try SMAppService.mainApp.unregister()
                 autostartStatus = String(localized: "settings.general.autostart.disabled")
             }
+            autostartIsError = false
         } catch {
-            autostartStatus = "⚠️ \(error.localizedDescription)"
+            autostartStatus = error.localizedDescription
+            autostartIsError = true
             autostart = SMAppService.mainApp.status == .enabled
         }
     }
@@ -207,11 +204,13 @@ private struct HotkeysTab: View {
 private struct ProvidersTab: View {
     @State private var selectedProvider: String = LLMRouter.preferredProviderID
     @State private var refreshTick: Int = 0
+    @State private var allowFallback: Bool = UserDefaults.standard.bool(forKey: "allowProviderFallback")
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 defaultPickerCard
+                fallbackCard
                 ForEach(LLMRouter.allProviders.indices, id: \.self) { index in
                     let provider = LLMRouter.allProviders[index]
                     ProviderRow(provider: provider, refreshTick: refreshTick) {
@@ -222,6 +221,24 @@ private struct ProvidersTab: View {
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private var fallbackCard: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle(isOn: $allowFallback) {
+                    Text(String(localized: "settings.providers.fallback"))
+                        .font(.headline)
+                }
+                .onChange(of: allowFallback) { _, new in
+                    UserDefaults.standard.set(new, forKey: "allowProviderFallback")
+                }
+                Text(String(localized: "settings.providers.fallback.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(6)
+        }
     }
 
     private var defaultPickerCard: some View {
@@ -931,6 +948,16 @@ private struct HelpTab: View {
                     icon: "cursorarrow.rays",
                     title: String(localized: "settings.help.howTitle"),
                     body: String(localized: "settings.help.howBody")
+                )
+                helpSection(
+                    icon: "keyboard",
+                    title: String(localized: "settings.help.instructTitle"),
+                    body: String(localized: "settings.help.instructBody")
+                )
+                helpSection(
+                    icon: "sparkles",
+                    title: String(localized: "settings.help.previewTitle"),
+                    body: String(localized: "settings.help.previewBody")
                 )
                 helpSection(
                     icon: "text.bubble",

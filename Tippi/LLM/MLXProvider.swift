@@ -72,9 +72,13 @@ struct MLXProvider: LLMProvider {
         // A truncated rewrite must never be inserted — it would silently
         // destroy the tail of the user's selection.
         guard first.finish_reason != "length" else { throw LLMError.truncated }
-        let text = first.message.content ?? first.message.reasoning ?? ""
+        // Use `content` only. Thinking models also expose `reasoning` (their
+        // internal chain-of-thought) — inserting that as the result would dump
+        // "Let me think…" scratch text into the user's document, so treat an
+        // empty content as an unusable response instead.
+        let text = (first.message.content ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw LLMError.invalidResponse }
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text
     }
 
     private func maxTokens(for userText: String) -> Int {

@@ -17,8 +17,7 @@ enum TextInsertion {
         }
 
         insertLog.notice("AX replace failed → clipboard+paste fallback")
-        app?.activate(options: [.activateIgnoringOtherApps])
-        try? await Task.sleep(nanoseconds: 150_000_000)
+        if let app { await TextCapture.activateAndWaitForFocus(app) }
         await paste(text: text)
         insertLog.notice("clipboard paste done")
     }
@@ -35,8 +34,7 @@ enum TextInsertion {
             return
         }
 
-        app?.activate(options: [.activateIgnoringOtherApps])
-        try? await Task.sleep(nanoseconds: 150_000_000)
+        if let app { await TextCapture.activateAndWaitForFocus(app) }
         await paste(attributedText: attributedText, fallbackPlainText: fallbackPlainText)
     }
 
@@ -52,8 +50,7 @@ enum TextInsertion {
     /// Use when AX has already been attempted and confirmed to be a no-op
     /// (e.g. `.ignored` outcome from `replaceViaElement`).
     static func insertViaClipboard(_ text: String, into app: NSRunningApplication?) async {
-        app?.activate(options: [.activateIgnoringOtherApps])
-        try? await Task.sleep(nanoseconds: 150_000_000)
+        if let app { await TextCapture.activateAndWaitForFocus(app) }
         await paste(text: text)
     }
 
@@ -258,7 +255,8 @@ enum TextInsertion {
             systemWide,
             kAXFocusedUIElementAttribute as CFString,
             &focusedRef
-        ) == .success, let focusedRaw = focusedRef else {
+        ) == .success, let focusedRaw = focusedRef,
+              CFGetTypeID(focusedRaw) == AXUIElementGetTypeID() else {
             return false
         }
 
@@ -354,7 +352,8 @@ enum TextInsertion {
             appElement,
             kAXFocusedUIElementAttribute as CFString,
             &focusedRef
-        ) == .success, let focusedRaw = focusedRef else {
+        ) == .success, let focusedRaw = focusedRef,
+              CFGetTypeID(focusedRaw) == AXUIElementGetTypeID() else {
             return nil
         }
         return (focusedRaw as! AXUIElement)

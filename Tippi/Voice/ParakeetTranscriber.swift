@@ -98,6 +98,16 @@ final class ParakeetStatus: ObservableObject {
 
 // MARK: - Parakeet (FluidAudio / CoreML)
 
+enum ParakeetError: LocalizedError {
+    case noOutput
+
+    var errorDescription: String? {
+        switch self {
+        case .noOutput: return "Parakeet produced no transcription."
+        }
+    }
+}
+
 actor ParakeetTranscriber {
     static let shared = ParakeetTranscriber()
 
@@ -124,10 +134,18 @@ actor ParakeetTranscriber {
                                 ParakeetStatus.shared.phase = .downloading(progress.fractionCompleted)
                             case .compiling:
                                 ParakeetStatus.shared.phase = .loading
+                            @unknown default:
+                                // Future FluidAudio phases shouldn't break the
+                                // build or strand the status — treat as loading.
+                                ParakeetStatus.shared.phase = .loading
                             }
                         }
                     }
                 )
+                // downloadAndLoad finished; the CoreML model still has to be
+                // loaded into memory — surface that as a distinct loading state
+                // instead of leaving the last download/compile phase showing.
+                await MainActor.run { ParakeetStatus.shared.phase = .loading }
                 let mgr = AsrManager()
                 try await mgr.loadModels(models)
                 await MainActor.run { ParakeetStatus.shared.phase = .ready }
@@ -157,7 +175,14 @@ actor ParakeetTranscriber {
         // not outlive the transcription attempt.
         defer { try? FileManager.default.removeItem(at: wavURL) }
 
+        // Honour user cancellation at the points we control. The CoreML/ANE
+        // inference itself runs in-process and can't be killed mid-flight like
+        // the whisper-cli subprocess, but bailing before model load and before
+        // returning keeps a cancelled dictation from inserting stale text.
+        try Task.checkCancellation()
         let manager = try await loadedManager()
+        try Task.checkCancellation()
+
         var decoderState = TdtDecoderState.make()
         // Reuse the Whisper language setting as a script hint; "auto" or
         // unsupported codes fall back to Parakeet's own detection.
@@ -167,9 +192,10 @@ actor ParakeetTranscriber {
             decoderState: &decoderState,
             language: languageHint
         )
+        try Task.checkCancellation()
 
         let text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { throw WhisperError.noOutput }
+        guard !text.isEmpty else { throw ParakeetError.noOutput }
         return text
     }
 }

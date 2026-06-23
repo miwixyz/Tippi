@@ -97,7 +97,11 @@ final class PermissionsManager: ObservableObject {
             return IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
         }
         // Tap created — Input Monitoring works. Clean up immediately.
+        // tapCreate returns a CFMachPort; disabling alone doesn't free it —
+        // invalidate it too, or each probe (10× during startup poll + on every
+        // permission change) leaks a Mach port.
         CGEvent.tapEnable(tap: tap, enable: false)
+        CFMachPortInvalidate(tap)
         return true
     }
 }

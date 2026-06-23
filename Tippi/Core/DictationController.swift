@@ -116,7 +116,13 @@ final class DictationController: ObservableObject {
 
     @Published private(set) var state: State = .idle
 
-    private let recorder = AudioRecorder()
+    private let recorder: AudioRecorder
+
+    /// Inject the shared `AudioRecorder` so dictation and the popup mic never
+    /// run two recorders against the same audio hardware/temp file.
+    init(recorder: AudioRecorder) {
+        self.recorder = recorder
+    }
 
     /// Guards against a second hotkey press while `start()` is suspended in
     /// the mic-permission prompt — `state` is still `.idle` at that point, so

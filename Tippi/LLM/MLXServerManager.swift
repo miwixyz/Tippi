@@ -76,9 +76,15 @@ final class MLXServerManager: ObservableObject {
             throw MLXError.serverNotFound
         }
 
-        // If a compatible server is already listening on the configured port,
-        // use it instead of killing user-owned MLX processes.
+        // If a server is already listening on the configured port, reuse it
+        // instead of killing user-owned MLX processes. Record the model it is
+        // actually serving — if that differs from the configured one, requests
+        // would silently run against the wrong model, so surface it via
+        // `activeModelID` (shown in history/UI) and log a warning.
         if let existingModelID = await fetchActiveModelID(port: port) {
+            if existingModelID != model {
+                NSLog("Tippi MLX: port \(port) already serves '\(existingModelID)', not the configured '\(model)' — using the running model.")
+            }
             activeModelID = existingModelID
             state = .running(port: port)
             return port

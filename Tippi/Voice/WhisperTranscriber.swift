@@ -110,17 +110,33 @@ enum WhisperConfig {
 // MARK: - Transcriber
 
 struct WhisperTranscriber {
+    /// Path the cache was last warmed for — skip re-reading the same 0.5 GB
+    /// file on every recording start once it's already in the OS cache.
+    private static let prewarmLock = NSLock()
+    nonisolated(unsafe) private static var lastPrewarmedPath: String?
+
     /// Reads the model file once so it sits in the OS file cache before
     /// whisper-cli (a fresh process per transcription) loads it. A cold load
     /// of the ~0.5 GB model otherwise adds many seconds to the first
     /// dictation — calling this while the user is still speaking hides it.
+    /// Skips the (re-)read when the same model was already warmed this session.
     static func prewarmModelCache() {
         let path = WhisperConfig.modelPath
-        guard !path.isEmpty, let handle = FileHandle(forReadingAtPath: path) else { return }
+        guard !path.isEmpty else { return }
+
+        prewarmLock.lock()
+        let alreadyWarmed = (lastPrewarmedPath == path)
+        prewarmLock.unlock()
+        guard !alreadyWarmed else { return }
+
+        guard let handle = FileHandle(forReadingAtPath: path) else { return }
         defer { try? handle.close() }
         while let chunk = try? handle.read(upToCount: 8 << 20), !chunk.isEmpty {
             _ = chunk
         }
+        prewarmLock.lock()
+        lastPrewarmedPath = path
+        prewarmLock.unlock()
     }
 
     /// Runs whisper-cli on `wavURL` and returns the transcribed text.
@@ -173,6 +189,8 @@ struct WhisperTranscriber {
     // MARK: - Private
 
     private static func runProcess(binary: String, arguments: [String]) async throws {
+        // Bail out before spawning whisper-cli if the caller already cancelled.
+        try Task.checkCancellation()
         try await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
                 try await runProcessUntilExit(binary: binary, arguments: arguments)
@@ -215,6 +233,15 @@ struct WhisperTranscriber {
                     }
                 }
 
+                // Close the cancel-vs-run race: if `onCancel` already fired
+                // before the process was stored, don't launch an orphan that
+                // would keep running (Metal/CPU) after the user cancelled.
+                guard !runner.registerStartIfNotCancelled() else {
+                    errPipe.fileHandleForReading.readabilityHandler = nil
+                    runner.resume(cont, throwing: CancellationError())
+                    return
+                }
+
                 do {
                     try process.run()
                 } catch {
@@ -231,8 +258,16 @@ struct WhisperTranscriber {
 private final class ProcessRunner: @unchecked Sendable {
     private let lock = NSLock()
     private var didResume = false
+    private var cancelRequested = false
     private var errorData = Data()
     var process: Process?
+
+    /// Returns `true` if cancellation already happened (caller should abort the
+    /// launch instead of spawning an orphan process).
+    func registerStartIfNotCancelled() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return cancelRequested
+    }
 
     func appendError(_ data: Data) {
         guard !data.isEmpty else { return }
@@ -254,6 +289,7 @@ private final class ProcessRunner: @unchecked Sendable {
 
     func terminate() {
         lock.lock()
+        cancelRequested = true
         let proc = process
         lock.unlock()
         guard let proc, proc.isRunning else { return }

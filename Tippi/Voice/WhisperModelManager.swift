@@ -39,15 +39,8 @@ final class WhisperModelManager: NSObject, ObservableObject {
     @Published var downloadError: String?    = nil
 
     private var downloadTask: URLSessionDownloadTask?
-    private var session: URLSession?
+    private var progressObservation: NSKeyValueObservation?
     private var destinationURL: URL?
-
-    override init() {
-        super.init()
-        let cfg = URLSessionConfiguration.default
-        let s = URLSession(configuration: cfg, delegate: nil, delegateQueue: .main)
-        self.session = s
-    }
 
     func download(_ model: WhisperModel) {
         guard downloadingModel == nil else { return }
@@ -124,14 +117,14 @@ final class WhisperModelManager: NSObject, ObservableObject {
             }
         }
 
-        // Track progress via observation
-        let observation = task.progress.observe(\.fractionCompleted) { [weak self] progress, _ in
+        // Track progress via observation, retained as a property for the
+        // download's lifetime (stable storage instead of a string-keyed
+        // associated object).
+        progressObservation = task.progress.observe(\.fractionCompleted) { [weak self] progress, _ in
             Task { @MainActor [weak self] in
                 self?.downloadProgress = progress.fractionCompleted
             }
         }
-        // Keep observation alive for the duration of the download
-        objc_setAssociatedObject(task, "progressObs", observation, .OBJC_ASSOCIATION_RETAIN)
 
         downloadTask = task
         task.resume()
@@ -140,11 +133,17 @@ final class WhisperModelManager: NSObject, ObservableObject {
     func cancel() {
         downloadTask?.cancel()
         downloadTask = nil
+        progressObservation = nil
         downloadingModel = nil
         downloadProgress = 0
     }
 
     func delete(_ model: WhisperModel) {
+        // Cancel an in-flight download of this exact model first — otherwise the
+        // completion handler would write the file back right after we delete it.
+        if downloadingModel == model.id {
+            cancel()
+        }
         let wasActive = WhisperConfig.modelPath == model.localURL.path
         try? FileManager.default.removeItem(at: model.localURL)
         // Clear a stored path pointing at the deleted file so the config

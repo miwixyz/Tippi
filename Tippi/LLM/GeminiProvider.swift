@@ -26,7 +26,7 @@ struct GeminiProvider: LLMProvider {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 30
+        request.timeoutInterval = 60
         request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
@@ -58,12 +58,22 @@ struct GeminiProvider: LLMProvider {
                     struct Part: Decodable { let text: String }
                     let parts: [Part]
                 }
-                let content: Content
+                // content/parts can be absent when the generation was blocked
+                // (SAFETY) or cut off (MAX_TOKENS) — keep optional so decoding
+                // doesn't fail before we can report the real cause.
+                let content: Content?
+                let finishReason: String?
             }
             let candidates: [Candidate]?
         }
         let decoded = try JSONDecoder().decode(ResponseBody.self, from: data)
-        guard let text = decoded.candidates?.first?.content.parts.first?.text else {
+        guard let candidate = decoded.candidates?.first else {
+            throw LLMError.invalidResponse
+        }
+        // A truncated rewrite must never be inserted — it would silently
+        // destroy the tail of the user's text.
+        guard candidate.finishReason != "MAX_TOKENS" else { throw LLMError.truncated }
+        guard let text = candidate.content?.parts.first?.text else {
             throw LLMError.invalidResponse
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)

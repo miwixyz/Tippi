@@ -12,6 +12,18 @@ struct CapturedText {
 
 @MainActor
 enum TextCapture {
+    /// Activates `app` and waits until it actually becomes frontmost, polling in
+    /// short steps with an early exit. Snappy apps return in ~15–30 ms instead
+    /// of a flat 150 ms wait; sluggish/non-cooperating apps are capped at
+    /// ~300 ms so we never stall. Shared by capture and insertion.
+    static func activateAndWaitForFocus(_ app: NSRunningApplication) async {
+        app.activate()
+        for _ in 0..<20 {  // up to ~300 ms, exits as soon as the app is active
+            if app.isActive { return }
+            try? await Task.sleep(nanoseconds: 15_000_000)
+        }
+    }
+
     static func captureSelectedText(sourceApp: NSRunningApplication?) async -> CapturedText? {
         let app = resolvedSourceApp(sourceApp)
         captureLog.notice("capture start app=\(app?.localizedName ?? "nil", privacy: .public) trusted=\(AXIsProcessTrusted())")
@@ -32,8 +44,7 @@ enum TextCapture {
 
         // Phase 2: activate source app and retry.
         if let app {
-            app.activate(options: [.activateIgnoringOtherApps])
-            try? await Task.sleep(nanoseconds: 150_000_000)
+            await activateAndWaitForFocus(app)
 
             if let text = readViaAccessibility(in: app), !text.isEmpty {
                 captureLog.notice("AX ok \(text.count) chars")
@@ -77,7 +88,8 @@ enum TextCapture {
         }
 
         var range = CFRange()
-        guard AXValueGetValue(rangeValue as! AXValue, .cfRange, &range), range.length > 0 else {
+        guard CFGetTypeID(rangeValue) == AXValueGetTypeID(),
+              AXValueGetValue(rangeValue as! AXValue, .cfRange, &range), range.length > 0 else {
             return nil
         }
         return (focused, range)
@@ -117,7 +129,7 @@ enum TextCapture {
 
         var windowRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &windowRef) == .success,
-           let windowRaw = windowRef {
+           let windowRaw = windowRef, CFGetTypeID(windowRaw) == AXUIElementGetTypeID() {
             return findSelectedText(in: windowRaw as! AXUIElement, depth: 0)
         }
 
@@ -148,7 +160,8 @@ enum TextCapture {
             appElement,
             kAXFocusedUIElementAttribute as CFString,
             &focusedRef
-        ) == .success, let focusedRaw = focusedRef else {
+        ) == .success, let focusedRaw = focusedRef,
+              CFGetTypeID(focusedRaw) == AXUIElementGetTypeID() else {
             return nil
         }
         return (focusedRaw as! AXUIElement)

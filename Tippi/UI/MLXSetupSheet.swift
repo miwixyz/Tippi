@@ -10,7 +10,6 @@ struct MLXSetupSheet: View {
     @State private var logLines: [String] = []
     @State private var running = false
     @State private var finished = false
-    @State private var succeeded = false
     @State private var streamTask: Task<Void, Never>?
 
     private let manualCommands = "uv tool install mlx-lm"
@@ -116,6 +115,8 @@ struct MLXSetupSheet: View {
                         .foregroundStyle(.secondary)
                     Button(String(localized: "mlx.install.cancel")) {
                         streamTask?.cancel()
+                        streamTask = nil
+                        running = false
                         dismiss()
                     }
                 } else if finished {
@@ -167,15 +168,10 @@ struct MLXSetupSheet: View {
     }
 
     private func phaseState(_ target: MLXInstaller.Phase) -> RowState {
-        // Skipped: uv already installed and we're past the uv phase
-        if target == .installingUV && MLXInstaller.isUVInstalled
-            && !running && logLines.isEmpty == false && !finished {
-            // Heuristic only used while running; below covers active/done.
-        }
         switch (phase, target) {
         case (.installingUV, .installingUV):       return .active
         case (.installingMLXLM, .installingMLXLM): return .active
-        case (.installingMLXLM, .installingUV):    return MLXInstaller.isUVInstalled ? .done : .done
+        case (.installingMLXLM, .installingUV):    return .done
         case (.done, _):                            return .done
         case (.failed, .installingUV):              return MLXInstaller.isUVInstalled ? .done : .failed
         case (.failed, .installingMLXLM):           return .failed
@@ -189,7 +185,6 @@ struct MLXSetupSheet: View {
         guard !running else { return }
         running = true
         finished = false
-        succeeded = false
         logLines.append("")
         logLines.append("→ Starting installation…")
 
@@ -200,10 +195,9 @@ struct MLXSetupSheet: View {
                     if !line.isEmpty { logLines.append(line) }
                 case .phaseChanged(let p):
                     phase = p
-                case .finished(let ok):
+                case .finished:
                     running = false
                     finished = true
-                    succeeded = ok
                 }
             }
         }

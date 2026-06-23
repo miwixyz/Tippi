@@ -85,7 +85,25 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         recorder = nil
         isRecording = false
         level = 0
-        return outputURL
+        // Hand the URL over and forget it — otherwise a stop() without a
+        // following transcription (which owns the cleanup `defer`) would leave
+        // the temp WAV behind, and a stale URL could be returned twice.
+        let url = outputURL
+        outputURL = nil
+        return url
+    }
+
+    /// Best-effort sweep of orphaned recordings left by a crash/force-quit.
+    /// Safe to call at app launch (no transcription is in flight then).
+    static func cleanupOrphanedRecordings() {
+        let tmp = FileManager.default.temporaryDirectory
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: tmp, includingPropertiesForKeys: nil
+        ) else { return }
+        for f in files where f.lastPathComponent.hasPrefix("tippi-voice-")
+            && f.pathExtension == "wav" {
+            try? FileManager.default.removeItem(at: f)
+        }
     }
 
     // MARK: - Level metering
@@ -111,6 +129,10 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
         Task { @MainActor in
+            // Only act if this error belongs to the currently active recorder —
+            // a fast restart would otherwise be aborted by a stale delegate call
+            // for the previous recording.
+            guard self.recorder === recorder else { return }
             NSLog("Tippi AudioRecorder encode error: \(error?.localizedDescription ?? "?")")
             self.stop()
         }

@@ -153,7 +153,8 @@
 
   .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
   .feature { background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-  .feature .icon { font-size: 28px; margin-bottom: 12px; }
+  .feature .icon { color: var(--accent); margin-bottom: 12px; line-height: 0; }
+  .feature .icon svg { width: 28px; height: 28px; display: block; }
   .feature h3 { font-size: 17px; margin-bottom: 8px; }
   .feature p { color: var(--ink-dim); font-size: 14px; line-height: 1.5; }
 
@@ -273,8 +274,8 @@
         <div class="n">3</div>
         <h3 data-lang="en">Replace in place</h3>
         <h3 data-lang="de">An Ort und Stelle ersetzen</h3>
-        <p data-lang="en">Preview the AI's rewrite side-by-side with the original. Replace, append, copy, or regenerate.</p>
-        <p data-lang="de">Vorschau Original vs. KI-Vorschlag nebeneinander. Ersetzen, anhängen, kopieren oder neu generieren.</p>
+        <p data-lang="en">Watch the AI's rewrite stream in side-by-side with the original, refine it in place, then replace, append, copy, or regenerate.</p>
+        <p data-lang="de">KI-Vorschlag streamt live neben dem Original ein, direkt verfeinerbar — dann ersetzen, anhängen, kopieren oder neu generieren.</p>
       </div>
     </div>
   </div>
@@ -333,42 +334,56 @@
 
     <div class="features">
       <div class="feature">
-        <div class="icon">⚡</div>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
         <h3 data-lang="en">System-wide hotkey</h3>
         <h3 data-lang="de">Systemweiter Hotkey</h3>
         <p data-lang="en">Triggers in any app. No need to switch to a chat window or paste into a different tab.</p>
         <p data-lang="de">Funktioniert in jeder App. Kein Wechsel zu Chat-Fenstern, kein Einfügen in andere Tabs.</p>
       </div>
       <div class="feature">
-        <div class="icon">🎯</div>
-        <h3 data-lang="en">22 curated built-in prompts</h3>
-        <h3 data-lang="de">22 kuratierte Built-in-Prompts</h3>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="0.5" fill="currentColor"></circle></svg></div>
+        <h3 data-lang="en">24 curated built-in prompts</h3>
+        <h3 data-lang="de">24 kuratierte Built-in-Prompts</h3>
         <p data-lang="en">Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize, and more — plus your own custom prompts.</p>
         <p data-lang="de">Verbessern, Rechtschreibung, Übersetzen, Zusammenfassen, TL;DR, LinkedIn-Post, E-Mail-Antwort, Menschlicher — plus deine eigenen Prompts.</p>
       </div>
       <div class="feature">
-        <div class="icon">🎙️</div>
-        <h3 data-lang="en">Voice input</h3>
-        <h3 data-lang="de">Spracheingabe</h3>
-        <p data-lang="en">Push-to-talk dictation with Whisper running fully on-device. No audio leaves your Mac.</p>
-        <p data-lang="de">Push-to-Talk-Diktat mit Whisper komplett lokal. Audio verlässt deinen Mac nicht.</p>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
+        <h3 data-lang="en">Type or speak an instruction</h3>
+        <h3 data-lang="de">Anweisung tippen oder sprechen</h3>
+        <p data-lang="en">Select text, then type a free-form instruction ("reply to this email", "translate to Spanish") or speak it. Tippi applies it via AI directly.</p>
+        <p data-lang="de">Text markieren, dann freie Anweisung tippen („antworte auf diese Mail", „übersetze ins Spanische") oder sprechen. Tippi wendet sie direkt per KI an.</p>
       </div>
       <div class="feature">
-        <div class="icon">🏷️</div>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4"></path><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"></path></svg></div>
+        <h3 data-lang="en">Streaming preview &amp; refine</h3>
+        <h3 data-lang="de">Live-Vorschau &amp; Verfeinern</h3>
+        <p data-lang="en">The result streams in token by token — then refine it in place ("shorter", "more formal") as many times as you like before replacing.</p>
+        <p data-lang="de">Das Ergebnis streamt Token für Token ein — danach beliebig oft verfeinern („kürzer", „förmlicher"), bevor du ersetzt.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>
+        <h3 data-lang="en">Voice input</h3>
+        <h3 data-lang="de">Spracheingabe</h3>
+        <p data-lang="en">Push-to-talk dictation with Whisper or Parakeet running fully on-device. No audio leaves your Mac.</p>
+        <p data-lang="de">Push-to-Talk-Diktat mit Whisper oder Parakeet komplett lokal. Audio verlässt deinen Mac nicht.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v2"></path><path d="M16 3h2a2 2 0 0 1 2 2v2"></path><path d="M8 21H6a2 2 0 0 1-2-2v-2"></path><path d="M16 21h2a2 2 0 0 0 2-2v-2"></path><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg></div>
         <h3 data-lang="en">Smart variables</h3>
         <h3 data-lang="de">Smarte Variablen</h3>
         <p data-lang="en"><code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code>, <code>{selected_text}</code> — your prompts adapt to context at trigger time.</p>
         <p data-lang="de"><code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code>, <code>{selected_text}</code> — Prompts passen sich beim Auslösen automatisch dem Kontext an.</p>
       </div>
       <div class="feature">
-        <div class="icon">📦</div>
-        <h3 data-lang="en">One-click MLX setup</h3>
-        <h3 data-lang="de">MLX in einem Klick</h3>
-        <p data-lang="en">Run AI fully locally on Apple Silicon. Tippi installs the toolchain from Settings — no Terminal required.</p>
-        <p data-lang="de">KI komplett lokal auf Apple Silicon. Tippi installiert die Toolchain aus den Einstellungen — kein Terminal nötig.</p>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg></div>
+        <h3 data-lang="en">One-click local AI</h3>
+        <h3 data-lang="de">Lokale KI in einem Klick</h3>
+        <p data-lang="en">Run AI fully locally on Apple Silicon. Tippi installs the MLX toolchain from Settings — no Terminal required.</p>
+        <p data-lang="de">KI komplett lokal auf Apple Silicon. Tippi installiert die MLX-Toolchain aus den Einstellungen — kein Terminal nötig.</p>
       </div>
       <div class="feature">
-        <div class="icon">🔄</div>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg></div>
         <h3 data-lang="en">Auto-updates</h3>
         <h3 data-lang="de">Auto-Updates</h3>
         <p data-lang="en">Sparkle 2 keeps Tippi current. Notarized DMG, signed with a Developer ID.</p>

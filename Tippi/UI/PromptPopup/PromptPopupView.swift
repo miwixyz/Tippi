@@ -27,6 +27,10 @@ struct PromptPopupView: View {
     // -1 means the "Direkt einfügen" row is highlighted (only when onDirectInsert != nil)
     @State private var selectedIndex: Int
     @State private var localActionMessage: String?
+    // True while the inline instruction TextField holds focus — suspends the
+    // container's keyboard navigation so typed characters and Return go to the
+    // field instead of selecting a prompt from the list.
+    @State private var instructionFieldActive = false
     @FocusState private var focused: Bool
 
     init(
@@ -86,7 +90,8 @@ struct PromptPopupView: View {
                 VoiceSection(
                     audioRecorder: audioRecorder,
                     mode: voiceMode,
-                    onTranscribed: onVoiceTranscribed ?? { _ in }
+                    onTranscribed: onVoiceTranscribed ?? { _ in },
+                    onFieldFocusChange: { instructionFieldActive = $0 }
                 )
             }
         }
@@ -100,29 +105,42 @@ struct PromptPopupView: View {
         .focusable()
         .focused($focused)
         .focusEffectDisabled()
-        .onAppear { focused = true }
+        .onAppear {
+            // In voice-prompt mode the instruction field auto-focuses itself so
+            // the user can type immediately — don't steal focus back to the
+            // container (that would disable typing). Dictate mode keeps the
+            // container focused for digit/arrow prompt navigation.
+            if !(voiceMode == .voicePrompt && audioRecorder != nil) {
+                focused = true
+            }
+        }
         .onKeyPress(.escape) {
             onDismiss()
             return .handled
         }
         .onKeyPress(.upArrow) {
+            guard !instructionFieldActive else { return .ignored }
             let minIndex = onDirectInsert != nil ? -1 : 0
             selectedIndex = max(minIndex, selectedIndex - 1)
             return .handled
         }
         .onKeyPress(.downArrow) {
+            guard !instructionFieldActive else { return .ignored }
+            guard !prompts.isEmpty else { return .handled }
             selectedIndex = min(prompts.count - 1, selectedIndex + 1)
             return .handled
         }
         .onKeyPress(.return) {
+            guard !instructionFieldActive else { return .ignored }
             if selectedIndex == -1 {
                 onDirectInsert?()
-            } else {
+            } else if prompts.indices.contains(selectedIndex) {
                 onSelect(prompts[selectedIndex])
             }
             return .handled
         }
         .onKeyPress { keyPress in
+            guard !instructionFieldActive else { return .ignored }
             guard let first = keyPress.characters.first,
                   let digit = Int(String(first)) else { return .ignored }
             if digit >= 1 && digit <= prompts.count {
@@ -156,8 +174,10 @@ struct PromptPopupView: View {
         VStack(spacing: 0) {
             ForEach(Array(prompts.enumerated()), id: \.element.id) { index, prompt in
                 PromptRow(
+                    // Only 1–9 are reachable via the digit shortcut; don't show
+                    // a badge for rows the keyboard can't trigger.
                     prompt: prompt,
-                    shortcut: "\(index + 1)",
+                    shortcut: index < 9 ? "\(index + 1)" : "",
                     isSelected: index == selectedIndex,
                     onHover: { selectedIndex = index },
                     onTap: { onSelect(prompt) }
@@ -291,16 +311,25 @@ private struct VoiceSection: View {
     var audioRecorder: AudioRecorder?
     let mode: VoiceMode
     let onTranscribed: (String) -> Void
+    var onFieldFocusChange: (Bool) -> Void = { _ in }
 
     private enum State { case idle, recording, transcribing, failed(String) }
     @SwiftUI.State private var voiceState: State = .idle
     @SwiftUI.State private var transcriptionTask: Task<Void, Never>?
+    @SwiftUI.State private var typedInstruction: String = ""
+    @FocusState private var fieldFocused: Bool
     @ObservedObject private var recorder: AudioRecorder
 
-    init(audioRecorder: AudioRecorder?, mode: VoiceMode, onTranscribed: @escaping (String) -> Void) {
+    init(
+        audioRecorder: AudioRecorder?,
+        mode: VoiceMode,
+        onTranscribed: @escaping (String) -> Void,
+        onFieldFocusChange: @escaping (Bool) -> Void = { _ in }
+    ) {
         self.audioRecorder = audioRecorder
         self.mode          = mode
         self.onTranscribed = onTranscribed
+        self.onFieldFocusChange = onFieldFocusChange
         self._recorder     = ObservedObject(wrappedValue: audioRecorder ?? AudioRecorder())
     }
 
@@ -350,16 +379,74 @@ private struct VoiceSection: View {
 
     // MARK: Voice controls
 
+    private var isIdleOrFailed: Bool {
+        if case .idle = voiceState { return true }
+        if case .failed = voiceState { return true }
+        return false
+    }
+
     @ViewBuilder
     private var voiceControls: some View {
         HStack(spacing: 10) {
             micButton
-            statusText
-            Spacer()
-            if case .recording = voiceState {
-                waveform
+            if mode == .voicePrompt && isIdleOrFailed {
+                instructionField
+            } else {
+                statusText
+                Spacer()
+                if case .recording = voiceState {
+                    waveform
+                }
             }
         }
+    }
+
+    /// Inline text field for typing an instruction (voicePrompt mode only).
+    private var instructionField: some View {
+        HStack(spacing: 4) {
+            TextField(
+                String(localized: "voice.instruction.placeholder"),
+                text: $typedInstruction
+            )
+            .textFieldStyle(.plain)
+            .font(.caption)
+            .focused($fieldFocused)
+            .onSubmit { submitTyped() }
+            .onChange(of: fieldFocused) { _, focused in
+                onFieldFocusChange(focused)
+            }
+            // Auto-focus so the user can type the instruction without a click.
+            .onAppear {
+                if mode == .voicePrompt {
+                    DispatchQueue.main.async { fieldFocused = true }
+                }
+            }
+            // ↓ hands keyboard navigation back to the prompt list.
+            .onKeyPress(.downArrow) {
+                fieldFocused = false
+                return .handled
+            }
+            // When the field leaves the tree (e.g. recording starts), the
+            // focus onChange may not fire — release the container lock here
+            // so keyboard navigation of the prompt list stays alive.
+            .onDisappear { onFieldFocusChange(false) }
+
+            if !typedInstruction.trimmingCharacters(in: .whitespaces).isEmpty {
+                Button(action: submitTyped) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .foregroundStyle(Color.accentColor)
+                        .font(.system(size: 18))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func submitTyped() {
+        let instruction = typedInstruction.trimmingCharacters(in: .whitespaces)
+        guard !instruction.isEmpty else { return }
+        typedInstruction = ""
+        onTranscribed(instruction)
     }
 
     private var micButton: some View {
@@ -375,9 +462,12 @@ private struct VoiceSection: View {
         }
         .buttonStyle(.plain)
         .disabled({
+            // No recorder → tapping would silently do nothing; disable it.
+            if audioRecorder == nil { return true }
             if case .transcribing = voiceState { return true }
             return false
         }())
+        .opacity(audioRecorder == nil ? 0.4 : 1)
     }
 
     private var micButtonBackground: Color {
@@ -508,15 +598,17 @@ private struct PromptRow: View {
                 Text(prompt.title)
                     .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .primary)
                 Spacer()
-                Text(shortcut)
-                    .font(.caption2.monospaced())
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 1)
-                    .background(
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(isSelected ? Color(nsColor: .selectedMenuItemTextColor).opacity(0.25) : Color.secondary.opacity(0.15))
-                    )
-                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
+                if !shortcut.isEmpty {
+                    Text(shortcut)
+                        .font(.caption2.monospaced())
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(isSelected ? Color(nsColor: .selectedMenuItemTextColor).opacity(0.25) : Color.secondary.opacity(0.15))
+                        )
+                        .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
+                }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
