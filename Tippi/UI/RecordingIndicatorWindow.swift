@@ -1,30 +1,63 @@
 import AppKit
 import SwiftUI
 
+// MARK: - Waveform bars
+
+private struct WaveformBars: View {
+    let level: Float
+    private let barCount = 8
+
+    var body: some View {
+        HStack(spacing: 2.5) {
+            ForEach(0..<barCount, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(Color.accentColor)
+                    .frame(width: 3, height: barHeight(for: i))
+                    .animation(.easeInOut(duration: 0.12), value: level)
+            }
+        }
+        .frame(height: 20, alignment: .center)
+    }
+
+    private func barHeight(for index: Int) -> CGFloat {
+        let base: CGFloat = 3
+        let range: CGFloat = 15
+        // Sine envelope: center bars taller, edges shorter for a natural look
+        let phase = CGFloat(index) / CGFloat(barCount - 1)
+        let envelope = sin(phase * .pi)
+        // Alternate bars nudge slightly for visual texture
+        let nudge: CGFloat = index.isMultiple(of: 2) ? 0 : CGFloat(level) * 2
+        return base + CGFloat(level) * range * (0.4 + 0.6 * envelope) + nudge
+    }
+}
+
 // MARK: - Indicator view
 
 private struct RecordingIndicatorView: View {
     let mode: RecordingIndicatorWindowController.Mode
-    @SwiftUI.State private var pulse = false
+    @ObservedObject var recorder: AudioRecorder
+    let aiEnabled: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             switch mode {
             case .recording:
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 12, height: 12)
-                    .scaleEffect(pulse ? 1.0 : 0.6)
-                    .opacity(pulse ? 1.0 : 0.5)
-                    .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
-                    .onAppear { pulse = true }
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+                WaveformBars(level: recorder.level)
                 Text(String(localized: "dictation.indicator.recording"))
                     .font(.subheadline.weight(.medium))
             case .transcribing:
                 ProgressView()
                     .controlSize(.small)
-                Text(String(localized: "dictation.indicator.transcribing"))
+                Text(aiEnabled
+                     ? String(localized: "dictation.indicator.aiPolishing")
+                     : String(localized: "dictation.indicator.transcribing"))
                     .font(.subheadline.weight(.medium))
+            }
+            if aiEnabled {
+                aiBadge
             }
         }
         .foregroundStyle(.primary)
@@ -33,6 +66,21 @@ private struct RecordingIndicatorView: View {
         .background(.regularMaterial, in: Capsule())
         .overlay(Capsule().stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
         .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+    }
+
+    /// Status hint (not a button) — the whole window ignores mouse events.
+    /// Subtle separator + sparkle + "KI" reads as a suffix to the status text,
+    /// not as an interactive control.
+    private var aiBadge: some View {
+        HStack(spacing: 4) {
+            Text("·")
+                .foregroundStyle(.tertiary)
+            Image(systemName: "sparkles")
+                .font(.system(size: 11, weight: .regular))
+            Text(String(localized: "dictation.indicator.aiSuffix"))
+                .font(.subheadline.weight(.regular))
+        }
+        .foregroundStyle(.secondary)
     }
 }
 
@@ -50,8 +98,8 @@ final class RecordingIndicatorWindowController {
 
     private var window: NSWindow?
 
-    func show(mode: Mode) {
-        let hostView = NSHostingView(rootView: RecordingIndicatorView(mode: mode))
+    func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false) {
+        let hostView = NSHostingView(rootView: RecordingIndicatorView(mode: mode, recorder: recorder, aiEnabled: aiEnabled))
         hostView.layout()
         let size = hostView.fittingSize
 

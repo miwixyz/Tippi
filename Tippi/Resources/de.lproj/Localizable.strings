@@ -330,12 +330,15 @@
 "dictation.toast.micDenied" = "Mikrofon-Zugriff verweigert";
 "dictation.indicator.recording" = "Aufnahme …";
 "dictation.indicator.transcribing" = "Transkribiere …";
+"dictation.indicator.aiPolishing" = "KI-Bereinigung …";
+"dictation.indicator.aiSuffix" = "KI";
+"dictation.toast.cleanupFallback" = "KI-Cleanup hat geantwortet statt bereinigt — Original eingefügt";
 "settings.voice.dictation.title" = "Diktat-Modus";
 "settings.voice.dictation.body" = "Diktat-Hotkey drücken zum Aufnehmen, erneut drücken zum Stoppen — Tippi transkribiert und fügt den Text an der Cursor-Position ein. Kein Popup, keine Textmarkierung nötig.";
 "settings.voice.dictation.enable" = "Diktat-Hotkey aktivieren";
 "settings.voice.dictation.needsModel" = "Whisper-Modell oben herunterladen, um Diktat zu nutzen.";
 "settings.voice.dictation.postProcess.enable" = "Transkript per KI glätten (Füllwörter raus, Satzzeichen rein)";
-"settings.voice.dictation.postProcess.body" = "Nachdem Whisper dein Diktat transkribiert hat, schickt Tippi den Rohtext durch deinen aktiven KI-Anbieter — entfernt Füllwörter (äh, ähm, halt, also), ergänzt Satzzeichen und korrigiert offensichtliche Versprecher. Kostet 1–3 s zusätzliche Latenz. Schlägt der KI-Aufruf fehl, wird stattdessen das Roh-Transkript eingefügt — Diktat bricht nie ab.";
+"settings.voice.dictation.postProcess.body" = "Nachdem Whisper dein Diktat transkribiert hat, schickt Tippi den Rohtext durch deinen aktiven KI-Anbieter — entfernt Füllwörter (äh, ähm, halt, also), ergänzt Satzzeichen und korrigiert offensichtliche Versprecher. Nur bei Eingaben ≥ 50 Zeichen (kürzere Texte profitieren nicht). Antwortet die KI statt zu bereinigen, wird das Roh-Transkript eingefügt. Kostet 1–3 s zusätzliche Latenz — Diktat bricht nie ab.";
 "settings.voice.dictation.postProcess.promptLabel" = "Glättungs-Prompt (wird als System-Prompt genutzt):";
 "settings.voice.dictation.postProcess.reset" = "Auf Standard zurücksetzen";
 "settings.voice.dictation.postProcess.providerLabel" = "Glätten via:";

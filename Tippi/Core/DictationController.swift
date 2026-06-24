@@ -14,20 +14,49 @@ enum DictationSettings {
     private static let postProcessModelKey      = "dictation.postProcess.modelOverride"
 
     /// Below this many characters Tippi skips the LLM polish entirely —
-    /// short utterances ("ja", "ok", "danke") don't benefit from cleanup
-    /// and the round-trip latency dominates user perception.
-    static let postProcessMinChars = 20
+    /// short utterances ("ja", "ok", "Hallo, wie geht's?") don't benefit
+    /// from cleanup and the round-trip latency dominates user perception.
+    /// Raised from 20 → 50 in 2026-06: weak local models (llama3.2:3B etc.)
+    /// tend to misinterpret short inputs as conversational prompts and
+    /// reply instead of cleaning the text.
+    static let postProcessMinChars = 50
 
     /// Default LLM smoothing prompt. Language-agnostic — instructs the model
     /// to keep the source language so a single prompt covers DE/EN/ES/…
+    ///
+    /// Hardened against weak instruction-followers (e.g. llama3.2:3B) which
+    /// otherwise reply conversationally to short inputs. Includes role lock,
+    /// repeated "no commentary" rule, and few-shot examples (DE + EN).
     static let defaultPostProcessPrompt = """
-    You receive a raw dictation transcript. Clean it up:
-    – remove filler words ("um", "uh", "äh", "ähm", "halt", "also", "you know")
-    – add punctuation and sensible capitalization
-    – fix obvious self-corrections (keep the corrected version, drop the false start)
-    – keep the meaning, tone and language exactly as in the input
-    – do NOT translate, summarize, or rephrase
-    Return ONLY the cleaned text, no preamble, no commentary, no quotes.
+    You are a text cleanup tool. Your ONLY job is to clean up a raw dictation transcript and return the cleaned text. You are NOT a chatbot. You NEVER respond conversationally. You NEVER ask questions. You NEVER add explanations or preamble.
+
+    Rules:
+    1. Remove filler words ("um", "uh", "äh", "ähm", "halt", "also", "you know", "irgendwie", "sozusagen")
+    2. Add punctuation and sensible capitalization
+    3. Fix obvious self-corrections (keep the corrected version, drop the false start)
+    4. Keep meaning, tone and language EXACTLY as in the input — same language in, same language out
+    5. DO NOT translate, summarize, rephrase, expand, or comment
+    6. If the input is already clean, return it verbatim
+    7. If the input is a greeting or short statement, return it cleaned — do NOT respond to it
+
+    Examples:
+
+    Input: hallo wie gehts dir
+    Output: Hallo, wie geht's dir?
+
+    Input: ich brauche äh halt noch zwei Stunden
+    Output: Ich brauche noch zwei Stunden.
+
+    Input: das war ähm nein das war gestern
+    Output: Das war gestern.
+
+    Input: hello world how are you
+    Output: Hello world, how are you?
+
+    Input: um can you send me the file
+    Output: Can you send me the file?
+
+    Now clean the following transcript. Return ONLY the cleaned text on a single line or in natural paragraphs — nothing else, no quotes, no preamble.
     """
 
     static var isEnabled: Bool {
@@ -162,7 +191,11 @@ final class DictationController: ObservableObject {
         do {
             let url = try recorder.start()
             state = .recording(url)
-            RecordingIndicatorWindowController.shared.show(mode: .recording)
+            RecordingIndicatorWindowController.shared.show(
+                mode: .recording,
+                recorder: recorder,
+                aiEnabled: DictationSettings.postProcessEnabled
+            )
             NSLog("Tippi: dictation recording started")
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.
@@ -176,7 +209,11 @@ final class DictationController: ObservableObject {
     private func beginTranscription(wavURL: URL, targetApp: NSRunningApplication?) {
         recorder.stop()
         state = .transcribing
-        RecordingIndicatorWindowController.shared.show(mode: .transcribing)
+        RecordingIndicatorWindowController.shared.show(
+            mode: .transcribing,
+            recorder: recorder,
+            aiEnabled: DictationSettings.postProcessEnabled
+        )
         transcriptionTask = Task { [weak self] in
             await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp)
         }
@@ -269,6 +306,18 @@ final class DictationController: ObservableObject {
                 NSLog("Tippi: dictation post-process returned empty — keeping raw")
                 return raw
             }
+            // Hard rule: dictation cleanup must NEVER respond conversationally.
+            // Weak local models (llama3.2:3B etc.) tend to treat short inputs
+            // as chat prompts and reply instead of cleaning. If the output
+            // looks like a chat response, fall back to the raw transcript
+            // and toast the user so the misbehavior is visible, not silent.
+            if Self.looksLikeConversationalResponse(input: trimmed, output: polished) {
+                NSLog("Tippi: dictation post-process went conversational — falling back to raw (in=\(trimmed.count), out=\(polished.count))")
+                ToastWindowController.shared.show(
+                    message: String(localized: "dictation.toast.cleanupFallback")
+                )
+                return raw
+            }
             NSLog("Tippi: dictation post-processed via \(result.providerDisplay) in \(String(format: "%.2f", result.duration))s")
             do {
                 try HistoryStore.shared.append(
@@ -289,5 +338,37 @@ final class DictationController: ObservableObject {
             NSLog("Tippi: dictation post-process failed — \(error.localizedDescription) — keeping raw")
             return raw
         }
+    }
+
+    /// Detects when the cleanup LLM treated the dictation as a prompt and
+    /// replied conversationally instead of cleaning the text. Two cheap
+    /// heuristics — length blowup and known conversational openers in
+    /// DE/EN. False positives are acceptable: the fallback is the raw
+    /// transcript (which is what the user actually said), so a wrong
+    /// trigger here just means "no cleanup this round", never "wrong text".
+    private static func looksLikeConversationalResponse(input: String, output: String) -> Bool {
+        // Length blowup: cleaning "Hallo, wie geht's dir?" should not produce
+        // 80+ characters. Threshold: 2× input AND > 80 chars (so genuine
+        // long-form cleanups aren't flagged).
+        if output.count > max(input.count * 2, 80) {
+            return true
+        }
+        let lower = output.lowercased().trimmingCharacters(in: .whitespaces)
+        let conversationalStarters = [
+            // German
+            "ja, ich", "ja ich", "ich verstehe", "ich habe verstanden",
+            "natürlich,", "natürlich kann", "klar,", "klar kann",
+            "lass mich", "ich werde", "kannst du mir", "könntest du",
+            "kein problem", "absolut", "verstanden,", "selbstverständlich",
+            // English
+            "yes, i", "yes i ", "i understand", "i can help",
+            "sure,", "sure i", "of course", "absolutely,",
+            "let me", "i'll ", "i will ", "no problem",
+            "could you", "would you", "happy to"
+        ]
+        for starter in conversationalStarters {
+            if lower.hasPrefix(starter) { return true }
+        }
+        return false
     }
 }

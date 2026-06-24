@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.12.2] — 2026-06-24
+
+### Added
+- **Waveform indicator while recording.** The dictation pill now shows an animated 8-bar waveform driven by the live microphone level instead of a pulsing red dot — you can see how loud you're speaking in real time.
+- **AI-polish badge in the indicator.** When the post-process setting is on, the pill shows a subtle "· AI" (or "· KI") suffix during transcription and an "AI cleanup…" label while the LLM is polishing, so it's always clear which step Tippi is on.
+
+### Changed
+- **Cleanup minimum raised 20 → 50 characters.** Weak local models (llama3.2:3B and similar) were misinterpreting short utterances as conversational prompts and replying instead of cleaning. Very short dictations are now inserted as-is — the latency saving outweighs any cleanup benefit anyway.
+- **Hardened cleanup prompt.** The default post-process system prompt now locks the model into a "text cleanup tool only" role with an explicit "NEVER respond conversationally" instruction and five few-shot examples (DE + EN). Prevents instruction-light models from going off-script.
+
+### Fixed
+- **AI-cleanup fallback when model responds conversationally.** Tippi now detects when the cleanup LLM replied instead of cleaned (length blowup or known conversational openers in DE/EN) and falls back to the raw transcript with a visible toast. Previously, a misbehaving local model would silently replace your dictation with an AI reply.
+
 ## [1.12.1] — 2026-06-23
 
 ### Changed

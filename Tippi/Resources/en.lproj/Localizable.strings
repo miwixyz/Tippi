@@ -351,12 +351,15 @@
 "dictation.toast.micDenied" = "Microphone access denied";
 "dictation.indicator.recording" = "Recording…";
 "dictation.indicator.transcribing" = "Transcribing…";
+"dictation.indicator.aiPolishing" = "AI cleanup…";
+"dictation.indicator.aiSuffix" = "AI";
+"dictation.toast.cleanupFallback" = "AI responded instead of cleaning — original inserted";
 "settings.voice.dictation.title" = "Dictation Mode";
 "settings.voice.dictation.body" = "Press the dictation hot key to start recording, press again to stop — Tippi transcribes and inserts the text at your cursor. No popup, no text selection needed.";
 "settings.voice.dictation.enable" = "Enable dictation hot key";
 "settings.voice.dictation.needsModel" = "Download a Whisper model above to use dictation.";
 "settings.voice.dictation.postProcess.enable" = "Polish transcript with AI (removes fillers, adds punctuation)";
-"settings.voice.dictation.postProcess.body" = "After Whisper transcribes your dictation, Tippi sends the raw text through your active LLM provider to remove filler words (\"um\", \"uh\", \"äh\"), add punctuation, and fix obvious self-corrections. Adds 1–3 s of latency. If the LLM call fails, the raw transcript is inserted instead — dictation never breaks.";
+"settings.voice.dictation.postProcess.body" = "After Whisper transcribes your dictation, Tippi sends the raw text through your active LLM provider to remove filler words (\"um\", \"uh\", \"äh\"), add punctuation, and fix obvious self-corrections. Only runs on inputs ≥ 50 characters (shorter texts do not benefit). If the AI responds conversationally instead of cleaning, the raw transcript is inserted. Adds 1–3 s of latency — dictation never breaks.";
 "settings.voice.dictation.postProcess.promptLabel" = "Polishing prompt (used as system prompt):";
 "settings.voice.dictation.postProcess.reset" = "Reset to default";
 "settings.voice.dictation.postProcess.providerLabel" = "Polish via:";
