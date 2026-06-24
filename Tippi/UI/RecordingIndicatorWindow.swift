@@ -37,6 +37,9 @@ private struct RecordingIndicatorView: View {
     let mode: RecordingIndicatorWindowController.Mode
     @ObservedObject var recorder: AudioRecorder
     let aiEnabled: Bool
+    /// Display name of the AI provider handling cleanup (e.g. "Groq", "Claude").
+    /// nil = generic AI badge. Shown only when aiEnabled is true.
+    let providerName: String?
 
     var body: some View {
         HStack(spacing: 8) {
@@ -69,15 +72,16 @@ private struct RecordingIndicatorView: View {
     }
 
     /// Status hint (not a button) — the whole window ignores mouse events.
-    /// Subtle separator + sparkle + "KI" reads as a suffix to the status text,
-    /// not as an interactive control.
+    /// When `providerName` is known (cleanup step), shows the actual provider
+    /// (e.g. "· ✨ Groq"). During transcription (provider not yet known),
+    /// falls back to the generic "· ✨ KI" label.
     private var aiBadge: some View {
         HStack(spacing: 4) {
             Text("·")
                 .foregroundStyle(.tertiary)
             Image(systemName: "sparkles")
                 .font(.system(size: 11, weight: .regular))
-            Text(String(localized: "dictation.indicator.aiSuffix"))
+            Text(providerName ?? String(localized: "dictation.indicator.aiSuffix"))
                 .font(.subheadline.weight(.regular))
         }
         .foregroundStyle(.secondary)
@@ -98,8 +102,8 @@ final class RecordingIndicatorWindowController {
 
     private var window: NSWindow?
 
-    func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false) {
-        let hostView = NSHostingView(rootView: RecordingIndicatorView(mode: mode, recorder: recorder, aiEnabled: aiEnabled))
+    func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false, providerName: String? = nil) {
+        let hostView = NSHostingView(rootView: RecordingIndicatorView(mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName))
         hostView.layout()
         let size = hostView.fittingSize
 

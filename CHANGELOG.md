@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.13.0] — 2026-06-24
+
+### Added
+- **Provider name in the dictation indicator.** When AI cleanup is enabled, the floating pill now shows the actual provider handling the polish step (e.g. "· ✨ Groq", "· ✨ Anthropic", "· ✨ Ollama") the moment cleanup starts — no more generic "· ✨ AI". The provider is resolved synchronously from your settings before the LLM call begins, so there is zero extra latency.
+- **Menubar icon pulses while Tippi is waiting for AI.** Any in-flight LLM request — popup transformation or dictation cleanup — causes the Tippi menubar icon to breathe softly (opacity 1.0 → 0.3 → 1.0, ~0.75 s cycle). Stops the moment the response arrives or the request fails. Works for all 8 providers; concurrent requests (popup + dictation) keep the animation running until the last one finishes.
+
 ## [1.12.2] — 2026-06-24
 
 ### Added

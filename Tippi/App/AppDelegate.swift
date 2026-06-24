@@ -1,6 +1,7 @@
 import AppKit
 import Carbon
 import Combine
+import QuartzCore
 import Sparkle
 import SwiftUI
 
@@ -240,6 +241,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         item.menu = menu
         statusItem = item
+
+        // Enable layer backing on the button so CAAnimations work.
+        item.button?.wantsLayer = true
+
+        // Pulse the menubar icon while any AI request is in flight.
+        // Uses Combine so the animation is always driven from the main thread.
+        AIActivityMonitor.shared.$isActive
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isActive in
+                self?.updateMenubarAIActivity(isActive)
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Starts/stops a subtle opacity-pulse animation on the menubar icon
+    /// to signal that Tippi is waiting for an AI provider response.
+    private func updateMenubarAIActivity(_ isActive: Bool) {
+        guard let layer = statusItem?.button?.layer else { return }
+        layer.removeAnimation(forKey: "aiPulse")
+        if isActive {
+            let pulse = CABasicAnimation(keyPath: "opacity")
+            pulse.fromValue = 1.0
+            pulse.toValue   = 0.3
+            pulse.duration  = 0.75
+            pulse.autoreverses = true
+            pulse.repeatCount  = .infinity
+            pulse.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            layer.add(pulse, forKey: "aiPulse")
+        } else {
+            layer.opacity = 1.0
+        }
     }
 
     @objc func checkForUpdates(_ sender: Any?) {

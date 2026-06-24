@@ -45,6 +45,13 @@ struct LLMRouter {
         UserDefaults.standard.set(id, forKey: "defaultProvider")
     }
 
+    /// Returns the human-readable display name for a provider ID without
+    /// making any API call. Used by the recording indicator to show which
+    /// provider WILL handle the dictation cleanup step before the call starts.
+    static func providerDisplayName(forID id: String) -> String? {
+        allProviders.first(where: { $0.id == id })?.displayName
+    }
+
     /// The provider to actually try first. Honours an explicit user choice; if
     /// none is set, picks the first cloud provider that has a key so a fresh
     /// install with e.g. only a Mistral key doesn't silently fall through to a
@@ -74,6 +81,8 @@ struct LLMRouter {
     /// fall through to the next configured provider. Throws `.noProviderConfigured`
     /// if nothing usable is available.
     func complete(systemPrompt: String, userText: String) async throws -> CompletionResult {
+        await MainActor.run { AIActivityMonitor.shared.begin() }
+        defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
         let preferred = await MainActor.run { effectivePreferredProviderID() }
         let ordered = orderedProviders(preferred: preferred)
         let fallbackOn = Self.allowProviderFallback
@@ -181,6 +190,8 @@ struct LLMRouter {
         forceProviderID: String,
         forceModel: String
     ) async throws -> CompletionResult {
+        await MainActor.run { AIActivityMonitor.shared.begin() }
+        defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
         guard !forceProviderID.isEmpty,
               let provider = Self.allProviders.first(where: { $0.id == forceProviderID }) else {
             return try await complete(systemPrompt: systemPrompt, userText: userText)

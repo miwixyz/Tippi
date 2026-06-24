@@ -271,6 +271,20 @@ final class DictationController: ObservableObject {
         let providerOverride = DictationSettings.postProcessProviderOverride
         let modelOverride    = DictationSettings.postProcessModelOverride
 
+        // Resolve the provider display name before the async call so the
+        // indicator pill can show "· ✨ Groq" instead of the generic "· ✨ KI"
+        // the moment cleanup starts — no extra round-trip needed.
+        let resolvedProviderID = !providerOverride.isEmpty
+            ? providerOverride
+            : LLMRouter.shared.effectivePreferredProviderID()
+        let resolvedProviderName = LLMRouter.providerDisplayName(forID: resolvedProviderID)
+        RecordingIndicatorWindowController.shared.show(
+            mode: .transcribing,
+            recorder: recorder,
+            aiEnabled: true,
+            providerName: resolvedProviderName
+        )
+
         do {
             // Hard 30s cap: dictation must never hang on the polish step.
             // A local provider cold-starting its server (MLX model load can
