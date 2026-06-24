@@ -96,6 +96,57 @@ fi
 echo "  ✓ Release notes present ($(echo "${CHANGELOG_CONTENT}" | wc -l | tr -d ' ') lines)"
 echo ""
 
+# ─── PRE-FLIGHT: Git sync check ───────────────────────────────────────────────
+# Prevent the Zwei-Mac disaster: a make-release on a stale local branch
+# would build successfully, push the DMG to GitHub, and then fail git push
+# (non-fast-forward) — having silently overwritten a release from the other Mac.
+# We check BEFORE building so the failure is fast and nothing is uploaded.
+echo "▶ [Pre-flight] Git sync check..."
+git fetch origin --quiet 2>/dev/null || { echo "  ⚠ git fetch failed — check network. Continuing anyway."; }
+
+# Check branch divergence (ahead/behind/diverged relative to origin).
+LOCAL_HEAD=$(git rev-parse HEAD)
+REMOTE_HEAD=$(git rev-parse "origin/$(git rev-parse --abbrev-ref HEAD)" 2>/dev/null || echo "")
+MERGE_BASE=$(git merge-base HEAD "origin/$(git rev-parse --abbrev-ref HEAD)" 2>/dev/null || echo "")
+
+if [ -z "${REMOTE_HEAD}" ]; then
+    echo "  ⚠ Could not resolve remote branch. No upstream sync check possible."
+elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" = "${REMOTE_HEAD}" ]; then
+    echo "  ✓ Branch is ahead of origin — changes not yet pushed (will push after release)."
+elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" = "${LOCAL_HEAD}" ]; then
+    echo "  ✗ ABORT: local branch is BEHIND origin/${CURRENT_BRANCH}."
+    echo "    The other Mac has commits you don't have. Run: git pull --rebase"
+    echo "    Then re-run make release."
+    exit 1
+elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" != "${LOCAL_HEAD}" ] && [ "${MERGE_BASE}" != "${REMOTE_HEAD}" ]; then
+    echo "  ✗ ABORT: local branch has DIVERGED from origin."
+    echo "    Local and remote have independent commits. Resolve manually before releasing."
+    echo "    Hint: git log --oneline HEAD...origin/main  (shows divergence)"
+    exit 1
+else
+    echo "  ✓ Branch in sync with origin."
+fi
+
+# Check if the release tag for this version already exists on remote.
+# If it does, that tag belongs to the other Mac's release — we must not clobber.
+EXISTING_REMOTE_TAG=$(git ls-remote --tags origin "refs/tags/v${VERSION}" 2>/dev/null | awk '{print $1}')
+if [ -n "${EXISTING_REMOTE_TAG}" ]; then
+    # Allow re-release only if the existing remote tag points to our commit or its parent.
+    LOCAL_TAGGED_COMMIT=$(git rev-list -n 1 "v${VERSION}" 2>/dev/null || echo "")
+    if [ "${EXISTING_REMOTE_TAG}" != "${LOCAL_TAGGED_COMMIT}" ] && [ "${EXISTING_REMOTE_TAG}" != "${LOCAL_HEAD}" ]; then
+        echo "  ✗ ABORT: remote tag v${VERSION} already exists and points to a DIFFERENT commit."
+        echo "    Remote tag:  ${EXISTING_REMOTE_TAG}"
+        echo "    Local HEAD:  ${LOCAL_HEAD}"
+        echo "    This version was already released from another Mac."
+        echo "    Bump the version first: ./scripts/bump-version.sh X.Y.Z"
+        exit 1
+    fi
+    echo "  ✓ Remote tag v${VERSION} matches local — safe to re-release."
+else
+    echo "  ✓ No remote tag v${VERSION} yet — this is a new release."
+fi
+echo ""
+
 # 0. Pre-release sanity: docs ↔ code drift check.
 # Catches features that were shipped in code but never reflected in user-facing
 # help texts. Fails the release if any provider or built-in prompt is mentioned
@@ -268,8 +319,16 @@ GH_RELEASE_URL="https://github.com/miwixyz/Tippi/releases/download/v${VERSION}"
 # (macOS BSD head has no -n -1 support; use awk to skip header + stop at next entry)
 RELEASE_NOTES="$(awk "/^## \[${VERSION}\]/{found=1;next} found && /^## \[/{exit} found{print}" CHANGELOG.md)"
 if gh release view "v${VERSION}" >/dev/null 2>&1; then
-    gh release upload "v${VERSION}" "${DMG_PATH}" --clobber
-    echo "  ✓ GitHub Release v${VERSION} aktualisiert"
+    # A release already exists. The pre-flight check above would have aborted
+    # if it belongs to a different commit, so we only reach here when this is
+    # a deliberate re-run on the same commit (e.g., DMG failed to upload).
+    # We still refuse --clobber by default — explicit confirmation required.
+    echo "  ⚠ GitHub Release v${VERSION} already exists."
+    echo "    This should only happen when re-running after a partial failure."
+    echo "    To upload the new DMG, run manually:"
+    echo "      gh release upload v${VERSION} ${DMG_PATH} --clobber"
+    echo "    Then continue with step 9/9 (appcast)."
+    exit 1
 else
     gh release create "v${VERSION}" "${DMG_PATH}" \
         --title "Tippi ${VERSION}" \
