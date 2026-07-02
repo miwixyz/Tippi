@@ -10,32 +10,12 @@ import Foundation
 /// Cache-hit input: $0.16. OpenRouter alternative: $0.80 / $3.40.
 ///
 /// API keys: platform.moonshot.cn
-struct KimiProvider: LLMProvider {
+struct KimiProvider: OpenAICompatibleProvider {
     let id = "kimi"
     let displayName = "Kimi (Moonshot)"
     /// Kimi K2 — flagship model, 256K context, leading SWE-Bench Pro.
     let defaultModel = "kimi-k2"
     let requiresAPIKey = true
 
-    private let endpoint = URL(string: "https://api.moonshot.cn/v1/chat/completions")!
-
-    func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
-        let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
-        return try await openAIChatComplete(
-            endpoint: endpoint,
-            apiKey: apiKey,
-            model: model.isEmpty ? defaultModel : model,
-            systemPrompt: systemPrompt,
-            userText: userText,
-            temperature: 0.3
-        )
-    }
-
-    func completeStream(systemPrompt: String, userText: String, model: String) -> AsyncThrowingStream<String, Error> {
-        openAIProviderStream(
-            id: id, displayName: displayName, endpoint: endpoint,
-            model: model.isEmpty ? defaultModel : model,
-            systemPrompt: systemPrompt, userText: userText, temperature: 0.3
-        )
-    }
+    let endpoint = URL(string: "https://api.moonshot.cn/v1/chat/completions")!
 }

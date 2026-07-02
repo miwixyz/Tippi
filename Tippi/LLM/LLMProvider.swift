@@ -79,6 +79,48 @@ enum LLMError: LocalizedError {
     }
 }
 
+// MARK: - OpenAI-compatible provider protocol
+
+/// A provider that speaks the OpenAI `/chat/completions` schema. Conforming
+/// types declare only their identity + endpoint; `complete`/`completeStream`
+/// come from the default implementation below, so the five interchangeable
+/// hosted providers (Kimi, Nebius, Groq, Scaleway, Mistral) carry no request
+/// glue. Override `temperature(for:)` for per-model tuning — OpenAI omits it
+/// for its reasoning family.
+protocol OpenAICompatibleProvider: LLMProvider {
+    var endpoint: URL { get }
+    /// Temperature for a given model. Default 0.3; return `nil` to omit the
+    /// field (reasoning models reject a custom temperature).
+    func temperature(for model: String) -> Double?
+}
+
+extension OpenAICompatibleProvider {
+    func temperature(for model: String) -> Double? { 0.3 }
+
+    func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
+        let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
+        let modelName = model.isEmpty ? defaultModel : model
+        return try await openAIChatComplete(
+            endpoint: endpoint,
+            apiKey: apiKey,
+            model: modelName,
+            systemPrompt: systemPrompt,
+            userText: userText,
+            temperature: temperature(for: modelName)
+        )
+    }
+
+    func completeStream(systemPrompt: String, userText: String, model: String) -> AsyncThrowingStream<String, Error> {
+        let modelName = model.isEmpty ? defaultModel : model
+        return openAIProviderStream(
+            id: id, displayName: displayName, endpoint: endpoint,
+            model: modelName,
+            systemPrompt: systemPrompt, userText: userText,
+            temperature: temperature(for: modelName)
+        )
+    }
+}
+
 // MARK: - Shared helpers for OpenAI-compatible providers
 
 /// Fetches the Keychain API key for a provider, throwing `.noAPIKey` when
