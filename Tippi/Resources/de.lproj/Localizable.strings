@@ -231,6 +231,8 @@
 "settings.providers.hint.mistral" = "Key bei console.mistral.ai. EU-Hosting (Paris) → DSGVO-sauber. Exzellente Deutsch-/Französisch-Qualität. Standard: mistral-small-latest (schnell, perfekt für Diktat-Glättung).";
 "settings.providers.hint.scaleway" = "Key bei console.scaleway.com → Generative APIs. EU-Hosting (Paris) für Llama 3.x / Mistral auf Scaleway-Infrastruktur — Groq-Klasse Speed mit DSGVO. Gratis-Tier (~1M Token/Monat). Standard: Llama 3.1 8B Instruct.";
 "settings.providers.hint.groq" = "Gratis-Key bei console.groq.com. Schnellster Hosted-Anbieter — Antworten unter 1 s dank LPU-Hardware. Ideal für Diktat-Glättung. Standard: Llama 3.1 8B Instant.";
+"settings.providers.hint.kimi" = "Key bei platform.moonshot.cn. Kimi K2 — 1T-MoE-Modell, SWE-Bench #1, 256K Kontext. ~15× günstiger als Opus bei vergleichbarer Coding-Qualität. Standard: kimi-k2.";
+"settings.providers.hint.nebius" = "Key bei studio.nebius.ai. 100 % EU-Datenhaltung (Amsterdam) — DSGVO-konform. Sehr günstig (~$0,10–0,30 / 1M Token). Hostet Llama 3.x, Qwen, DeepSeek. Standard: Llama 3.3 70B fast.";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
 "settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Standard: Llama 3.2 3B Fast/Balanced für niedrigere Latenz; 8B/14B-Presets wählen, wenn Qualität wichtiger ist als Tempo. Keine Cloud, kein Key.";
 "settings.providers.mlx.port" = "Port";
@@ -243,7 +245,7 @@
 "settings.tab.help" = "Hilfe";
 "settings.about.description" = "Text in einer beliebigen App markieren, ⌥⌘T drücken — KI transformiert ihn direkt an Ort und Stelle.";
 "settings.about.feature1" = "Funktioniert systemweit in jeder App";
-"settings.about.feature2" = "Bring Your Own Key — 8 KI-Anbieter (6 Cloud + 2 lokal)";
+"settings.about.feature2" = "Bring Your Own Key — 10 KI-Anbieter (8 Cloud + 2 lokal)";
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.howTitle" = "So funktioniert Tippi";
@@ -262,7 +264,7 @@
 "settings.help.importExportTitle" = "Prompts teilen & importieren";
 "settings.help.importExportBody" = "Exportiere deine eigenen Prompts als .tippipack-Datei — zum Teilen oder als Backup.\n\nAlle exportieren — klick auf Alle exportieren oben im Prompts-Tab.\nEinzeln exportieren — klick auf das ↑-Symbol neben einem Prompt.\nImportieren — klick auf Importieren, wähle eine .tippipack-Datei, dann: Hinzufügen (bestehende behalten) oder Ersetzen (bestehende überschreiben).\n\nImportierte Prompts bekommen immer neue IDs — keine Konflikte mit vorhandenen.";
 "settings.help.apiTitle" = "KI-Anbieter & API-Keys";
-"settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt 8 Anbieter — OpenAI, Anthropic, Gemini, Mistral, Scaleway (EU, Paris) und Groq (Cloud, BYOK) sowie Ollama und MLX (beide komplett lokal, kostenlos, ohne Key). Keys werden sicher im macOS-Schlüsselbund gespeichert.\n\nStandard-Anbieter: Tippi probiert deinen gewählten Standard zuerst; ohne Key fällt es auf den nächsten konfigurierten zurück. Ohne expliziten Standard nimmt es automatisch den ersten Anbieter, für den du einen Key hinterlegt hast — eine frische Installation hängt so nie an einem kalten lokalen Modell. Optionaler Fallback (Tab Anbieter): schlägt dein Anbieter fehl (Rate-Limit, Server- oder Netzwerkfehler), kann Tippi den nächsten konfigurierten Anbieter versuchen — standardmäßig aus, da dein Text dann an einen zweiten Anbieter geht.";
+"settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt 10 Anbieter — OpenAI, Anthropic, Gemini, Mistral, Scaleway (EU, Paris), Groq, Kimi/Moonshot und Nebius (EU, Amsterdam) als Cloud-BYOK-Anbieter sowie Ollama und MLX (beide komplett lokal, kostenlos, ohne Key). Keys werden sicher im macOS-Schlüsselbund gespeichert.\n\nStandard-Anbieter: Tippi probiert deinen gewählten Standard zuerst; ohne Key fällt es auf den nächsten konfigurierten zurück. Ohne expliziten Standard nimmt es automatisch den ersten Anbieter, für den du einen Key hinterlegt hast — eine frische Installation hängt so nie an einem kalten lokalen Modell. Optionaler Fallback (Tab Anbieter): schlägt dein Anbieter fehl (Rate-Limit, Server- oder Netzwerkfehler), kann Tippi den nächsten konfigurierten Anbieter versuchen — standardmäßig aus, da dein Text dann an einen zweiten Anbieter geht.";
 
 "settings.help.linksTitle" = "Links & Ressourcen";
 "settings.help.linksBody" = "[GitHub-Repository](https://github.com/miwixyz/Tippi) — public, MIT-Lizenz, Quellcode, Issues, Releases.\n\n[Landing Page](https://miwixyz.github.io/Tippi/) — zweisprachig EN/DE, Features, Screenshots, Download.\n\n[One-Pager](https://github.com/miwixyz/Tippi/blob/main/docs/ONE-PAGER.md) — für Hacker News, Reddit, Weiterleitung; Tippi in 60 Sekunden.\n\n[Changelog](https://github.com/miwixyz/Tippi/blob/main/CHANGELOG.md) — jede Änderung, jede Version.\n\n[Aktuelles Release](https://github.com/miwixyz/Tippi/releases/latest) — DMG-Download, Release Notes, Prüfsummen.";

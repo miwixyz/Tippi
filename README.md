@@ -25,18 +25,22 @@
 - **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
 - **PopClip-style local quick actions** — instantly format or transform selected text without an AI call: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Brackets, Join Lines, Character Count, and Word Count
-- **6 AI providers** — choose any combination, switch freely:
+- **10 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5-mini`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
   - **Google Gemini** (default: `gemini-2.5-flash`)
-  - **Mistral** (default: `mistral-small-latest`, EU hosting available)
+  - **Mistral** (default: `mistral-small-latest`, EU hosting)
+  - **Scaleway** (default: `llama-3.1-8b-instruct`, EU/Paris)
+  - **Groq** (default: `llama-3.3-70b-versatile`, LPU-accelerated, ~800 tok/s)
+  - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, SWE-Bench #1, ~15× cheaper than Opus)
+  - **Nebius** (default: `meta-llama/Meta-Llama-3.3-70B-Instruct-fast`, EU/Amsterdam, DSGVO)
   - **Ollama** (local, fully offline)
   - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Llama 3.2 3B Fast/Balanced preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Free-form instruction — typed or spoken** — select text, trigger the hotkey, then type an instruction in the popup's input field (e.g. "reply to this email politely", "translate to Spanish") and press Return, or press the mic button and speak it. Tippi follows it literally: transform instructions (translate, summarize, shorten) operate on the text as-is, reaction instructions (reply, respond) produce an answer. The field auto-focuses; press ↓ to jump back to the prompt list
 - **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating pill shows recording (live waveform), transcribing, and AI-cleanup state with the actual provider name (e.g. "· ✨ Groq")
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
-- **Streaming preview** — the AI result streams in token by token instead of appearing all at once after a wait (real streaming for OpenAI, Mistral, Scaleway, Groq; other providers show it in one piece)
+- **Streaming preview** — the AI result streams in token by token instead of appearing all at once after a wait (real streaming for OpenAI, Mistral, Scaleway, Groq, Kimi, Nebius; other providers show it in one piece)
 - **Iterative refine** — once a result is ready, type a follow-up in the Refine field ("shorter", "more formal", "add a greeting") to rewrite it in place; chain as many refinements as you like
 - **Preview before applying** — side-by-side original vs. AI suggestion, then Replace / Append / Copy / Regenerate, with keyboard shortcuts (Return = Replace, ⌘C = Copy, ⌘Return = Append, ⌘R = Regenerate, Esc = Cancel). A result that hits the model's length limit is kept and flagged "Cut off" rather than discarded
 - **Optional provider fallback** — Providers tab → if your chosen provider fails (rate limit, server or network error), Tippi can retry the next configured provider; off by default since it sends your text to a second provider
@@ -293,7 +297,11 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 | OpenAI    | $          | Fast    | ★★★★   | Most popular. `gpt-5-mini` is the right balance. |
 | Anthropic | $          | Fast    | ★★★★★  | Excellent prose quality. `claude-haiku-4-5` for fast tier. |
 | Gemini    | Free tier  | Fast    | ★★★    | Generous free tier at `aistudio.google.com/apikey`. |
-| Mistral   | $          | Fast    | ★★★★   | EU-hosted option for data-residency requirements. |
+| Mistral   | $          | Fast    | ★★★★   | EU-hosted (Paris). Great German/French. |
+| Scaleway  | $          | ⚡ Fast | ★★★    | EU-hosted (Paris). Llama 3.x on European infra. |
+| Groq      | $          | ⚡⚡ ~800 tok/s | ★★★★ | LPU-accelerated. Fastest hosted option for dictation polish. |
+| Kimi      | $          | Fast    | ★★★★★  | Moonshot Kimi K2 — SWE-Bench #1, 256K context, ~15× cheaper than Opus. `platform.moonshot.cn` |
+| Nebius    | $          | ⚡ Fast | ★★★★   | 100% EU (Amsterdam). DSGVO-compliant. Very cheap. `studio.nebius.ai` |
 | Ollama    | **Free**   | ⚡ Hardware-dependent | ★★–★★★★ | Fully local. Privacy-best. Quality depends on model. |
 | MLX       | **Free**   | ⚡⚡ ~1.5–2× faster than Ollama on Apple Silicon | ★★–★★★★ | Fully local, Apple-Silicon-native via Metal. Tippi manages the `mlx_lm.server` process. Auto-starts on launch when set as default. |
 
@@ -316,7 +324,7 @@ Bug reports and pull requests are welcome. For significant changes, please open 
 - **Hardened Runtime, no Sandbox** — required for cross-app text capture
 - **Text capture**: Accessibility API first (`AXUIElementCopyAttributeValue` on focused element), Pasteboard ⌘C round-trip as fallback (with snapshot/restore to keep clipboard intact)
 - **Hotkey**: `NSEvent.addGlobalMonitorForEvents(matching: .keyDown)` plus a Carbon `RegisterEventHotKey` backup. For self-signed builds, the macOS-native keyboard shortcut binding to the "Trigger Tippi…" menu item is the most reliable path.
-- **LLM layer**: a `LLMProvider` protocol with six implementations (OpenAI, Anthropic, Gemini, Mistral, Ollama, MLX); `LLMRouter` picks the preferred configured provider with automatic fallthrough. The MLX provider additionally drives `MLXServerManager`, which spawns and supervises a local `mlx_lm.server` process and resolves the active model ID via `/v1/models`.
+- **LLM layer**: a `LLMProvider` protocol with ten implementations (OpenAI, Anthropic, Gemini, Mistral, Scaleway, Groq, Kimi, Nebius, Ollama, MLX); `LLMRouter` picks the preferred configured provider with automatic fallthrough. OpenAI-compatible providers (OpenAI, Mistral, Scaleway, Groq, Kimi, Nebius) share a single `openAIChatComplete()` / `openAIChatStream()` helper. The MLX provider additionally drives `MLXServerManager`, which spawns and supervises a local `mlx_lm.server` process and resolves the active model ID via `/v1/models`.
 - **Voice layer**:
   - `AudioRecorder` — AVFoundation-based push-to-talk capture
   - `WhisperTranscriber` — wraps a statically linked `whisper-cli` binary bundled in the app; runs out-of-process, no dynamic library dependencies

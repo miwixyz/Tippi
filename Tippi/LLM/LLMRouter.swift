@@ -31,6 +31,8 @@ struct LLMRouter {
         MistralProvider(),
         ScalewayProvider(),
         GroqProvider(),
+        KimiProvider(),
+        NebiusProvider(),
         OllamaProvider(),
         MLXProvider()
     ]

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.0] — 2026-07-02
+
+### Added
+- **Kimi (Moonshot) provider.** Moonshot's Kimi K2 — a 1T-parameter MoE model that leads SWE-Bench Pro (58.6) ahead of GPT-5.4 and Claude Opus 4.5. OpenAI-compatible API, 256K context, ~15× cheaper than Opus at comparable coding quality. Get a key at platform.moonshot.cn.
+- **Nebius provider (EU).** Nebius AI Studio — OpenAI-compatible inference API with 100% EU data residency (Amsterdam, NASDAQ: NBIS). DSGVO-compliant alternative to Groq for latency-sensitive European use cases. Hosts Llama 3.x, Qwen 3 and DeepSeek V3. Very competitive pricing (~$0.10–0.30 / 1M tokens). Get a key at studio.nebius.ai.
+- Both providers support real streaming (token-by-token preview) and fall back seamlessly via the existing provider fallback system.
+- Tippi now supports **10 AI providers** — 8 cloud BYOK + 2 fully local (Ollama, MLX).
+
 ## [1.13.0] — 2026-06-24
 
 ### Added

@@ -11,7 +11,7 @@ import Foundation
 /// dictation-polish UI can default to the fastest non-reasoning option.
 ///
 /// Maintained manually — provider model catalogues change every few weeks.
-/// Last update: 2026-05-24.
+/// Last update: 2026-07-02 — added Kimi (Moonshot) + Nebius (EU).
 enum ProviderModelPresets {
 
     struct Preset: Identifiable, Hashable {
@@ -29,6 +29,8 @@ enum ProviderModelPresets {
         case "mistral":    return mistral
         case "scaleway":   return scaleway
         case "groq":       return groq
+        case "kimi":       return kimi
+        case "nebius":     return nebius
         default:           return []   // Ollama / MLX use their own pickers
         }
     }
@@ -93,6 +95,31 @@ enum ProviderModelPresets {
         Preset(id: "llama-3.1-8b-instant",      label: "Llama 3.1 8B Instant — ~800 tok/s ⭐",         isFastest: true,  isReasoning: false),
         Preset(id: "llama-3.3-70b-versatile",   label: "Llama 3.3 70B Versatile — ~270 tok/s, premium", isFastest: false, isReasoning: false),
         Preset(id: "openai/gpt-oss-20b",        label: "GPT-OSS 20B — OpenAI open weights",             isFastest: false, isReasoning: false),
+    ]
+
+    // MARK: - Kimi / Moonshot AI (global, OpenAI-compatible, 2026-07)
+    //
+    // Kimi K2 is a 1T-MoE open-weight model leading SWE-Bench Pro (58.6).
+    // Very cheap at $0.95/$4.00 per 1M tokens (direct). 256K context.
+    // moonshot-v1-* are the older instruction models — still useful for
+    // short-text tasks like dictation polish due to low latency.
+    static let kimi: [Preset] = [
+        Preset(id: "kimi-k2",              label: "Kimi K2 — flagship, SWE-Bench #1 ⭐",       isFastest: false, isReasoning: false),
+        Preset(id: "moonshot-v1-8k",       label: "Moonshot v1 8K — fast, short context",       isFastest: true,  isReasoning: false),
+        Preset(id: "moonshot-v1-32k",      label: "Moonshot v1 32K — balanced",                 isFastest: false, isReasoning: false),
+        Preset(id: "moonshot-v1-128k",     label: "Moonshot v1 128K — long context",            isFastest: false, isReasoning: false),
+    ]
+
+    // MARK: - Nebius AI Studio (EU/Amsterdam, OpenAI-compatible, 2026-07)
+    //
+    // 100 % EU data residency (Amsterdam). DSGVO-compliant. Very competitive
+    // pricing (~$0.10–0.30 / 1M tokens). Hosts Llama 3.x, Qwen, DeepSeek.
+    // "-fast" variants use tensor parallelism for lower latency.
+    static let nebius: [Preset] = [
+        Preset(id: "meta-llama/Meta-Llama-3.1-8B-Instruct-fast",  label: "Llama 3.1 8B — EU, fastest ⭐",        isFastest: true,  isReasoning: false),
+        Preset(id: "meta-llama/Meta-Llama-3.3-70B-Instruct-fast", label: "Llama 3.3 70B — EU, premium quality", isFastest: false, isReasoning: false),
+        Preset(id: "Qwen/Qwen3-235B-A22B-fast",                   label: "Qwen3 235B — EU, top quality",        isFastest: false, isReasoning: false),
+        Preset(id: "deepseek-ai/DeepSeek-V3",                     label: "DeepSeek V3 — EU, strong coding",     isFastest: false, isReasoning: false),
     ]
 
     /// Default model for dictation polish on a given provider — picks the

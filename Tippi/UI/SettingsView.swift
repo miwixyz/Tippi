@@ -644,6 +644,8 @@ private struct ProviderRow: View {
         case "mistral":   return String(localized: "settings.providers.hint.mistral")
         case "scaleway":  return String(localized: "settings.providers.hint.scaleway")
         case "groq":      return String(localized: "settings.providers.hint.groq")
+        case "kimi":      return String(localized: "settings.providers.hint.kimi")
+        case "nebius":    return String(localized: "settings.providers.hint.nebius")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
         case "mlx":       return String(localized: "settings.providers.hint.mlx")
         default:          return ""
