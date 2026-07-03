@@ -33,7 +33,7 @@
   - **Scaleway** (default: `llama-3.1-8b-instruct`, EU/Paris)
   - **Groq** (default: `llama-3.3-70b-versatile`, LPU-accelerated, ~800 tok/s)
   - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, SWE-Bench #1, ~15× cheaper than Opus)
-  - **Nebius** (default: `meta-llama/Meta-Llama-3.3-70B-Instruct-fast`, EU/Amsterdam, DSGVO)
+  - **Nebius** (default: `meta-llama/Llama-3.3-70B-Instruct`, EU/Amsterdam, DSGVO)
   - **Ollama** (local, fully offline)
   - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Llama 3.2 3B Fast/Balanced preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
@@ -159,6 +159,17 @@ A faster path for pure dictation, with no popup. Enable it in **Settings → Voi
 **Optional AI cleanup** (Settings → Voice → Post-process): Tippi sends the raw transcript through your active LLM provider to remove filler words (äh, ähm, halt, also, um, uh), add punctuation, and fix self-corrections. Only runs on inputs ≥ 50 characters; adds 1–3 s latency. If the model responds conversationally instead of cleaning, Tippi detects this and inserts the raw transcript with a toast — dictation never breaks.
 
 Avoid combos macOS reserves (e.g. ⌥⌘D toggles the Dock) — Tippi can't receive a system-claimed shortcut.
+
+### 4c. Translate Quick Panel (v1.15+)
+
+A Spotlight-style translator, independent of the "select text" flow. Press **⌥⌘L** anywhere — nothing needs to be selected — and a floating window opens centered near the top of the screen. Type or paste text, press Return, and Tippi auto-detects whether it's German or Spanish and translates to the other language. No language picker.
+
+- **Speak instead of typing** — the mic button records locally (same Whisper/Parakeet engine as dictation) and auto-translates the transcript.
+- **Hear the result** — the speaker button reads the translation aloud with a natural macOS voice, automatically picking a German or Spanish voice to match. Install an Enhanced/Premium system voice (System Settings → Accessibility → Spoken Content) for the most natural output.
+- **Read-only** — the result is shown for manual copy (⌘C or the Copy button); nothing is auto-pasted or auto-copied, so it never touches your clipboard unexpectedly.
+- Matches the system light/dark appearance and switches live. Change the hotkey in Settings → Hotkeys; a menu bar **Translate…** entry works too.
+
+Runs through your configured AI provider, same as everything else. The default direction (German ⇄ Spanish) is built in; for other language pairs, use a custom prompt with the main hotkey.
 
 ### App compatibility
 

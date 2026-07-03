@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tippi — System-wide AI writing assistant for macOS</title>
-<meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 6 AI providers, fully local option via MLX. macOS only.">
+<meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 10 AI providers, fully local option via MLX. macOS only.">
 
 <meta property="og:title" content="Tippi — System-wide AI writing assistant for macOS">
 <meta property="og:description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, fully local option.">
@@ -183,6 +183,14 @@
   .builtin { background: var(--navy-2); border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; font-size: 14px; color: var(--ink-dim); }
   .builtin strong { color: var(--ink); display: block; font-size: 14px; font-weight: 500; }
 
+  .faq { max-width: 760px; margin: 0 auto; }
+  .faq details { background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 20px; margin-bottom: 12px; }
+  .faq summary { cursor: pointer; padding: 18px 0; font-weight: 600; font-size: 16px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; color: var(--accent); font-size: 20px; font-weight: 400; }
+  .faq details[open] summary::after { content: "–"; }
+  .faq details p { color: var(--ink-dim); font-size: 14px; line-height: 1.6; padding-bottom: 18px; margin: 0; }
+
   .final { text-align: center; background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(59,140,255,.12) 0%, transparent 70%); }
 
   footer { padding: 36px 0; border-top: 1px solid var(--border); color: var(--ink-dim); font-size: 13px; text-align: center; }
@@ -210,6 +218,7 @@
         <a href="#how"><span data-lang="en">How it works</span><span data-lang="de">So funktioniert's</span></a>
         <a href="#features"><span data-lang="en">Features</span><span data-lang="de">Features</span></a>
         <a href="#privacy"><span data-lang="en">Privacy</span><span data-lang="de">Datenschutz</span></a>
+        <a href="#faq"><span data-lang="en">FAQ</span><span data-lang="de">FAQ</span></a>
         <a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">GitHub</a>
       </div>
       <div class="lang-toggle" role="group" aria-label="Language">
@@ -304,7 +313,7 @@
           </tr>
           <tr>
             <td><span data-lang="en">Locked to one provider</span><span data-lang="de">An einen Anbieter gebunden</span></td>
-            <td class="tippi"><span data-lang="en">6 providers — pick what works for you</span><span data-lang="de">6 Anbieter zur freien Wahl</span></td>
+            <td class="tippi"><span data-lang="en">10 providers — pick what works for you</span><span data-lang="de">10 Anbieter zur freien Wahl</span></td>
           </tr>
           <tr>
             <td><span data-lang="en">Cloud-only — your text leaves your Mac</span><span data-lang="de">Cloud-only — Text verlässt deinen Mac</span></td>
@@ -369,6 +378,13 @@
         <p data-lang="de">Push-to-Talk-Diktat mit Whisper oder Parakeet komplett lokal. Audio verlässt deinen Mac nicht.</p>
       </div>
       <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"></path><path d="M4 21l3-7 3 7"></path><path d="M4.5 19h5"></path></svg></div>
+        <h3 data-lang="en">Translate Quick Panel</h3>
+        <h3 data-lang="de">Übersetzungs-Fenster</h3>
+        <p data-lang="en">Press ⌥⌘L anywhere — nothing selected — for a Spotlight-style window. Type or speak, get instant German ⇄ Spanish, and hear it read aloud. Voice in, speech out, both on-device.</p>
+        <p data-lang="de">⌥⌘L überall drücken — nichts markiert — für ein Spotlight-artiges Fenster. Tippen oder sprechen, sofort Deutsch ⇄ Spanisch, Ergebnis vorlesen lassen. Voice rein, Sprache raus, beides lokal.</p>
+      </div>
+      <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v2"></path><path d="M16 3h2a2 2 0 0 1 2 2v2"></path><path d="M8 21H6a2 2 0 0 1-2-2v-2"></path><path d="M16 21h2a2 2 0 0 0 2-2v-2"></path><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg></div>
         <h3 data-lang="en">Smart variables</h3>
         <h3 data-lang="de">Smarte Variablen</h3>
@@ -417,6 +433,22 @@
       <div class="provider">
         <div class="pname">Mistral</div>
         <div class="ptag"><span data-lang="en">EU cloud · BYOK</span><span data-lang="de">EU-Cloud · BYOK</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Scaleway</div>
+        <div class="ptag"><span data-lang="en">EU cloud · BYOK</span><span data-lang="de">EU-Cloud · BYOK</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Groq</div>
+        <div class="ptag"><span data-lang="en">cloud · ultra-fast</span><span data-lang="de">Cloud · ultraschnell</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Kimi</div>
+        <div class="ptag"><span data-lang="en">cloud · SWE-Bench #1</span><span data-lang="de">Cloud · SWE-Bench #1</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">Nebius</div>
+        <div class="ptag"><span data-lang="en">EU cloud · DSGVO</span><span data-lang="de">EU-Cloud · DSGVO</span></div>
       </div>
       <div class="provider local">
         <div class="pname">Ollama</div>
@@ -528,6 +560,49 @@
       <div class="builtin"><strong data-lang="en">Translate → DE</strong><strong data-lang="de">Übersetzen → DE</strong><span data-lang="en">Natural modern German</span><span data-lang="de">Natürliches modernes Deutsch</span></div>
       <div class="builtin"><strong data-lang="en">Translate → EN</strong><strong data-lang="de">Übersetzen → EN</strong><span data-lang="en">Natural modern English</span><span data-lang="de">Natürliches modernes Englisch</span></div>
       <div class="builtin"><strong data-lang="en">Translate → ES</strong><strong data-lang="de">Übersetzen → ES</strong><span data-lang="en">Natural modern Spanish</span><span data-lang="de">Natürliches modernes Spanisch</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ───────────────────────────────────────────────────────────────── -->
+<section id="faq">
+  <div class="wrap">
+    <h2 data-lang="en">Frequently asked questions</h2>
+    <h2 data-lang="de">Häufige Fragen</h2>
+    <p class="lead" data-lang="en">The things people ask before downloading.</p>
+    <p class="lead" data-lang="de">Was die meisten vor dem Download wissen wollen.</p>
+
+    <div class="faq">
+      <details>
+        <summary><span data-lang="en">Is Tippi free?</span><span data-lang="de">Ist Tippi kostenlos?</span></summary>
+        <p data-lang="en">Yes. Tippi is open-source (MIT) and free to use. You bring your own API key for cloud providers, or run it fully locally with MLX or Ollama at no cost at all. There is no subscription and no upsell.</p>
+        <p data-lang="de">Ja. Tippi ist Open Source (MIT) und kostenlos. Für Cloud-Anbieter bringst du deinen eigenen API-Key mit, oder du betreibst es komplett lokal mit MLX oder Ollama — dann ganz ohne Kosten. Kein Abo, kein Upselling.</p>
+      </details>
+      <details>
+        <summary><span data-lang="en">Does my text get sent to a server?</span><span data-lang="de">Wird mein Text an einen Server geschickt?</span></summary>
+        <p data-lang="en">Only to the AI provider you explicitly configured — nowhere else. Tippi has zero telemetry and no analytics. If you choose a local engine (MLX or Ollama), nothing leaves your Mac at all. Voice transcription always runs on-device.</p>
+        <p data-lang="de">Nur an den KI-Anbieter, den du selbst eingerichtet hast — sonst nirgendwohin. Tippi hat keine Telemetrie und keine Analytics. Wählst du eine lokale Engine (MLX oder Ollama), verlässt gar nichts deinen Mac. Die Sprach-Transkription läuft immer lokal.</p>
+      </details>
+      <details>
+        <summary><span data-lang="en">Which AI providers are supported?</span><span data-lang="de">Welche KI-Anbieter werden unterstützt?</span></summary>
+        <p data-lang="en">Ten: OpenAI, Anthropic Claude, Google Gemini, Mistral, Scaleway, Groq, Kimi (Moonshot), and Nebius in the cloud, plus Ollama and MLX fully local. Switch between them with one click in Settings, and optionally fall back to a second provider automatically if one fails.</p>
+        <p data-lang="de">Zehn: OpenAI, Anthropic Claude, Google Gemini, Mistral, Scaleway, Groq, Kimi (Moonshot) und Nebius in der Cloud, dazu Ollama und MLX komplett lokal. In den Einstellungen per Klick umschalten, auf Wunsch mit automatischem Fallback auf einen zweiten Anbieter.</p>
+      </details>
+      <details>
+        <summary><span data-lang="en">Can I dictate and translate by voice?</span><span data-lang="de">Kann ich diktieren und per Sprache übersetzen?</span></summary>
+        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the German ⇄ Spanish translation read back aloud — voice in, speech out, both on-device.</p>
+        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
+      </details>
+      <details>
+        <summary><span data-lang="en">Does it work in every app?</span><span data-lang="de">Funktioniert es in jeder App?</span></summary>
+        <p data-lang="en">Text capture and dictation work everywhere, including Electron/Chromium apps (Obsidian, Slack, VS Code). The one limit: replacing a selection in place inside Electron apps isn't possible — Tippi copies the result to the clipboard with a "press ⌘V" toast instead. Native apps (Mail, Notes, Safari, Pages) and Office get full in-place replacement.</p>
+        <p data-lang="de">Texterfassung und Diktat funktionieren überall, auch in Electron/Chromium-Apps (Obsidian, Slack, VS Code). Eine Grenze: das direkte Ersetzen einer Auswahl in Electron-Apps geht nicht — Tippi legt das Ergebnis stattdessen in die Zwischenablage mit „⌘V drücken"-Hinweis. Native Apps (Mail, Notizen, Safari, Pages) und Office ersetzen direkt an Ort und Stelle.</p>
+      </details>
+      <details>
+        <summary><span data-lang="en">What do I need to run it?</span><span data-lang="de">Was brauche ich dafür?</span></summary>
+        <p data-lang="en">macOS 15 Sequoia or later on Apple Silicon (M1–M5), and at least one AI provider — a cloud API key or a locally installed model. The setup wizard walks you through Accessibility permission and adding a provider in about 30 seconds.</p>
+        <p data-lang="de">macOS 15 Sequoia oder neuer auf Apple Silicon (M1–M5) und mindestens einen KI-Anbieter — einen Cloud-API-Key oder ein lokal installiertes Modell. Der Einrichtungs-Assistent führt dich in rund 30 Sekunden durch Bedienungshilfen-Berechtigung und Anbieter-Setup.</p>
+      </details>
     </div>
   </div>
 </section>
