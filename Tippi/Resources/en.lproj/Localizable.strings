@@ -1,5 +1,6 @@
 /* Menubar */
 "menu.trigger" = "Trigger Tippi…";
+"menu.translate" = "Translate…";
 "menu.checkForUpdates" = "Check for Updates…";
 "menu.dictationLanguage" = "Dictation Language";
 "menu.welcome" = "Welcome…";
@@ -109,6 +110,16 @@
 "preview.truncated.badge" = "Cut off (length limit)";
 "preview.truncated.empty" = "The response was cut off before any text arrived (output length limit). Try a shorter input.";
 
+/* Translate Quick Panel */
+"translate.panel.placeholder" = "Type text to translate (German ⇄ Spanish)…";
+"translate.panel.translating" = "Translating…";
+"translate.panel.copy" = "Copy";
+"translate.panel.close" = "Close (Esc)";
+"translate.panel.mic" = "Speak instead of typing";
+"translate.panel.speak" = "Speak";
+"translate.panel.stop" = "Stop";
+"translate.panel.micDenied" = "Microphone access denied — grant it in System Settings → Privacy & Security → Microphone.";
+
 "setup.tryIt.clickCount" = "Button clicked %d time(s) ✓";
 "setup.tryIt.hotkey.heading" = "Once permissions are granted, the global hotkey is:";
 
@@ -160,6 +171,8 @@
 "settings.hotkeys.macOSHeader" = "Alternative: macOS-managed shortcut";
 "settings.hotkeys.macOSBody" = "If the in-app hotkey misbehaves (locally-signed apps sometimes have TCC issues), macOS can bind any combo to Tippi's 'Trigger Tippi…' menu item. Click below, then: + → choose Tippi → menu title 'Trigger Tippi…' → assign your shortcut.";
 "settings.hotkeys.macOSOpen" = "Open macOS Keyboard Shortcuts";
+"settings.hotkeys.translate.header" = "Translate Quick Panel";
+"settings.hotkeys.translate.intro" = "Opens a Spotlight-style window: type or paste text, get an instant German ⇄ Spanish translation. Independent of the main hotkey — works without any text selected anywhere.";
 "settings.hotkeys.tipHeader" = "Doesn't fire?";
 "settings.hotkeys.tip1" = "1. Tippi needs Accessibility permission — check System Settings → Privacy & Security → Accessibility";
 "settings.hotkeys.tip2" = "2. You can always trigger via the menu bar ✏️ → \"Trigger Tippi…\"";
@@ -381,5 +394,7 @@
 "settings.about.github" = "GitHub";
 "settings.about.landingPage" = "Landing page";
 "settings.about.onePager" = "One-pager";
+"settings.help.translateTitle" = "Translate Quick Panel";
+"settings.help.translateBody" = "Press the translate hotkey (default ⌥⌘L, configurable in Settings → Hotkeys) anywhere — no text needs to be selected. A Spotlight-style window opens: type or paste text and press Return. Tippi detects whether it's German or Spanish and translates it to the other language automatically — no language picker needed. The result is shown for reading and manual copying (⌘C or the Copy button); nothing is inserted or copied automatically, so it never overwrites your clipboard unexpectedly. Press Escape, or click away, to close the window. Runs through your configured AI provider, same as the main hotkey.";
 "settings.help.voiceTitle" = "Voice Input";
 "settings.help.voiceBody" = "Press ⌥⌘T with no text selected: a mic button appears in the popup. Hold to record, release to transcribe — Whisper runs fully on-device. The transcript appears in the popup; pick an AI prompt or tap \"Insert directly\" to paste as-is.\n\nVoice Instruction: select text first, trigger Tippi, then press the mic button and speak your command (e.g. \"make this shorter\"). Tippi applies it via AI immediately.\n\nDictation mode: enable it in Settings → Voice → Dictation Mode and pick a hotkey (default ⌃⌥⌘M). Press the hotkey to start recording, press again to stop — Whisper transcribes locally and inserts the text at the cursor, with no popup. Avoid system-reserved combos like ⌥⌘D (Dock).\n\nDictation polish (opt-in, v1.8.0+): after Whisper transcribes, Tippi can send the raw text through your active LLM provider to remove filler words (\"um\", \"uh\", \"äh\"), add punctuation, and fix obvious self-corrections — then insert the polished text at the cursor. Toggle in Settings → Voice → Dictation Mode → \"Polish transcript with AI\". The polishing prompt is fully editable. You can also pick a separate, faster provider just for polish (e.g. Groq for ~800 tok/s or Scaleway for EU-hosted sub-second polish). Short utterances (< 20 chars) skip the polish step. On any LLM failure the raw Whisper transcript is inserted instead — dictation never breaks.\n\nDictation language quick switcher (v1.8.1+): the menu bar icon now has a \"Dictation Language\" submenu (Auto / Deutsch / English / Español / Français / 日本語) so you can switch Whisper's source language in one click without opening Settings. The active language is checkmarked. The Settings picker continues to work and stays in sync.\n\nSpeech engines (beta): Settings → Voice → Speech engine switches dictation between Whisper (default) and Parakeet v3 — a CoreML model on the Neural Engine that is markedly faster and more accurate for German and other European languages than Whisper small. Parakeet downloads its ~600 MB model on first use; the status row in the engine section shows whether the model is missing, downloading (with progress), or ready — including a \"Download now\" button. The toast after every dictation shows which engine actually transcribed (\"… · Parakeet v3\" / \"… · Whisper\").\n\nCancelling & polish cap: pressing the dictation hotkey again while \"Transcribing…\" is shown cancels the run. The AI polish step is capped at 30 seconds — if your polish provider doesn't answer in time (e.g. a large local model still loading), Tippi inserts the raw transcript instead of waiting. For instant polish pick a fast provider (Groq) or a small local model — a 70B via Ollama is overkill for punctuation cleanup.\n\nDownload a model in Settings → Voice before first use.";

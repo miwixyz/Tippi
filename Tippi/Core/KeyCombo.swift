@@ -26,6 +26,11 @@ struct KeyCombo: Codable, Equatable {
     /// (Dock auto-hide) and ⌃⌥⌘D collides with the common ⌃⌥⇧⌘D main combo.
     static let dictationDefault = KeyCombo(keyCode: 46, modifiers: [.control, .option, .command])
 
+    /// Translate Quick Panel default: ⌥⌘L (Option + Command + L — L for language).
+    /// Distinct from main (⌥⌘T), dictation (⌃⌥⌘M) and the hardcoded safety
+    /// hotkey (⌃⌥⌘T).
+    static let translateDefault = KeyCombo(keyCode: 37, modifiers: [.option, .command])
+
     var displayString: String {
         var parts: [String] = []
         let m = modifiers

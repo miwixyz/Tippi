@@ -89,6 +89,8 @@ private struct HotkeysTab: View {
 
     @State private var combo: KeyCombo = KeyComboStore.load()
     @State private var savedFlash = false
+    @State private var translateEnabled: Bool = TranslateSettings.isEnabled
+    @State private var translateCombo: KeyCombo = TranslateSettings.combo
 
     var body: some View {
         ScrollView {
@@ -152,6 +154,33 @@ private struct HotkeysTab: View {
                                 "x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts"
                             )!
                             NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .padding(6)
+                }
+
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(isOn: $translateEnabled) {
+                            Text(String(localized: "settings.hotkeys.translate.header"))
+                                .font(.headline)
+                        }
+                        .onChange(of: translateEnabled) { _, new in
+                            TranslateSettings.isEnabled = new
+                            (NSApp.delegate as? AppDelegate)?.restartTranslateHotkey()
+                        }
+
+                        Text(String(localized: "settings.hotkeys.translate.intro"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if translateEnabled {
+                            HotkeyRecorderField(combo: $translateCombo)
+                                .onChange(of: translateCombo) { _, new in
+                                    TranslateSettings.combo = new
+                                    (NSApp.delegate as? AppDelegate)?.restartTranslateHotkey()
+                                }
                         }
                     }
                     .padding(6)
@@ -1000,6 +1029,11 @@ private struct HelpTab: View {
                     icon: "mic",
                     title: String(localized: "settings.help.voiceTitle"),
                     body: String(localized: "settings.help.voiceBody")
+                )
+                helpSection(
+                    icon: "character.bubble",
+                    title: String(localized: "settings.help.translateTitle"),
+                    body: String(localized: "settings.help.translateBody")
                 )
                 helpSection(
                     icon: "clock.arrow.circlepath",

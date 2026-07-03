@@ -12,8 +12,11 @@ import Foundation
 struct NebiusProvider: OpenAICompatibleProvider {
     let id = "nebius"
     let displayName = "Nebius (EU)"
-    /// Llama 3.3 70B fast — best quality/speed balance in EU.
-    let defaultModel = "meta-llama/Meta-Llama-3.3-70B-Instruct-fast"
+    /// Llama 3.3 70B — best quality/speed balance in EU. Nebius renamed this
+    /// model (dropped "Meta-" prefix and "-fast" suffix) some time after
+    /// v1.14.0 shipped; verified live against /v1/models on 2026-07-03 —
+    /// the old ID 404s.
+    let defaultModel = "meta-llama/Llama-3.3-70B-Instruct"
     let requiresAPIKey = true
 
     let endpoint = URL(string: "https://api.studio.nebius.ai/v1/chat/completions")!

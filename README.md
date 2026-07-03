@@ -39,6 +39,7 @@
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Free-form instruction — typed or spoken** — select text, trigger the hotkey, then type an instruction in the popup's input field (e.g. "reply to this email politely", "translate to Spanish") and press Return, or press the mic button and speak it. Tippi follows it literally: transform instructions (translate, summarize, shorten) operate on the text as-is, reaction instructions (reply, respond) produce an answer. The field auto-focuses; press ↓ to jump back to the prompt list
 - **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating pill shows recording (live waveform), transcribing, and AI-cleanup state with the actual provider name (e.g. "· ✨ Groq")
+- **Translate Quick Panel** — a dedicated hotkey (default **⌥⌘L**) opens a Spotlight-style window anywhere, with no text selected: type or paste text, press Return, and Tippi auto-detects German ⇄ Spanish and translates to the other language. Result is shown for manual copy (⌘C) only — nothing auto-pastes or auto-copies
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Voice); choose Tiny / Base / Small in English or multilingual
 - **Streaming preview** — the AI result streams in token by token instead of appearing all at once after a wait (real streaming for OpenAI, Mistral, Scaleway, Groq, Kimi, Nebius; other providers show it in one piece)
 - **Iterative refine** — once a result is ready, type a follow-up in the Refine field ("shorter", "more formal", "add a greeting") to rewrite it in place; chain as many refinements as you like
@@ -75,7 +76,7 @@
 
 ### From the latest release
 
-1. Download the latest **[Tippi-1.12.1.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.12.1)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
+1. Download the latest **[Tippi-1.15.0.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.15.0)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant Accessibility permission, optionally enter an API key)
@@ -367,6 +368,9 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.10.x | ✅ Done | Defuse + Add-Emojis modes from Blitztext-App (v1.10.0); HotkeyRecorder TabView-race fix + Carbon-trigger persistence fix (v1.10.1); atomic `isHandlingTrigger`-flag against triple-trigger race that caused 2–5 s UI freeze (v1.10.2); 16-fix review hardening + faster Whisper (v1.10.3) |
 | v1.11.x | ✅ Done | Parakeet v3 speech engine, beta (v1.11.0); paste in non-AppKit apps via non-activating panels + universal prompt role-boundary (v1.11.1) |
 | v1.12.x | ✅ Done | Type **or** speak a free-form instruction; streaming preview; iterative refine; preview keyboard shortcuts; optional provider fallback; smarter default provider; provider de-dup + truncation guards + ~22 review fixes (v1.12.0); Parakeet v3 as the default speech engine (v1.12.1) |
+| v1.13.x | ✅ Done | Provider name shown live in the dictation indicator; menubar icon pulses while any LLM request is in flight |
+| v1.14.x | ✅ Done | Kimi (Moonshot) + Nebius (EU) providers — now 10 providers (8 cloud BYOK + 2 local) |
+| v1.15.0 | ✅ Done | **Translate Quick Panel** (⌥⌘L) — Spotlight-style window with auto German ⇄ Spanish, local voice input, spoken output, live light/dark |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).

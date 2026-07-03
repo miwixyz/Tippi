@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.15.0] — 2026-07-03
+
+### Added
+- **Translate Quick Panel.** New dedicated hotkey (default ⌥⌘L, configurable in Settings → Hotkeys) opens a Spotlight-style floating window — type or paste text, press Return, get an instant translation. Auto-detects German ⇄ Spanish and translates to the other language, no picker needed. Independent of the main "selected text" flow: no AX capture, works with nothing selected anywhere. Runs through the existing `LLMRouter`, same provider fallback as everywhere else.
+  - **Voice input** — a mic button transcribes speech locally (same Whisper/Parakeet engine as dictation) straight into the field and auto-translates it.
+  - **Spoken output** — a speaker button reads the translation aloud with a natural macOS voice, auto-picking a German or Spanish voice to match the result (prefers an installed Enhanced/Premium voice). Offline, via `AVSpeechSynthesizer`.
+  - **Read-only result** — shown for manual copy only (⌘C or Copy button); nothing is auto-pasted or auto-copied, so it never clobbers your clipboard.
+  - **Live light/dark** — the panel matches the system appearance and switches live if you toggle the theme while it is open.
+  - Menu bar gains a **Translate…** entry as an alternative to the hotkey.
+
+### Fixed
+- **Nebius default model updated.** Nebius renamed `meta-llama/Meta-Llama-3.3-70B-Instruct-fast` to `meta-llama/Llama-3.3-70B-Instruct` (verified live against their `/v1/models`); the old ID had started returning HTTP 404. Users with a stale `defaultModel.nebius` override should clear it in Settings → Providers.
+
 ## [1.14.0] — 2026-07-02
 
 ### Added

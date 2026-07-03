@@ -18,6 +18,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the same audio hardware/temp file could otherwise collide (dictation
     /// hotkey vs. popup mic). `lazy` so it can reference `audioRecorder`.
     lazy var dictationController = DictationController(recorder: audioRecorder)
+    /// Third Carbon hot key (id 3) for the Translate Quick Panel. Independent
+    /// of the main trigger — no AX capture, no source-app selection.
+    let translateHotkeyManager = HotkeyManager(id: 3)
+    private let translateQuickPanel = TranslateQuickPanel()
 
     private var statusItem: NSStatusItem?
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
@@ -67,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerSafetyHotKey()
         startGlobalKeyMonitor()
         restartDictationHotkey()
+        restartTranslateHotkey()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -187,6 +192,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         triggerItem.keyEquivalentModifierMask = [.command, .shift]
         menu.addItem(triggerItem)
+
+        let translateItem = NSMenuItem(
+            title: String(localized: "menu.translate"),
+            action: #selector(triggerTranslatePanel),
+            keyEquivalent: ""
+        )
+        menu.addItem(translateItem)
 
         menu.addItem(.separator())
 
@@ -463,12 +475,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSLog("Tippi: dictation hot key registered (\(combo.displayString))")
     }
 
+    /// (Re)registers the Translate Quick Panel hot key. Call after the
+    /// setting changes. Simpler than dictation — no model/engine readiness
+    /// gate, just the enabled toggle.
+    func restartTranslateHotkey() {
+        translateHotkeyManager.stop()
+        guard TranslateSettings.isEnabled else {
+            NSLog("Tippi: translate hot key inactive (disabled in settings)")
+            return
+        }
+
+        let combo = TranslateSettings.combo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+
+        translateHotkeyManager.update(
+            trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
+        )
+        translateHotkeyManager.start { [weak self] in
+            guard let self else { return }
+            self.translateQuickPanel.toggle(audioRecorder: self.audioRecorder)
+        }
+        NSLog("Tippi: translate hot key registered (\(combo.displayString))")
+    }
+
     /// Manual trigger from menubar.
     /// Works without Input Monitoring, but still needs Accessibility to read selected text.
     @objc func triggerManually() {
         Task { @MainActor in
             await handleTriggered(from: .manual)
         }
+    }
+
+    /// Manual trigger for the Translate Quick Panel from menubar.
+    @objc func triggerTranslatePanel() {
+        translateQuickPanel.toggle(audioRecorder: audioRecorder)
     }
 
     /// Permission-free demo entry used by the Welcome wizard's "Try Tippi" button.
