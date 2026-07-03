@@ -105,14 +105,19 @@ echo "▶ [Pre-flight] Git sync check..."
 git fetch origin --quiet 2>/dev/null || { echo "  ⚠ git fetch failed — check network. Continuing anyway."; }
 
 # Check branch divergence (ahead/behind/diverged relative to origin).
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 LOCAL_HEAD=$(git rev-parse HEAD)
-REMOTE_HEAD=$(git rev-parse "origin/$(git rev-parse --abbrev-ref HEAD)" 2>/dev/null || echo "")
-MERGE_BASE=$(git merge-base HEAD "origin/$(git rev-parse --abbrev-ref HEAD)" 2>/dev/null || echo "")
+REMOTE_HEAD=$(git rev-parse "origin/${CURRENT_BRANCH}" 2>/dev/null || echo "")
+MERGE_BASE=$(git merge-base HEAD "origin/${CURRENT_BRANCH}" 2>/dev/null || echo "")
 
 if [ -z "${REMOTE_HEAD}" ]; then
     echo "  ⚠ Could not resolve remote branch. No upstream sync check possible."
 elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" = "${REMOTE_HEAD}" ]; then
-    echo "  ✓ Branch is ahead of origin — changes not yet pushed (will push after release)."
+    echo "  ✗ ABORT: local branch is AHEAD of origin/${CURRENT_BRANCH} — bump-commit not pushed."
+    echo "    gh release create tags the REMOTE HEAD, not local HEAD — the release would be"
+    echo "    built from stale code (root cause of the v1.10.3 / v1.11.0 wrong-tag incidents)."
+    echo "    Fix: git push, then re-run make release."
+    exit 1
 elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" = "${LOCAL_HEAD}" ]; then
     echo "  ✗ ABORT: local branch is BEHIND origin/${CURRENT_BRANCH}."
     echo "    The other Mac has commits you don't have. Run: git pull --rebase"
