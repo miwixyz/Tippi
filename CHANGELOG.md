@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Ambient prompt filtering in the popup.** The prompt list narrows live while you type, from either input path — no extra shortcut, no mode switch. With text selected, the instruction field's text mirrors into the filter behind the scenes (Return still runs the instruction verbatim, unchanged; `↓` then Return picks from the pre-filtered list). Without a selection there's no instruction field, but you can type directly at the popup — the query surfaces in the header with a 🔍 glyph and a live match-count. `⌫` shrinks the query one character at a time. `⎋` is two-stage: first press clears an active query, second closes the popup. Digit shortcuts `1–9` still fire when nothing is typed, preserving muscle memory. Case-insensitive substring match on the prompt title. Works over built-in and custom prompts alike. Help section added under Settings → Help.
+
 ## [1.15.0] — 2026-07-03
 
 ### Added

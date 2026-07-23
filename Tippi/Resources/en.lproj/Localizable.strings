@@ -34,6 +34,9 @@
 "prompt.instagramCaption" = "Instagram caption";
 "prompt.facebookPost" = "Facebook post";
 "prompt.translateES" = "Translate → ES";
+"prompt.search.noMatch" = "No prompts match. Press ⌫ to shrink query, ⎋ to clear.";
+"settings.help.commandPaletteTitle" = "Ambient prompt filtering";
+"settings.help.commandPaletteBody" = "The prompt list filters live while you type — no extra shortcut, no mode switch. Two paths lead to the same behaviour depending on how you opened the popup:\n\nWith text selected: type your instruction into the \"Or type an instruction…\" field as before. Tippi mirrors that text into the prompt filter behind the scenes, so the list narrows to matching prompts as you write. Return still runs your instruction verbatim (unchanged), and ↓ then Return picks from the pre-filtered list.\n\nWith nothing selected: the field isn't there, but you can just start typing at the popup — the query appears in the header (🔍) and filters the list. ⌫ shrinks it one character at a time, ⎋ clears an active query first (second press closes the popup), and digit shortcuts 1–9 still work when nothing is typed.\n\nWhy this matters: with 22 built-in prompts plus your custom ones the scroll list gets long. Three letters narrow it to the exact one in a beat. The match count appears in the header when a filter is active. Filter is case-insensitive substring match on the title. If nothing matches you'll see a short hint.";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Welcome to Tippi";

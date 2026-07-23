@@ -31,6 +31,10 @@ struct PromptPopupView: View {
     // container's keyboard navigation so typed characters and Return go to the
     // field instead of selecting a prompt from the list.
     @State private var instructionFieldActive = false
+    // Alfred-style type-to-search filter. Empty = no filter (all prompts shown,
+    // digit shortcuts 1–9 remain active). Non-empty = live filter, digits and
+    // letters go into the query buffer instead of firing shortcuts.
+    @State private var searchQuery: String = ""
     @FocusState private var focused: Bool
 
     init(
@@ -58,6 +62,13 @@ struct PromptPopupView: View {
         // Always start at first AI prompt (index 0).
         // "Direkt einfügen" row (index -1) is visible but requires explicit click or ↑ arrow.
         _selectedIndex = State(initialValue: 0)
+    }
+
+    /// Prompts filtered by the current search query (title-only, case-insensitive
+    /// substring). Empty query returns the full list unchanged.
+    private var filteredPrompts: [DemoPrompt] {
+        guard !searchQuery.isEmpty else { return prompts }
+        return prompts.filter { $0.title.localizedCaseInsensitiveContains(searchQuery) }
     }
 
     var body: some View {
@@ -91,7 +102,11 @@ struct PromptPopupView: View {
                     audioRecorder: audioRecorder,
                     mode: voiceMode,
                     onTranscribed: onVoiceTranscribed ?? { _ in },
-                    onFieldFocusChange: { instructionFieldActive = $0 }
+                    onFieldFocusChange: { instructionFieldActive = $0 },
+                    onInstructionChange: { newText in
+                        searchQuery = newText
+                        selectedIndex = 0
+                    }
                 )
             }
         }
@@ -115,36 +130,63 @@ struct PromptPopupView: View {
             }
         }
         .onKeyPress(.escape) {
+            // Two-stage escape: first clears an active search query, second closes.
+            if !searchQuery.isEmpty {
+                searchQuery = ""
+                selectedIndex = 0
+                return .handled
+            }
             onDismiss()
             return .handled
         }
         .onKeyPress(.upArrow) {
             guard !instructionFieldActive else { return .ignored }
-            let minIndex = onDirectInsert != nil ? -1 : 0
+            let minIndex = onDirectInsert != nil && searchQuery.isEmpty ? -1 : 0
             selectedIndex = max(minIndex, selectedIndex - 1)
             return .handled
         }
         .onKeyPress(.downArrow) {
             guard !instructionFieldActive else { return .ignored }
-            guard !prompts.isEmpty else { return .handled }
-            selectedIndex = min(prompts.count - 1, selectedIndex + 1)
+            guard !filteredPrompts.isEmpty else { return .handled }
+            selectedIndex = min(filteredPrompts.count - 1, selectedIndex + 1)
             return .handled
         }
         .onKeyPress(.return) {
             guard !instructionFieldActive else { return .ignored }
-            if selectedIndex == -1 {
+            if selectedIndex == -1 && searchQuery.isEmpty {
                 onDirectInsert?()
-            } else if prompts.indices.contains(selectedIndex) {
-                onSelect(prompts[selectedIndex])
+            } else if filteredPrompts.indices.contains(selectedIndex) {
+                onSelect(filteredPrompts[selectedIndex])
             }
+            return .handled
+        }
+        .onKeyPress(.delete) {
+            // Backspace shrinks the search query one char at a time.
+            guard !instructionFieldActive, !searchQuery.isEmpty else { return .ignored }
+            searchQuery.removeLast()
+            selectedIndex = 0
             return .handled
         }
         .onKeyPress { keyPress in
             guard !instructionFieldActive else { return .ignored }
-            guard let first = keyPress.characters.first,
-                  let digit = Int(String(first)) else { return .ignored }
-            if digit >= 1 && digit <= prompts.count {
-                onSelect(prompts[digit - 1])
+            // Only pure key input (no ⌘/⌃/⌥) participates in shortcuts or search.
+            guard keyPress.modifiers.isDisjoint(with: [.command, .control, .option]) else {
+                return .ignored
+            }
+            guard let first = keyPress.characters.first else { return .ignored }
+
+            // Digit shortcut 1–9 only fires when no query is active; otherwise
+            // digits go into the query buffer alongside letters.
+            if searchQuery.isEmpty, let digit = Int(String(first)),
+               digit >= 1 && digit <= filteredPrompts.count {
+                onSelect(filteredPrompts[digit - 1])
+                return .handled
+            }
+
+            // Type-to-search: append any alphanumeric or space character.
+            if first.isLetter || first.isNumber || first == " " || first == "-" {
+                searchQuery.append(first)
+                selectedIndex = 0
                 return .handled
             }
             return .ignored
@@ -153,11 +195,31 @@ struct PromptPopupView: View {
 
     private var header: some View {
         HStack(spacing: 6) {
-            Image(systemName: "pencil.and.outline")
+            // Show the search glass only when the query originates from the
+            // container (direct type-to-search, dictate mode). When the
+            // instruction field is active the query is visible in the text
+            // field below, so keep the header neutral to avoid duplication.
+            Image(systemName: (!searchQuery.isEmpty && !instructionFieldActive)
+                  ? "magnifyingglass" : "pencil.and.outline")
                 .foregroundStyle(.tint)
-            Text("Tippi")
-                .font(.subheadline.weight(.semibold))
+            if !searchQuery.isEmpty && !instructionFieldActive {
+                Text(searchQuery)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                    .truncationMode(.head)
+            } else {
+                Text("Tippi")
+                    .font(.subheadline.weight(.semibold))
+            }
             Spacer()
+            // Match-count is always shown when a filter is active, regardless
+            // of source — visual confirmation that filtering is running.
+            if !searchQuery.isEmpty {
+                Text("\(filteredPrompts.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.secondary)
@@ -172,12 +234,20 @@ struct PromptPopupView: View {
 
     private var list: some View {
         VStack(spacing: 0) {
-            ForEach(Array(prompts.enumerated()), id: \.element.id) { index, prompt in
+            if filteredPrompts.isEmpty && !searchQuery.isEmpty {
+                Text(String(localized: "prompt.search.noMatch"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+            }
+            ForEach(Array(filteredPrompts.enumerated()), id: \.element.id) { index, prompt in
                 PromptRow(
-                    // Only 1–9 are reachable via the digit shortcut; don't show
-                    // a badge for rows the keyboard can't trigger.
+                    // Only 1–9 are reachable via the digit shortcut, and only
+                    // when no search query is active (digits go into the query
+                    // buffer while filtering).
                     prompt: prompt,
-                    shortcut: index < 9 ? "\(index + 1)" : "",
+                    shortcut: (searchQuery.isEmpty && index < 9) ? "\(index + 1)" : "",
                     isSelected: index == selectedIndex,
                     onHover: { selectedIndex = index },
                     onTap: { onSelect(prompt) }
@@ -312,6 +382,9 @@ private struct VoiceSection: View {
     let mode: VoiceMode
     let onTranscribed: (String) -> Void
     var onFieldFocusChange: (Bool) -> Void = { _ in }
+    /// Called on every keystroke in the instruction field. Parent uses this to
+    /// mirror the text into `searchQuery` for ambient prompt filtering.
+    var onInstructionChange: (String) -> Void = { _ in }
 
     private enum State { case idle, recording, transcribing, failed(String) }
     @SwiftUI.State private var voiceState: State = .idle
@@ -324,12 +397,14 @@ private struct VoiceSection: View {
         audioRecorder: AudioRecorder?,
         mode: VoiceMode,
         onTranscribed: @escaping (String) -> Void,
-        onFieldFocusChange: @escaping (Bool) -> Void = { _ in }
+        onFieldFocusChange: @escaping (Bool) -> Void = { _ in },
+        onInstructionChange: @escaping (String) -> Void = { _ in }
     ) {
         self.audioRecorder = audioRecorder
         self.mode          = mode
         self.onTranscribed = onTranscribed
         self.onFieldFocusChange = onFieldFocusChange
+        self.onInstructionChange = onInstructionChange
         self._recorder     = ObservedObject(wrappedValue: audioRecorder ?? AudioRecorder())
     }
 
@@ -414,6 +489,14 @@ private struct VoiceSection: View {
             .onSubmit { submitTyped() }
             .onChange(of: fieldFocused) { _, focused in
                 onFieldFocusChange(focused)
+            }
+            // Ambient prompt filtering: mirror the typed instruction into the
+            // parent's search query on every keystroke. The list re-filters live
+            // while the user drafts their instruction — no extra shortcut,
+            // Return still fires `submitTyped()` (free instruction), and ↓+Return
+            // picks from the pre-filtered list.
+            .onChange(of: typedInstruction) { _, new in
+                onInstructionChange(new)
             }
             // Auto-focus so the user can type the instruction without a click.
             .onAppear {

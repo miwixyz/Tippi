@@ -34,6 +34,9 @@
 "prompt.instagramCaption" = "Instagram-Caption";
 "prompt.facebookPost" = "Facebook-Post";
 "prompt.translateES" = "Übersetzen → ES";
+"prompt.search.noMatch" = "Kein Prompt passt. ⌫ kürzt den Suchtext, ⎋ löscht ihn.";
+"settings.help.commandPaletteTitle" = "Passives Prompt-Filtern";
+"settings.help.commandPaletteBody" = "Die Prompt-Liste filtert live mit, während du tippst — kein Extra-Shortcut, kein Moduswechsel. Zwei Wege führen zum gleichen Verhalten, je nachdem wie du das Popup öffnest:\n\nMit markiertem Text: du tippst deine Anweisung wie gewohnt ins Feld „Oder Anweisung eintippen…“. Tippi spiegelt den Text im Hintergrund in den Prompt-Filter — die Liste engt sich auf passende Prompts ein, während du schreibst. Return führt deine Anweisung unverändert aus (wie bisher), und ↓ dann Return wählt aus der vor-gefilterten Liste.\n\nOhne Auswahl: das Feld ist nicht da, aber du kannst direkt am Popup lostippen — der Suchtext erscheint im Header (🔍) und filtert die Liste. ⌫ kürzt Zeichen für Zeichen, ⎋ löscht zuerst nur den aktiven Suchtext (beim zweiten Druck schließt es das Popup), und die Zahlen-Shortcuts 1–9 funktionieren weiter solange du nichts tippst.\n\nWarum wichtig: mit 22 eingebauten Prompts plus deinen eigenen wird die Scroll-Liste lang. Drei Buchstaben und du landest sofort beim gewünschten Prompt. Die Trefferzahl erscheint rechts im Header, sobald ein Filter aktiv ist. Der Filter ist Groß-/Kleinschreibung-egal und sucht als Teilstring im Titel. Kommt kein Treffer zurück, siehst du einen kurzen Hinweis.";
 
 /* Welcome / Setup Wizard */
 "welcome.title" = "Willkommen bei Tippi";

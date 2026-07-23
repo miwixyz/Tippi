@@ -1036,6 +1036,11 @@ private struct HelpTab: View {
                     body: String(localized: "settings.help.translateBody")
                 )
                 helpSection(
+                    icon: "magnifyingglass",
+                    title: String(localized: "settings.help.commandPaletteTitle"),
+                    body: String(localized: "settings.help.commandPaletteBody")
+                )
+                helpSection(
                     icon: "clock.arrow.circlepath",
                     title: String(localized: "settings.help.historyTitle"),
                     body: String(localized: "settings.help.historyBody")
