@@ -233,6 +233,16 @@ if [ ! -d "${APP_PATH}" ]; then
     echo "✗ Build failed — ${APP_PATH} not found"; exit 1
 fi
 
+# Write the build number we actually shipped back into project.yml.
+# bump-version.sh can only guess it (commits land between bump and release),
+# so without this the file drifts below the shipped build — 1.16.0 shipped as
+# 185 while project.yml still said 181. Commit it together with appcast.xml.
+PROJECT_BUILD="$(awk -F'"' '/CURRENT_PROJECT_VERSION:/ { print $2; exit }' project.yml)"
+if [ "${PROJECT_BUILD}" != "${BUILD_NUMBER}" ]; then
+    sed -i '' -E "s/(CURRENT_PROJECT_VERSION: )\"[^\"]+\"/\1\"${BUILD_NUMBER}\"/" project.yml
+    echo "  ✓ project.yml CURRENT_PROJECT_VERSION ${PROJECT_BUILD} → ${BUILD_NUMBER} (shipped build)"
+fi
+
 # 4a. Inject whisper-cli into bundle (static binary — no separate dylibs needed)
 echo "▶ [3/7] Injecting whisper-cli into bundle..."
 HELPERS_SRC="./Tippi/Helpers"
@@ -367,4 +377,4 @@ echo "  DMG:  ${DMG_PATH}"
 echo "  Size: $(du -h "${DMG_PATH}" | cut -f1)"
 echo ""
 echo "Next steps:"
-echo "  1. git add appcast.xml && git commit -m 'release: v${VERSION}' && git push"
+echo "  1. git add appcast.xml project.yml && git commit -m 'release: v${VERSION}' && git push"

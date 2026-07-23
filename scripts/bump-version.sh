@@ -9,9 +9,13 @@
 # project.yml is the single source of truth for VERSION (since 2026-06-02).
 # release.env no longer carries a VERSION field.
 #
-# CURRENT_PROJECT_VERSION in project.yml is mostly for IDE consistency — the
-# release pipeline overrides it with `git rev-list --count HEAD` at build time.
-# We still bump it to keep local Xcode builds matching the release behaviour.
+# CURRENT_PROJECT_VERSION in project.yml is for local Xcode builds only. The
+# release pipeline computes the real build number as `git rev-list --count HEAD`
+# at build time and writes it back into project.yml afterwards.
+#
+# The value written here is a best guess and goes stale with every commit that
+# lands before the release — 1.16.0 was bumped to 181 and shipped as 185. That
+# is expected. The shipped number is authoritative; release.sh corrects the file.
 
 set -euo pipefail
 
