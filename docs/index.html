@@ -129,6 +129,30 @@
   }
   .btn.ghost:hover { background: rgba(255,255,255,.05); }
   .hero small { display: block; margin-top: 18px; color: var(--ink-dim); font-size: 14px; }
+  .hero .contrast { display: block; margin-top: 6px; color: var(--ink-dim); font-size: 13px; opacity: .85; }
+
+  /* ── App strip (Trust anchor: works in these apps) ─────────────────────── */
+  .app-strip {
+    margin: 36px auto 0;
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center;
+    max-width: 560px;
+  }
+  .app-strip .label {
+    width: 100%;
+    text-align: center;
+    color: var(--ink-dim); font-size: 12px;
+    letter-spacing: .08em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .app-chip {
+    display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px; color: var(--ink);
+    background: rgba(255,255,255,.03);
+  }
 
   /* ── Section structure ─────────────────────────────────────────────────── */
   section { padding: 72px 0; border-top: 1px solid var(--border); }
@@ -253,6 +277,21 @@
 
     <small data-lang="en">Free · MIT licensed · Apple Silicon · macOS 15+</small>
     <small data-lang="de">Kostenlos · MIT-Lizenz · Apple Silicon · macOS 15+</small>
+    <small class="contrast" data-lang="en">No subscription. Your API keys, your costs.</small>
+    <small class="contrast" data-lang="de">Kein Abo. Deine API-Keys, deine Kosten.</small>
+
+    <div class="app-strip" aria-label="Apps in which Tippi works">
+      <span class="label" data-lang="en">Works right inside</span>
+      <span class="label" data-lang="de">Läuft direkt in</span>
+      <span class="app-chip">Mail</span>
+      <span class="app-chip">Safari</span>
+      <span class="app-chip">Notes</span>
+      <span class="app-chip">Slack</span>
+      <span class="app-chip">Notion</span>
+      <span class="app-chip">VS Code</span>
+      <span class="app-chip">Messages</span>
+      <span class="app-chip"><span data-lang="en">and any other text field</span><span data-lang="de">und jedem anderen Textfeld</span></span>
+    </div>
   </div>
 </header>
 
