@@ -383,6 +383,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.13.x | ✅ Done | Provider name shown live in the dictation indicator; menubar icon pulses while any LLM request is in flight |
 | v1.14.x | ✅ Done | Kimi (Moonshot) + Nebius (EU) providers — now 10 providers (8 cloud BYOK + 2 local) |
 | v1.15.0 | ✅ Done | **Translate Quick Panel** (⌥⌘L) — Spotlight-style window with auto German ⇄ Spanish, local voice input, spoken output, live light/dark |
+| v1.16.0 | ✅ Done | **Ambient prompt filtering** — prompt list narrows live while typing, from both input paths (instruction field on selected text via bridge callback; direct type at the popup without selection). Match count in header, `⌫` shrinks query, `⎋` two-stage clear-then-close, digit shortcuts 1–9 preserved |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).
