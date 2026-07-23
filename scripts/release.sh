@@ -2,7 +2,7 @@
 # Tippi release pipeline: build → sign → notarize → DMG → ready for GitHub.
 #
 # Required env vars (or release.env in repo root):
-#   DEVELOPER_ID         e.g. "Developer ID Application: Michael Wildenauer (54PMA7GFAN)"
+#   DEVELOPER_ID         "Developer ID Application: Michael Wildenauer (LTKJ6Z2VYB)"
 #   NOTARY_PROFILE       Keychain profile name for notarytool (default: tippi-notary)
 #
 # VERSION is always read from project.yml MARKETING_VERSION (single source of truth
@@ -11,8 +11,12 @@
 # Setup notarytool profile once with:
 #   xcrun notarytool store-credentials tippi-notary \
 #       --apple-id miwimail@icloud.com \
-#       --team-id 54PMA7GFAN \
+#       --team-id LTKJ6Z2VYB \
 #       --password <app-specific-password>
+#
+# Real values live in the Keychain (TIPPI_DEVELOPER_ID / TIPPI_NOTARY_PROFILE),
+# read via keys.sh below. Team ID is LTKJ6Z2VYB — matches every shipped build
+# since 1.12.x. (Header previously showed 54PMA7GFAN, which was never used.)
 
 set -euo pipefail
 
