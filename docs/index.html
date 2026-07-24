@@ -14,7 +14,12 @@
 
 <style>
   :root {
-    --accent: #3B8CFF;
+    --accent: #3B8CFF;          /* Signal Blue — foreground on dark bg (text/icons/borders), high contrast */
+    /* CTA / filled surfaces with WHITE text need ≥4.5:1 — Signal Blue is only 3.3:1.
+       --accent-cta is a darkened Signal Blue (~5.7:1 on white) used wherever white
+       text sits on a blue fill (buttons, active toggle, step numbers). WCAG AA. */
+    --accent-cta: #1565C0;
+    --accent-cta-hover: #0D4FA0;
     --accent-hover: #1e5cd0;
     --navy: #020B1D;
     --navy-2: #0B1730;
@@ -83,7 +88,7 @@
     letter-spacing: 0.04em;
     transition: background .15s, color .15s;
   }
-  .lang-toggle button.active { background: var(--accent); color: white; }
+  .lang-toggle button.active { background: var(--accent-cta); color: white; }
   .lang-toggle button:not(.active):hover { color: var(--ink); }
 
   /* ── Hero ──────────────────────────────────────────────────────────────── */
@@ -114,14 +119,14 @@
   .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--accent); color: white;
+    background: var(--accent-cta); color: white;
     padding: 14px 24px;
     border-radius: var(--radius);
     font-weight: 600; font-size: 16px;
     transition: background .15s ease, transform .1s ease;
     border: none; cursor: pointer;
   }
-  .btn:hover { background: var(--accent-hover); text-decoration: none; transform: translateY(-1px); }
+  .btn:hover { background: var(--accent-cta-hover); text-decoration: none; transform: translateY(-1px); }
   .btn.ghost {
     background: transparent;
     border: 1px solid var(--border);
@@ -171,7 +176,7 @@
 
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .step { background: var(--navy-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
-  .step .n { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; font-weight: 700; display: grid; place-items: center; margin-bottom: 18px; }
+  .step .n { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-cta); color: white; font-weight: 700; display: grid; place-items: center; margin-bottom: 18px; }
   .step h3 { font-size: 18px; margin-bottom: 8px; }
   .step p { color: var(--ink-dim); font-size: 15px; }
 
@@ -213,7 +218,7 @@
   .faq summary::-webkit-details-marker { display: none; }
   .faq summary::after { content: "+"; color: var(--accent); font-size: 20px; font-weight: 400; }
   .faq details[open] summary::after { content: "–"; }
-  .faq details p { color: var(--ink-dim); font-size: 14px; line-height: 1.6; padding-bottom: 18px; margin: 0; }
+  .faq details p { color: var(--ink-dim); font-size: 14px; line-height: 1.6; padding-bottom: 18px; margin: 0; max-width: 68ch; }
 
   .final { text-align: center; background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(59,140,255,.12) 0%, transparent 70%); }
 
