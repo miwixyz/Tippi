@@ -78,7 +78,7 @@
 
 ### From the latest release
 
-1. Download the latest **[Tippi-1.15.0.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.15.0)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
+1. Download the latest **[Tippi-1.17.0.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.17.0)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant Accessibility permission, optionally enter an API key)
@@ -397,6 +397,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.14.x | ✅ Done | Kimi (Moonshot) + Nebius (EU) providers — now 10 providers (8 cloud BYOK + 2 local) |
 | v1.15.0 | ✅ Done | **Translate Quick Panel** (⌥⌘L) — Spotlight-style window with auto German ⇄ Spanish, local voice input, spoken output, live light/dark |
 | v1.16.0 | ✅ Done | **Ambient prompt filtering** — prompt list narrows live while typing, from both input paths (instruction field on selected text via bridge callback; direct type at the popup without selection). Match count in header, `⌫` shrinks query, `⎋` two-stage clear-then-close, digit shortcuts 1–9 preserved |
+| v1.17.0 | ✅ Done | **Prompt chains (multi-step pipelines)** — link several prompts behind one hotkey, each step's output feeds the next; live "Step 2/3" progress with a streaming final step, failed steps keep the last good result editable. Built-in "Cleanup → English" chain. Plus stale-Nebius-model-preset 404 fixes + launch migration, and a "Custom…" model-picker snap-shut fix |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).
