@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.17.0] — 2026-07-24
+
+### Added
+- **Prompt chains (multi-step pipelines).** A prompt can now run several prompts in a row instead of one — each step's output becomes the next step's input, all behind a single hotkey. In the prompt editor switch the type from *Single step* to *Chain* and add two or more steps; any built-in or custom prompt can be a step (chains can't nest). Reorder with ↑/↓, remove with the trash icon. The preview header shows live progress ("Step 2/3: …") and the **final step streams** token-by-token so the finished result builds instead of hanging on a spinner. If a step fails — an error or a deleted referenced prompt — the chain stops and the last good intermediate result stays editable, with a note explaining what broke. Chains need a configured AI provider (no local-only fallback). A ready-made **"Cleanup → English"** chain (fix grammar, then translate) ships built in. Help section added under Settings → Help.
+
+### Fixed
+- **Nebius model presets were stale and 404'd.** The curated Nebius list pointed at model ids the provider has since removed — including the "fastest ⭐" default (`Meta-Llama-3.1-8B-Instruct-fast`), which broke both chat transforms and dictation polish with an HTTP 404. Presets are now verified against the live catalog: fastest is `Qwen/Qwen3-30B-A3B-Instruct-2507` (MoE, ~3B active params — fast without a separate `-fast` sku), plus `Llama-3.3-70B-Instruct`, `Qwen3-235B-A22B-Instruct-2507`, and `DeepSeek-V4-Pro`. A one-time launch migration remaps any persisted selection (chat model + dictation-polish override) that still points at a removed id, so existing installs self-heal on next start.
+- **"Custom…" model entry snapped shut.** Choosing *Custom…* in a provider's model picker cleared the model field, which made the picker immediately revert to the default and hide the text field before you could type. It now sticks in custom mode via explicit state, so the field stays open for editing.
+
 ## [1.16.0] — 2026-07-23
 
 ### Added

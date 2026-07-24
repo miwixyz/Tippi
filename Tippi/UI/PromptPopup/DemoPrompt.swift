@@ -8,6 +8,11 @@ struct DemoPrompt: Identifiable, Equatable {
     let symbol: String
     let transform: @Sendable (String) -> String
 
+    /// Optional multi-step chain. Each entry is another `DemoPrompt.id` (built-in
+    /// or `custom-<uuid>`). When non-nil, the preview runs the steps in order,
+    /// feeding each step's output into the next. `nil` = single-step prompt.
+    let pipeline: [String]?
+
     /// Operation-specific instructions, supplied by the prompt author
     /// (built-in or via Settings → Prompts). The property `systemPrompt`
     /// wraps this with a shared role-boundary preamble before the LLM sees it.
@@ -18,13 +23,25 @@ struct DemoPrompt: Identifiable, Equatable {
         title: String,
         symbol: String,
         systemPrompt: String,
+        pipeline: [String]? = nil,
         transform: @escaping @Sendable (String) -> String
     ) {
         self.id = id
         self.title = title
         self.symbol = symbol
         self.rawSystemPrompt = systemPrompt
+        self.pipeline = (pipeline?.isEmpty ?? true) ? nil : pipeline
         self.transform = transform
+    }
+
+    /// `true` when this prompt is a multi-step chain.
+    var isChain: Bool { !(pipeline?.isEmpty ?? true) }
+
+    /// Resolve a chain step id to its concrete prompt. Returns `nil` when the id
+    /// no longer exists (e.g. a custom prompt that was deleted).
+    @MainActor
+    static func resolve(id: String) -> DemoPrompt? {
+        all.first { $0.id == id }
     }
 
     /// Effective system prompt sent to the LLM. Combines the universal
@@ -117,6 +134,21 @@ struct DemoPrompt: Identifiable, Equatable {
                 Output ONLY the translated text. No quotes, no commentary, no labels, no follow-up.
                 """,
                 transform: { @Sendable in "[Demo ES] " + $0 }
+            ),
+
+            // ── Chains (multi-step pipelines) ─────────────────────────────────
+            // Shipped example: runs `fixGrammar` then `translateEN`, feeding the
+            // corrected text into the translator. Placed near the top (after the
+            // translations) so the pipeline feature is discoverable without
+            // scrolling. Demonstrates chains end-to-end without the user having
+            // to build one first.
+            DemoPrompt(
+                id: "chainCleanupEN",
+                title: String(localized: "prompt.chainCleanupEN"),
+                symbol: "arrow.right.circle",
+                systemPrompt: "",
+                pipeline: ["fixGrammar", "translateEN"],
+                transform: { @Sendable in $0 }
             ),
 
             // ── Core transformations ──────────────────────────────────────────

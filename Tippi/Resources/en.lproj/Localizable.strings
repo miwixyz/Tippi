@@ -21,6 +21,7 @@
 "prompt.simplify" = "Simplify";
 "prompt.summarize" = "Summarize";
 "prompt.adaptForApp" = "Adapt for App";
+"prompt.chainCleanupEN" = "Cleanup → English";
 "prompt.humanize" = "Humanize";
 "prompt.tldr" = "TL;DR";
 "prompt.bulletpoints" = "Bullet points";
@@ -108,6 +109,10 @@
 "preview.regenerate" = "Regenerate";
 "preview.retry" = "Try again";
 "preview.fallback.badge" = "Local demo · no API key";
+"preview.chain.step" = "Step %1$d/%2$d: %3$@";
+"preview.chain.stepFailed" = "Step %1$d failed: %2$@";
+"preview.chain.missingStep" = "Chain step %d references a deleted prompt";
+"preview.chain.noProvider" = "A chain needs an AI provider — add a key in Settings → Providers.";
 "preview.refine.placeholder" = "Refine: e.g. shorter, more formal, reply to it…";
 "preview.refine.apply" = "Refine";
 "preview.truncated.badge" = "Cut off (length limit)";
@@ -209,6 +214,13 @@
 "settings.prompts.editor.systemLabel" = "Instructions for the AI:";
 "settings.prompts.editor.systemHint" = "Describe exactly what the AI should do. Your selected text will be passed in as the user message.";
 "settings.prompts.editor.variablesHint" = "Variables: {clipboard} · {app_name} · {language} · {selected_text}";
+"settings.prompts.editor.mode" = "Type";
+"settings.prompts.editor.mode.single" = "Single step";
+"settings.prompts.editor.mode.chain" = "Chain";
+"settings.prompts.editor.chainHint" = "Runs several prompts in order — each step's output becomes the next step's input. Needs at least 2 steps.";
+"settings.prompts.editor.chainEmpty" = "No steps yet — add prompts below.";
+"settings.prompts.editor.chainAddStep" = "Add step";
+"settings.prompts.editor.chainMissing" = "Deleted prompt";
 
 /* Prompts — Import / Export */
 "prompts.import.button" = "Import";
@@ -271,6 +283,8 @@
 "settings.help.previewBody" = "The result streams in token by token, so you see it forming instead of waiting for the whole answer. Once it's ready you can refine it in place: type a follow-up in the \"Refine\" field (e.g. \"shorter\", \"more formal\", \"add a greeting\") and it rewrites the current result — chain as many refinements as you like. Keyboard shortcuts in the preview: Return = Replace, ⌘C = Copy, ⌘Return = Append, ⌘R = Regenerate, Esc = Cancel. If a result hits the model's length limit it's kept but flagged \"Cut off\" so you don't replace a truncated text by accident.";
 "settings.help.promptsTitle" = "Custom prompts";
 "settings.help.promptsBody" = "Go to the Prompts tab to add your own. Each prompt needs a title, an SF Symbol name, and an instruction for the AI. The selected text is sent automatically — no placeholder needed.";
+"settings.help.chainsTitle" = "Prompt chains";
+"settings.help.chainsBody" = "In the prompt editor switch the type to Chain to run several prompts in a row. Each step's output feeds the next — e.g. Cleanup → English translates your text after fixing grammar. The preview shows the current step; if a step fails, the last good result stays editable. Try the built-in \"Cleanup → English\".";
 "settings.help.localActionsTitle" = "Local quick actions";
 "settings.help.localActionsBody" = "Tippi is not PopClip: marking text alone does not open the menu. Select text, then press your hotkey (default ⌥⌘T) or choose Trigger Tippi… from the menu bar.\n\nWhen text is captured, Quick actions appear above the AI prompts. They run locally: rich-text formatting, case changes, underscore/hyphen, brackets, join lines, and counts.\n\nBold/Italic/Underline/Strike use RTF when the app supports it; plain-text apps get Markdown-style fallbacks (**bold**, ~~struck~~). Counts only show a number and do not edit text.\n\nIf you see “No text captured”, grant Accessibility for the Tippi.app you launched (local test builds need a fresh toggle after each make build). TextEdit and Notes work best. Hide Quick actions in Settings → General.";
 "settings.help.troubleBody" = "Nothing happens when you only highlight text? Press ⌥⌘T (or ⌃⌥⌘T) after selecting — Tippi does not auto-open like PopClip.\n\nHotkey not firing? Grant Accessibility (System Settings → Privacy & Security → Accessibility). Trigger via menu bar ✏️ → Trigger Tippi…\n\nQuick actions show but text does not change? Re-select text in TextEdit/Notes, trigger again, then tap the action. Local builds: enable Accessibility for build/Build/Products/Release/Tippi.app and restart the app.\n\nNew hotkey not responding? Quit and reopen Tippi.";

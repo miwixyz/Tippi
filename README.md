@@ -24,6 +24,7 @@
 - **22 built-in prompts** — Improve, Fix Grammar, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Humanize, Summarize, TL;DR, Bullet points, Key points, Action items, Explain like I'm 10, Email reply, LinkedIn post, Instagram caption, Facebook post, Adapt for App, Translate → DE, Translate → EN, Translate → ES; language-aware prompts use `{language}`
 - **Ambient prompt filtering** — the prompt list narrows live while you type, no shortcut or mode switch. With text selected the instruction field feeds the filter behind the scenes (Return still runs your instruction verbatim, `↓` then Return picks from the pre-filtered list). Without a selection you just type at the popup — query appears in the header, `⌫` shrinks it, `⎋` first clears the query then closes the popup, digit shortcuts `1–9` still work when nothing is typed
 - **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
+- **Prompt chains** — link several prompts into one hotkey; each step's output feeds the next (e.g. built-in "Cleanup → English" fixes grammar, then translates). The preview shows the current step; if a step fails, the last good result stays editable
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
 - **PopClip-style local quick actions** — instantly format or transform selected text without an AI call: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Brackets, Join Lines, Character Count, and Word Count
 - **10 AI providers** — choose any combination, switch freely:
@@ -258,6 +259,18 @@ Context from clipboard: {clipboard}
 
 This is a draft reply. Polish it so it fits the context above. Return only the improved reply.
 ```
+
+#### Prompt chains (multi-step)
+
+A prompt can run **several prompts in a row** instead of one. Each step's output becomes the next step's input — one hotkey, one preview.
+
+In the prompt editor switch the **Type** from *Single step* to *Chain*, then add at least two steps. Any built-in or custom prompt can be a step (chains can't nest). Reorder with ↑/↓, remove with the trash icon.
+
+- **Built-in example** — "Cleanup → English" fixes grammar, then translates the corrected text to English. Try it without building anything.
+- **Progress** — the preview header shows "Step 2/3: …" while the chain runs.
+- **Failure** — if a step errors (or references a deleted prompt), the chain stops and the last good intermediate result stays editable, with a red note explaining what broke.
+- **Needs a provider** — chains run through your configured AI provider; there's no local-only fallback for a chain.
+- Chains export/import inside `.tippipack` like any prompt. Steps that point at *custom* prompts by id won't survive an import into a different vault (built-in steps always do).
 
 #### Import / Export custom prompts
 

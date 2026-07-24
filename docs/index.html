@@ -633,6 +633,11 @@
         <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
       </details>
       <details>
+        <summary><span data-lang="en">Can I chain prompts together?</span><span data-lang="de">Kann ich Prompts verketten?</span></summary>
+        <p data-lang="en">Yes. A prompt can run several prompts in a row — each step's output becomes the next step's input, all behind one hotkey. In the prompt editor switch the type to "Chain" and add two or more steps (any built-in or custom prompt). The preview shows the current step live and streams the final result; if a step fails, the last good intermediate stays editable. A ready-made "Cleanup → English" chain ships built in.</p>
+        <p data-lang="de">Ja. Ein Prompt kann mehrere Prompts nacheinander ausführen — die Ausgabe jedes Schritts wird zur Eingabe des nächsten, alles hinter einem Hotkey. Im Prompt-Editor den Typ auf „Kette" stellen und zwei oder mehr Schritte hinzufügen (beliebige Built-in- oder eigene Prompts). Die Vorschau zeigt den aktuellen Schritt live und streamt das Endergebnis; scheitert ein Schritt, bleibt das letzte gültige Zwischenergebnis bearbeitbar. Eine fertige „Cleanup → Englisch"-Kette ist eingebaut.</p>
+      </details>
+      <details>
         <summary><span data-lang="en">Does it work in every app?</span><span data-lang="de">Funktioniert es in jeder App?</span></summary>
         <p data-lang="en">Text capture and dictation work everywhere, including Electron/Chromium apps (Obsidian, Slack, VS Code). The one limit: replacing a selection in place inside Electron apps isn't possible — Tippi copies the result to the clipboard with a "press ⌘V" toast instead. Native apps (Mail, Notes, Safari, Pages) and Office get full in-place replacement.</p>
         <p data-lang="de">Texterfassung und Diktat funktionieren überall, auch in Electron/Chromium-Apps (Obsidian, Slack, VS Code). Eine Grenze: das direkte Ersetzen einer Auswahl in Electron-Apps geht nicht — Tippi legt das Ergebnis stattdessen in die Zwischenablage mit „⌘V drücken"-Hinweis. Native Apps (Mail, Notizen, Safari, Pages) und Office ersetzen direkt an Ort und Stelle.</p>

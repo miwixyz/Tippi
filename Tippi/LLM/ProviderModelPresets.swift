@@ -110,16 +110,20 @@ enum ProviderModelPresets {
         Preset(id: "moonshot-v1-128k",     label: "Moonshot v1 128K — long context",            isFastest: false, isReasoning: false),
     ]
 
-    // MARK: - Nebius AI Studio (EU/Amsterdam, OpenAI-compatible, 2026-07)
+    // MARK: - Nebius AI Studio (EU/Amsterdam, OpenAI-compatible)
     //
     // 100 % EU data residency (Amsterdam). DSGVO-compliant. Very competitive
-    // pricing (~$0.10–0.30 / 1M tokens). Hosts Llama 3.x, Qwen, DeepSeek.
-    // "-fast" variants use tensor parallelism for lower latency.
+    // pricing (~$0.10–0.30 / 1M tokens). Hosts Llama, Qwen, DeepSeek.
+    //
+    // ⚠️ Model IDs verified against the live /v1/models catalog on 2026-07-24.
+    // Nebius removed the earlier "-fast" variants (they now 404) — do NOT
+    // reintroduce `*-Instruct-fast` ids. "fastest" is a MoE model (Qwen3-30B-A3B,
+    // ~3B active params) which is fast without a separate `-fast` sku.
     static let nebius: [Preset] = [
-        Preset(id: "meta-llama/Meta-Llama-3.1-8B-Instruct-fast",  label: "Llama 3.1 8B — EU, fastest ⭐",        isFastest: true,  isReasoning: false),
-        Preset(id: "meta-llama/Meta-Llama-3.3-70B-Instruct-fast", label: "Llama 3.3 70B — EU, premium quality", isFastest: false, isReasoning: false),
-        Preset(id: "Qwen/Qwen3-235B-A22B-fast",                   label: "Qwen3 235B — EU, top quality",        isFastest: false, isReasoning: false),
-        Preset(id: "deepseek-ai/DeepSeek-V3",                     label: "DeepSeek V3 — EU, strong coding",     isFastest: false, isReasoning: false),
+        Preset(id: "Qwen/Qwen3-30B-A3B-Instruct-2507",     label: "Qwen3 30B A3B — EU, fastest ⭐",      isFastest: true,  isReasoning: false),
+        Preset(id: "meta-llama/Llama-3.3-70B-Instruct",    label: "Llama 3.3 70B — EU, premium quality", isFastest: false, isReasoning: false),
+        Preset(id: "Qwen/Qwen3-235B-A22B-Instruct-2507",   label: "Qwen3 235B — EU, top quality",        isFastest: false, isReasoning: false),
+        Preset(id: "deepseek-ai/DeepSeek-V4-Pro",          label: "DeepSeek V4 — EU, strong coding",     isFastest: false, isReasoning: false),
     ]
 
     /// Default model for dictation polish on a given provider — picks the
@@ -127,5 +131,25 @@ enum ProviderModelPresets {
     /// provider has no curated presets (Ollama/MLX/unknown).
     static func defaultPolishModel(for providerID: String) -> String? {
         presets(for: providerID).first(where: { $0.isFastest && !$0.isReasoning })?.id
+    }
+
+    /// Nebius removed several hosted model ids in mid-2026 (their `-fast` skus and
+    /// DeepSeek-V3). Any persisted selection pointing at one now 404s. Remap the
+    /// stored chat-model and dictation-polish overrides to the current
+    /// equivalent on launch. Idempotent — only rewrites values that are a
+    /// known-dead id, so it no-ops on every launch after the first.
+    static func migrateRemovedNebiusModels(defaults: UserDefaults = .standard) {
+        let remap: [String: String] = [
+            "meta-llama/Meta-Llama-3.1-8B-Instruct-fast":  "Qwen/Qwen3-30B-A3B-Instruct-2507",
+            "meta-llama/Meta-Llama-3.3-70B-Instruct-fast": "meta-llama/Llama-3.3-70B-Instruct",
+            "Qwen/Qwen3-235B-A22B-fast":                   "Qwen/Qwen3-235B-A22B-Instruct-2507",
+            "deepseek-ai/DeepSeek-V3":                     "deepseek-ai/DeepSeek-V4-Pro",
+        ]
+        let keys = ["defaultModel.nebius", "dictation.postProcess.modelOverride"]
+        for key in keys {
+            guard let current = defaults.string(forKey: key), let replacement = remap[current] else { continue }
+            defaults.set(replacement, forKey: key)
+            NSLog("Tippi: migrated removed Nebius model '\(current)' → '\(replacement)' (key: \(key))")
+        }
     }
 }

@@ -312,6 +312,10 @@ private struct ProviderRow: View {
     @State private var modelName: String = ""
     @State private var hasKey: Bool = false
     @State private var savedFlash: Bool = false
+    /// Sticky "Custom…" selection. Without this the picker would snap back to the
+    /// default the moment `modelName` is cleared for editing, hiding the text
+    /// field before the user can type anything.
+    @State private var customModelMode: Bool = false
 
     // MLX-only
     @ObservedObject private var mlxManager = MLXServerManager.shared
@@ -506,17 +510,23 @@ private struct ProviderRow: View {
                     .textFieldStyle(.roundedBorder)
             }
         } else {
-            let isCustom = !modelName.isEmpty && !presets.contains(where: { $0.id == modelName })
+            // A stored model that isn't a preset means the user typed a custom id.
+            let storedIsCustom = !modelName.isEmpty && !presets.contains(where: { $0.id == modelName })
+            let showCustom = customModelMode || storedIsCustom
             let pickerSelection = Binding<String>(
                 get: {
-                    if modelName.isEmpty { return provider.defaultModel }
-                    return isCustom ? "__custom__" : modelName
+                    if showCustom { return "__custom__" }
+                    return modelName.isEmpty ? provider.defaultModel : modelName
                 },
                 set: { newValue in
                     if newValue == "__custom__" {
-                        // keep current modelName (user will edit in TextField)
-                        if !isCustom { modelName = "" }
+                        // Enter custom mode and keep it sticky. Clear the field only
+                        // when coming from a preset, so re-selecting Custom doesn't
+                        // wipe an id the user already typed.
+                        if !storedIsCustom { modelName = "" }
+                        customModelMode = true
                     } else {
+                        customModelMode = false
                         modelName = newValue
                     }
                 }
@@ -536,7 +546,7 @@ private struct ProviderRow: View {
                     }
                     .labelsHidden()
                 }
-                if isCustom || pickerSelection.wrappedValue == "__custom__" {
+                if showCustom {
                     TextField(provider.defaultModel, text: $modelName)
                         .textFieldStyle(.roundedBorder)
                         .padding(.leading, 60)
@@ -813,11 +823,7 @@ private struct PromptsTab: View {
         .sheet(isPresented: $creatingNew) {
             PromptEditor(existing: nil) { newOne in
                 if let newOne {
-                    store.add(
-                        title: newOne.title,
-                        symbol: newOne.symbol,
-                        systemPrompt: newOne.systemPrompt
-                    )
+                    store.add(newOne)
                 }
                 creatingNew = false
             }
@@ -890,9 +896,13 @@ private struct PromptEditor: View {
     let existing: CustomPrompt?
     let onSave: (CustomPrompt?) -> Void
 
+    private enum Mode: Hashable { case single, chain }
+
     @State private var title: String
     @State private var symbol: String
     @State private var systemPrompt: String
+    @State private var mode: Mode
+    @State private var pipeline: [String]
 
     init(existing: CustomPrompt?, onSave: @escaping (CustomPrompt?) -> Void) {
         self.existing = existing
@@ -900,6 +910,24 @@ private struct PromptEditor: View {
         _title = State(initialValue: existing?.title ?? "")
         _symbol = State(initialValue: existing?.symbol ?? "wand.and.stars")
         _systemPrompt = State(initialValue: existing?.systemPrompt ?? "")
+        _mode = State(initialValue: (existing?.isChain ?? false) ? .chain : .single)
+        _pipeline = State(initialValue: existing?.pipeline ?? [])
+    }
+
+    /// Prompts that can be used as chain steps: every non-chain prompt except
+    /// the one being edited (a chain can't reference itself, and chain-in-chain
+    /// is out of scope).
+    private var availableSteps: [DemoPrompt] {
+        let selfID = existing.map { "custom-\($0.id.uuidString)" }
+        return DemoPrompt.all.filter { !$0.isChain && $0.id != selfID }
+    }
+
+    private var isValid: Bool {
+        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        switch mode {
+        case .single: return !systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .chain: return pipeline.count >= 2
+        }
     }
 
     var body: some View {
@@ -921,6 +949,51 @@ private struct PromptEditor: View {
                     .foregroundStyle(.tint)
                     .frame(width: 24, height: 24)
             }
+
+            Picker(String(localized: "settings.prompts.editor.mode"), selection: $mode) {
+                Text(String(localized: "settings.prompts.editor.mode.single")).tag(Mode.single)
+                Text(String(localized: "settings.prompts.editor.mode.chain")).tag(Mode.chain)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if mode == .single {
+                singleEditor
+            } else {
+                chainEditor
+            }
+
+            Spacer(minLength: 0)
+
+            HStack {
+                Button(String(localized: "demo.sheet.cancel")) { onSave(nil) }
+                    .keyboardShortcut(.escape)
+                Spacer()
+                Button(String(localized: "settings.providers.save")) {
+                    let trimmed = CustomPrompt(
+                        id: existing?.id ?? UUID(),
+                        title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                        symbol: symbol.trimmingCharacters(in: .whitespacesAndNewlines),
+                        systemPrompt: mode == .single
+                            ? systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+                            : "",
+                        pipeline: mode == .chain ? pipeline : nil
+                    )
+                    onSave(trimmed)
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.return)
+                .disabled(!isValid)
+            }
+        }
+        .padding(20)
+        .frame(width: 520, height: 520)
+    }
+
+    // MARK: - Single-step editor
+
+    private var singleEditor: some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "settings.prompts.editor.symbolHint"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -942,30 +1015,83 @@ private struct PromptEditor: View {
             Text(String(localized: "settings.prompts.editor.variablesHint"))
                 .font(.caption)
                 .foregroundStyle(.tint)
-
-            Spacer(minLength: 0)
-
-            HStack {
-                Button(String(localized: "demo.sheet.cancel")) { onSave(nil) }
-                    .keyboardShortcut(.escape)
-                Spacer()
-                Button(String(localized: "settings.providers.save")) {
-                    let trimmed = CustomPrompt(
-                        id: existing?.id ?? UUID(),
-                        title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                        symbol: symbol.trimmingCharacters(in: .whitespacesAndNewlines),
-                        systemPrompt: systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
-                    )
-                    onSave(trimmed)
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.return)
-                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                          || systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
         }
-        .padding(20)
-        .frame(width: 520, height: 480)
+    }
+
+    // MARK: - Chain editor
+
+    private var chainEditor: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(String(localized: "settings.prompts.editor.chainHint"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if pipeline.isEmpty {
+                Text(String(localized: "settings.prompts.editor.chainEmpty"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
+                    )
+            } else {
+                VStack(spacing: 4) {
+                    ForEach(Array(pipeline.enumerated()), id: \.offset) { index, stepID in
+                        chainRow(index: index, stepID: stepID)
+                    }
+                }
+                .frame(minHeight: 120, alignment: .top)
+            }
+
+            Menu {
+                ForEach(availableSteps) { step in
+                    Button {
+                        pipeline.append(step.id)
+                    } label: {
+                        Label(step.title, systemImage: step.symbol)
+                    }
+                }
+            } label: {
+                Label(String(localized: "settings.prompts.editor.chainAddStep"), systemImage: "plus.circle")
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+        }
+    }
+
+    private func chainRow(index: Int, stepID: String) -> some View {
+        let step = DemoPrompt.resolve(id: stepID)
+        return HStack(spacing: 8) {
+            Text("\(index + 1).")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+            Image(systemName: step?.symbol ?? "questionmark.circle")
+                .foregroundStyle(step == nil ? Color.red : Color.accentColor)
+                .frame(width: 20)
+            Text(step?.title ?? String(localized: "settings.prompts.editor.chainMissing"))
+                .foregroundStyle(step == nil ? Color.red : Color.primary)
+            Spacer()
+            Button {
+                guard index > 0 else { return }
+                pipeline.swapAt(index, index - 1)
+            } label: { Image(systemName: "arrow.up") }
+                .buttonStyle(.borderless)
+                .disabled(index == 0)
+            Button {
+                guard index < pipeline.count - 1 else { return }
+                pipeline.swapAt(index, index + 1)
+            } label: { Image(systemName: "arrow.down") }
+                .buttonStyle(.borderless)
+                .disabled(index == pipeline.count - 1)
+            Button {
+                pipeline.remove(at: index)
+            } label: { Image(systemName: "trash").foregroundStyle(.red) }
+                .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(RoundedRectangle(cornerRadius: 5).fill(Color.secondary.opacity(0.08)))
     }
 }
 
@@ -994,6 +1120,11 @@ private struct HelpTab: View {
                     icon: "text.bubble",
                     title: String(localized: "settings.help.promptsTitle"),
                     body: String(localized: "settings.help.promptsBody")
+                )
+                helpSection(
+                    icon: "arrow.right.circle",
+                    title: String(localized: "settings.help.chainsTitle"),
+                    body: String(localized: "settings.help.chainsBody")
                 )
                 helpSection(
                     icon: "bolt",

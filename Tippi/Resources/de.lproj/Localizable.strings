@@ -21,6 +21,7 @@
 "prompt.simplify" = "Vereinfachen";
 "prompt.summarize" = "Zusammenfassen";
 "prompt.adaptForApp" = "Für App anpassen";
+"prompt.chainCleanupEN" = "Cleanup → Englisch";
 "prompt.humanize" = "Menschlicher";
 "prompt.tldr" = "TL;DR";
 "prompt.bulletpoints" = "Bulletpoints";
@@ -108,6 +109,10 @@
 "preview.regenerate" = "Neu generieren";
 "preview.retry" = "Erneut versuchen";
 "preview.fallback.badge" = "Lokale Demo · kein API-Key";
+"preview.chain.step" = "Schritt %1$d/%2$d: %3$@";
+"preview.chain.stepFailed" = "Schritt %1$d fehlgeschlagen: %2$@";
+"preview.chain.missingStep" = "Chain-Schritt %d verweist auf einen gelöschten Prompt";
+"preview.chain.noProvider" = "Eine Kette braucht einen KI-Anbieter — Key in Einstellungen → Anbieter hinterlegen.";
 "preview.refine.placeholder" = "Verfeinern: z. B. kürzer, förmlicher, antworte darauf…";
 "preview.refine.apply" = "Verfeinern";
 "preview.truncated.badge" = "Abgeschnitten (Längen-Limit)";
@@ -209,6 +214,13 @@
 "settings.prompts.editor.systemLabel" = "Anweisung an die KI:";
 "settings.prompts.editor.systemHint" = "Beschreibe genau, was die KI tun soll. Dein markierter Text wird automatisch als Benutzer-Nachricht angehängt.";
 "settings.prompts.editor.variablesHint" = "Variablen: {clipboard} · {app_name} · {language} · {selected_text}";
+"settings.prompts.editor.mode" = "Typ";
+"settings.prompts.editor.mode.single" = "Einzelschritt";
+"settings.prompts.editor.mode.chain" = "Kette";
+"settings.prompts.editor.chainHint" = "Führt mehrere Prompts nacheinander aus — die Ausgabe jedes Schritts wird zur Eingabe des nächsten. Mindestens 2 Schritte nötig.";
+"settings.prompts.editor.chainEmpty" = "Noch keine Schritte — unten Prompts hinzufügen.";
+"settings.prompts.editor.chainAddStep" = "Schritt hinzufügen";
+"settings.prompts.editor.chainMissing" = "Gelöschter Prompt";
 
 /* Prompts — Import / Export */
 "prompts.import.button" = "Importieren";
@@ -272,6 +284,8 @@
 "settings.help.previewBody" = "Das Ergebnis streamt Token für Token ein — du siehst es entstehen, statt auf die ganze Antwort zu warten. Sobald es fertig ist, kannst du es direkt verfeinern: im Feld „Verfeinern“ eine Folgeanweisung tippen (z. B. „kürzer“, „förmlicher“, „Gruß ergänzen“) und das aktuelle Ergebnis wird umgeschrieben — beliebig oft hintereinander. Tastenkürzel in der Vorschau: Return = Ersetzen, ⌘C = Kopieren, ⌘Return = Anhängen, ⌘R = Neu generieren, Esc = Abbrechen. Erreicht ein Ergebnis das Längen-Limit des Modells, bleibt es erhalten, wird aber als „Abgeschnitten“ markiert, damit du keinen unvollständigen Text versehentlich einsetzt.";
 "settings.help.promptsTitle" = "Eigene Prompts";
 "settings.help.promptsBody" = "Im Tab Prompts eigene Prompts anlegen. Jeder Prompt braucht einen Titel, einen SF-Symbol-Namen und eine KI-Anweisung. Der markierte Text wird automatisch mitgeschickt — kein Platzhalter nötig.";
+"settings.help.chainsTitle" = "Prompt-Ketten";
+"settings.help.chainsBody" = "Im Prompt-Editor den Typ auf Kette umstellen, um mehrere Prompts hintereinander laufen zu lassen. Die Ausgabe jedes Schritts wird zur Eingabe des nächsten — z. B. übersetzt \"Cleanup → Englisch\" den Text erst nach der Grammatikkorrektur. Die Vorschau zeigt den aktuellen Schritt; scheitert ein Schritt, bleibt das letzte gültige Ergebnis bearbeitbar. Teste den eingebauten \"Cleanup → Englisch\".";
 "settings.help.localActionsTitle" = "Lokale Schnellaktionen";
 "settings.help.localActionsBody" = "Tippi ist kein PopClip: Nur markieren öffnet kein Menü. Text markieren, dann Hotkey (Standard ⌥⌘T) oder Menüleiste → Tippi auslösen…\n\nWenn Text erkannt wurde, erscheinen Schnellaktionen über den KI-Prompts — lokal, ohne API: Formatierung, Groß-/Kleinschreibung, Underscore/Bindestrich, Klammern, Zeilen verbinden, Zähler.\n\nFett/Kursiv/Unterstrichen/Durchgestrichen nutzen RTF, Plain-Text-Apps Markdown-Fallback (**fett**, ~~durchgestrichen~~). Zähler ändern den Text nicht.\n\n„Kein Text erkannt“? Bedienungshilfen für die gestartete Tippi.app erteilen (Test-Builds nach jedem make build neu setzen). TextEdit und Notizen sind am zuverlässigsten. Ausblenden: Einstellungen → Allgemein.";
 "settings.help.troubleBody" = "Nur markieren reicht nicht — danach ⌥⌘T (oder ⌃⌥⌘T) drücken. Tippi öffnet sich nicht automatisch wie PopClip.\n\nHotkey tot? Bedienungshilfen erteilen (Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen). Alternativ Menüleiste ✏️ → Tippi auslösen…\n\nSchnellaktionen sichtbar, aber Text ändert sich nicht? In TextEdit/Notizen neu markieren, erneut auslösen, dann Aktion tippen. Lokaler Build: Bedienungshilfen für build/Build/Products/Release/Tippi.app, App neu starten.\n\nNeuer Hotkey reagiert nicht? Tippi beenden und neu öffnen.";

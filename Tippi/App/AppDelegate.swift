@@ -52,6 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        // Remap persisted Nebius model ids that the provider removed (they 404).
+        ProviderModelPresets.migrateRemovedNebiusModels()
         // Clear temp WAVs left behind by a previous crash/force-quit.
         AudioRecorder.cleanupOrphanedRecordings()
         // Cap synchronous AX calls at 2 s (process-wide via the system-wide

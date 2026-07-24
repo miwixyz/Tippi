@@ -10,6 +10,13 @@ struct PreviewView: View {
     @State private var refineInstruction = ""
     @FocusState private var refineFocused: Bool
 
+    /// Live progress of a running chain, e.g. "Schritt 2/3: Übersetze → EN".
+    /// `nil` for single-step prompts and once the chain has finished.
+    @State private var chainProgress: ChainProgress?
+    /// Set when a chain step failed. The result of the last successful step
+    /// stays in `state` (editable), and this drives a red sub-line in the header.
+    @State private var chainError: String?
+
     let onReplace: (String) -> Void
     let onAppend: (String) -> Void
     let onCopy: (String) -> Void
@@ -19,6 +26,12 @@ struct PreviewView: View {
         case loading
         case ready(text: String, providerInfo: String?, truncated: Bool = false)
         case failed(message: String)
+    }
+
+    struct ChainProgress: Equatable {
+        let current: Int
+        let total: Int
+        let stepTitle: String
     }
 
     init(
@@ -58,26 +71,51 @@ struct PreviewView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Image(systemName: prompt.symbol).foregroundStyle(.tint)
-            Text(prompt.title)
-                .font(.headline)
-            if let sourceAppName {
-                Text("· \(sourceAppName)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Image(systemName: prompt.symbol).foregroundStyle(.tint)
+                Text(prompt.title)
+                    .font(.headline)
+                if let sourceAppName {
+                    Text("· \(sourceAppName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let progress = chainProgress {
+                    chainBadge(progress)
+                } else if case .ready(_, _, let truncated) = state, truncated {
+                    truncatedBadge
+                } else if case .ready(_, let info?, _) = state {
+                    providerBadge(info)
+                } else if case .ready = state {
+                    fallbackBadge
+                }
             }
-            Spacer()
-            if case .ready(_, _, let truncated) = state, truncated {
-                truncatedBadge
-            } else if case .ready(_, let info?, _) = state {
-                providerBadge(info)
-            } else if case .ready = state {
-                fallbackBadge
+            if let chainError {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.caption2)
+                    Text(chainError)
+                }
+                .font(.caption)
+                .foregroundStyle(.orange)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+
+    /// Progress pill shown while a chain runs, e.g. "Schritt 2/3: Übersetze".
+    private func chainBadge(_ p: ChainProgress) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "arrow.right.circle").font(.caption2)
+            Text(String(format: String(localized: "preview.chain.step"), p.current, p.total, p.stepTitle))
+        }
+        .font(.caption)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Color.accentColor.opacity(0.15)))
+        .foregroundStyle(.tint)
     }
 
     /// Shown when the model hit its output length limit mid-stream. The partial
@@ -238,6 +276,10 @@ struct PreviewView: View {
     /// Initial run (or "Regenerate"): apply the chosen prompt to the original
     /// selection.
     private func runCompletion() {
+        if prompt.isChain {
+            runChain()
+            return
+        }
         let context = PromptVariableResolver.Context(
             selectedText: originalText,
             appName: sourceAppName ?? ""
@@ -247,6 +289,173 @@ struct PreviewView: View {
             context: context
         )
         perform(systemPrompt: resolvedPrompt, userText: originalText, input: originalText, allowLocalFallback: true)
+    }
+
+    /// Runs a multi-step chain: each step's output feeds the next step's input.
+    /// Intermediate steps run non-streaming (the full output is needed before
+    /// the next step can start), but the FINAL step streams live so the finished
+    /// result builds token-by-token instead of hanging on a spinner. On failure
+    /// at step n, the last successful result stays editable and a red sub-line
+    /// explains what broke — matching the single-step "always leave something
+    /// usable" contract.
+    private func runChain() {
+        let stepIDs = prompt.pipeline ?? []
+        task?.cancel()
+        chainError = nil
+        state = .loading
+
+        task = Task { @MainActor in
+            var current = originalText
+            let total = stepIDs.count
+
+            // ── Intermediate steps (all but the last) — non-streaming ──────────
+            for index in 0..<max(0, total - 1) {
+                guard !Task.isCancelled else { return }
+                guard let step = DemoPrompt.resolve(id: stepIDs[index]) else {
+                    chainProgress = nil
+                    finishChainWithError(missingStepMessage(index), lastGood: current)
+                    return
+                }
+                chainProgress = ChainProgress(current: index + 1, total: total, stepTitle: step.title)
+                do {
+                    let result = try await LLMRouter.shared.complete(
+                        systemPrompt: resolvedStepPrompt(step, input: current),
+                        userText: current
+                    )
+                    guard !Task.isCancelled else { return }
+                    current = result.text
+                } catch LLMError.noProviderConfigured, LLMError.noAPIKey {
+                    guard !Task.isCancelled else { return }
+                    chainProgress = nil
+                    chainError = String(localized: "preview.chain.noProvider")
+                    state = .ready(text: originalText, providerInfo: nil)
+                    return
+                } catch {
+                    guard !Task.isCancelled else { return }
+                    chainProgress = nil
+                    finishChainWithError(stepFailedMessage(index, error), lastGood: current)
+                    return
+                }
+            }
+
+            // ── Final step — streamed live when possible ───────────────────────
+            guard total > 0, !Task.isCancelled else {
+                chainProgress = nil
+                state = .ready(text: current, providerInfo: nil)
+                return
+            }
+            let finalIndex = total - 1
+            guard let finalStep = DemoPrompt.resolve(id: stepIDs[finalIndex]) else {
+                chainProgress = nil
+                finishChainWithError(missingStepMessage(finalIndex), lastGood: current)
+                return
+            }
+            chainProgress = ChainProgress(current: finalIndex + 1, total: total, stepTitle: finalStep.title)
+            await runFinalChainStep(finalStep, index: finalIndex, input: current)
+        }
+    }
+
+    /// Executes the last chain step. Streams when provider-fallback is off
+    /// (mirrors the single-step path); falls back to a clean non-streaming call
+    /// when fallback is on, since a retry needs an error boundary with no
+    /// partial stream to unwind.
+    private func runFinalChainStep(_ step: DemoPrompt, index: Int, input: String) async {
+        let resolved = resolvedStepPrompt(step, input: input)
+
+        guard !LLMRouter.allowProviderFallback else {
+            do {
+                let result = try await LLMRouter.shared.complete(systemPrompt: resolved, userText: input)
+                guard !Task.isCancelled else { return }
+                chainProgress = nil
+                logToHistory(result: result, input: originalText)
+                state = .ready(text: result.text, providerInfo: "\(result.providerDisplay) · \(formatDuration(result.duration))")
+            } catch LLMError.noProviderConfigured, LLMError.noAPIKey {
+                guard !Task.isCancelled else { return }
+                chainProgress = nil
+                chainError = String(localized: "preview.chain.noProvider")
+                state = .ready(text: originalText, providerInfo: nil)
+            } catch {
+                guard !Task.isCancelled else { return }
+                chainProgress = nil
+                finishChainWithError(stepFailedMessage(index, error), lastGood: input)
+            }
+            return
+        }
+
+        var accumulated = ""
+        var providerDisplay = ""
+        let start = Date()
+        do {
+            let streaming = try await LLMRouter.shared.completeStream(systemPrompt: resolved, userText: input)
+            providerDisplay = streaming.providerDisplay
+            for try await delta in streaming.stream {
+                guard !Task.isCancelled else { return }
+                accumulated += delta
+                // Show text growing live; keep the step badge until the stream ends.
+                state = .ready(text: accumulated, providerInfo: streaming.providerDisplay)
+            }
+            guard !Task.isCancelled else { return }
+            chainProgress = nil
+            let duration = Date().timeIntervalSince(start)
+            let finalText = accumulated.trimmingCharacters(in: .whitespacesAndNewlines)
+            state = .ready(text: finalText, providerInfo: "\(streaming.providerDisplay) · \(formatDuration(duration))")
+            logToHistory(
+                result: CompletionResult(
+                    text: finalText,
+                    providerDisplay: streaming.providerDisplay,
+                    duration: duration,
+                    providerID: streaming.providerID,
+                    model: streaming.model
+                ),
+                input: originalText
+            )
+        } catch LLMError.truncated {
+            guard !Task.isCancelled else { return }
+            chainProgress = nil
+            let finalText = accumulated.trimmingCharacters(in: .whitespacesAndNewlines)
+            if finalText.isEmpty {
+                state = .failed(message: String(localized: "preview.truncated.empty"))
+            } else {
+                state = .ready(text: finalText, providerInfo: providerDisplay, truncated: true)
+            }
+        } catch LLMError.noProviderConfigured, LLMError.noAPIKey {
+            guard !Task.isCancelled else { return }
+            chainProgress = nil
+            chainError = String(localized: "preview.chain.noProvider")
+            state = .ready(text: originalText, providerInfo: nil)
+        } catch {
+            guard !Task.isCancelled else { return }
+            chainProgress = nil
+            finishChainWithError(stepFailedMessage(index, error), lastGood: input)
+        }
+    }
+
+    /// Resolve a chain step's system prompt with the same variable substitution
+    /// (`{language}`, `{app_name}`, …) the single-step path uses.
+    private func resolvedStepPrompt(_ step: DemoPrompt, input: String) -> String {
+        let context = PromptVariableResolver.Context(selectedText: input, appName: sourceAppName ?? "")
+        return PromptVariableResolver.resolve(template: step.systemPrompt, context: context)
+    }
+
+    private func missingStepMessage(_ index: Int) -> String {
+        String(format: String(localized: "preview.chain.missingStep"), index + 1)
+    }
+
+    private func stepFailedMessage(_ index: Int, _ error: Error) -> String {
+        String(format: String(localized: "preview.chain.stepFailed"), index + 1, error.localizedDescription)
+    }
+
+    /// Chain aborted mid-way: surface the error and keep the last good text
+    /// editable. When an earlier step already produced output (lastGood differs
+    /// from the original), that intermediate stays usable; otherwise the very
+    /// first step failed and there is nothing to show but the error.
+    private func finishChainWithError(_ message: String, lastGood: String) {
+        chainError = message
+        if lastGood != originalText {
+            state = .ready(text: lastGood, providerInfo: nil)
+        } else {
+            state = .failed(message: message)
+        }
     }
 
     /// Iteratively refine the current result: feed it back as input with the

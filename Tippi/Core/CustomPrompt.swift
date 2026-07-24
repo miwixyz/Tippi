@@ -19,12 +19,24 @@ struct CustomPrompt: Codable, Identifiable, Equatable {
     var symbol: String
     var systemPrompt: String
 
-    init(id: UUID = UUID(), title: String, symbol: String, systemPrompt: String) {
+    /// Optional multi-step chain. When non-nil and non-empty, this prompt is a
+    /// pipeline: each entry is a `DemoPrompt.id` (built-in like `"translateEN"`
+    /// or custom like `"custom-<uuid>"`) and the output of step n feeds the
+    /// input of step n+1. When nil, this is a classic single-step prompt and
+    /// `systemPrompt` is used. `Optional` keeps old JSON (no `pipeline` key)
+    /// decoding cleanly to `nil` — no version bump needed.
+    var pipeline: [String]?
+
+    init(id: UUID = UUID(), title: String, symbol: String, systemPrompt: String, pipeline: [String]? = nil) {
         self.id = id
         self.title = title
         self.symbol = symbol.isEmpty ? "wand.and.stars" : symbol
         self.systemPrompt = systemPrompt
+        self.pipeline = (pipeline?.isEmpty ?? true) ? nil : pipeline
     }
+
+    /// `true` when this prompt is a multi-step chain rather than a single step.
+    var isChain: Bool { !(pipeline?.isEmpty ?? true) }
 
     func asDemoPrompt() -> DemoPrompt {
         let promptTitle = title
@@ -33,6 +45,7 @@ struct CustomPrompt: Codable, Identifiable, Equatable {
             title: title,
             symbol: symbol,
             systemPrompt: systemPrompt,
+            pipeline: pipeline,
             transform: { @Sendable text in
                 "[\(promptTitle)] \(text)\n\n(Local demo — add an AI key in Settings → Providers.)"
             }
@@ -54,6 +67,13 @@ final class CustomPromptStore: ObservableObject {
 
     func add(title: String, symbol: String, systemPrompt: String) {
         prompts.append(CustomPrompt(title: title, symbol: symbol, systemPrompt: systemPrompt))
+        save()
+    }
+
+    /// Append a fully-built prompt (used by the editor, which constructs the
+    /// struct directly so it can carry a `pipeline`).
+    func add(_ prompt: CustomPrompt) {
+        prompts.append(prompt)
         save()
     }
 
@@ -105,7 +125,7 @@ final class CustomPromptStore: ObservableObject {
         let package = try JSONDecoder().decode(PromptPackage.self, from: data)
         // Always assign fresh UUIDs so imported prompts never collide with existing ones.
         let imported = package.prompts.map {
-            CustomPrompt(id: UUID(), title: $0.title, symbol: $0.symbol, systemPrompt: $0.systemPrompt)
+            CustomPrompt(id: UUID(), title: $0.title, symbol: $0.symbol, systemPrompt: $0.systemPrompt, pipeline: $0.pipeline)
         }
         if merge {
             prompts.append(contentsOf: imported)
