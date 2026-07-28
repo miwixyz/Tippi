@@ -349,14 +349,14 @@ private struct ProviderRow: View {
         // thinking disabled so it returns only the cleaned text.
         MLXPreset(
             id: "qwen35-2b-4bit",
-            label: "Qwen 3.5 2B — Fastest, faithful German (4-bit) ⭐ fast",
+            label: "Qwen 3.5 2B — Fastest, faithful German (4-bit) ⭐ default",
             repoID: "mlx-community/Qwen3.5-2B-MLX-4bit"
         ),
 
         // ── 8 GB Mac (small, fast, 3B-class) ────────────────────────────────
         MLXPreset(
             id: "llama32-3b",
-            label: "Llama 3.2 3B — Fast/Balanced ⭐ default",
+            label: "Llama 3.2 3B — Fast/Balanced",
             repoID: "mlx-community/Llama-3.2-3B-Instruct-4bit"
         ),
         MLXPreset(

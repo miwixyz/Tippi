@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.18.0] — 2026-07-28
+
+### Added
+- **New fast local model — Qwen 3.5 2B (4-bit), now the MLX default.** A 2B-class model that runs the dictation-polish / text-cleanup path in roughly ~0.6 s warm on Apple Silicon. In side-by-side testing on German dictation it was both the fastest preset and the most faithful — unlike the previous 3B default it does not drift the meaning of the input. Available at the top of Settings → Providers → MLX; existing installs keep whatever model they already selected.
+
+### Changed
+- **Default local MLX model is now Qwen 3.5 2B (4-bit)** (was Llama 3.2 3B). Only affects fresh installs and anyone who never picked a model; explicit selections are untouched.
+- **Server warm-up now actually warms the model.** `mlx_lm.server`'s `/v1/models` answers before the weights are loaded, so the first real transformation used to pay the full cold-start cost (~2 s of weight load + Metal-kernel compilation). Tippi now fires a tiny throwaway completion right after the server reports healthy, so the model and kernels are ready before your first dictation.
+
+### Fixed
+- **Thinking models returned no usable text.** Qwen 3.x are thinking models: over `mlx_lm.server` they emit their chain-of-thought in `reasoning` and leave `content` empty, which made the polish fail. Local MLX requests now send `enable_thinking=false`, so these models return the cleaned text directly. Verified harmless for non-thinking models (Llama/Gemma/Phi) — their chat template ignores the flag.
+
 ## [1.17.0] — 2026-07-24
 
 ### Added

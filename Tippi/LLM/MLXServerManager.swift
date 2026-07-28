@@ -41,7 +41,7 @@ final class MLXServerManager: ObservableObject {
     // MARK: - Configuration keys
 
     // Uses same key convention as LLMRouter for model ("defaultModel.mlx")
-    static let defaultModel = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    static let defaultModel = "mlx-community/Qwen3.5-2B-MLX-4bit"
     static let modelKey  = "defaultModel.mlx"
     static let portKey   = "mlx.port"
 

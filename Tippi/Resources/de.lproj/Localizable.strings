@@ -319,7 +319,7 @@
 "mlx.install.copyCommand" = "Befehl kopieren";
 
 "settings.help.mlxTitle" = "MLX — lokale KI auf Apple Silicon";
-"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.\n\nFür Tempo ist Llama 3.2 3B Fast/Balanced das Standard-Preset. Wähle Llama 3.1 8B, Qwen 7B oder Qwen 14B nur, wenn Qualität wichtiger ist als Latenz. Tippi begrenzt lokale Antwortlängen gegen langsame Ausreißer und zeigt die echte Generierungszeit im Vorschau-Badge.\n\nWenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.";
+"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.\n\nStandard ist Qwen 3.5 2B (4-bit) — das schnellste Preset und zugleich das treueste bei deutscher Nachbearbeitung (keine Sinn-Verfälschung). Wähle Llama 3.2 3B, Qwen 7B oder Qwen 14B nur, wenn du bewusst ein anderes Modell möchtest. Tippi begrenzt lokale Antwortlängen gegen langsame Ausreißer und zeigt die echte Generierungszeit im Vorschau-Badge.\n\nWenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 
 /* Voice Input */

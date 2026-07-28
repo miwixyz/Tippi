@@ -318,7 +318,7 @@
 "mlx.install.copyCommand" = "Copy command";
 
 "settings.help.mlxTitle" = "MLX — local AI on Apple Silicon";
-"settings.help.mlxBody" = "MLX runs AI models directly on your Mac — no cloud, no API key, no data leaves your device. It's roughly 1.5–2× faster than Ollama on Apple Silicon.\n\nOne-time setup: pick MLX in Settings → Providers and click \"Install MLX…\". Tippi handles the rest — no Terminal needed.\n\nFor speed, the default preset is Llama 3.2 3B Fast/Balanced. Choose Llama 3.1 8B, Qwen 7B, or Qwen 14B only when quality matters more than latency. Tippi caps local response length to avoid slow runaway generations and shows the actual generation time in the preview badge.\n\nWhen MLX is your default provider, Tippi pre-warms the server on app launch so your first transformation is faster.";
+"settings.help.mlxBody" = "MLX runs AI models directly on your Mac — no cloud, no API key, no data leaves your device. It's roughly 1.5–2× faster than Ollama on Apple Silicon.\n\nOne-time setup: pick MLX in Settings → Providers and click \"Install MLX…\". Tippi handles the rest — no Terminal needed.\n\nThe default is Qwen 3.5 2B (4-bit) — the fastest preset and also the most faithful for German polish (no meaning drift). Choose Llama 3.2 3B, Qwen 7B, or Qwen 14B only if you prefer a different model. Tippi caps local response length to avoid slow runaway generations and shows the actual generation time in the preview badge.\n\nWhen MLX is your default provider, Tippi pre-warms the server on app launch so your first transformation is faster.";
 "settings.help.troubleTitle" = "Troubleshooting";
 
 /* Voice Input */
