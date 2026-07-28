@@ -17,12 +17,19 @@ struct MLXProvider: LLMProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         struct Message: Encodable { let role: String; let content: String }
+        // enable_thinking=false suppresses the chain-of-thought preamble of
+        // thinking models (Qwen3.x) so they return usable text in `content`
+        // instead of a "Thinking Process:…" monologue in `reasoning`. Verified
+        // harmless for non-thinking models (Llama/Gemma/Phi): their Jinja chat
+        // template simply ignores the unreferenced kwarg.
+        struct ChatTemplateKwargs: Encodable { let enable_thinking: Bool }
         struct Body: Encodable {
             let model: String
             let messages: [Message]
             let stream: Bool
             let max_tokens: Int
             let temperature: Double
+            let chat_template_kwargs: ChatTemplateKwargs
         }
         // Use the HuggingFace repo ID we explicitly started the server with —
         // NOT whatever /v1/models reports first.
@@ -45,7 +52,8 @@ struct MLXProvider: LLMProvider {
             ],
             stream: false,
             max_tokens: maxTokens(for: userText),
-            temperature: 0.3
+            temperature: 0.3,
+            chat_template_kwargs: ChatTemplateKwargs(enable_thinking: false)
         )
         request.httpBody = try JSONEncoder().encode(body)
 

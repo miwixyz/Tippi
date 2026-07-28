@@ -343,6 +343,16 @@ private struct ProviderRow: View {
     /// Each preset is labelled by the RAM tier of the target Mac, not the
     /// model's on-disk size. ⭐ marks the recommended default for speed.
     static let mlxPresets: [MLXPreset] = [
+        // ── < 8 GB Mac (fastest, 2B-class, 4-bit) ───────────────────────────
+        // Measured ~0.6 s warm polish, most faithful German of all presets
+        // (no meaning-drift). Qwen3.5 is a thinking family — served with
+        // thinking disabled so it returns only the cleaned text.
+        MLXPreset(
+            id: "qwen35-2b-4bit",
+            label: "Qwen 3.5 2B — Fastest, faithful German (4-bit) ⭐ fast",
+            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit"
+        ),
+
         // ── 8 GB Mac (small, fast, 3B-class) ────────────────────────────────
         MLXPreset(
             id: "llama32-3b",

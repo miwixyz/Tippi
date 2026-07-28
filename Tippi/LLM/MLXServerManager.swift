@@ -119,6 +119,10 @@ final class MLXServerManager: ObservableObject {
             let p = try await waitForHealth(port: port, timeout: 60)
             activeModelID = await fetchActiveModelID(port: p)
             state = .running(port: p)
+            // /v1/models answers before the model is actually loaded — the first
+            // completion pays the weight-load + Metal-kernel-compile cost. Force
+            // that now in the background so the user's first real polish is warm.
+            warmUpInBackground(port: p, model: activeModelID ?? model)
             return p
         } catch {
             proc.terminate()
@@ -136,6 +140,30 @@ final class MLXServerManager: ObservableObject {
         process = nil
         state = .stopped
         activeModelID = nil
+    }
+
+    // MARK: - Warm-up
+
+    /// Fire-and-forget warm-up. `mlx_lm.server` loads the model lazily, so the
+    /// first `/v1/chat/completions` triggers weight load + Metal-kernel
+    /// compilation — the cold-start cost measured at ~2 s vs ~0.6 s warm.
+    /// Issuing a tiny throwaway request at launch pays that cost in the
+    /// background. Best-effort: all errors are ignored.
+    private func warmUpInBackground(port: Int, model: String) {
+        Task.detached(priority: .utility) {
+            guard let url = URL(string: "http://localhost:\(port)/v1/chat/completions") else { return }
+            var req = URLRequest(url: url)
+            req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let body: [String: Any] = [
+                "model": model,
+                "messages": [["role": "user", "content": "hi"]],
+                "max_tokens": 1,
+                "temperature": 0.0
+            ]
+            req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+            _ = try? await URLSession.shared.data(for: req)
+        }
     }
 
     // MARK: - Binary resolution
