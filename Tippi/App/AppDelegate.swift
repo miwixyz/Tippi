@@ -27,6 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
     /// refreshed when the user picks a language from its submenu.
     private var dictationLanguageMenuItem: NSMenuItem?
+    /// Disabled menu header showing the readiness status in words ("Ready" /
+    /// "Loading model…" / "Error"). Mirrors the colored badge on the icon.
+    private var statusMenuItem: NSMenuItem?
+    /// Colored dot sublayer on the menubar button signalling readiness.
+    private var statusBadgeLayer: CALayer?
     private var welcomeWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
     private var lastNonTippiApp: NSRunningApplication?
@@ -187,6 +192,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.image = menubarImage
 
         let menu = NSMenu()
+
+        // Readiness status header (disabled; mirrors the colored icon badge).
+        let statusMI = NSMenuItem(
+            title: String(format: String(localized: "menu.status"),
+                          TippiStatusMonitor.shared.status.label),
+            action: nil,
+            keyEquivalent: ""
+        )
+        statusMI.isEnabled = false
+        menu.addItem(statusMI)
+        menu.addItem(.separator())
+        statusMenuItem = statusMI
+
         let triggerItem = NSMenuItem(
             title: String(localized: "menu.trigger"),
             action: #selector(triggerManually),
@@ -267,6 +285,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.updateMenubarAIActivity(isActive)
             }
             .store(in: &cancellables)
+
+        // Readiness badge: a colored dot in the icon's bottom-right corner.
+        setupStatusBadge(on: item)
+        TippiStatusMonitor.shared.$status
+            .receive(on: RunLoop.main)
+            .sink { [weak self] status in self?.updateStatusBadge(status) }
+            .store(in: &cancellables)
+        TippiStatusMonitor.shared.start()
+    }
+
+    /// Adds the colored status-dot sublayer to the menubar button (once).
+    private func setupStatusBadge(on item: NSStatusItem) {
+        guard let button = item.button else { return }
+        let dot = CALayer()
+        dot.cornerRadius = 3
+        dot.borderWidth = 0.5
+        dot.borderColor = NSColor.black.withAlphaComponent(0.25).cgColor
+        dot.zPosition = 100
+        button.layer?.addSublayer(dot)
+        statusBadgeLayer = dot
+        updateStatusBadge(TippiStatusMonitor.shared.status)
+    }
+
+    /// Repositions + recolors the status dot and updates the menu header.
+    private func updateStatusBadge(_ status: TippiStatusMonitor.Status) {
+        statusMenuItem?.title = String(
+            format: String(localized: "menu.status"), status.label
+        )
+        guard let button = statusItem?.button, let dot = statusBadgeLayer else { return }
+        let size: CGFloat = 6
+        let b = button.bounds
+        // Bottom-right corner (layer origin is bottom-left), small inset.
+        dot.frame = CGRect(x: b.maxX - size - 1, y: 1, width: size, height: size)
+        let color: NSColor
+        switch status {
+        case .ready:   color = .systemGreen
+        case .warming: color = .systemYellow
+        case .error:   color = .systemRed
+        }
+        // Instant, un-animated color change.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        dot.backgroundColor = color.cgColor
+        CATransaction.commit()
     }
 
     /// Starts/stops a subtle opacity-pulse animation on the menubar icon

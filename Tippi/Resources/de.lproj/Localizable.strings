@@ -1,4 +1,8 @@
 /* Menubar */
+"menu.status" = "Status: %@";
+"status.ready" = "Bereit";
+"status.warming" = "Modell lädt…";
+"status.error" = "Fehler";
 "menu.trigger" = "Tippi auslösen…";
 "menu.translate" = "Übersetzen…";
 "menu.checkForUpdates" = "Nach Updates suchen…";
@@ -279,6 +283,8 @@
 "settings.about.feature2" = "Bring Your Own Key — 10 KI-Anbieter (8 Cloud + 2 lokal)";
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
+"settings.help.whatsNewTitle" = "Was ist neu";
+"settings.help.whatsNewBody" = "v1.19.0 — Menüleisten-Status: Ein farbiger Punkt am Tippi-Symbol zeigt, ob Tippi bereit ist. Grün = bereit, Gelb = lokales Modell lädt, Rot = lokaler Server nicht erreichbar. Bei Cloud-Providern immer grün. Der Menü-Kopf zeigt den Status zusätzlich in Worten.\n\nv1.18.1 — Wartungsrelease: Ein vollständiges Code-Audit hat zahlreiche stille Fehler behoben — u. a. „Verlauf löschen\", die Erkennung der Bedienungshilfen-Berechtigung für den globalen Hotkey, die MLX-Modellwahl und falsche „Gespeichert\"-Meldungen.\n\nVollständige Historie: CHANGELOG.md im Projekt-Repository.";
 "settings.help.howTitle" = "So funktioniert Tippi";
 "settings.help.howBody" = "Text in einer beliebigen App markieren, dann Hotkey drücken (Standard: ⌥⌘T). Ein Popup erscheint am Cursor — Prompt wählen, Vorschau prüfen, ersetzen oder kopieren.";
 "settings.help.instructTitle" = "Anweisung geben — tippen oder sprechen";

@@ -1,4 +1,8 @@
 /* Menubar */
+"menu.status" = "Status: %@";
+"status.ready" = "Ready";
+"status.warming" = "Loading model…";
+"status.error" = "Error";
 "menu.trigger" = "Trigger Tippi…";
 "menu.translate" = "Translate…";
 "menu.checkForUpdates" = "Check for Updates…";
@@ -278,6 +282,8 @@
 "settings.about.feature3" = "No telemetry, no cloud storage";
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
+"settings.help.whatsNewTitle" = "What's New";
+"settings.help.whatsNewBody" = "v1.19.0 — Menu-bar status: a colored dot on the Tippi icon shows whether Tippi is ready. Green = ready, yellow = local model loading, red = local server unreachable. Cloud providers are always green. The menu header also shows the status in words.\n\nv1.18.1 — Maintenance release: a full-codebase audit fixed a number of silent bugs — including \"Delete all history\", the Accessibility-permission check for the global hotkey, MLX model selection, and false \"Saved\" confirmations.\n\nFull history: CHANGELOG.md in the project repository.";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.instructTitle" = "Give an instruction — type or speak";

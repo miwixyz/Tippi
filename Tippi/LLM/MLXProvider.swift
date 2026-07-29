@@ -63,6 +63,10 @@ struct MLXProvider: LLMProvider {
             let text = String(data: data, encoding: .utf8) ?? ""
             throw LLMError.httpError(status: http.statusCode, body: text)
         }
+        // A successful completion proves the weights are loaded — self-heal the
+        // menubar warm flag in case the background warm-up probe failed
+        // transiently and left the badge stuck on "warming".
+        await MainActor.run { MLXServerManager.shared.markWarm() }
 
         // OpenAI-compatible response shape
         struct Choice: Decodable {

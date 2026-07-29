@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.19.0] — 2026-07-29
+
+### Added
+- **Menu-bar readiness status.** A small colored dot on the Tippi menu-bar icon now shows at a glance whether Tippi is ready to process a request: **green** when ready, **yellow** while a local model is still loading, **red** when the active local server isn't reachable. Cloud providers show green immediately (no warm-up needed); local MLX shows yellow during the cold-start weight-load and flips to green only once the model is actually *warm* — not just when the server answers `/v1/models`. The menu also shows the status in words ("Status: Ready / Loading model… / Error"), and there's a new **What's New** section under Settings → Help.
+
+### Changed
+- **MLX server now tracks true warmth.** `mlx_lm.server` reports healthy before its weights are loaded, so Tippi now distinguishes "server up" from "model warm" (proven by a successful warm-up completion). A real completion self-heals the warm flag if the background warm-up probe failed transiently, and an unexpected server exit is surfaced as an error rather than a silent stop.
+
 ## [1.18.1] — 2026-07-29
 
 Maintenance release — a full-codebase audit surfaced a number of latent bugs; every fix below was independently verified against the code.

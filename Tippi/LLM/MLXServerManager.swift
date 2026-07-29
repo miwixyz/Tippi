@@ -10,6 +10,12 @@ final class MLXServerManager: ObservableObject {
 
     @Published private(set) var state: ServerState = .stopped
 
+    /// True once the model weights are loaded and the throwaway warm-up request
+    /// has completed — i.e. the next real polish will be fast (~0.6 s, not ~2 s).
+    /// `.running` alone is NOT enough: `mlx_lm.server` answers /v1/models before
+    /// the weights are loaded, so a `.running` server can still be cold.
+    @Published private(set) var isWarm = false
+
     enum ServerState: Equatable {
         case stopped
         case starting
@@ -68,6 +74,7 @@ final class MLXServerManager: ObservableObject {
         let model = Self.model
         let port  = Self.port
         state = .starting
+        isWarm = false
 
         let binary = Self.resolvedBinary()
         guard let binary else {
@@ -91,6 +98,8 @@ final class MLXServerManager: ObservableObject {
             }
             activeModelID = existingModelID
             state = .running(port: port)
+            // A pre-existing server serving our model is assumed already warm.
+            isWarm = true
             return port
         }
 
@@ -105,7 +114,14 @@ final class MLXServerManager: ObservableObject {
         proc.standardError  = FileHandle.nullDevice
         proc.terminationHandler = { [weak self] _ in
             Task { @MainActor [weak self] in
-                if case .running = self?.state { self?.state = .stopped }
+                // Exit while we still believed the server was running = an
+                // unexpected crash/kill (an explicit stop() sets .stopped BEFORE
+                // terminate(), so this branch never fires for that path). Surface
+                // it as .failed so the status badge turns red, not stuck yellow.
+                if case .running = self?.state {
+                    self?.state = .failed("Server exited unexpectedly")
+                    self?.isWarm = false
+                }
             }
         }
 
@@ -137,6 +153,14 @@ final class MLXServerManager: ObservableObject {
         }
     }
 
+    /// Mark the server warm from an external success signal — e.g. a real
+    /// completion just returned 2xx, which proves the weights are loaded. Lets
+    /// the status badge self-heal if the background warm-up probe had failed
+    /// transiently. No-op unless the server is currently running.
+    func markWarm() {
+        if state.isRunning { isWarm = true }
+    }
+
     // MARK: - Stop
 
     func stop() {
@@ -144,6 +168,7 @@ final class MLXServerManager: ObservableObject {
         process = nil
         state = .stopped
         activeModelID = nil
+        isWarm = false
     }
 
     // MARK: - Warm-up
@@ -166,7 +191,21 @@ final class MLXServerManager: ObservableObject {
                 "temperature": 0.0
             ]
             req.httpBody = try? JSONSerialization.data(withJSONObject: body)
-            _ = try? await URLSession.shared.data(for: req)
+            // Only a genuinely successful (2xx) throwaway completion proves the
+            // weights are loaded and inference works. A suppressed error
+            // (timeout / network / 5xx) must NOT flip the status to warm — that
+            // would show "Ready" while the first real polish is still cold or
+            // failing.
+            let result = try? await URLSession.shared.data(for: req)
+            let warmed = (result?.1 as? HTTPURLResponse)
+                .map { (200..<300).contains($0.statusCode) } ?? false
+            // Also guard against a stop()/restart() that raced in while this
+            // request was in flight: never mark a dead server warm.
+            await MainActor.run {
+                if warmed, MLXServerManager.shared.state.isRunning {
+                    MLXServerManager.shared.isWarm = true
+                }
+            }
         }
     }
 

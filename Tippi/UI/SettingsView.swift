@@ -1159,6 +1159,11 @@ private struct HelpTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 helpSection(
+                    icon: "star.circle",
+                    title: String(localized: "settings.help.whatsNewTitle"),
+                    body: String(localized: "settings.help.whatsNewBody")
+                )
+                helpSection(
                     icon: "cursorarrow.rays",
                     title: String(localized: "settings.help.howTitle"),
                     body: String(localized: "settings.help.howBody")

@@ -78,7 +78,7 @@
 
 ### From the latest release
 
-1. Download the latest **[Tippi-1.18.1.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.18.1)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
+1. Download the latest **[Tippi-1.19.0.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.19.0)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant Accessibility permission, optionally enter an API key)
@@ -400,6 +400,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.17.0 | ✅ Done | **Prompt chains (multi-step pipelines)** — link several prompts behind one hotkey, each step's output feeds the next; live "Step 2/3" progress with a streaming final step, failed steps keep the last good result editable. Built-in "Cleanup → English" chain. Plus stale-Nebius-model-preset 404 fixes + launch migration, and a "Custom…" model-picker snap-shut fix |
 | v1.18.0 | ✅ Done | **Faster local default — Qwen 3.5 2B (4-bit)** as the MLX default (~0.6 s warm, most faithful German); real server warm-up before the first request; `enable_thinking=false` fix so thinking models (Qwen 3.x) return usable text |
 | v1.18.1 | ✅ Done | **Maintenance** — full-codebase audit fixes: working history delete/reset, reliable Accessibility-permission check for the global hotkey, correct MLX model targeting, no UI freeze on text capture, no false "Saved", plus clipboard-restore, download-race, prompt-loss, MLX-port-safety and deprecated-API fixes |
+| v1.19.0 | ✅ Done | **Menu-bar readiness status** — a colored dot on the icon (green ready / yellow loading / red unreachable) plus a worded status in the menu; MLX now tracks true model *warmth* (not just "server up") with self-heal, and a "What's New" Help section |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).
