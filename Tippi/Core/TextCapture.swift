@@ -37,7 +37,7 @@ enum TextCapture {
             captureLog.notice("AX (no activate) ok \(text.count) chars")
             return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
         }
-        if let app, let text = readViaSystemEvents(in: app), !text.isEmpty {
+        if let app, let text = await readViaSystemEvents(in: app), !text.isEmpty {
             captureLog.notice("System Events (no activate) ok \(text.count) chars")
             return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
         }
@@ -50,7 +50,7 @@ enum TextCapture {
                 captureLog.notice("AX ok \(text.count) chars")
                 return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
             }
-            if let text = readViaSystemEvents(in: app), !text.isEmpty {
+            if let text = await readViaSystemEvents(in: app), !text.isEmpty {
                 captureLog.notice("System Events ok \(text.count) chars")
                 return CapturedText(text: text, sourceApp: app, usedClipboardFallback: false)
             }
@@ -226,7 +226,7 @@ enum TextCapture {
 
     // MARK: - System Events
 
-    private static func readViaSystemEvents(in app: NSRunningApplication) -> String? {
+    private static func readViaSystemEvents(in app: NSRunningApplication) async -> String? {
         guard AXIsProcessTrusted() else { return nil }
         let processName = (app.localizedName ?? "")
             .replacingOccurrences(of: "\\", with: "\\\\")
@@ -250,12 +250,18 @@ enum TextCapture {
         end tell
         """
 
-        var error: NSDictionary?
-        guard let appleScript = NSAppleScript(source: script) else { return nil }
-        let result = appleScript.executeAndReturnError(&error)
-        if error != nil { return nil }
-        let text = result.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return text.isEmpty ? nil : text
+        // NSAppleScript compile+execute is synchronous and can block for hundreds
+        // of ms when System Events scripts an unresponsive/large target app.
+        // Because TextCapture is @MainActor, running it inline would freeze the
+        // whole UI (menubar + popup) during that time. Run it off the main actor.
+        return await Task.detached(priority: .userInitiated) { () -> String? in
+            var error: NSDictionary?
+            guard let appleScript = NSAppleScript(source: script) else { return nil }
+            let result = appleScript.executeAndReturnError(&error)
+            if error != nil { return nil }
+            let text = result.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return text.isEmpty ? nil : text
+        }.value
     }
 
     // MARK: - Pasteboard

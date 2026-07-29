@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.18.1] — 2026-07-29
+
+Maintenance release — a full-codebase audit surfaced a number of latent bugs; every fix below was independently verified against the code.
+
+### Fixed
+- **"Delete all history" and the full reset did nothing.** The cleanup ran a `VACUUM` inside the same database transaction as the delete, which SQLite rejects — so the whole operation rolled back and no rows were removed while an error was raised. History deletion and reset now work.
+- **The global hotkey could silently stop working — while reporting itself as active.** Without Accessibility permission the monitor was created but never received key events, yet Tippi showed it as running. It now checks the permission directly, so you get a clear "grant Accessibility" hint instead of a dead shortcut.
+- **Local MLX could run against the wrong model.** When more than one MLX model was downloaded, requests could target whichever model the server listed first instead of the one you selected, forcing a slow model swap. Tippi now always uses the configured model.
+- **The UI could briefly freeze while grabbing selected text** from some apps (the Electron/Chromium fallback path). That lookup now runs off the main thread, so the menu bar and popup stay responsive.
+- **Starting a new voice recording while one was still running** could orphan the earlier recording (with your audio in it) and confuse recorder state. A new recording now cleanly finalizes the previous one first.
+- **Saving one provider's settings could discard unsaved edits in another provider row.** Rows with in-progress edits are no longer reloaded when a sibling row is saved.
+- **Custom prompts could be lost** if their stored data ever became unreadable — the next edit would overwrite it. The unreadable data is now preserved under a backup key instead of being destroyed.
+- **Cancelling a model download and immediately starting another** could let the two race and write one model's data under the other's filename. Downloads are now generation-tracked so a cancelled one can't clobber a new one.
+- **The clipboard could be cleared instead of restored** for certain promise-backed clipboard content after a copy/paste round-trip. Restore now only clears the clipboard when it actually has something to put back.
+- **Security: Tippi no longer sends your text to an unrelated local server.** If another server was already listening on the MLX port, Tippi could adopt it and post your selected text to it. It now only reuses a server that serves the configured model, and reports a clear error otherwise.
+- **Clearer errors for empty/blocked AI responses.** Providers returning a null message body now surface a clean message instead of a cryptic decoding error.
+- **No more false "Saved ✓".** A failed keychain write, a failed prompt export, or an invalid MLX port now shows an actual error instead of a success flash.
+- **The dictation indicator no longer vanishes** if you stop and immediately restart within the fade-out.
+
+### Changed
+- Migrated off a window-activation API deprecated in macOS 14.
+
 ## [1.18.0] — 2026-07-28
 
 ### Added

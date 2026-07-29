@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 
 /// Listens for a configurable global key combo via `NSEvent.addGlobalMonitorForEvents`.
 /// Requires only Accessibility permission (no Input Monitoring), which is the same
@@ -24,6 +25,18 @@ final class GlobalKeyMonitor: ObservableObject {
         self.onTrigger = onTrigger
         self.lastError = nil
 
+        // `addGlobalMonitorForEvents` returns a NON-nil token even without
+        // Accessibility permission — it simply never delivers events. So a nil
+        // return is NOT a reliable permission check. Gate on AXIsProcessTrusted()
+        // (same check the capture/insertion paths use); otherwise the hotkey
+        // would silently never fire while isActive falsely reported true.
+        guard AXIsProcessTrusted() else {
+            lastError = "Grant Accessibility permission so the global hotkey can fire."
+            NSLog("Tippi: GlobalKeyMonitor — not trusted (Accessibility permission missing)")
+            self.onTrigger = nil
+            return
+        }
+
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handle(event)
         }
@@ -35,12 +48,16 @@ final class GlobalKeyMonitor: ObservableObject {
         }
 
         if globalMonitor == nil {
-            lastError = "Couldn't register global key monitor. Grant Accessibility permission and try again."
+            lastError = "Couldn't register global key monitor."
             NSLog("Tippi: GlobalKeyMonitor — addGlobalMonitorForEvents returned nil")
-        } else {
-            isActive = true
-            NSLog("Tippi: GlobalKeyMonitor active for \(combo.displayString)")
+            // Don't leak the local monitor that DID register, and don't keep a
+            // dangling handler that would fire only while Tippi is focused.
+            if let m = localMonitor { NSEvent.removeMonitor(m); localMonitor = nil }
+            self.onTrigger = nil
+            return
         }
+        isActive = true
+        NSLog("Tippi: GlobalKeyMonitor active for \(combo.displayString)")
     }
 
     func stop() {

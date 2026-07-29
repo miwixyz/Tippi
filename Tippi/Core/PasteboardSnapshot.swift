@@ -19,7 +19,10 @@ struct PasteboardSnapshot {
     }
 
     func restore(to pasteboard: NSPasteboard = .general) {
-        pasteboard.clearContents()
+        // Build the restorable items BEFORE clearing. If the snapshot captured
+        // only non-materializable (promise/data-provider backed) content, nsItems
+        // is empty — clearing first would then wipe the user's real clipboard
+        // instead of leaving it untouched.
         let nsItems = items.compactMap { entries -> NSPasteboardItem? in
             guard !entries.isEmpty else { return nil }
             let item = NSPasteboardItem()
@@ -29,6 +32,7 @@ struct PasteboardSnapshot {
             return item
         }
         guard !nsItems.isEmpty else { return }
+        pasteboard.clearContents()
         pasteboard.writeObjects(nsItems)
     }
 }

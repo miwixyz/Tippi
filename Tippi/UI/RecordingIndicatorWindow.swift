@@ -101,8 +101,13 @@ final class RecordingIndicatorWindowController {
     enum Mode { case recording, transcribing }
 
     private var window: NSWindow?
+    /// Bumped on every show()/hide() so a pending fade-out completion from an
+    /// earlier hide() can detect a newer show() interrupted it and NOT hide the
+    /// freshly-shown window.
+    private var generation = 0
 
     func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false, providerName: String? = nil) {
+        generation &+= 1
         let hostView = NSHostingView(rootView: RecordingIndicatorView(mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName))
         hostView.layout()
         let size = hostView.fittingSize
@@ -142,12 +147,20 @@ final class RecordingIndicatorWindowController {
     }
 
     func hide() {
+        generation &+= 1
+        let generationAtHide = generation
         let win = window
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.25
             win?.animator().alphaValue = 0
-        }, completionHandler: {
-            win?.orderOut(nil)
+        }, completionHandler: { [weak self] in
+            // Completion fires on the main thread; assumeIsolated lets us read the
+            // @MainActor `generation`. If a show() ran during the 0.25s fade it
+            // bumped `generation` — don't order out the window it just re-displayed.
+            MainActor.assumeIsolated {
+                guard let self, self.generation == generationAtHide else { return }
+                win?.orderOut(nil)
+            }
         })
     }
 }

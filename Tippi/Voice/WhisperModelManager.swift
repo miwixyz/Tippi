@@ -41,6 +41,10 @@ final class WhisperModelManager: NSObject, ObservableObject {
     private var downloadTask: URLSessionDownloadTask?
     private var progressObservation: NSKeyValueObservation?
     private var destinationURL: URL?
+    /// Bumped on every download() and cancel() so a stale (cancelled/superseded)
+    /// completion handler can detect it no longer owns the manager state and bail
+    /// instead of clobbering a newer download.
+    private var downloadGeneration = 0
 
     func download(_ model: WhisperModel) {
         guard downloadingModel == nil else { return }
@@ -49,6 +53,8 @@ final class WhisperModelManager: NSObject, ObservableObject {
         try? fm.createDirectory(at: WhisperConfig.appModelDirectory,
                                 withIntermediateDirectories: true)
 
+        downloadGeneration &+= 1
+        let generation = downloadGeneration
         downloadingModel = model.id
         downloadProgress = 0
         downloadError = nil
@@ -69,6 +75,13 @@ final class WhisperModelManager: NSObject, ObservableObject {
 
             Task { @MainActor [weak self] in
                 guard let self else {
+                    if let staged { try? FileManager.default.removeItem(at: staged) }
+                    return
+                }
+                // A completion from a cancelled/superseded download must not touch
+                // current state — otherwise it clears a newer download's marker
+                // and lets two downloads race on the shared destinationURL.
+                guard self.downloadGeneration == generation else {
                     if let staged { try? FileManager.default.removeItem(at: staged) }
                     return
                 }
@@ -131,6 +144,9 @@ final class WhisperModelManager: NSObject, ObservableObject {
     }
 
     func cancel() {
+        // Invalidate any in-flight completion so its late MainActor hop can't
+        // reset downloadingModel after a new download has already started.
+        downloadGeneration &+= 1
         downloadTask?.cancel()
         downloadTask = nil
         progressObservation = nil

@@ -185,7 +185,11 @@ func openAIChatComplete(
 
     struct ResponseBody: Decodable {
         struct Choice: Decodable {
-            struct Msg: Decodable { let content: String }
+            // content is optional: OpenAI-compatible endpoints return
+            // `content: null` on content-filter refusals / empty output. Modeling
+            // it as non-optional would surface a raw DecodingError to the user
+            // instead of a clean LLMError. Matches the streaming decoder.
+            struct Msg: Decodable { let content: String? }
             let message: Msg
             let finish_reason: String?
         }
@@ -196,7 +200,8 @@ func openAIChatComplete(
     // A truncated rewrite must never be inserted — it would silently destroy
     // the tail of the user's text.
     guard choice.finish_reason != "length" else { throw LLMError.truncated }
-    return choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let content = choice.message.content else { throw LLMError.invalidResponse }
+    return content.trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
 /// Provider-level streaming wrapper for OpenAI-compatible providers: fetches

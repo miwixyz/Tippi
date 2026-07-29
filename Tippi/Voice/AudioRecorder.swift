@@ -47,6 +47,16 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     /// Starts recording. Returns the URL of the temp WAV file that will be written.
     @discardableResult
     func start() throws -> URL {
+        // Re-entrancy guard: this single instance is shared by dictation, the
+        // popup mic and the translate panel, which fire from independent global
+        // hotkeys. Starting again while a take is in flight would overwrite
+        // recorder/outputURL, orphan the previous WAV (the user's voice) and leak
+        // the still-running recorder. Finalize the previous take first.
+        if isRecording {
+            NSLog("Tippi: AudioRecorder.start() called while already recording — finalizing previous take first")
+            _ = stop()
+        }
+
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("tippi-voice-\(UUID().uuidString).wav")
 

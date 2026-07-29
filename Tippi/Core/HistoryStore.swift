@@ -164,7 +164,17 @@ final class HistoryStore: @unchecked Sendable {
     func deleteAll() throws {
         try dbQueue.write { db in
             try db.execute(sql: "DELETE FROM history")
-            try db.execute(sql: "VACUUM")
+        }
+        // VACUUM cannot run inside a transaction — SQLite rejects it with error 1
+        // ("cannot VACUUM from within a transaction"), which would roll back the
+        // DELETE above. Reclaim space in a separate, transaction-free write and
+        // treat compaction failure as non-fatal (the rows are already gone).
+        do {
+            try dbQueue.writeWithoutTransaction { db in
+                try db.execute(sql: "VACUUM")
+            }
+        } catch {
+            NSLog("Tippi: history VACUUM after deleteAll failed (non-fatal): \(error.localizedDescription)")
         }
     }
 

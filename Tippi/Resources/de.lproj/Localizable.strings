@@ -233,6 +233,7 @@
 "prompts.import.cancel" = "Abbrechen";
 "prompts.import.success" = "%lld Prompt(s) importiert.";
 "prompts.import.failed" = "Import fehlgeschlagen – die Datei konnte nicht gelesen werden.";
+"prompts.export.failed" = "Export fehlgeschlagen – die Datei konnte nicht geschrieben werden.";
 "prompts.export.panel.title" = "Prompts exportieren";
 "prompts.export.panel.message" = "Als .tippipack speichern – diese Datei kannst du weitergeben.";
 "prompts.import.panel.title" = "Prompts importieren";
@@ -250,6 +251,8 @@
 "settings.providers.apiKey" = "API-Key (sk-…)";
 "settings.providers.model" = "Modell:";
 "settings.providers.savedFlash" = "Gespeichert ✓";
+"settings.providers.keychainSaveFailed" = "API-Key konnte nicht im Schlüsselbund gespeichert werden.";
+"settings.providers.mlx.portInvalid" = "Bitte eine gültige Portnummer (1–65535) eingeben.";
 "settings.providers.keySaved" = "Key gespeichert";
 "settings.providers.noKey" = "Noch kein Key";
 "settings.providers.localBadge" = "Lokal — kein Key nötig";

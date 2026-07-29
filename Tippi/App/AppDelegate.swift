@@ -333,7 +333,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showWelcomeWindow() {
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
 
         if welcomeWindowController == nil {
             let hostingController = NSHostingController(
@@ -359,7 +359,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
 
         if settingsWindowController == nil {
             let hostingController = NSHostingController(
@@ -547,7 +547,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let transformed = prompt.transform(original)
         NSLog("Tippi: demo result for \(prompt.id)")
 
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         let alert = NSAlert()
         alert.messageText = String(
             format: String(localized: "demo.result.title"),
@@ -870,6 +870,6 @@ extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
         forUpdate update: SUAppcastItem,
         state: SPUUserUpdateState
     ) {
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
     }
 }

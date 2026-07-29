@@ -95,8 +95,14 @@ final class CustomPromptStore: ObservableObject {
 
     private func load() {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
-        if let decoded = try? JSONDecoder().decode([CustomPrompt].self, from: data) {
-            prompts = decoded
+        do {
+            prompts = try JSONDecoder().decode([CustomPrompt].self, from: data)
+        } catch {
+            // Don't silently start empty and let the next mutation's save()
+            // overwrite recoverable data. Preserve the undecodable blob under a
+            // backup key so the user's prompts can be recovered manually.
+            UserDefaults.standard.set(data, forKey: storageKey + ".corrupt")
+            NSLog("Tippi: CustomPromptStore load failed — preserved blob at \(storageKey).corrupt: \(error.localizedDescription)")
         }
     }
 

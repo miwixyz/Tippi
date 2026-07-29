@@ -77,13 +77,17 @@ final class MLXServerManager: ObservableObject {
         }
 
         // If a server is already listening on the configured port, reuse it
-        // instead of killing user-owned MLX processes. Record the model it is
-        // actually serving — if that differs from the configured one, requests
-        // would silently run against the wrong model, so surface it via
-        // `activeModelID` (shown in history/UI) and log a warning.
+        // instead of killing user-owned MLX processes — but ONLY if it actually
+        // serves the model we want. Otherwise the process on this port is a
+        // foreign server (LM Studio, LocalAI, llama.cpp, …); silently sending the
+        // user's selected text to it would leak that text to an unintended local
+        // process and run against the wrong model. Refuse in that case.
         if let existingModelID = await fetchActiveModelID(port: port) {
-            if existingModelID != model {
-                NSLog("Tippi MLX: port \(port) already serves '\(existingModelID)', not the configured '\(model)' — using the running model.")
+            guard existingModelID == model else {
+                let msg = "Port \(port) is already used by a server serving '\(existingModelID)', not '\(model)'. Change Tippi's MLX port in Settings or stop that server."
+                NSLog("Tippi MLX: \(msg)")
+                state = .failed(msg)
+                throw MLXError.launchFailed(msg)
             }
             activeModelID = existingModelID
             state = .running(port: port)
@@ -227,6 +231,17 @@ final class MLXServerManager: ObservableObject {
     /// HuggingFace repo string — using this value prevents 404 errors in completions.
     private func fetchActiveModelID(port: Int) async -> String? {
         guard let response = await fetchModels(port: port) else { return nil }
+        // /v1/models lists EVERY model in the HF cache in arbitrary order, so
+        // data[0] is often NOT the model this server loaded — using it would make
+        // completions POST a foreign model id and force a full model swap on every
+        // request. Prefer the entry matching the model we launched with; only fall
+        // back to data[0] when the configured model isn't present (e.g. a foreign
+        // server already listening on the port), which keeps the reuse-path
+        // mismatch warning working.
+        let configured = Self.model
+        if response.data.contains(where: { $0.id == configured }) {
+            return configured
+        }
         return response.data.first?.id
     }
 

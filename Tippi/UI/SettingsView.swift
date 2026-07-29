@@ -316,6 +316,12 @@ private struct ProviderRow: View {
     /// default the moment `modelName` is cleared for editing, hiding the text
     /// field before the user can type anything.
     @State private var customModelMode: Bool = false
+    @State private var saveError: String?
+    /// Baseline of the last loaded values, so a sibling row's save (which bumps
+    /// the shared refreshTick) doesn't reload and discard THIS row's unsaved edits.
+    @State private var loadedApiKey: String = ""
+    @State private var loadedModelName: String = ""
+    @State private var loadedMlxPort: String = ""
 
     // MLX-only
     @ObservedObject private var mlxManager = MLXServerManager.shared
@@ -477,7 +483,11 @@ private struct ProviderRow: View {
                 // ────────────────────────────────────────────────────────────
 
                 HStack {
-                    if savedFlash {
+                    if let saveError {
+                        Text(saveError)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else if savedFlash {
                         Text(String(localized: "settings.providers.savedFlash"))
                             .font(.caption)
                             .foregroundStyle(.green)
@@ -491,7 +501,13 @@ private struct ProviderRow: View {
             .padding(6)
         }
         .onAppear(perform: load)
-        .onChange(of: refreshTick) { _, _ in load() }
+        .onChange(of: refreshTick) { _, _ in
+            // Another row's save bumped the shared tick — only reload if THIS row
+            // has no unsaved edits, otherwise we'd silently discard them.
+            if apiKey == loadedApiKey && modelName == loadedModelName && mlxPort == loadedMlxPort {
+                load()
+            }
+        }
         .sheet(isPresented: $showingMLXSetup, onDismiss: {
             // After the user finishes the install (or cancels), re-check disk
             // state so the UI flips from the "Install MLX" card to the normal
@@ -652,19 +668,44 @@ private struct ProviderRow: View {
                 if modelName.isEmpty { modelName = MLXServerManager.model }
             }
         }
+        // Record the loaded baseline so cross-row refreshes can detect edits.
+        loadedApiKey = apiKey
+        loadedModelName = modelName
+        loadedMlxPort = mlxPort
     }
 
     private func save() {
-        if provider.requiresAPIKey {
-            try? KeychainStore.setAPIKey(apiKey, for: provider.id)
+        // Validate the MLX port up-front so an invalid entry never receives a
+        // false "Saved" confirmation while the change is silently dropped.
+        var validatedPort: Int?
+        if isMLX {
+            guard let p = Int(mlxPort.trimmingCharacters(in: .whitespaces)), (1...65535).contains(p) else {
+                saveError = String(localized: "settings.providers.mlx.portInvalid")
+                return
+            }
+            validatedPort = p
         }
+
+        if provider.requiresAPIKey {
+            // A swallowed keychain error would let the UI flash "Saved" while the
+            // key was never persisted — surface it instead.
+            do {
+                try KeychainStore.setAPIKey(apiKey, for: provider.id)
+            } catch {
+                saveError = String(localized: "settings.providers.keychainSaveFailed")
+                NSLog("Tippi: keychain save failed for \(provider.id): \(error.localizedDescription)")
+                return
+            }
+        }
+        saveError = nil
+
         let trimmedModel = modelName.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedModel.isEmpty {
             UserDefaults.standard.removeObject(forKey: "defaultModel.\(provider.id)")
         } else {
             UserDefaults.standard.set(trimmedModel, forKey: "defaultModel.\(provider.id)")
         }
-        if isMLX, let p = Int(mlxPort.trimmingCharacters(in: .whitespaces)), p > 0 {
+        if isMLX, let p = validatedPort {
             let modelChanged = !trimmedModel.isEmpty && trimmedModel != MLXServerManager.model
             let portChanged  = p != MLXServerManager.port
             let wasRunning   = mlxManager.state.isRunning
@@ -861,7 +902,11 @@ private struct PromptsTab: View {
         panel.message = String(localized: "prompts.export.panel.message")
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
-            try? data.write(to: url)
+            do {
+                try data.write(to: url)
+            } catch {
+                showImportMessage(String(localized: "prompts.export.failed"))
+            }
         }
     }
 
@@ -875,9 +920,11 @@ private struct PromptsTab: View {
         panel.title = String(localized: "prompts.import.panel.title")
         panel.message = String(localized: "prompts.import.panel.message")
         panel.begin { response in
-            guard response == .OK,
-                  let url = panel.url,
-                  let data = try? Data(contentsOf: url) else { return }
+            guard response == .OK, let url = panel.url else { return }
+            guard let data = try? Data(contentsOf: url) else {
+                showImportMessage(String(localized: "prompts.import.failed"))
+                return
+            }
             self.pendingImportData = data
         }
     }
