@@ -45,3 +45,4 @@ Tippi/Helpers/
 release.env
 release.env.*
 graphify-out/
+.claude/
