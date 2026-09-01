@@ -100,6 +100,49 @@ fi
 echo "  ✓ Release notes present ($(echo "${CHANGELOG_CONTENT}" | wc -l | tr -d ' ') lines)"
 echo ""
 
+# ─── DOCUMENTATION COMPLETENESS GATE ───────────────────────────────────────────
+# Added 2026-09-01, direct instruction after v1.20.0 shipped with a real
+# user-facing feature (system-audio mute) that was never mentioned in
+# README.md, docs/ONE-PAGER.md, the website, or the in-app "What's New" —
+# it took a separate explicit ask to catch and backfill it in v1.20.1/.2.
+# "Always" means a script checks it, not that a future session remembers to.
+#
+# Hard-gated (grep-able facts): does README.md and both in-app Help strings
+# mention this version at all. NOT proof the prose is good — just proof
+# nobody forgot to touch them. A generic multi-line reminder covers the
+# things that can't be auto-verified (ONE-PAGER, website, other Help
+# sections) — those need a human/agent judgment call on whether this
+# release touches them.
+echo "▶ [CHANGELOG] Documentation completeness check..."
+EN_STRINGS_DOC="Tippi/Resources/en.lproj/Localizable.strings"
+DE_STRINGS_DOC="Tippi/Resources/de.lproj/Localizable.strings"
+DOC_ERRORS=0
+if ! grep -q "v${VERSION}" README.md; then
+    echo "  ✗ README.md doesn't mention v${VERSION} anywhere (e.g. the Roadmap table)."
+    DOC_ERRORS=1
+fi
+if ! grep -q "v${VERSION}" "${EN_STRINGS_DOC}"; then
+    echo "  ✗ EN Localizable.strings doesn't mention v${VERSION} (settings.help.whatsNewBody)."
+    DOC_ERRORS=1
+fi
+if ! grep -q "v${VERSION}" "${DE_STRINGS_DOC}"; then
+    echo "  ✗ DE Localizable.strings doesn't mention v${VERSION} (settings.help.whatsNewBody)."
+    DOC_ERRORS=1
+fi
+if [ "${DOC_ERRORS}" -ne 0 ]; then
+    echo ""
+    echo "✗ Documentation is incomplete for v${VERSION} — refusing to release."
+    echo "  Add v${VERSION} to README.md's Roadmap table and to settings.help.whatsNewBody"
+    echo "  in BOTH Localizable.strings files before running ./scripts/release.sh."
+    exit 1
+fi
+echo "  ✓ v${VERSION} mentioned in README.md + in-app Help (both languages)"
+echo "  ⚠ Not auto-checkable — confirm by hand before continuing if this release"
+echo "    touches user-facing behavior: docs/ONE-PAGER.md, docs/index.html (website),"
+echo "    other in-app Help sections beyond What's New (e.g. feature-specific bodies),"
+echo "    and CONTRIBUTING.md / docs/HANDOVER.md if the dev workflow itself changed."
+echo ""
+
 # ─── PRE-FLIGHT: Git sync check ───────────────────────────────────────────────
 # Prevent the Zwei-Mac disaster: a make-release on a stale local branch
 # would build successfully, push the DMG to GitHub, and then fail git push
