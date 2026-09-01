@@ -21,7 +21,7 @@
 ## Features
 
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
-- **22 built-in prompts** — Improve, Fix Grammar, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Humanize, Summarize, TL;DR, Bullet points, Key points, Action items, Explain like I'm 10, Email reply, LinkedIn post, Instagram caption, Facebook post, Adapt for App, Translate → DE, Translate → EN, Translate → ES; language-aware prompts use `{language}`
+- **24 built-in prompts** — Improve, Fix Grammar, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Humanize, Add Emojis, Defuse, Summarize, TL;DR, Bullet points, Key points, Action items, Explain like I'm 10, Email reply, LinkedIn post, Instagram caption, Facebook post, Adapt for App, Translate → DE, Translate → EN, Translate → ES; language-aware prompts use `{language}`
 - **Ambient prompt filtering** — the prompt list narrows live while you type, no shortcut or mode switch. With text selected the instruction field feeds the filter behind the scenes (Return still runs your instruction verbatim, `↓` then Return picks from the pre-filtered list). Without a selection you just type at the popup — query appears in the header, `⌫` shrinks it, `⎋` first clears the query then closes the popup, digit shortcuts `1–9` still work when nothing is typed
 - **Custom prompts** — write your own AI instructions for repeatable tasks (e.g. "Rewrite as Slack message", "Translate to Bavarian", "Convert to bullet list"); supports `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables resolved at trigger time
 - **Prompt chains** — link several prompts into one hotkey; each step's output feeds the next (e.g. built-in "Cleanup → English" fixes grammar, then translates). The preview shows the current step; if a step fails, the last good result stays editable
@@ -158,7 +158,9 @@ To enable voice, download a Whisper model first: Settings → Voice → Download
 
 A faster path for pure dictation, with no popup. Enable it in **Settings → Voice → Dictation Mode** and pick a hotkey (default **⌃⌥⌘M**). Then, in any text field: press the hotkey to start recording — a floating pill appears with a live waveform driven by your mic level — press again to stop. Tippi transcribes locally (Parakeet v3 or Whisper) and inserts the text at the cursor.
 
-**Optional AI cleanup** (Settings → Voice → Post-process): Tippi sends the raw transcript through your active LLM provider to remove filler words (äh, ähm, halt, also, um, uh), add punctuation, and fix self-corrections. Only runs on inputs ≥ 50 characters; adds 1–3 s latency. If the model responds conversationally instead of cleaning, Tippi detects this and inserts the raw transcript with a toast — dictation never breaks.
+**Optional AI cleanup** (Settings → Voice → Post-process): Tippi sends the raw transcript through your active LLM provider to remove filler words in whatever language you dictated in (German/English/Spanish/French/Japanese) without stripping words that carry real meaning (e.g. English "also"), remove stutter-style word repeats, add punctuation and correct capitalization (including German noun capitalization), and fix self-corrections. Only runs on inputs ≥ 50 characters; adds 1–3 s latency. If the model responds conversationally instead of cleaning, Tippi detects this and inserts the raw transcript with a toast — dictation never breaks.
+
+**Mute system audio while recording** (Settings → Voice → System Audio, off by default): mutes your Mac's speakers/output for the duration of any recording (dictation, the voice-command popup, or the translate panel) and restores the exact previous state afterward — if your speakers were already muted, they stay muted. Useful when music or a video is playing while you dictate.
 
 Avoid combos macOS reserves (e.g. ⌥⌘D toggles the Dock) — Tippi can't receive a system-claimed shortcut.
 
@@ -282,11 +284,11 @@ Share your custom prompts with teammates or between devices using `.tippipack` f
 
 ### Built-in prompts
 
-Tippi ships with 11 ready-to-use prompts — all language-aware via `{language}`:
+Tippi ships with 24 built-in prompts — all language-aware via `{language}`. A few of the most-used ones (full list lives in the app's prompt popup):
 
 | Prompt | What it does |
 |--------|-------------|
-| **Improve** | Rewrites for better quality, same length and meaning |
+| **Improve** | Cuts filler and redundant phrases, tightens wordy constructions, fixes awkward phrasing, varies sentence length, sharpens vague word choices — same meaning, trimming filler is fine |
 | **Fix Grammar** | Corrects spelling, punctuation, grammar only — no rewording |
 | **Shorten** | Trims ~30%, keeps all key information |
 | **Lengthen** | Expands ~50% with relevant context and detail |
@@ -401,6 +403,8 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.18.0 | ✅ Done | **Faster local default — Qwen 3.5 2B (4-bit)** as the MLX default (~0.6 s warm, most faithful German); real server warm-up before the first request; `enable_thinking=false` fix so thinking models (Qwen 3.x) return usable text |
 | v1.18.1 | ✅ Done | **Maintenance** — full-codebase audit fixes: working history delete/reset, reliable Accessibility-permission check for the global hotkey, correct MLX model targeting, no UI freeze on text capture, no false "Saved", plus clipboard-restore, download-race, prompt-loss, MLX-port-safety and deprecated-API fixes |
 | v1.19.0 | ✅ Done | **Menu-bar readiness status** — a colored dot on the icon (green ready / yellow loading / red unreachable) plus a worded status in the menu; MLX now tracks true model *warmth* (not just "server up") with self-heal, and a "What's New" Help section |
+| v1.20.0 | ✅ Done | **Mute system audio while recording** (opt-in, Settings → Voice → System Audio) — mutes/restores your Mac's output around dictation, popup and translate takes, with crash recovery; sharper built-in **Improve** prompt (concrete edits instead of vague guidance) |
+| v1.20.1 | ✅ Done | **Sharper dictation cleanup prompt** — language-aware filler removal (DE/EN/ES/FR/JA) instead of a mixed list that stripped meaningful words (English "also"), hesitation-repeat removal, reliable German noun capitalization |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).

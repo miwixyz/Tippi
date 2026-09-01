@@ -283,7 +283,7 @@
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
 "settings.help.whatsNewTitle" = "What's New";
-"settings.help.whatsNewBody" = "v1.19.0 — Menu-bar status: a colored dot on the Tippi icon shows whether Tippi is ready. Green = ready, yellow = local model loading, red = local server unreachable. Cloud providers are always green. The menu header also shows the status in words.\n\nv1.18.1 — Maintenance release: a full-codebase audit fixed a number of silent bugs — including \"Delete all history\", the Accessibility-permission check for the global hotkey, MLX model selection, and false \"Saved\" confirmations.\n\nFull history: CHANGELOG.md in the project repository.";
+"settings.help.whatsNewBody" = "v1.20.1 — Sharper dictation polish: the optional AI cleanup (Settings → Voice → Dictation) now recognizes filler words per language (German/English/Spanish/French/Japanese) instead of mixing them — words like English \"also\" (meaning \"in addition\") are no longer mistakenly stripped as filler. New: hesitation repeats are removed (\"the the file\" → \"the file\"), and German nouns are reliably capitalized.\n\nv1.20.0 — System audio muting: a new option under Settings → Voice → System Audio mutes your Mac's output for the duration of a recording (dictation, voice command, translate) and restores the exact previous state afterward. Off by default. Also: the built-in \"Improve\" prompt now names concrete edits instead of vague guidance.\n\nFull history: CHANGELOG.md in the project repository.";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.instructTitle" = "Give an instruction — type or speak";
@@ -403,7 +403,7 @@
 "settings.voice.dictation.enable" = "Enable dictation hot key";
 "settings.voice.dictation.needsModel" = "Download a Whisper model above to use dictation.";
 "settings.voice.dictation.postProcess.enable" = "Polish transcript with AI (removes fillers, adds punctuation)";
-"settings.voice.dictation.postProcess.body" = "After Whisper transcribes your dictation, Tippi sends the raw text through your active LLM provider to remove filler words (\"um\", \"uh\", \"äh\"), add punctuation, and fix obvious self-corrections. Only runs on inputs ≥ 50 characters (shorter texts do not benefit). If the AI responds conversationally instead of cleaning, the raw transcript is inserted. Adds 1–3 s of latency — dictation never breaks.";
+"settings.voice.dictation.postProcess.body" = "After Whisper transcribes your dictation, Tippi sends the raw text through your active LLM provider to remove language-aware filler words (German/English/Spanish/French/Japanese, without confusing them with real words like English \"also\"), remove hesitation repeats, add punctuation and correct capitalization (including German nouns), and fix obvious self-corrections. Only runs on inputs ≥ 50 characters (shorter texts do not benefit). If the AI responds conversationally instead of cleaning, the raw transcript is inserted. Adds 1–3 s of latency — dictation never breaks.";
 "settings.voice.dictation.postProcess.promptLabel" = "Polishing prompt (used as system prompt):";
 "settings.voice.dictation.postProcess.reset" = "Reset to default";
 "settings.voice.dictation.postProcess.providerLabel" = "Polish via:";
