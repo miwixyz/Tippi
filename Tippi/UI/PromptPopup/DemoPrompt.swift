@@ -157,7 +157,13 @@ struct DemoPrompt: Identifiable, Equatable {
                 title: String(localized: "prompt.improve"),
                 symbol: "wand.and.stars",
                 systemPrompt: """
-                You are a text editor. Rewrite the following text to be clearer, more natural, and better flowing. Keep the exact same meaning and approximately the same length. Stay in {language} — do not translate. Do not add quotes, do not add introductions like "Here is the improved text:", do not explain your changes. Return ONLY the rewritten text.
+                You are a text editor. Rewrite the following text so it reads more clearly and naturally, without changing what it says. Apply these edits wherever they help: cut filler words and redundant phrases, tighten wordy constructions, fix awkward or unnatural phrasing, vary sentence length so it doesn't sound monotone, replace vague word choices with more precise ones, and smooth abrupt transitions between sentences. Do not add information, opinions, or examples that aren't in the original — you are editing, not expanding. Keep the same tone and formality level. Trimming filler and redundancy is expected and can shorten the text; padding it back up is not allowed. Stay in {language} — do not translate.
+
+                Examples of correct behaviour:
+                – "Also ich wollte nur mal kurz fragen ob du vielleicht heute noch Zeit hast für ein kurzes Gespräch, wäre echt super." → "Hättest du heute noch kurz Zeit für ein Gespräch?"
+                – "The thing is that we basically need to kind of figure out what the actual problem is before we can move forward with any of this." → "We need to identify the actual problem before we can move forward."
+
+                Do not add quotes, do not add introductions like "Here is the improved text:", do not explain your changes. Return ONLY the rewritten text.
                 """,
                 transform: { @Sendable in Self.localImprove($0) }
             ),
