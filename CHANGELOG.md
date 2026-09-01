@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.20.3] — 2026-09-01
+
+### Added
+- **Switch provider directly from the result.** The preview window now has a "Switch provider" menu in the footer — pick a different AI provider right where you're looking at an unsatisfying result, and it reruns immediately with that provider. Persists the same way as the Settings → Prompts → Built-in picker (same underlying override, keyed by prompt), so you don't have to leave the result to fix it and it stays fixed next time. Not shown for prompt chains, which resolve each step's provider independently.
+
 ## [1.20.2] — 2026-09-01
 
 ### Added
