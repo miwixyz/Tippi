@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.20.4] — 2026-09-01
+
+### Fixed
+- **Gemini requests could fail with HTTP 404 "no longer available to new users."** Google is retiring the 2.5 generation ahead of its official October 2026 shutdown date. The default model (`gemini-2.5-flash`) and the "fastest" preset (`gemini-2.5-flash-lite`) now point to the confirmed GA replacements, `gemini-3.5-flash` and `gemini-3.5-flash-lite`. `gemini-2.5-pro` is left as-is — no reliable 3.x replacement could be confirmed — and flagged in the picker as possibly affected too.
+
 ## [1.20.3] — 2026-09-01
 
 ### Added

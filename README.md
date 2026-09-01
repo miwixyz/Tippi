@@ -31,7 +31,7 @@
 - **10 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5-mini`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
-  - **Google Gemini** (default: `gemini-2.5-flash`)
+  - **Google Gemini** (default: `gemini-3.5-flash`)
   - **Mistral** (default: `mistral-small-latest`, EU hosting)
   - **Scaleway** (default: `llama-3.1-8b-instruct`, EU/Paris)
   - **Groq** (default: `llama-3.3-70b-versatile`, LPU-accelerated, ~800 tok/s)
@@ -212,7 +212,7 @@ This route always works because macOS does the binding, not Tippi.
 
 ### Default AI model
 
-Settings → Providers → "Default Provider" picker. Tippi tries the chosen provider first. If it has no key, it falls through to the next configured one. Each provider also has a "Model" field — leave blank for the default (recommended in May 2026: `gpt-5-mini`, `claude-haiku-4-5`, `gemini-2.5-flash`, `mistral-small-latest`, `llama3.3`).
+Settings → Providers → "Default Provider" picker. Tippi tries the chosen provider first. If it has no key, it falls through to the next configured one. Each provider also has a "Model" field — leave blank for the default (recommended in Sep 2026: `gpt-5-mini`, `claude-haiku-4-5`, `gemini-3.5-flash`, `mistral-small-latest`, `llama3.3`).
 
 ### Custom prompts
 
@@ -408,6 +408,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.20.1 | ✅ Done | **Sharper dictation cleanup prompt** — language-aware filler removal (DE/EN/ES/FR/JA) instead of a mixed list that stripped meaningful words (English "also"), hesitation-repeat removal, reliable German noun capitalization |
 | v1.20.2 | ✅ Done | **Per-prompt AI provider override** (Settings → Prompts → Built-in) — pin any built-in prompt to a specific provider/model independent of the global default, for cases where a fast local model is right for most tasks but too small for a specific one (e.g. rewriting a long, fact-dense document); preview now flags a result that comes back identical to the input instead of showing it as a normal success |
 | v1.20.3 | ✅ Done | **"Switch provider" right in the result** — the preview footer got a provider picker so a disappointing result can be re-run with a different provider without leaving the window; persists as that prompt's override, same storage as the Settings picker |
+| v1.20.4 | ✅ Done | **Gemini model IDs updated** — `gemini-2.5-flash`/`gemini-2.5-flash-lite` started returning HTTP 404 ("no longer available to new users") ahead of Google's official Oct 2026 retirement; default and fastest-preset now point to the confirmed `gemini-3.5-flash`/`gemini-3.5-flash-lite` replacements |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).

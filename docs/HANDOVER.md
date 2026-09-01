@@ -75,7 +75,7 @@ Tippi/
 │   ├── LLMProvider.swift           Protocol + LLMError
 │   ├── OpenAIProvider.swift        gpt-5-mini, /v1/chat/completions
 │   ├── AnthropicProvider.swift     claude-haiku-4-5, /v1/messages
-│   ├── GeminiProvider.swift        gemini-2.5-flash, generativelanguage.googleapis.com
+│   ├── GeminiProvider.swift        gemini-3.5-flash, generativelanguage.googleapis.com
 │   ├── MistralProvider.swift       mistral-small-latest, OpenAI-kompatibel
 │   ├── OllamaProvider.swift        llama3.3, localhost:11434
 │   └── LLMRouter.swift             Provider-Reihenfolge, Fallthrough-Logik
@@ -234,7 +234,7 @@ Voice Input hat zwei Modi, gesteuert durch `VoiceMode` enum in `PromptPopupView.
 |----------|----------------|--------------|------|-------|
 | OpenAI | `gpt-5-mini` | `https://api.openai.com/v1/chat/completions` | `Authorization: Bearer <key>` | Schnell, günstig, gute deutsche Sprache |
 | Anthropic | `claude-haiku-4-5` | `https://api.anthropic.com/v1/messages` | `x-api-key: <key>` + `anthropic-version: 2023-06-01` | Beste Prosa-Qualität |
-| Google | `gemini-2.5-flash` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key=<key>` | Query-Param | Großzügiges Free-Tier |
+| Google | `gemini-3.5-flash` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key=<key>` | Query-Param | Großzügiges Free-Tier |
 | Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting möglich |
 | Ollama | `llama3.3` | `http://localhost:11434/api/chat` | Keine | Lokal, gratis, voll privat |
 
