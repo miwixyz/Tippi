@@ -220,6 +220,38 @@ struct LLMRouter {
         )
     }
 
+    /// Streaming counterpart to the forced `complete` above — same "force a
+    /// specific provider/model, fall back to the normal resolution if it's
+    /// unusable" contract, for the per-prompt provider override.
+    func completeStream(
+        systemPrompt: String,
+        userText: String,
+        forceProviderID: String,
+        forceModel: String
+    ) async throws -> StreamingCompletion {
+        guard !forceProviderID.isEmpty,
+              let provider = Self.allProviders.first(where: { $0.id == forceProviderID }) else {
+            return try await completeStream(systemPrompt: systemPrompt, userText: userText)
+        }
+        if provider.requiresAPIKey {
+            let hasKey = await MainActor.run { hasAPIKey(for: provider.id) }
+            guard hasKey else {
+                return try await completeStream(systemPrompt: systemPrompt, userText: userText)
+            }
+        }
+        let modelName = forceModel.isEmpty ? provider.defaultModel : forceModel
+        return StreamingCompletion(
+            stream: provider.completeStream(
+                systemPrompt: systemPrompt,
+                userText: userText,
+                model: modelName
+            ),
+            providerDisplay: "\(provider.displayName) / \(modelName)",
+            providerID: provider.id,
+            model: modelName
+        )
+    }
+
     @MainActor
     func anyProviderConfigured() -> Bool {
         for provider in providers {

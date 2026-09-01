@@ -760,17 +760,12 @@ private struct PromptsTab: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "settings.prompts.builtIn"))
                             .font(.headline)
+                        Text(String(localized: "settings.prompts.builtIn.overrideHint"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         ForEach(DemoPrompt.builtIn) { p in
-                            HStack {
-                                Image(systemName: p.symbol)
-                                    .foregroundStyle(.tint)
-                                    .frame(width: 22)
-                                Text(p.title)
-                                Spacer()
-                                Text(String(localized: "settings.prompts.readOnly"))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                            BuiltInPromptRow(prompt: p)
+                            Divider()
                         }
                     }
                     .padding(6)
@@ -946,6 +941,96 @@ private struct PromptsTab: View {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             await MainActor.run { importMessage = nil }
         }
+    }
+}
+
+/// One row in the built-in prompts list: title (read-only, can't edit the
+/// wording of a built-in) plus a per-prompt provider/model override. Exists
+/// because a global default provider that's great for short dictation polish
+/// (small local model, fast) can be hopeless on a long prompt like "Improve"
+/// run against a multi-paragraph business email — reproduced 2026-09-01:
+/// MLX Qwen3.5 2B returned such an email completely unchanged. Rather than
+/// force a bigger/cloud model globally, this pins one prompt to a different
+/// provider without touching everyone else's default.
+private struct BuiltInPromptRow: View {
+    let prompt: DemoPrompt
+
+    @State private var providerOverride: String
+    @State private var modelOverride: String
+
+    init(prompt: DemoPrompt) {
+        self.prompt = prompt
+        _providerOverride = State(initialValue: PromptProviderOverride.providerID(for: prompt.id))
+        _modelOverride = State(initialValue: PromptProviderOverride.modelOverride(for: prompt.id))
+    }
+
+    private static let useActive = "__active__"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: prompt.symbol)
+                    .foregroundStyle(.tint)
+                    .frame(width: 22)
+                Text(prompt.title)
+                Spacer()
+                Picker("", selection: providerBinding) {
+                    Text(String(localized: "settings.voice.dictation.postProcess.providerActive"))
+                        .tag(Self.useActive)
+                    Divider()
+                    ForEach(LLMRouter.allProviders, id: \.id) { provider in
+                        Text(provider.displayName).tag(provider.id)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 200)
+            }
+            if !providerOverride.isEmpty {
+                let modelPresets = ProviderModelPresets.presets(for: providerOverride)
+                if !modelPresets.isEmpty {
+                    HStack {
+                        Spacer().frame(width: 22)
+                        Text(String(localized: "settings.providers.model"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Picker("", selection: modelBinding) {
+                            ForEach(modelPresets) { preset in
+                                Text(preset.label).tag(preset.id)
+                            }
+                        }
+                        .labelsHidden()
+                    }
+                }
+            }
+        }
+    }
+
+    private var providerBinding: Binding<String> {
+        Binding(
+            get: { providerOverride.isEmpty ? Self.useActive : providerOverride },
+            set: { new in
+                let value = (new == Self.useActive) ? "" : new
+                providerOverride = value
+                PromptProviderOverride.setProviderID(value, for: prompt.id)
+                if !value.isEmpty, let fastest = ProviderModelPresets.defaultPolishModel(for: value) {
+                    modelOverride = fastest
+                    PromptProviderOverride.setModelOverride(fastest, for: prompt.id)
+                } else {
+                    modelOverride = ""
+                    PromptProviderOverride.setModelOverride("", for: prompt.id)
+                }
+            }
+        )
+    }
+
+    private var modelBinding: Binding<String> {
+        Binding(
+            get: { modelOverride },
+            set: { new in
+                modelOverride = new
+                PromptProviderOverride.setModelOverride(new, for: prompt.id)
+            }
+        )
     }
 }
 

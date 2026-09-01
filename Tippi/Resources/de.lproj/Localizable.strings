@@ -208,7 +208,7 @@
 "settings.prompts.custom" = "Deine Prompts";
 "settings.prompts.new" = "Neuer Prompt";
 "settings.prompts.empty" = "Noch keine eigenen Prompts. Klick auf Neuer Prompt und leg los — z.B. Auf Bayrisch übersetzen oder Als Slack-Nachricht umschreiben.";
-"settings.prompts.readOnly" = "eingebaut";
+"settings.prompts.builtIn.overrideHint" = "Wortlaut ist fest, aber du kannst pro Prompt einen anderen KI-Anbieter erzwingen — nützlich wenn ein kleines lokales Modell bei einem bestimmten Prompt zu wenig ändert.";
 
 "settings.prompts.editor.titleNew" = "Neuer Prompt";
 "settings.prompts.editor.titleEdit" = "Prompt bearbeiten";
@@ -335,6 +335,8 @@
 "settings.tab.voice" = "Sprache";
 "settings.voice.mic.title" = "Mikrofon-Berechtigung";
 "settings.voice.mic.grant" = "Zugriff erteilen";
+"preview.noChange.badge" = "Keine Änderung";
+"preview.noChange.help" = "Das Modell hat den Text unverändert zurückgegeben. Bei „Verbessern“, „Kürzen“ & Co. kann das bedeuten, dass das Modell mit diesem Text überfordert war — probier ggf. einen anderen Anbieter über den Override unten bei diesem Prompt.";
 "settings.voice.systemAudio.title" = "Systemaudio";
 "settings.voice.systemAudio.enable" = "Systemaudio während der Aufnahme stummschalten";
 "settings.voice.systemAudio.body" = "Schaltet die Mac-Lautsprecher/-Ausgabe für die Dauer der Aufnahme stumm (Diktat, Sprachbefehl-Popup, Übersetzen) und stellt danach genau den vorherigen Zustand wieder her — war es vorher schon stumm, bleibt es stumm. Nützlich wenn Musik oder ein Video läuft, während du diktierst. Standardmäßig aus. Manche Audiogeräte (z. B. bestimmte USB-/Bluetooth-Ausgänge) unterstützen keine Stummschaltung — dann bleibt diese Option wirkungslos, ohne die Aufnahme zu beeinträchtigen.";

@@ -24,7 +24,7 @@ struct PreviewView: View {
 
     enum ViewState {
         case loading
-        case ready(text: String, providerInfo: String?, truncated: Bool = false)
+        case ready(text: String, providerInfo: String?, truncated: Bool = false, unchanged: Bool = false)
         case failed(message: String)
     }
 
@@ -84,12 +84,15 @@ struct PreviewView: View {
                 Spacer()
                 if let progress = chainProgress {
                     chainBadge(progress)
-                } else if case .ready(_, _, let truncated) = state, truncated {
+                } else if case .ready(_, _, let truncated, _) = state, truncated {
                     truncatedBadge
-                } else if case .ready(_, let info?, _) = state {
+                } else if case .ready(_, let info?, _, _) = state {
                     providerBadge(info)
                 } else if case .ready = state {
                     fallbackBadge
+                }
+                if case .ready(_, _, _, let unchanged) = state, unchanged {
+                    noChangeBadge
                 }
             }
             if let chainError {
@@ -145,6 +148,26 @@ struct PreviewView: View {
         .foregroundStyle(.tint)
     }
 
+    /// Shown when the model's response is character-for-character identical to
+    /// the input. For prompts meant to actively rewrite text (Improve, Shorten,
+    /// Make Formal, …) this is a real signal, not a normal outcome — usually a
+    /// small/local model being too conservative on a long or fact-dense input.
+    /// Some prompts (Fix Grammar on already-correct text, Translate on text
+    /// already in the target language) can legitimately produce this, so the
+    /// badge states the fact neutrally rather than calling it an error.
+    private var noChangeBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "equal.circle").font(.caption2)
+            Text(String(localized: "preview.noChange.badge"))
+        }
+        .font(.caption)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Color.orange.opacity(0.18)))
+        .foregroundStyle(.orange)
+        .help(String(localized: "preview.noChange.help"))
+    }
+
     private var fallbackBadge: some View {
         HStack(spacing: 4) {
             Image(systemName: "cloud.slash").font(.caption2)
@@ -170,7 +193,7 @@ struct PreviewView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        case .ready(let suggestion, _, _):
+        case .ready(let suggestion, _, _, _):
             HStack(spacing: 0) {
                 column(
                     label: String(localized: "preview.original"),
@@ -227,7 +250,7 @@ struct PreviewView: View {
     /// ready.
     @ViewBuilder
     private var refineBar: some View {
-        if case .ready(let suggestion, _, _) = state {
+        if case .ready(let suggestion, _, _, _) = state {
             HStack(spacing: 8) {
                 Image(systemName: "wand.and.stars")
                     .foregroundStyle(.secondary)
@@ -251,7 +274,7 @@ struct PreviewView: View {
 
             Spacer()
 
-            if case .ready(let suggestion, _, _) = state {
+            if case .ready(let suggestion, _, _, _) = state {
                 Button(String(localized: "preview.copy")) { onCopy(suggestion) }
                     .keyboardShortcut("c", modifiers: .command)
                 Button(String(localized: "preview.append")) { onAppend(suggestion) }
@@ -492,6 +515,8 @@ struct PreviewView: View {
     }
 
     private func performStreaming(systemPrompt: String, userText: String, input: String, allowLocalFallback: Bool) {
+        let providerOverride = PromptProviderOverride.providerID(for: prompt.id)
+        let modelOverride = PromptProviderOverride.modelOverride(for: prompt.id)
         task = Task { @MainActor in
             // Declared outside the do so a mid-stream truncation can still keep
             // the partial text the user already watched stream in.
@@ -499,10 +524,20 @@ struct PreviewView: View {
             var providerDisplay = ""
             let start = Date()
             do {
-                let streaming = try await LLMRouter.shared.completeStream(
-                    systemPrompt: systemPrompt,
-                    userText: userText
-                )
+                let streaming: StreamingCompletion
+                if !providerOverride.isEmpty {
+                    streaming = try await LLMRouter.shared.completeStream(
+                        systemPrompt: systemPrompt,
+                        userText: userText,
+                        forceProviderID: providerOverride,
+                        forceModel: modelOverride
+                    )
+                } else {
+                    streaming = try await LLMRouter.shared.completeStream(
+                        systemPrompt: systemPrompt,
+                        userText: userText
+                    )
+                }
                 providerDisplay = streaming.providerDisplay
                 // Accumulate deltas and update the view live — the user sees the
                 // result grow token-by-token instead of staring at a spinner.
@@ -514,9 +549,11 @@ struct PreviewView: View {
                 guard !Task.isCancelled else { return }
                 let duration = Date().timeIntervalSince(start)
                 let finalText = accumulated.trimmingCharacters(in: .whitespacesAndNewlines)
+                let unchanged = finalText == input.trimmingCharacters(in: .whitespacesAndNewlines)
                 state = .ready(
                     text: finalText,
-                    providerInfo: "\(streaming.providerDisplay) · \(formatDuration(duration))"
+                    providerInfo: "\(streaming.providerDisplay) · \(formatDuration(duration))",
+                    unchanged: unchanged
                 )
                 logToHistory(
                     result: CompletionResult(
@@ -550,14 +587,29 @@ struct PreviewView: View {
     }
 
     private func performNonStreaming(systemPrompt: String, userText: String, input: String, allowLocalFallback: Bool) {
+        let providerOverride = PromptProviderOverride.providerID(for: prompt.id)
+        let modelOverride = PromptProviderOverride.modelOverride(for: prompt.id)
         task = Task { @MainActor in
             do {
-                let result = try await LLMRouter.shared.complete(systemPrompt: systemPrompt, userText: userText)
+                let result: CompletionResult
+                if !providerOverride.isEmpty {
+                    result = try await LLMRouter.shared.complete(
+                        systemPrompt: systemPrompt,
+                        userText: userText,
+                        forceProviderID: providerOverride,
+                        forceModel: modelOverride
+                    )
+                } else {
+                    result = try await LLMRouter.shared.complete(systemPrompt: systemPrompt, userText: userText)
+                }
                 guard !Task.isCancelled else { return }
                 logToHistory(result: result, input: input)
+                let unchanged = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    == input.trimmingCharacters(in: .whitespacesAndNewlines)
                 state = .ready(
                     text: result.text,
-                    providerInfo: "\(result.providerDisplay) · \(formatDuration(result.duration))"
+                    providerInfo: "\(result.providerDisplay) · \(formatDuration(result.duration))",
+                    unchanged: unchanged
                 )
             } catch LLMError.noProviderConfigured, LLMError.noAPIKey {
                 guard !Task.isCancelled else { return }
