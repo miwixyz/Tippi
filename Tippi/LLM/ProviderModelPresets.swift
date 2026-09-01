@@ -56,11 +56,21 @@ enum ProviderModelPresets {
         Preset(id: "claude-opus-4-5",   label: "Claude Opus 4.5 — premium",      isFastest: false, isReasoning: false),
     ]
 
-    // MARK: - Gemini (current 2026)
+    // MARK: - Gemini (updated 2026-09-01)
+    //
+    // The 2.5 generation started returning HTTP 404 "no longer available to
+    // new users" ahead of its official Oct 2026 shutdown date — reproduced
+    // live via a real Tippi error on gemini-2.5-flash-lite, which the error
+    // body itself pointed at gemini-3.5-flash-lite as the replacement.
+    // gemini-3.5-flash confirmed via ai.google.dev as the flash-tier GA
+    // successor. gemini-2.5-pro's exact GA 3.x replacement could NOT be
+    // confirmed with confidence (docs only surfaced a "-preview"-suffixed
+    // pro ID, too unstable to hardcode) — left on 2.5-pro, flagged here so
+    // it isn't silently trusted if it starts 404ing too.
     static let gemini: [Preset] = [
-        Preset(id: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite — fastest ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "gemini-2.5-flash",      label: "Gemini 2.5 Flash — fast",            isFastest: false, isReasoning: false),
-        Preset(id: "gemini-2.5-pro",        label: "Gemini 2.5 Pro — premium",           isFastest: false, isReasoning: false),
+        Preset(id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite — fastest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "gemini-3.5-flash",      label: "Gemini 3.5 Flash — fast",            isFastest: false, isReasoning: false),
+        Preset(id: "gemini-2.5-pro",        label: "Gemini 2.5 Pro — premium ⚠️ unverified, may 404",  isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Mistral La Plateforme (EU/FR hosting, current 2026)

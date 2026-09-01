@@ -3,7 +3,11 @@ import Foundation
 struct GeminiProvider: LLMProvider {
     let id = "gemini"
     let displayName = "Google Gemini"
-    let defaultModel = "gemini-2.5-flash"
+    // gemini-2.5-flash returns HTTP 404 for accounts without prior grandfathered
+    // access ("no longer available to new users" — confirmed via a real Tippi
+    // error + Google's own migration pointer + ai.google.dev docs, 2026-09-01).
+    // gemini-3.5-flash is Google's stated GA replacement for the same tier.
+    let defaultModel = "gemini-3.5-flash"
     let requiresAPIKey = true
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
