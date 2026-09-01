@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.20.2] — 2026-09-01
+
+### Added
+- **Per-prompt AI provider override.** Settings → Prompts → Built-in now shows a provider picker for each of the 24 built-in prompts (previously just a "read-only" label) — pin a specific prompt to a different provider/model than your global default. Fixes a real case: a small local model (MLX Qwen3.5 2B) that's great for fast dictation polish returned a multi-paragraph business email completely unchanged when asked to run "Improve" on it — reproduced against the live model, not a prompt-wording issue. The override lets that one prompt route to a stronger provider without changing the default everyone else uses.
+- **"No change" indicator in the preview.** If a prompt's result comes back character-for-character identical to the input, the preview now shows a neutral badge instead of letting it look like a normal completed transform — most relevant for prompts meant to actively rewrite text (Improve, Shorten, Make Formal, …), where an unchanged result is worth noticing rather than silently accepting.
+
 ## [1.20.1] — 2026-09-01
 
 ### Fixed
