@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.20.1] — 2026-09-01
+
+### Fixed
+- **Dictation cleanup could silently change meaning or skip languages it should have handled.** The post-process prompt (Settings → Voice → Post-process) used one mixed German/English filler-word list, so English "also" (meaning "in addition") could be stripped as if it were the unrelated German filler use — changing what a sentence said. Filler removal is now language-aware (German/English/Spanish/French/Japanese, matching the dictation language picker) and never removes a word that carries real meaning in context.
+- **German nouns weren't reliably capitalized** by the cleanup step — "sensible capitalization" is now spelled out to explicitly cover German noun capitalization, not just sentence starts.
+- **Stutter-style word repeats from hesitation** ("the the file", "ich ich wollte") were left in the cleaned transcript — the prompt had no rule for this distinct-from-filler artifact. Now removed.
+
+### Changed
+- Self-correction cleanup ("no wait, I mean…") now only drops the earlier part when the speaker clearly abandoned it — two options being compared are both kept instead of one being guessed away.
+- README, the one-pager, the website and in-app Help now document the v1.20.0 system-audio-mute option and the sharpened "Improve" prompt (previously shipped but never written up), and the built-in-prompt counts are corrected to the actual 24 (previously inconsistently stated as 22 or "11 ready-to-use" in places).
+
 ## [1.20.0] — 2026-09-01
 
 ### Added
