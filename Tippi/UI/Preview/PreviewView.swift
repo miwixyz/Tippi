@@ -180,6 +180,50 @@ struct PreviewView: View {
         .foregroundStyle(.orange)
     }
 
+    /// Lets the user change which provider/model runs *this* prompt, right at
+    /// the result — not just in Settings. Picking one persists it the same way
+    /// as the Settings → Prompts → Built-in picker (same `PromptProviderOverride`
+    /// storage, keyed by `prompt.id`) and immediately regenerates. Direct
+    /// response to a real case: a small local model made only a cosmetic,
+    /// easy-to-miss edit on a business email — the fix belongs one click away
+    /// from noticing it, not three screens deep in Settings.
+    private var providerSwitcher: some View {
+        Menu {
+            Button(String(localized: "settings.voice.dictation.postProcess.providerActive")) {
+                switchProvider(to: "")
+            }
+            Divider()
+            ForEach(LLMRouter.allProviders, id: \.id) { provider in
+                Button(provider.displayName) {
+                    switchProvider(to: provider.id)
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                Text(String(localized: "preview.switchProvider"))
+            }
+            .font(.caption)
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .help(String(localized: "preview.switchProvider.help"))
+    }
+
+    /// Persists the chosen provider as this prompt's override (empty = clear
+    /// it, fall back to the global default) and re-runs immediately so the
+    /// choice shows its effect right away instead of requiring a second
+    /// manual "regenerate" click.
+    private func switchProvider(to providerID: String) {
+        PromptProviderOverride.setProviderID(providerID, for: prompt.id)
+        if !providerID.isEmpty, let fastest = ProviderModelPresets.defaultPolishModel(for: providerID) {
+            PromptProviderOverride.setModelOverride(fastest, for: prompt.id)
+        } else {
+            PromptProviderOverride.setModelOverride("", for: prompt.id)
+        }
+        runCompletion()
+    }
+
     // MARK: - Content
 
     @ViewBuilder
@@ -271,6 +315,13 @@ struct PreviewView: View {
         HStack(spacing: 8) {
             Button(String(localized: "preview.cancel"), action: cancel)
                 .keyboardShortcut(.escape)
+
+            // Chains resolve each step's provider independently — a per-prompt
+            // override on the chain's own id would silently do nothing, so
+            // don't offer a switcher that implies it works.
+            if !prompt.isChain {
+                providerSwitcher
+            }
 
             Spacer()
 
