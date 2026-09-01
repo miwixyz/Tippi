@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.0] — 2026-09-01
+
+### Added
+- **Mute system audio while recording (opt-in).** New toggle under Settings → Voice → System Audio: while Tippi records (dictation, the voice-command popup, or the translate panel — all three share the same recorder), it can now mute your Mac's audio output for the duration of the take, then restore the exact previous state afterward — if your speakers were already muted, they stay muted. Off by default. If Tippi is quit or crashes mid-recording with the option on, the next launch automatically un-mutes system audio rather than leaving it stuck.
+
+### Changed
+- **Sharper "Improve" text prompt.** The built-in *Improve* transform now names concrete edits (cut filler and redundant phrases, tighten wordy constructions, fix awkward phrasing, vary sentence length, replace vague words with precise ones, smooth transitions) instead of vague guidance, and explicitly allows trimming filler instead of holding the text to its original length. Two before/after examples anchor local models that used to make only cosmetic changes.
+
 ## [1.19.0] — 2026-07-29
 
 ### Added
