@@ -24,6 +24,34 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private var levelTimer: Timer?
     private var outputURL: URL?
 
+    // MARK: - System audio muting (opt-in)
+
+    private static let muteSystemAudioKey = "recording.muteSystemAudio"
+    /// Persisted mirror of `mutedSystemAudioPreviousState`, written right
+    /// before muting and cleared right after restoring. Lets `recoverFromCrashIfNeeded()`
+    /// detect and fix a system audio left muted by a crash/force-quit
+    /// mid-recording — the in-memory flag alone can't survive that.
+    private static let pendingRestoreKey = "recording.muteSystemAudio.pendingRestore"
+
+    /// Whether Tippi should mute the default system audio output while
+    /// recording (dictation, popup mic, translate panel — all share this
+    /// recorder). Default OFF: muting system audio is a convenience for
+    /// people who dictate over music/video, not something everyone wants.
+    static var muteSystemAudioDuringRecording: Bool {
+        get { UserDefaults.standard.bool(forKey: muteSystemAudioKey) }
+        set { UserDefaults.standard.set(newValue, forKey: muteSystemAudioKey) }
+    }
+
+    /// System output's mute state captured right before we muted it, so
+    /// `stop()` restores the *previous* state instead of force-unmuting —
+    /// if the user had already muted their speakers themselves, Tippi
+    /// shouldn't undo that. `nil` means "we didn't touch system audio for
+    /// the current/last take" (setting was off, or the device has no mute
+    /// control) — `stop()` uses this as the sole signal for whether to
+    /// restore, independent of the *current* value of the setting above,
+    /// so toggling the setting off mid-recording can't leave audio muted.
+    private var mutedSystemAudioPreviousState: Bool?
+
     // MARK: - Permission
 
     static func authorizationStatus() -> AVAuthorizationStatus {
@@ -79,6 +107,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             outputURL = url
             isRecording = true
             startLevelTimer()
+            muteSystemAudioIfEnabled()
             return url
         } catch let err as AudioRecorderError {
             throw err
@@ -95,12 +124,25 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         recorder = nil
         isRecording = false
         level = 0
+        restoreSystemAudioIfNeeded()
         // Hand the URL over and forget it — otherwise a stop() without a
         // following transcription (which owns the cleanup `defer`) would leave
         // the temp WAV behind, and a stale URL could be returned twice.
         let url = outputURL
         outputURL = nil
         return url
+    }
+
+    /// Best-effort fix for system audio left muted by a crash/force-quit
+    /// while a recording (with the mute-system-audio setting on) was in
+    /// flight — the normal restore path in `stop()` never got to run.
+    /// Safe to call at app launch, before any recording starts.
+    static func recoverFromCrashIfNeeded() {
+        guard UserDefaults.standard.object(forKey: pendingRestoreKey) != nil else { return }
+        let previous = UserDefaults.standard.bool(forKey: pendingRestoreKey)
+        UserDefaults.standard.removeObject(forKey: pendingRestoreKey)
+        SystemAudioMuter.setMuted(previous)
+        NSLog("Tippi: recovered system audio mute state left over from a previous crash/force-quit")
     }
 
     /// Best-effort sweep of orphaned recordings left by a crash/force-quit.
@@ -114,6 +156,31 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             && f.pathExtension == "wav" {
             try? FileManager.default.removeItem(at: f)
         }
+    }
+
+    // MARK: - System audio muting
+
+    /// Captures the current mute state and mutes system audio, but only if
+    /// the setting is on. Failing to read/write (device has no mute
+    /// control, or a CoreAudio call fails) leaves `mutedSystemAudioPreviousState`
+    /// `nil` — `restoreSystemAudioIfNeeded()` then knows there's nothing to
+    /// undo, matching the "best-effort, never blocks recording" contract.
+    private func muteSystemAudioIfEnabled() {
+        guard Self.muteSystemAudioDuringRecording else { return }
+        guard let previous = SystemAudioMuter.isMuted() else { return }
+        guard SystemAudioMuter.setMuted(true) else { return }
+        mutedSystemAudioPreviousState = previous
+        UserDefaults.standard.set(previous, forKey: Self.pendingRestoreKey)
+    }
+
+    /// Restores system audio to whatever it was before `muteSystemAudioIfEnabled()`
+    /// muted it — regardless of the setting's *current* value, so flipping
+    /// the toggle off mid-recording can't leave the system stuck muted.
+    private func restoreSystemAudioIfNeeded() {
+        guard let previous = mutedSystemAudioPreviousState else { return }
+        mutedSystemAudioPreviousState = nil
+        UserDefaults.standard.removeObject(forKey: Self.pendingRestoreKey)
+        SystemAudioMuter.setMuted(previous)
     }
 
     // MARK: - Level metering

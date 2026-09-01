@@ -335,6 +335,9 @@
 "settings.tab.voice" = "Sprache";
 "settings.voice.mic.title" = "Mikrofon-Berechtigung";
 "settings.voice.mic.grant" = "Zugriff erteilen";
+"settings.voice.systemAudio.title" = "Systemaudio";
+"settings.voice.systemAudio.enable" = "Systemaudio während der Aufnahme stummschalten";
+"settings.voice.systemAudio.body" = "Schaltet die Mac-Lautsprecher/-Ausgabe für die Dauer der Aufnahme stumm (Diktat, Sprachbefehl-Popup, Übersetzen) und stellt danach genau den vorherigen Zustand wieder her — war es vorher schon stumm, bleibt es stumm. Nützlich wenn Musik oder ein Video läuft, während du diktierst. Standardmäßig aus. Manche Audiogeräte (z. B. bestimmte USB-/Bluetooth-Ausgänge) unterstützen keine Stummschaltung — dann bleibt diese Option wirkungslos, ohne die Aufnahme zu beeinträchtigen.";
 "settings.voice.binary.title" = "whisper-cli Binärdatei";
 "settings.voice.binary.detected" = "Automatisch gefunden: %@";
 "settings.voice.binary.notFound" = "Nicht gefunden — Tippi neu installieren";

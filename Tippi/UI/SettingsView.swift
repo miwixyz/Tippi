@@ -1359,6 +1359,7 @@ private struct VoiceTab: View {
     @EnvironmentObject var permissions: PermissionsManager
     @StateObject private var modelManager = WhisperModelManager()
     @AppStorage("voice.language") private var language: String = "auto"
+    @State private var muteSystemAudio: Bool = AudioRecorder.muteSystemAudioDuringRecording
     @State private var dictationEnabled: Bool = DictationSettings.isEnabled
     @State private var dictationCombo: KeyCombo = DictationSettings.combo
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
@@ -1372,6 +1373,7 @@ private struct VoiceTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 microphoneSection
+                systemAudioSection
                 engineSection
                 modelSection
                 languageSection
@@ -1639,6 +1641,26 @@ private struct VoiceTab: View {
                         .buttonStyle(.bordered)
                     }
                 }
+            }
+            .padding(6)
+        }
+    }
+
+    // MARK: System audio
+
+    private var systemAudioSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(String(localized: "settings.voice.systemAudio.title"))
+                    .font(.headline)
+                Toggle(String(localized: "settings.voice.systemAudio.enable"), isOn: $muteSystemAudio)
+                    .onChange(of: muteSystemAudio) { _, new in
+                        AudioRecorder.muteSystemAudioDuringRecording = new
+                    }
+                Text(String(localized: "settings.voice.systemAudio.body"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(6)
         }

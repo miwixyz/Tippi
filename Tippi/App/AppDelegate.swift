@@ -61,6 +61,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ProviderModelPresets.migrateRemovedNebiusModels()
         // Clear temp WAVs left behind by a previous crash/force-quit.
         AudioRecorder.cleanupOrphanedRecordings()
+        // Un-mute system audio if a previous crash/force-quit happened
+        // mid-recording with "mute system audio" on (stop() never ran).
+        AudioRecorder.recoverFromCrashIfNeeded()
         // Cap synchronous AX calls at 2 s (process-wide via the system-wide
         // element). Capture/insert traverse target apps with hundreds of AX
         // IPC calls on the main thread — without this cap, one unresponsive
@@ -93,6 +96,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The mlx_lm.server child process would otherwise outlive the app,
         // holding the model in RAM and blocking the port.
         MLXServerManager.shared.stop()
+        // Restore system audio if the user quits Tippi mid-recording with
+        // "mute system audio" on — a clean quit should never leave the
+        // Mac muted. (Crash/force-quit is covered separately at next
+        // launch by recoverFromCrashIfNeeded().)
+        if audioRecorder.isRecording {
+            audioRecorder.stop()
+        }
     }
 
     private func startGlobalKeyMonitor() {
