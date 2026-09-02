@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.22.1] — 2026-09-02
+
+### Fixed
+- **"Model may be outdated" falsely flagged working models — including Claude.** The v1.21.0 availability check requested each provider's model list without a page-size parameter. Anthropic's `/v1/models` defaults to **20 results, newest first**, so `claude-haiku-4-5` simply wasn't in the response and got reported as retired while working perfectly. The check now requests the documented maximum (Anthropic `limit=1000`, Gemini `pageSize=1000`), and — more importantly — **refuses to warn at all when a catalogue comes back paginated or partial**: an incomplete list can only produce false alarms, never a trustworthy verdict. Matching is also alias-tolerant now, so a configured `claude-haiku-4-5` still counts as served when the catalogue lists a pinned `claude-haiku-4-5-20251001` (or vice versa).
+
+### Added
+- **"Which model for what?" Help section.** Concrete recommendations instead of a bare provider list: short tasks local / long fact-dense text in the cloud, why Mistral and Claude handle German better, why reasoning models are the wrong pick for "fix this sentence", and a specific starting configuration.
+
+### Changed
+- The Help section on prompt filtering said "22 built-in prompts"; the real count has been 24 for a while.
+
 ## [1.22.0] — 2026-09-02
 
 ### Fixed

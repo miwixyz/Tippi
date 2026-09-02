@@ -47,8 +47,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tippi.app
         PRODUCT_NAME: Tippi
-        MARKETING_VERSION: "1.22.0"
-        CURRENT_PROJECT_VERSION: "230"
+        MARKETING_VERSION: "1.22.1"
+        CURRENT_PROJECT_VERSION: "231"
         INFOPLIST_FILE: Tippi/Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: Tippi/Resources/Tippi.entitlements
         ENABLE_HARDENED_RUNTIME: YES
