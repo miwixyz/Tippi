@@ -86,11 +86,17 @@ struct GeminiProvider: LLMProvider {
     /// Gemini's `/v1beta/models` returns `{"models":[{"name":"models/gemini-…"}]}`
     /// — a `models/` prefix on every id that the API rejects if you pass it
     /// back on a completion call, so strip it before comparing/storing.
-    func fetchModelIDs() async throws -> Set<String> {
+    ///
+    /// `pageSize=1000` for the same reason Anthropic needs `limit`: this
+    /// endpoint paginates too, and a truncated list would make a working
+    /// model look retired. A `nextPageToken` in the response means there's
+    /// more than we fetched → report the catalogue as incomplete rather than
+    /// risk a false "outdated" warning.
+    func fetchModelCatalog() async throws -> ModelCatalog {
         let apiKey: String? = await MainActor.run { try? KeychainStore.getAPIKey(for: id) }
         guard let apiKey, !apiKey.isEmpty else { throw LLMError.noAPIKey(provider: displayName) }
 
-        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models")!)
+        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000")!)
         request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.timeoutInterval = 15
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -100,8 +106,12 @@ struct GeminiProvider: LLMProvider {
         struct ModelsResponse: Decodable {
             struct Model: Decodable { let name: String }
             let models: [Model]
+            let nextPageToken: String?
         }
         let decoded = try JSONDecoder().decode(ModelsResponse.self, from: data)
-        return Set(decoded.models.map { $0.name.replacingOccurrences(of: "models/", with: "") })
+        return ModelCatalog(
+            ids: Set(decoded.models.map { $0.name.replacingOccurrences(of: "models/", with: "") }),
+            isComplete: decoded.nextPageToken == nil
+        )
     }
 }

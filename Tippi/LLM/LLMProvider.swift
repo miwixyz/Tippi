@@ -22,18 +22,45 @@ protocol LLMProvider: Sendable {
         model: String
     ) -> AsyncThrowingStream<String, Error>
 
-    /// Live model IDs this provider currently serves, straight from its own
-    /// API — lets `ModelAvailabilityChecker` flag a configured model the
-    /// provider has quietly retired (the gemini-2.5-flash-lite 404, found
-    /// 2026-09-01, is the reason this exists: nobody knew until a real task
-    /// failed). Default is an empty set ("nothing to check against") — local
-    /// providers (Ollama/MLX) override this with nothing since they only
-    /// ever list what's actually installed, immune to this failure class.
-    func fetchModelIDs() async throws -> Set<String>
+    /// Live model catalogue from this provider's own API — lets
+    /// `ModelAvailabilityChecker` flag a model the provider has quietly
+    /// retired (the gemini-2.5-flash-lite 404, found 2026-09-01, is why this
+    /// exists: nobody knew until a real task failed). Default is an empty,
+    /// incomplete catalogue ("nothing to check against") — local providers
+    /// (Ollama/MLX) keep that, since they only ever list what's actually
+    /// installed and are immune to this failure class.
+    func fetchModelCatalog() async throws -> ModelCatalog
+}
+
+/// A provider's live model list, plus whether we actually got all of it.
+///
+/// `isComplete` exists because a partial list is worse than no list: it makes
+/// a perfectly working model look retired. Real case (2026-09-02): Anthropic's
+/// `/v1/models` defaults to `limit=20` sorted newest-first, so `claude-haiku-4-5`
+/// fell off the end and got flagged "may be outdated" while working fine.
+struct ModelCatalog {
+    let ids: Set<String>
+    /// `false` when the provider paginated and we may not have every id —
+    /// callers must not conclude "retired" from a catalogue like this.
+    let isComplete: Bool
+
+    static let unknown = ModelCatalog(ids: [], isComplete: false)
+
+    /// Whether `model` is plausibly served, tolerating the alias/pinned-version
+    /// split most vendors use: a request may name `claude-haiku-4-5` while the
+    /// catalogue lists `claude-haiku-4-5-20251001` (or the reverse). Exact match
+    /// first, then prefix in either direction. Deliberately generous — this
+    /// drives a *warning*, so a false "everything's fine" is much cheaper than
+    /// telling the user to fix something that isn't broken.
+    func plausiblyServes(_ model: String) -> Bool {
+        guard !model.isEmpty else { return true }
+        if ids.contains(model) { return true }
+        return ids.contains { $0.hasPrefix(model) || model.hasPrefix($0) }
+    }
 }
 
 extension LLMProvider {
-    func fetchModelIDs() async throws -> Set<String> { [] }
+    func fetchModelCatalog() async throws -> ModelCatalog { .unknown }
 
     func completeStream(
         systemPrompt: String,
@@ -111,6 +138,10 @@ protocol OpenAICompatibleProvider: LLMProvider {
 struct OpenAIModelsResponse: Decodable {
     struct Model: Decodable { let id: String }
     let data: [Model]
+    /// OpenAI's own `/v1/models` returns every model in one shot, but several
+    /// "OpenAI-compatible" gateways add cursor pagination and signal it here.
+    /// Absent → treat as complete.
+    let has_more: Bool?
 }
 
 extension OpenAICompatibleProvider {
@@ -122,7 +153,7 @@ extension OpenAICompatibleProvider {
     /// shape as the request body — that's the whole OpenAI-compatibility
     /// convention these providers opted into. One implementation covers all
     /// seven instead of one per provider.
-    func fetchModelIDs() async throws -> Set<String> {
+    func fetchModelCatalog() async throws -> ModelCatalog {
         let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
         let modelsURL = endpoint.deletingLastPathComponent().appendingPathComponent("models")
         var request = URLRequest(url: modelsURL)
@@ -133,7 +164,10 @@ extension OpenAICompatibleProvider {
             throw LLMError.invalidResponse
         }
         let decoded = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
-        return Set(decoded.data.map(\.id))
+        return ModelCatalog(
+            ids: Set(decoded.data.map(\.id)),
+            isComplete: decoded.has_more != true
+        )
     }
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {

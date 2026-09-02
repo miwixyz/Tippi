@@ -66,11 +66,19 @@ struct AnthropicProvider: LLMProvider {
     /// Anthropic's `/v1/models` shares the same `{"data":[{"id":…}]}` shape
     /// as the OpenAI-compatible providers, just under a different auth
     /// scheme (`x-api-key` + `anthropic-version`, not `Authorization: Bearer`).
-    func fetchModelIDs() async throws -> Set<String> {
+    ///
+    /// `limit=1000` (the documented maximum) is essential, not cosmetic: the
+    /// endpoint defaults to **20** and sorts newest-first, so without it a
+    /// perfectly working older model like `claude-haiku-4-5` simply isn't in
+    /// the response and gets reported as retired. That exact false alarm
+    /// shipped in v1.21.0 and was caught on 2026-09-02. `has_more` is still
+    /// honoured on top, so a future catalogue past 1000 degrades to
+    /// "incomplete" (no warning) instead of lying.
+    func fetchModelCatalog() async throws -> ModelCatalog {
         let apiKey: String? = await MainActor.run { try? KeychainStore.getAPIKey(for: id) }
         guard let apiKey, !apiKey.isEmpty else { throw LLMError.noAPIKey(provider: displayName) }
 
-        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models")!)
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models?limit=1000")!)
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.timeoutInterval = 15
@@ -81,8 +89,12 @@ struct AnthropicProvider: LLMProvider {
         struct ModelsResponse: Decodable {
             struct Model: Decodable { let id: String }
             let data: [Model]
+            let has_more: Bool?
         }
         let decoded = try JSONDecoder().decode(ModelsResponse.self, from: data)
-        return Set(decoded.data.map(\.id))
+        return ModelCatalog(
+            ids: Set(decoded.data.map(\.id)),
+            isComplete: decoded.has_more != true
+        )
     }
 }

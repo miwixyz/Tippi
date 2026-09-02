@@ -7,10 +7,11 @@ import Foundation
 /// until "Improve" on a real email came back HTTP 404.
 ///
 /// Best-effort by design: a failed fetch (no key, network error, provider
-/// has no live catalogue — see `LLMProvider.fetchModelIDs()`'s empty-set
-/// default for Ollama/MLX) is silently skipped. This is a convenience
-/// warning shown in Settings, never a blocker — checking must never be able
-/// to break or slow down an actual transform.
+/// has no live catalogue — see `LLMProvider.fetchModelCatalog()`'s `.unknown`
+/// default for Ollama/MLX) is silently skipped, as is a catalogue that came
+/// back paginated. This is a convenience warning shown in Settings, never a
+/// blocker — checking must never break or slow down an actual transform, and
+/// must never claim a working model is retired.
 @MainActor
 final class ModelAvailabilityChecker: ObservableObject {
     static let shared = ModelAvailabilityChecker()
@@ -39,13 +40,17 @@ final class ModelAvailabilityChecker: ObservableObject {
                 group.addTask {
                     let configuredModel = UserDefaults.standard.string(forKey: "defaultModel.\(provider.id)")
                         ?? provider.defaultModel
-                    guard let liveIDs = try? await provider.fetchModelIDs(), !liveIDs.isEmpty else {
-                        // Fetch failed or provider has no live catalogue —
-                        // "not stale", not "unknown". Silence over a false
-                        // alarm: a network hiccup shouldn't flag a fine model.
+                    guard let catalog = try? await provider.fetchModelCatalog(),
+                          catalog.isComplete,
+                          !catalog.ids.isEmpty else {
+                        // Fetch failed, provider has no live catalogue, or the
+                        // list came back paginated/partial → "not stale".
+                        // Never warn on incomplete data: a truncated catalogue
+                        // makes working models look retired, which is exactly
+                        // how v1.21.0 falsely flagged claude-haiku-4-5.
                         return (provider.id, false)
                     }
-                    return (provider.id, !liveIDs.contains(configuredModel))
+                    return (provider.id, !catalog.plausiblyServes(configuredModel))
                 }
             }
             var collected: [(String, Bool)] = []
