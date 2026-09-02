@@ -1304,6 +1304,11 @@ private struct HelpTab: View {
                     body: String(localized: "settings.help.apiBody")
                 )
                 helpSection(
+                    icon: "wand.and.stars.inverse",
+                    title: String(localized: "settings.help.pickModelTitle"),
+                    body: String(localized: "settings.help.pickModelBody")
+                )
+                helpSection(
                     icon: "cpu",
                     title: String(localized: "settings.help.mlxTitle"),
                     body: String(localized: "settings.help.mlxBody")
