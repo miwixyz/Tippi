@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.21.0] — 2026-09-02
+
+### Added
+- **OpenRouter provider (11th provider).** One API key, 300+ models across every major vendor (OpenAI, Anthropic, Google, Meta, xAI, DeepSeek, …) behind an OpenAI-compatible endpoint. Model field takes `vendor/model` ids, e.g. `openai/gpt-4o-mini` (the default). Pass-through pricing — no markup up to 1M requests/month, 5% beyond.
+- **Proactive model-retirement warning.** Tippi now checks, in the background at launch, whether each configured provider still serves the model you have selected — catching a retirement (the gemini-2.5-flash-lite incident, v1.20.4) before a real task fails on it instead of after. Shows a "Model may be outdated" badge in Settings → Providers. Best-effort: a failed check is silently skipped, never blocks or slows down an actual transform.
+
+### Changed
+- **Model-retirement migration generalized.** The Nebius-only remap table became `ProviderModelPresets.retiredModels`, a shared list any provider's dead ids can be added to — already covers both the mid-2026 Nebius retirements and the Gemini 2.5→3.5 migration (v1.20.4), and now also rewrites a stale selection inside a per-prompt provider override (v1.20.2), which the old Nebius-specific version didn't reach.
+
 ## [1.20.4] — 2026-09-01
 
 ### Fixed
