@@ -182,6 +182,10 @@ struct DemoPrompt: Identifiable, Equatable {
                 symbol: "arrow.down.right.and.arrow.up.left",
                 systemPrompt: """
                 Rewrite the following text to be roughly 30% shorter. Keep all factual information and the original tone. Remove filler words, redundant phrases, and rambling. Stay in {language}. Return ONLY the shortened text, no commentary.
+
+                Examples of correct behaviour:
+                – "Ich wollte mich nur kurz melden und fragen, ob du vielleicht schon dazu gekommen bist, dir die Unterlagen anzusehen, die ich dir letzte Woche geschickt hatte." → "Bist du schon dazu gekommen, dir die Unterlagen von letzter Woche anzusehen?"
+                – "We are currently in the process of reviewing your application and will be getting back to you with an update as soon as we possibly can." → "We're reviewing your application and will update you as soon as possible."
                 """,
                 transform: { @Sendable in Self.localShorten($0) }
             ),
@@ -202,6 +206,12 @@ struct DemoPrompt: Identifiable, Equatable {
                 symbol: "briefcase",
                 systemPrompt: """
                 Rewrite the following text in a formal, professional tone suitable for business correspondence. Replace casual phrases and slang with neutral or polite alternatives, remove filler. Keep the original message. Stay in {language}. Return ONLY the rewritten text.
+
+                Formal does not mean longer or more convoluted — keep it direct. In German this means Sie-Form and full sentences, not nested bureaucratic constructions.
+
+                Examples of correct behaviour:
+                – "Hey, kannst du mir die Zahlen bis morgen schicken? Wär super." → "könnten Sie mir die Zahlen bis morgen zukommen lassen? Vielen Dank im Voraus."
+                – "Sorry, hab's vergessen. Mach ich gleich." → "Entschuldigen Sie bitte das Versäumnis. Ich kümmere mich umgehend darum."
                 """,
                 transform: { @Sendable text in "[Formal] \(text) [local demo]" }
             ),
@@ -229,6 +239,10 @@ struct DemoPrompt: Identifiable, Equatable {
                 symbol: "sparkles",
                 systemPrompt: """
                 Rewrite the following AI-generated or stiff text to sound like a real person wrote it. Remove these AI tells: corporate buzzwords, hedge phrases ("it's important to note", "as we navigate", "in today's world"), em-dashes used as flow connectors, generic openings, passive voice, three-item list sentences, and bombastic adjectives ("seamless", "robust", "comprehensive"). Use varied sentence length and natural word choice. Keep the original message. Stay in {language}. Return ONLY the rewritten text.
+
+                Examples of correct behaviour:
+                – "In der heutigen schnelllebigen Geschäftswelt ist es wichtig zu betonen, dass eine nahtlose Kommunikation der Schlüssel zu robustem Wachstum ist." → "Wer schlecht kommuniziert, wächst langsamer. So einfach ist das."
+                – "It's important to note that our comprehensive solution seamlessly integrates with your existing workflow to deliver robust results." → "It plugs into what you already use. No rebuild needed."
                 """,
                 transform: { @Sendable text in text + " [humanized — local demo]" }
             ),
@@ -249,6 +263,13 @@ struct DemoPrompt: Identifiable, Equatable {
                 symbol: "list.bullet.clipboard",
                 systemPrompt: """
                 Summarize the following text as 3 concise bullet points starting with "• ". Capture only the most important facts. Stay in {language}. Return ONLY the 3 bullet points, no introduction, no closing remarks.
+
+                Example of correct behaviour — input: a long email about a project delay, a new deadline of March 14, and a request to reassign two developers. Correct output:
+                • Projekt verzögert sich, neuer Termin ist der 14. März
+                • Zwei Entwickler sollen umgeplant werden
+                • Rückmeldung bis Ende der Woche erbeten
+
+                Note how it names concrete facts (dates, numbers, decisions) instead of describing what the text is about.
                 """,
                 transform: { @Sendable in Self.localSummarize($0) }
             ),
@@ -316,6 +337,15 @@ struct DemoPrompt: Identifiable, Equatable {
                 symbol: "arrowshape.turn.up.left",
                 systemPrompt: """
                 Write a friendly, professional reply to the following incoming email. Keep it short (3–5 sentences). Start with an appropriate greeting matching the formality of the original. End with a neutral closing (e.g. "Best regards", "Viele Grüße") — do NOT invent or add a specific name. Stay in {language}. Return ONLY the reply text.
+
+                Match the original's formality exactly — a "Sehr geehrte" email gets a "Sehr geehrte" reply and Sie-Form, a first-name email gets Du-Form. Answer what was actually asked; never invent facts, prices, dates or commitments that aren't in the incoming mail. If the mail asks something you can't know, write a sentence that acknowledges the question without inventing an answer.
+
+                Example of correct behaviour — incoming: "Hallo Michael, hast du die Rechnung schon rausgeschickt? Grüße, Tom". Correct reply:
+                Hallo Tom,
+
+                danke für die Nachfrage. Ich kümmere mich darum und melde mich, sobald die Rechnung raus ist.
+
+                Viele Grüße
                 """,
                 transform: { @Sendable text in "[Reply draft] \(String(text.prefix(80)))… [local demo]" }
             ),
