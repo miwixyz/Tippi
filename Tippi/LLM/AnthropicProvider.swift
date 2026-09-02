@@ -62,4 +62,27 @@ struct AnthropicProvider: LLMProvider {
         guard !text.isEmpty else { throw LLMError.invalidResponse }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    /// Anthropic's `/v1/models` shares the same `{"data":[{"id":…}]}` shape
+    /// as the OpenAI-compatible providers, just under a different auth
+    /// scheme (`x-api-key` + `anthropic-version`, not `Authorization: Bearer`).
+    func fetchModelIDs() async throws -> Set<String> {
+        let apiKey: String? = await MainActor.run { try? KeychainStore.getAPIKey(for: id) }
+        guard let apiKey, !apiKey.isEmpty else { throw LLMError.noAPIKey(provider: displayName) }
+
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models")!)
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw LLMError.invalidResponse
+        }
+        struct ModelsResponse: Decodable {
+            struct Model: Decodable { let id: String }
+            let data: [Model]
+        }
+        let decoded = try JSONDecoder().decode(ModelsResponse.self, from: data)
+        return Set(decoded.data.map(\.id))
+    }
 }

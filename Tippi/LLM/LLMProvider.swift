@@ -21,9 +21,20 @@ protocol LLMProvider: Sendable {
         userText: String,
         model: String
     ) -> AsyncThrowingStream<String, Error>
+
+    /// Live model IDs this provider currently serves, straight from its own
+    /// API — lets `ModelAvailabilityChecker` flag a configured model the
+    /// provider has quietly retired (the gemini-2.5-flash-lite 404, found
+    /// 2026-09-01, is the reason this exists: nobody knew until a real task
+    /// failed). Default is an empty set ("nothing to check against") — local
+    /// providers (Ollama/MLX) override this with nothing since they only
+    /// ever list what's actually installed, immune to this failure class.
+    func fetchModelIDs() async throws -> Set<String>
 }
 
 extension LLMProvider {
+    func fetchModelIDs() async throws -> Set<String> { [] }
+
     func completeStream(
         systemPrompt: String,
         userText: String,
@@ -94,8 +105,36 @@ protocol OpenAICompatibleProvider: LLMProvider {
     func temperature(for model: String) -> Double?
 }
 
+/// Shared `GET .../models` response shape for every OpenAI-compatible
+/// provider. File-scope, not nested in the protocol extension method below —
+/// Swift rejects a type declared inside a protocol-extension function body.
+struct OpenAIModelsResponse: Decodable {
+    struct Model: Decodable { let id: String }
+    let data: [Model]
+}
+
 extension OpenAICompatibleProvider {
     func temperature(for model: String) -> Double? { 0.3 }
+
+    /// Every OpenAI-compatible provider Tippi uses (OpenAI, Mistral, Scaleway,
+    /// Groq, Kimi, Nebius, OpenRouter) also serves `GET .../models` one path
+    /// segment up from `.../chat/completions`, in the same `{"data":[{"id":…}]}`
+    /// shape as the request body — that's the whole OpenAI-compatibility
+    /// convention these providers opted into. One implementation covers all
+    /// seven instead of one per provider.
+    func fetchModelIDs() async throws -> Set<String> {
+        let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
+        let modelsURL = endpoint.deletingLastPathComponent().appendingPathComponent("models")
+        var request = URLRequest(url: modelsURL)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw LLMError.invalidResponse
+        }
+        let decoded = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
+        return Set(decoded.data.map(\.id))
+    }
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
         let apiKey = try await keychainAPIKey(id: id, displayName: displayName)

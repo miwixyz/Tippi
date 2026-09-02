@@ -31,6 +31,7 @@ enum ProviderModelPresets {
         case "groq":       return groq
         case "kimi":       return kimi
         case "nebius":     return nebius
+        case "openrouter": return openRouter
         default:           return []   // Ollama / MLX use their own pickers
         }
     }
@@ -136,6 +137,21 @@ enum ProviderModelPresets {
         Preset(id: "deepseek-ai/DeepSeek-V4-Pro",          label: "DeepSeek V4 — EU, strong coding",     isFastest: false, isReasoning: false),
     ]
 
+    // MARK: - OpenRouter (unified gateway, current 2026)
+    //
+    // Vendor-prefixed IDs (openrouter routes "vendor/model" to that vendor's
+    // backend). Curated to the same three vendors Tippi already has native
+    // integrations for, on IDs already verified elsewhere in this file/session
+    // — not a reason to trust OpenRouter's full 300+ catalogue blindly, just a
+    // safe starting trio. OpenRouter aliasing a vendor rename doesn't make
+    // Tippi immune to the "hardcoded id goes stale" problem (see gemini-2.5
+    // incident, 2026-09-01) — it inherits whatever the upstream vendor does.
+    static let openRouter: [Preset] = [
+        Preset(id: "openai/gpt-4o-mini",           label: "GPT-4o mini (via OpenRouter) — fastest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "anthropic/claude-haiku-4-5",   label: "Claude Haiku 4.5 (via OpenRouter) — balanced", isFastest: false, isReasoning: false),
+        Preset(id: "google/gemini-3.5-flash",      label: "Gemini 3.5 Flash (via OpenRouter) — balanced", isFastest: false, isReasoning: false),
+    ]
+
     /// Default model for dictation polish on a given provider — picks the
     /// preset marked `isFastest` and not `isReasoning`. Returns nil if the
     /// provider has no curated presets (Ollama/MLX/unknown).
@@ -143,23 +159,56 @@ enum ProviderModelPresets {
         presets(for: providerID).first(where: { $0.isFastest && !$0.isReasoning })?.id
     }
 
-    /// Nebius removed several hosted model ids in mid-2026 (their `-fast` skus and
-    /// DeepSeek-V3). Any persisted selection pointing at one now 404s. Remap the
-    /// stored chat-model and dictation-polish overrides to the current
-    /// equivalent on launch. Idempotent — only rewrites values that are a
-    /// known-dead id, so it no-ops on every launch after the first.
-    static func migrateRemovedNebiusModels(defaults: UserDefaults = .standard) {
-        let remap: [String: String] = [
-            "meta-llama/Meta-Llama-3.1-8B-Instruct-fast":  "Qwen/Qwen3-30B-A3B-Instruct-2507",
-            "meta-llama/Meta-Llama-3.3-70B-Instruct-fast": "meta-llama/Llama-3.3-70B-Instruct",
-            "Qwen/Qwen3-235B-A22B-fast":                   "Qwen/Qwen3-235B-A22B-Instruct-2507",
-            "deepseek-ai/DeepSeek-V3":                     "deepseek-ai/DeepSeek-V4-Pro",
-        ]
-        let keys = ["defaultModel.nebius", "dictation.postProcess.modelOverride"]
-        for key in keys {
-            guard let current = defaults.string(forKey: key), let replacement = remap[current] else { continue }
-            defaults.set(replacement, forKey: key)
-            NSLog("Tippi: migrated removed Nebius model '\(current)' → '\(replacement)' (key: \(key))")
+    /// A model id a provider has retired. Any persisted selection pointing at
+    /// `deadID` — the provider's own default, the dictation-polish override,
+    /// or a per-built-in-prompt override — silently keeps 404ing forever
+    /// after an app update unless rewritten, because a saved UserDefaults
+    /// value always wins over a new static default/preset. Updating
+    /// `openAI`/`gemini`/etc. above only changes what a *fresh* pick sees.
+    struct RetiredModel {
+        let providerID: String
+        let deadID: String
+        let replacementID: String
+    }
+
+    /// Every known provider model retirement discovered so far. Add a line
+    /// here whenever a provider pulls a model id out from under existing
+    /// users — this is the second time in 2026 (Nebius mid-2026, Gemini
+    /// 2.5→3.5 on 2026-09-01) and won't be the last; providers routinely
+    /// retire ids faster than this file gets manually updated.
+    static let retiredModels: [RetiredModel] = [
+        .init(providerID: "nebius", deadID: "meta-llama/Meta-Llama-3.1-8B-Instruct-fast",  replacementID: "Qwen/Qwen3-30B-A3B-Instruct-2507"),
+        .init(providerID: "nebius", deadID: "meta-llama/Meta-Llama-3.3-70B-Instruct-fast", replacementID: "meta-llama/Llama-3.3-70B-Instruct"),
+        .init(providerID: "nebius", deadID: "Qwen/Qwen3-235B-A22B-fast",                   replacementID: "Qwen/Qwen3-235B-A22B-Instruct-2507"),
+        .init(providerID: "nebius", deadID: "deepseek-ai/DeepSeek-V3",                     replacementID: "deepseek-ai/DeepSeek-V4-Pro"),
+        // Google retired the 2.5 generation ahead of its official Oct 2026
+        // shutdown — reproduced live via a real gemini-2.5-flash-lite 404,
+        // see GeminiProvider.swift / the `gemini` presets above.
+        .init(providerID: "gemini", deadID: "gemini-2.5-flash-lite", replacementID: "gemini-3.5-flash-lite"),
+        .init(providerID: "gemini", deadID: "gemini-2.5-flash",      replacementID: "gemini-3.5-flash"),
+    ]
+
+    /// Rewrites every persisted model selection that points at a known-dead
+    /// id: the provider's own `defaultModel.<id>`, the dictation-polish
+    /// override, and every built-in prompt's per-prompt provider override
+    /// (`prompt.providerOverride.<promptID>.model`). Idempotent — only
+    /// touches values that exactly match a `retiredModels` entry, so it's a
+    /// silent no-op on every launch after the first for a given remap.
+    /// Call once at app launch, before anything reads a persisted model id.
+    @MainActor
+    static func migrateRetiredModels(defaults: UserDefaults = .standard) {
+        let promptIDs = DemoPrompt.builtIn.map(\.id)
+        for retired in retiredModels {
+            var keysToCheck = [
+                "defaultModel.\(retired.providerID)",
+                "dictation.postProcess.modelOverride",
+            ]
+            keysToCheck += promptIDs.map { "prompt.providerOverride.\($0).model" }
+            for key in keysToCheck {
+                guard defaults.string(forKey: key) == retired.deadID else { continue }
+                defaults.set(retired.replacementID, forKey: key)
+                NSLog("Tippi: migrated retired \(retired.providerID) model '\(retired.deadID)' → '\(retired.replacementID)' (key: \(key))")
+            }
         }
     }
 }

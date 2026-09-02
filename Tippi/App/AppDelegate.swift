@@ -58,7 +58,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
         // Remap persisted Nebius model ids that the provider removed (they 404).
-        ProviderModelPresets.migrateRemovedNebiusModels()
+        ProviderModelPresets.migrateRetiredModels()
+        // Best-effort, non-blocking: catch a provider retiring the configured
+        // model (see ModelAvailabilityChecker) before a real task hits it.
+        Task { await ModelAvailabilityChecker.shared.checkAllConfigured() }
         // Clear temp WAVs left behind by a previous crash/force-quit.
         AudioRecorder.cleanupOrphanedRecordings()
         // Un-mute system audio if a previous crash/force-quit happened

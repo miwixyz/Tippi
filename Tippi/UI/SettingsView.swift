@@ -323,6 +323,8 @@ private struct ProviderRow: View {
     @State private var loadedModelName: String = ""
     @State private var loadedMlxPort: String = ""
 
+    @ObservedObject private var availabilityChecker = ModelAvailabilityChecker.shared
+
     // MLX-only
     @ObservedObject private var mlxManager = MLXServerManager.shared
     @State private var mlxPort: String = "\(MLXServerManager.port)"
@@ -409,6 +411,13 @@ private struct ProviderRow: View {
                 Text(hint(for: provider.id))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if availabilityChecker.possiblyStale.contains(provider.id) {
+                    Label(String(localized: "settings.providers.modelStale"), systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .help(String(localized: "settings.providers.modelStale.help"))
+                }
 
                 if provider.requiresAPIKey {
                     SecureField(String(localized: "settings.providers.apiKey"),
@@ -736,6 +745,7 @@ private struct ProviderRow: View {
         case "groq":      return String(localized: "settings.providers.hint.groq")
         case "kimi":      return String(localized: "settings.providers.hint.kimi")
         case "nebius":    return String(localized: "settings.providers.hint.nebius")
+        case "openrouter": return String(localized: "settings.providers.hint.openrouter")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
         case "mlx":       return String(localized: "settings.providers.hint.mlx")
         default:          return ""

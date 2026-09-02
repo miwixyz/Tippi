@@ -33,6 +33,7 @@ struct LLMRouter {
         GroqProvider(),
         KimiProvider(),
         NebiusProvider(),
+        OpenRouterProvider(),
         OllamaProvider(),
         MLXProvider()
     ]

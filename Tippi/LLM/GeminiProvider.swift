@@ -82,4 +82,26 @@ struct GeminiProvider: LLMProvider {
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    /// Gemini's `/v1beta/models` returns `{"models":[{"name":"models/gemini-…"}]}`
+    /// — a `models/` prefix on every id that the API rejects if you pass it
+    /// back on a completion call, so strip it before comparing/storing.
+    func fetchModelIDs() async throws -> Set<String> {
+        let apiKey: String? = await MainActor.run { try? KeychainStore.getAPIKey(for: id) }
+        guard let apiKey, !apiKey.isEmpty else { throw LLMError.noAPIKey(provider: displayName) }
+
+        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models")!)
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.timeoutInterval = 15
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw LLMError.invalidResponse
+        }
+        struct ModelsResponse: Decodable {
+            struct Model: Decodable { let name: String }
+            let models: [Model]
+        }
+        let decoded = try JSONDecoder().decode(ModelsResponse.self, from: data)
+        return Set(decoded.models.map { $0.name.replacingOccurrences(of: "models/", with: "") })
+    }
 }
