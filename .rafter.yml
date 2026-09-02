@@ -1,0 +1,24 @@
+# Rafter-Konfiguration — Tippi
+#
+# Hier stehen NUR Findings, die nach Nachverfolgung des Input-→-Sink-Pfads
+# nachweislich nicht ausnutzbar sind. Jeder Eintrag nennt den Grund und das
+# Datum der Analyse. Wer einen Eintrag anfasst, prüft die Begründung neu.
+
+ignore:
+  # ── R-5F5C6 · Nicht-konstantzeitiger Secret-Vergleich ──────────────────────
+  # Gemeldet auf `apiKey == loadedApiKey` in ProviderRow.onChange(of: refreshTick).
+  # Das ist KEIN Authentifizierungs-Vergleich, sondern ein UI-Dirty-Check:
+  # "hat der Nutzer dieses Feld geändert, seit es geladen wurde?" — er
+  # entscheidet nur, ob die Zeile neu geladen werden darf, ohne ungespeicherte
+  # Eingaben zu verwerfen (der Fix aus dem v1.18.1-Audit).
+  #
+  # Ein Timing-Seitenkanal setzt einen Angreifer voraus, der die Vergleichszeit
+  # misst und das Geheimnis zeichenweise errät. Hier gibt es nichts zu erraten:
+  # beide Werte gehören dem Nutzer, liegen im selben Prozess auf seinem eigenen
+  # Mac, und wer diesen Prozess beobachten kann, liest den Key ohnehin direkt
+  # aus dem Speicher oder dem Schlüsselbund. Ein konstantzeitiger Vergleich
+  # würde hier keinerlei Angriff verhindern.
+  # Analysiert 2026-09-02.
+  - rule: R-5F5C6
+    paths:
+      - "Tippi/UI/SettingsView.swift"
