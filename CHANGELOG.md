@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.23.0] — 2026-09-02
+
+Model catalogue audit. Every shipped model id was checked against its provider's own current documentation — four of the nine cloud providers were serving stale or already-deprecated defaults.
+
+### Fixed
+- **OpenAI: the entire model line-up was outdated.** `gpt-4o-mini` (the default), `gpt-4o`, `gpt-5-nano`, `gpt-5-mini` and `gpt-5` are all gone from OpenAI's current model list — the catalogue is now the gpt-5.6 trio. Defaults and presets moved to `gpt-5.6-luna` / `terra` / `sol`, with Luna (cheapest, fastest) as the recommended pick. Worth knowing: all three current OpenAI models do some reasoning, so a local model or Claude Haiku is still snappier for short rewrites.
+- **Groq: both shipped models were deprecated in June 2026.** `llama-3.3-70b-versatile` (the default) and `llama-3.1-8b-instant` (the "fastest" pick, and the one recommended for dictation polish) are both retired. Replaced with the models Groq's own migration notice names: `openai/gpt-oss-20b`, `openai/gpt-oss-120b`, `qwen/qwen3.6-27b`.
+- **Anthropic: two presets were a generation behind.** `claude-sonnet-4-5` and `claude-opus-4-5` are legacy; now `claude-sonnet-5` and `claude-opus-5`. Haiku 4.5 stays the ⭐ pick — it's still the fastest and cheapest model Anthropic sells — but note its announced retirement is "not sooner than October 15, 2026", and there is no Haiku 5 yet.
+- **Documentation recommended dead models.** The setup wizard, the OpenAI/Groq provider hints, README and HANDOVER all still pointed at `gpt-5-mini` and the retired Llama models.
+
+### Changed
+- **Auto-updating aliases instead of pinned versions where providers offer them.** Gemini's default is now `gemini-flash-latest` (Google hot-swaps these on every release) rather than a pinned generation — the same property that made `mistral-small-latest` the only provider default that never broke through three separate retirement waves. Pinned `gemini-3.7-flash` remains available for anyone who wants a fixed target.
+- **All of the above are registered in the retirement-migration table**, so an existing selection is rewritten on next launch instead of silently 404ing — updating a default alone never reaches a user who already picked a model.
+- `ProviderModelPresets` now documents the three-layer strategy for staying current (aliases first, migration table second, live availability check as the safety net) rather than relying on manual upkeep, which this audit showed does not keep pace.
+
 ## [1.22.1] — 2026-09-02
 
 ### Fixed
