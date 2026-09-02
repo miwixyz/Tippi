@@ -29,15 +29,15 @@
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
 - **PopClip-style local quick actions** — instantly format or transform selected text without an AI call: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Brackets, Join Lines, Character Count, and Word Count
 - **11 AI providers** — choose any combination, switch freely:
-  - **OpenAI** (default: `gpt-5-mini`)
+  - **OpenAI** (default: `gpt-5.6-luna`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
-  - **Google Gemini** (default: `gemini-3.5-flash`)
+  - **Google Gemini** (default: `gemini-flash-latest`, auto-updating alias)
   - **Mistral** (default: `mistral-small-latest`, EU hosting)
   - **Scaleway** (default: `llama-3.1-8b-instruct`, EU/Paris)
-  - **Groq** (default: `llama-3.3-70b-versatile`, LPU-accelerated, ~800 tok/s)
+  - **Groq** (default: `openai/gpt-oss-20b`, LPU-accelerated)
   - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, SWE-Bench #1, ~15× cheaper than Opus)
   - **Nebius** (default: `meta-llama/Llama-3.3-70B-Instruct`, EU/Amsterdam, DSGVO)
-  - **OpenRouter** (default: `openai/gpt-4o-mini`) — unified gateway, 300+ models behind one key, `vendor/model` id format, pass-through pricing
+  - **OpenRouter** (default: `openai/gpt-5.6-luna`) — unified gateway, 300+ models behind one key, `vendor/model` id format, pass-through pricing
   - **Ollama** (local, fully offline)
   - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Qwen 3.5 2B (4-bit) preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Proactive model-retirement warning** — Tippi checks each configured provider's live model catalogue in the background at launch and flags in Settings if your selected model has been retired, instead of only finding out when a real task 404s.
@@ -214,7 +214,7 @@ This route always works because macOS does the binding, not Tippi.
 
 ### Default AI model
 
-Settings → Providers → "Default Provider" picker. Tippi tries the chosen provider first. If it has no key, it falls through to the next configured one. Each provider also has a "Model" field — leave blank for the default (recommended in Sep 2026: `gpt-5-mini`, `claude-haiku-4-5`, `gemini-3.5-flash`, `mistral-small-latest`, `llama3.3`).
+Settings → Providers → "Default Provider" picker. Tippi tries the chosen provider first. If it has no key, it falls through to the next configured one. Each provider also has a "Model" field — leave blank for the default (recommended in Sep 2026: `gpt-5.6-luna`, `claude-haiku-4-5`, `gemini-flash-latest`, `mistral-small-latest`, `llama3.3`).
 
 ### Custom prompts
 
@@ -325,12 +325,12 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 
 | Provider  | Cost       | Speed   | Quality | Notes |
 |-----------|------------|---------|---------|-------|
-| OpenAI    | $          | Fast    | ★★★★   | Most popular. `gpt-5-mini` is the right balance. |
+| OpenAI    | $          | Fast    | ★★★★   | Most popular. `gpt-5.6-luna` is the cheapest of the current gpt-5.6 trio. |
 | Anthropic | $          | Fast    | ★★★★★  | Excellent prose quality. `claude-haiku-4-5` for fast tier. |
 | Gemini    | Free tier  | Fast    | ★★★    | Generous free tier at `aistudio.google.com/apikey`. |
 | Mistral   | $          | Fast    | ★★★★   | EU-hosted (Paris). Great German/French. |
 | Scaleway  | $          | ⚡ Fast | ★★★    | EU-hosted (Paris). Llama 3.x on European infra. |
-| Groq      | $          | ⚡⚡ ~800 tok/s | ★★★★ | LPU-accelerated. Fastest hosted option for dictation polish. |
+| Groq      | $          | ⚡⚡ sub-second | ★★★★ | LPU-accelerated. Fastest hosted option for dictation polish. Llama models retired June 2026 → now GPT-OSS. |
 | Kimi      | $          | Fast    | ★★★★★  | Moonshot Kimi K2 — SWE-Bench #1, 256K context, ~15× cheaper than Opus. `platform.moonshot.cn` |
 | Nebius    | $          | ⚡ Fast | ★★★★   | 100% EU (Amsterdam). DSGVO-compliant. Very cheap. `studio.nebius.ai` |
 | OpenRouter | $ (pass-through) | Depends on routed model | Depends on routed model | 300+ models behind one key. `vendor/model` id format, e.g. `openai/gpt-4o-mini`. `openrouter.ai` |
@@ -414,6 +414,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.20.4 | ✅ Done | **Gemini model IDs updated** — `gemini-2.5-flash`/`gemini-2.5-flash-lite` started returning HTTP 404 ("no longer available to new users") ahead of Google's official Oct 2026 retirement; default and fastest-preset now point to the confirmed `gemini-3.5-flash`/`gemini-3.5-flash-lite` replacements |
 | v1.21.0 | ✅ Done | **OpenRouter provider (now 11)** — one key, 300+ models; **proactive model-retirement warning** — Tippi checks each configured provider's live catalogue at launch and flags a stale selection in Settings before a real task fails on it; retirement migration generalized from a Nebius-only table to a shared list that also reaches per-prompt provider overrides |
 | v1.21.1 | ✅ Done | The v1.21.0 launch-time model check now runs at explicit background task priority so it can never contend with a hotkey press right after launch |
+| v1.23.0 | ✅ Done | **Model catalogue audit** — four of nine cloud providers were on stale or deprecated defaults: OpenAI's entire gpt-4o/gpt-5 line is gone (→ gpt-5.6 trio), Groq deprecated both shipped Llama models in June 2026 (→ gpt-oss), two Anthropic presets were a generation behind (→ Sonnet 5 / Opus 5). Gemini moved to the auto-updating `gemini-flash-latest` alias; all dead ids registered for automatic migration |
 | v1.22.1 | ✅ Done | **Fixed false "model may be outdated" warnings** — the v1.21.0 check didn't set a page size, so Anthropic's 20-result default hid working models like `claude-haiku-4-5`; now requests the full catalogue, never warns on a partial one, and tolerates alias-vs-pinned-version naming. Plus a new **"Which model for what?"** Help section with concrete recommendations |
 | v1.22.0 | ✅ Done | **Language-detection confidence gate** — short inputs like "LG Michael" were detected as Polish and the prompt then ordered the model to stay in that wrong language (and rendered "Stay in ." when nothing was detected); now requires 0.85 confidence with a valid fallback. Plus **few-shot examples** for Shorten/Summarize/Email reply/Make Formal/Humanize, and a `{clipboard}` privacy warning in Help |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
