@@ -21,7 +21,7 @@ That's it. That's the product.
 | Most AI assistants | Tippi |
 |---|---|
 | Open a new tab, paste your text, copy the answer back | Works in every app, right at your cursor |
-| Locked to one provider | **10 providers** — pick what works for you |
+| Locked to one provider | **11 providers** — pick what works for you |
 | Cloud-only, your data leaves your Mac | **Two local engines** (MLX, Ollama) — fully offline option |
 | Subscription | **Free, open-source (MIT)**, bring your own key |
 | Telemetry, analytics, "anonymized" data | **Zero telemetry**, no analytics, no crash reports |
@@ -36,7 +36,7 @@ That's it. That's the product.
 - **Streaming preview & iterative refine** — the result streams in token by token, then refine it in place ("shorter", "more formal") before replacing
 - **Custom prompts** with `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables that adapt to context at trigger time
 - **Voice input** — push-to-talk dictation with Whisper or Parakeet running fully on-device (no audio leaves your Mac); optionally mutes your Mac's system audio for the duration of the recording
-- **10 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · Scaleway (EU) · Groq · Kimi (Moonshot) · Nebius (EU) · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
+- **11 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · Scaleway (EU) · Groq · Kimi (Moonshot) · Nebius (EU) · OpenRouter (300+ models, one key) · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
 - **One-click MLX setup** from Settings — no Terminal needed
 - **Auto-updates** via Sparkle 2
 - **DE + EN UI**

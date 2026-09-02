@@ -28,7 +28,7 @@
 - **Prompt chains** — link several prompts into one hotkey; each step's output feeds the next (e.g. built-in "Cleanup → English" fixes grammar, then translates). The preview shows the current step; if a step fails, the last good result stays editable
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
 - **PopClip-style local quick actions** — instantly format or transform selected text without an AI call: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Brackets, Join Lines, Character Count, and Word Count
-- **10 AI providers** — choose any combination, switch freely:
+- **11 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5-mini`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
   - **Google Gemini** (default: `gemini-3.5-flash`)
@@ -37,8 +37,10 @@
   - **Groq** (default: `llama-3.3-70b-versatile`, LPU-accelerated, ~800 tok/s)
   - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, SWE-Bench #1, ~15× cheaper than Opus)
   - **Nebius** (default: `meta-llama/Llama-3.3-70B-Instruct`, EU/Amsterdam, DSGVO)
+  - **OpenRouter** (default: `openai/gpt-4o-mini`) — unified gateway, 300+ models behind one key, `vendor/model` id format, pass-through pricing
   - **Ollama** (local, fully offline)
-  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Llama 3.2 3B Fast/Balanced preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
+  - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Qwen 3.5 2B (4-bit) preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
+- **Proactive model-retirement warning** — Tippi checks each configured provider's live model catalogue in the background at launch and flags in Settings if your selected model has been retired, instead of only finding out when a real task 404s.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Free-form instruction — typed or spoken** — select text, trigger the hotkey, then type an instruction in the popup's input field (e.g. "reply to this email politely", "translate to Spanish") and press Return, or press the mic button and speak it. Tippi follows it literally: transform instructions (translate, summarize, shorten) operate on the text as-is, reaction instructions (reply, respond) produce an answer. The field auto-focuses; press ↓ to jump back to the prompt list
 - **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating pill shows recording (live waveform), transcribing, and AI-cleanup state with the actual provider name (e.g. "· ✨ Groq")
@@ -331,6 +333,7 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 | Groq      | $          | ⚡⚡ ~800 tok/s | ★★★★ | LPU-accelerated. Fastest hosted option for dictation polish. |
 | Kimi      | $          | Fast    | ★★★★★  | Moonshot Kimi K2 — SWE-Bench #1, 256K context, ~15× cheaper than Opus. `platform.moonshot.cn` |
 | Nebius    | $          | ⚡ Fast | ★★★★   | 100% EU (Amsterdam). DSGVO-compliant. Very cheap. `studio.nebius.ai` |
+| OpenRouter | $ (pass-through) | Depends on routed model | Depends on routed model | 300+ models behind one key. `vendor/model` id format, e.g. `openai/gpt-4o-mini`. `openrouter.ai` |
 | Ollama    | **Free**   | ⚡ Hardware-dependent | ★★–★★★★ | Fully local. Privacy-best. Quality depends on model. |
 | MLX       | **Free**   | ⚡⚡ ~1.5–2× faster than Ollama on Apple Silicon | ★★–★★★★ | Fully local, Apple-Silicon-native via Metal. Tippi manages the `mlx_lm.server` process. Auto-starts on launch when set as default. |
 
@@ -409,6 +412,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.20.2 | ✅ Done | **Per-prompt AI provider override** (Settings → Prompts → Built-in) — pin any built-in prompt to a specific provider/model independent of the global default, for cases where a fast local model is right for most tasks but too small for a specific one (e.g. rewriting a long, fact-dense document); preview now flags a result that comes back identical to the input instead of showing it as a normal success |
 | v1.20.3 | ✅ Done | **"Switch provider" right in the result** — the preview footer got a provider picker so a disappointing result can be re-run with a different provider without leaving the window; persists as that prompt's override, same storage as the Settings picker |
 | v1.20.4 | ✅ Done | **Gemini model IDs updated** — `gemini-2.5-flash`/`gemini-2.5-flash-lite` started returning HTTP 404 ("no longer available to new users") ahead of Google's official Oct 2026 retirement; default and fastest-preset now point to the confirmed `gemini-3.5-flash`/`gemini-3.5-flash-lite` replacements |
+| v1.21.0 | ✅ Done | **OpenRouter provider (now 11)** — one key, 300+ models; **proactive model-retirement warning** — Tippi checks each configured provider's live catalogue at launch and flags a stale selection in Settings before a real task fails on it; retirement migration generalized from a Nebius-only table to a shared list that also reaches per-prompt provider overrides |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).

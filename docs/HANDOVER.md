@@ -228,19 +228,30 @@ Voice Input hat zwei Modi, gesteuert durch `VoiceMode` enum in `PromptPopupView.
 
 ---
 
-## 6. LLM-Provider — aktuelle Default-Modelle (Mai 2026)
+## 6. LLM-Provider — aktuelle Default-Modelle (Stand 2026-09-02, 11 Provider)
 
 | Provider | Default Modell | API Endpoint | Auth | Notes |
 |----------|----------------|--------------|------|-------|
 | OpenAI | `gpt-5-mini` | `https://api.openai.com/v1/chat/completions` | `Authorization: Bearer <key>` | Schnell, günstig, gute deutsche Sprache |
 | Anthropic | `claude-haiku-4-5` | `https://api.anthropic.com/v1/messages` | `x-api-key: <key>` + `anthropic-version: 2023-06-01` | Beste Prosa-Qualität |
-| Google | `gemini-3.5-flash` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key=<key>` | Query-Param | Großzügiges Free-Tier |
-| Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting möglich |
+| Google | `gemini-3.5-flash` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` | Header `x-goog-api-key: <key>` (nicht Query-Param — Tabelle war hier veraltet) | Großzügiges Free-Tier. 2.5-Generation seit 2026-09 teils HTTP 404 („no longer available to new users") |
+| Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris) |
+| Scaleway | `llama-3.1-8b-instruct` | `https://api.scaleway.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris), Groq-Klasse Speed |
+| Groq | `llama-3.3-70b-versatile` | `https://api.groq.com/openai/v1/chat/completions` | `Authorization: Bearer <key>` | LPU-Hardware, ~270-800 tok/s |
+| Kimi/Moonshot | `kimi-k2` | `https://api.moonshot.cn/v1/chat/completions` | `Authorization: Bearer <key>` | 1T-MoE, SWE-Bench #1 |
+| Nebius | `Qwen/Qwen3-30B-A3B-Instruct-2507` | `https://api.studio.nebius.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Amsterdam) |
+| **OpenRouter** | `openai/gpt-4o-mini` | `https://openrouter.ai/api/v1/chat/completions` | `Authorization: Bearer <key>` | Unified Gateway, 300+ Modelle, Modell-IDs im Format `vendor/model` |
 | Ollama | `llama3.3` | `http://localhost:11434/api/chat` | Keine | Lokal, gratis, voll privat |
+| MLX | `mlx-community/Qwen3.5-2B-MLX-4bit` | `http://localhost:8080/v1/chat/completions` (lokaler `mlx_lm.server`) | Keine | Lokal, Apple-Silicon-nativ |
 
 **Modell-Override:** Settings → Providers → pro Provider „Modell"-Feld füllen. Leer = Default.
 
-**Wenn Modelle veraltet sind** (z.B. nach 6-12 Monaten): Aktualisiere die `defaultModel`-Property in jedem `*Provider.swift` und die Hint-Strings in `Localizable.strings`. Kein anderer Code muss angefasst werden.
+**Wenn Modelle veraltet sind (Stand seit 2026-09-02, nach dem Gemini-2.5-404-Vorfall — diese Anleitung ist NEU, ersetzt die alte "kein anderer Code muss angefasst werden"-Aussage, die sich als falsch herausstellte):**
+
+1. `defaultModel` in `*Provider.swift` + betroffene Presets in `ProviderModelPresets.swift` aktualisieren
+2. **Zusätzlich Pflicht:** Eintrag in `ProviderModelPresets.retiredModels` ergänzen (alte ID → neue ID) — sonst bleibt jede **bereits gespeicherte** explizite Nutzerauswahl (UserDefaults `defaultModel.<provider>`, Diktat-Override, Prompt-Override) stumm auf der toten ID hängen. `migrateRetiredModels()` läuft bei jedem Start und räumt das automatisch auf, aber nur für Einträge, die in dieser Liste stehen.
+3. `Localizable.strings` Hint-Strings (beide Sprachen) aktualisieren
+4. Seit v1.21.0 gibt es zusätzlich `ModelAvailabilityChecker` — prüft bei jedem Start live gegen die `/models`-Endpoints der konfigurierten Provider und markiert in Settings ein „Modell evtl. veraltet"-Badge, falls die eingestellte ID nicht mehr auftaucht. Ersetzt manuelles Nachschauen nicht vollständig (Fetch kann fehlschlagen, wird dann still übersprungen), reduziert aber das Risiko, ein Retirement erst über einen echten Nutzerfehler zu bemerken.
 
 ---
 
