@@ -14,9 +14,9 @@ import Foundation
 struct OpenRouterProvider: OpenAICompatibleProvider {
     let id = "openrouter"
     let displayName = "OpenRouter"
-    /// openai/gpt-4o-mini — cheap, fast, non-reasoning, matches Tippi's own
-    /// native OpenAI default so behavior is comparable either way.
-    let defaultModel = "openai/gpt-4o-mini"
+    /// Matches Tippi's native OpenAI default so behaviour is comparable
+    /// either way; tracks the same upstream retirement (see OpenAIProvider).
+    let defaultModel = "openai/gpt-5.6-luna"
     let requiresAPIKey = true
 
     let endpoint = URL(string: "https://openrouter.ai/api/v1/chat/completions")!

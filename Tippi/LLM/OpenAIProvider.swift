@@ -8,7 +8,10 @@ struct OpenAIProvider: OpenAICompatibleProvider {
     /// gpt-5* reasoning family adds thinking-token latency that hurts the
     /// dictation/transform UX. Users can opt into reasoning in the model
     /// picker.
-    let defaultModel = "gpt-4o-mini"
+    // gpt-4o-mini is no longer in OpenAI's current model list (checked
+    // 2026-09-02) — the catalogue is the gpt-5.6 trio now. Luna is the
+    // cheapest/fastest of the three, matching what gpt-4o-mini was picked for.
+    let defaultModel = "gpt-5.6-luna"
     let requiresAPIKey = true
 
     let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!

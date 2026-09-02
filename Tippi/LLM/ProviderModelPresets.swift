@@ -4,14 +4,33 @@ import Foundation
 /// model picker in Settings only offers models that
 ///   1. exist today (deprecated/sunset IDs removed),
 ///   2. work for Tippi's "fix this short text, return only the result" use
-///      case (no o1/o3 raw-reasoning models that swallow tokens before
-///      output, no image-only models).
+///      case (no raw-reasoning models that swallow tokens before output,
+///      no image-only models).
 ///
 /// Each preset carries a hint flag (`isFastest`, `isReasoning`) so the
 /// dictation-polish UI can default to the fastest non-reasoning option.
 ///
-/// Maintained manually — provider model catalogues change every few weeks.
-/// Last update: 2026-07-02 — added Kimi (Moonshot) + Nebius (EU).
+/// ## Keeping this current — three layers, in order of preference
+///
+/// A full audit on 2026-09-02 found stale ids at **four of nine** cloud
+/// providers at once (OpenAI's whole gpt-4o/gpt-5 line gone, Groq's entire
+/// Llama line deprecated, two Anthropic presets superseded, Gemini already
+/// one generation behind a fix shipped a day earlier). Hand-maintenance
+/// alone demonstrably does not keep up. So:
+///
+/// 1. **Prefer auto-updating aliases where a provider publishes them.**
+///    Mistral (`mistral-small-latest`) and Gemini (`gemini-flash-latest`,
+///    hot-swapped on every release) survive generation changes with no app
+///    update at all — Mistral is the only provider that never broke here.
+///    Use the alias unless there's a concrete reason to pin.
+/// 2. **`retiredModels` migrates users off dead ids** (below). Updating a
+///    preset alone does nothing for someone who already picked a model:
+///    a stored UserDefaults value always wins over a new default.
+/// 3. **`ModelAvailabilityChecker` flags what slipped through** by asking
+///    each provider's live `/models` endpoint at launch. It's the safety
+///    net, not the plan — it can only warn, never pick a good replacement.
+///
+/// Last full audit: 2026-09-02 (verified against each provider's own docs).
 enum ProviderModelPresets {
 
     struct Preset: Identifiable, Hashable {
@@ -36,25 +55,36 @@ enum ProviderModelPresets {
         }
     }
 
-    // MARK: - OpenAI (current 2026)
+    // MARK: - OpenAI (verified against developers.openai.com, 2026-09-02)
     //
-    // Includes the gpt-5 reasoning family (premium quality, slower) and the
-    // gpt-4o family (fast, non-reasoning). gpt-3.5-turbo and gpt-4 base
-    // models are deliberately omitted — superseded by gpt-4o-mini at lower
-    // price and higher quality.
+    // The whole gpt-4o and gpt-5 generation is gone from OpenAI's current
+    // model list — the catalogue is now the gpt-5.6 trio. Every preset here
+    // was replaced; the old ones (gpt-4o-mini, gpt-4o, gpt-5-nano/mini/gpt-5)
+    // are in `retiredModels` so existing users get migrated rather than left
+    // on an id that is no longer listed.
+    //
+    // Caveat worth knowing: all three current models support reasoning, so
+    // there is no true "non-reasoning" option at OpenAI anymore. Luna is the
+    // cheapest and fastest of the three and therefore the ⭐ pick for Tippi's
+    // short-rewrite workload.
     static let openAI: [Preset] = [
-        Preset(id: "gpt-4o-mini",  label: "gpt-4o-mini — fast, cheap, non-reasoning ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "gpt-4o",       label: "gpt-4o — fast, non-reasoning",                isFastest: false, isReasoning: false),
-        Preset(id: "gpt-5-nano",   label: "gpt-5-nano — small reasoning",                isFastest: false, isReasoning: true),
-        Preset(id: "gpt-5-mini",   label: "gpt-5-mini — balanced reasoning",             isFastest: false, isReasoning: true),
-        Preset(id: "gpt-5",        label: "gpt-5 — premium reasoning",                   isFastest: false, isReasoning: true),
+        Preset(id: "gpt-5.6-luna",  label: "GPT-5.6 Luna — fastest, cheapest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "gpt-5.6-terra", label: "GPT-5.6 Terra — balanced",            isFastest: false, isReasoning: true),
+        Preset(id: "gpt-5.6-sol",   label: "GPT-5.6 Sol — premium",               isFastest: false, isReasoning: true),
     ]
 
-    // MARK: - Anthropic (current 2026)
+    // MARK: - Anthropic (verified against platform.claude.com, 2026-09-02)
+    //
+    // Haiku 4.5 is still the fastest and cheapest of the lineup ($1/$5 per
+    // MTok) and stays the ⭐ pick for short rewrites — but Anthropic lists its
+    // retirement as "not sooner than October 15, 2026", so it is on borrowed
+    // time and there is no Haiku 5 yet. Sonnet 5 is the fallback when it goes.
+    // Sonnet 4.5 / Opus 4.5 were shipped here until now and are both legacy —
+    // replaced by the 5 generation and migrated via `retiredModels`.
     static let anthropic: [Preset] = [
-        Preset(id: "claude-haiku-4-5",  label: "Claude Haiku 4.5 — fastest ⭐",   isFastest: true,  isReasoning: false),
-        Preset(id: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 — balanced",   isFastest: false, isReasoning: false),
-        Preset(id: "claude-opus-4-5",   label: "Claude Opus 4.5 — premium",      isFastest: false, isReasoning: false),
+        Preset(id: "claude-haiku-4-5",  label: "Claude Haiku 4.5 — fastest, cheapest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "claude-sonnet-5",   label: "Claude Sonnet 5 — balanced",              isFastest: false, isReasoning: false),
+        Preset(id: "claude-opus-5",     label: "Claude Opus 5 — premium",                 isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Gemini (updated 2026-09-01)
@@ -68,10 +98,19 @@ enum ProviderModelPresets {
     // confirmed with confidence (docs only surfaced a "-preview"-suffixed
     // pro ID, too unstable to hardcode) — left on 2.5-pro, flagged here so
     // it isn't silently trusted if it starts 404ing too.
+    // Google publishes auto-updating aliases ("hot-swapped with every new
+    // release") — `gemini-flash-lite-latest` / `gemini-flash-latest` keep
+    // working across generation changes without an app update, which is
+    // exactly the failure this file kept hitting. Prefer them over pinned
+    // ids wherever a provider offers the convention (Mistral's `-latest`
+    // aliases are the same idea and are why Mistral never broke here).
+    // The pinned 3.7 entry stays available for anyone who wants a fixed
+    // target; `gemini-2.5-pro` is dropped — the 2.5 generation is being
+    // retired and no confirmed 3.x Pro GA id exists to replace it with.
     static let gemini: [Preset] = [
-        Preset(id: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite — fastest ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "gemini-3.5-flash",      label: "Gemini 3.5 Flash — fast",            isFastest: false, isReasoning: false),
-        Preset(id: "gemini-2.5-pro",        label: "Gemini 2.5 Pro — premium ⚠️ unverified, may 404",  isFastest: false, isReasoning: false),
+        Preset(id: "gemini-flash-lite-latest", label: "Gemini Flash Lite (latest) — fastest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "gemini-flash-latest",      label: "Gemini Flash (latest) — auto-updating",  isFastest: false, isReasoning: false),
+        Preset(id: "gemini-3.7-flash",         label: "Gemini 3.7 Flash — pinned, most capable", isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Mistral La Plateforme (EU/FR hosting, current 2026)
@@ -97,15 +136,17 @@ enum ProviderModelPresets {
         Preset(id: "qwen2.5-coder-32b-instruct", label: "Qwen 2.5 Coder 32B — EU, code-focused",      isFastest: false, isReasoning: false),
     ]
 
-    // MARK: - Groq (LPU-accelerated, OpenAI-compatible)
+    // MARK: - Groq (LPU-accelerated, verified 2026-09-02)
     //
-    // 8B-Instant is the fastest hosted model anywhere (~800 tok/s) — perfect
-    // for dictation polish. 70B-Versatile is still sub-second on Groq and
-    // gives noticeably better quality for German/long-form smoothing.
+    // Groq deprecated its whole Llama chat line on 2026-06-17, including both
+    // models Tippi shipped: llama-3.1-8b-instant (the ⭐ dictation-polish pick)
+    // and llama-3.3-70b-versatile (the default). Groq's own migration advice
+    // names gpt-oss-20b and gpt-oss-120b / qwen3.6-27b as replacements, which
+    // is what's here. Both dead ids are in `retiredModels`.
     static let groq: [Preset] = [
-        Preset(id: "llama-3.1-8b-instant",      label: "Llama 3.1 8B Instant — ~800 tok/s ⭐",         isFastest: true,  isReasoning: false),
-        Preset(id: "llama-3.3-70b-versatile",   label: "Llama 3.3 70B Versatile — ~270 tok/s, premium", isFastest: false, isReasoning: false),
-        Preset(id: "openai/gpt-oss-20b",        label: "GPT-OSS 20B — OpenAI open weights",             isFastest: false, isReasoning: false),
+        Preset(id: "openai/gpt-oss-20b",   label: "GPT-OSS 20B — fastest ⭐",              isFastest: true,  isReasoning: false),
+        Preset(id: "openai/gpt-oss-120b",  label: "GPT-OSS 120B — premium quality",        isFastest: false, isReasoning: false),
+        Preset(id: "qwen/qwen3.6-27b",     label: "Qwen 3.6 27B — strong multilingual",    isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Kimi / Moonshot AI (global, OpenAI-compatible, 2026-07)
@@ -147,9 +188,9 @@ enum ProviderModelPresets {
     // Tippi immune to the "hardcoded id goes stale" problem (see gemini-2.5
     // incident, 2026-09-01) — it inherits whatever the upstream vendor does.
     static let openRouter: [Preset] = [
-        Preset(id: "openai/gpt-4o-mini",           label: "GPT-4o mini (via OpenRouter) — fastest ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "anthropic/claude-haiku-4-5",   label: "Claude Haiku 4.5 (via OpenRouter) — balanced", isFastest: false, isReasoning: false),
-        Preset(id: "google/gemini-3.5-flash",      label: "Gemini 3.5 Flash (via OpenRouter) — balanced", isFastest: false, isReasoning: false),
+        Preset(id: "anthropic/claude-haiku-4-5",   label: "Claude Haiku 4.5 (via OpenRouter) — fastest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "openai/gpt-5.6-luna",          label: "GPT-5.6 Luna (via OpenRouter) — cheap",          isFastest: false, isReasoning: false),
+        Preset(id: "google/gemini-flash-latest",   label: "Gemini Flash latest (via OpenRouter)",           isFastest: false, isReasoning: false),
     ]
 
     /// Default model for dictation polish on a given provider — picks the
@@ -183,9 +224,41 @@ enum ProviderModelPresets {
         .init(providerID: "nebius", deadID: "deepseek-ai/DeepSeek-V3",                     replacementID: "deepseek-ai/DeepSeek-V4-Pro"),
         // Google retired the 2.5 generation ahead of its official Oct 2026
         // shutdown — reproduced live via a real gemini-2.5-flash-lite 404,
-        // see GeminiProvider.swift / the `gemini` presets above.
-        .init(providerID: "gemini", deadID: "gemini-2.5-flash-lite", replacementID: "gemini-3.5-flash-lite"),
-        .init(providerID: "gemini", deadID: "gemini-2.5-flash",      replacementID: "gemini-3.5-flash"),
+        // see GeminiProvider.swift / the `gemini` presets above. Targets are
+        // now the auto-updating aliases so this can't need a third round.
+        .init(providerID: "gemini", deadID: "gemini-2.5-flash-lite", replacementID: "gemini-flash-lite-latest"),
+        .init(providerID: "gemini", deadID: "gemini-2.5-flash",      replacementID: "gemini-flash-latest"),
+        .init(providerID: "gemini", deadID: "gemini-3.5-flash-lite", replacementID: "gemini-flash-lite-latest"),
+        .init(providerID: "gemini", deadID: "gemini-3.5-flash",      replacementID: "gemini-flash-latest"),
+        .init(providerID: "gemini", deadID: "gemini-2.5-pro",        replacementID: "gemini-flash-latest"),
+
+        // OpenAI's gpt-4o and gpt-5 generations are no longer in the current
+        // model list (developers.openai.com, checked 2026-09-02); the whole
+        // catalogue is the gpt-5.6 trio now. Luna is the cheapest/fastest and
+        // the closest match to what these ids were chosen for.
+        .init(providerID: "openai", deadID: "gpt-4o-mini", replacementID: "gpt-5.6-luna"),
+        .init(providerID: "openai", deadID: "gpt-4o",      replacementID: "gpt-5.6-terra"),
+        .init(providerID: "openai", deadID: "gpt-5-nano",  replacementID: "gpt-5.6-luna"),
+        .init(providerID: "openai", deadID: "gpt-5-mini",  replacementID: "gpt-5.6-terra"),
+        .init(providerID: "openai", deadID: "gpt-5",       replacementID: "gpt-5.6-sol"),
+
+        // Anthropic's 4.5 Sonnet/Opus are legacy since the 5 generation.
+        // Haiku 4.5 is deliberately NOT remapped — it's still the fastest and
+        // cheapest model Anthropic sells and remains the right pick until its
+        // announced retirement (not before 2026-10-15).
+        .init(providerID: "anthropic", deadID: "claude-sonnet-4-5", replacementID: "claude-sonnet-5"),
+        .init(providerID: "anthropic", deadID: "claude-opus-4-5",   replacementID: "claude-opus-5"),
+
+        // Groq deprecated its entire Llama chat line on 2026-06-17. These two
+        // were Tippi's default and its "fastest" pick — replacements are the
+        // ones Groq's own migration notice names.
+        .init(providerID: "groq", deadID: "llama-3.1-8b-instant",    replacementID: "openai/gpt-oss-20b"),
+        .init(providerID: "groq", deadID: "llama-3.3-70b-versatile", replacementID: "openai/gpt-oss-120b"),
+
+        // OpenRouter passes vendor ids straight through, so it inherits every
+        // upstream retirement above under its `vendor/` prefix.
+        .init(providerID: "openrouter", deadID: "openai/gpt-4o-mini",      replacementID: "openai/gpt-5.6-luna"),
+        .init(providerID: "openrouter", deadID: "google/gemini-3.5-flash", replacementID: "google/gemini-flash-latest"),
     ]
 
     /// Rewrites every persisted model selection that points at a known-dead

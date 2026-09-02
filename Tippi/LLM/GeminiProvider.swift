@@ -3,11 +3,13 @@ import Foundation
 struct GeminiProvider: LLMProvider {
     let id = "gemini"
     let displayName = "Google Gemini"
-    // gemini-2.5-flash returns HTTP 404 for accounts without prior grandfathered
-    // access ("no longer available to new users" — confirmed via a real Tippi
-    // error + Google's own migration pointer + ai.google.dev docs, 2026-09-01).
-    // gemini-3.5-flash is Google's stated GA replacement for the same tier.
-    let defaultModel = "gemini-3.5-flash"
+    // Auto-updating alias, not a pinned id. Google hot-swaps `*-latest` on
+    // every release, so a generation change can't strand this default — which
+    // is exactly what happened twice: gemini-2.5-flash started returning 404
+    // "no longer available to new users" (fixed in v1.20.4 by pinning 3.5),
+    // and 3.5 was itself superseded by 3.7 weeks later. The alias ends that
+    // cycle for this provider.
+    let defaultModel = "gemini-flash-latest"
     let requiresAPIKey = true
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
