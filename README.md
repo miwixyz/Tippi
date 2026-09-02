@@ -414,6 +414,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.20.4 | ✅ Done | **Gemini model IDs updated** — `gemini-2.5-flash`/`gemini-2.5-flash-lite` started returning HTTP 404 ("no longer available to new users") ahead of Google's official Oct 2026 retirement; default and fastest-preset now point to the confirmed `gemini-3.5-flash`/`gemini-3.5-flash-lite` replacements |
 | v1.21.0 | ✅ Done | **OpenRouter provider (now 11)** — one key, 300+ models; **proactive model-retirement warning** — Tippi checks each configured provider's live catalogue at launch and flags a stale selection in Settings before a real task fails on it; retirement migration generalized from a Nebius-only table to a shared list that also reaches per-prompt provider overrides |
 | v1.21.1 | ✅ Done | The v1.21.0 launch-time model check now runs at explicit background task priority so it can never contend with a hotkey press right after launch |
+| v1.22.0 | ✅ Done | **Language-detection confidence gate** — short inputs like "LG Michael" were detected as Polish and the prompt then ordered the model to stay in that wrong language (and rendered "Stay in ." when nothing was detected); now requires 0.85 confidence with a valid fallback. Plus **few-shot examples** for Shorten/Summarize/Email reply/Make Formal/Humanize, and a `{clipboard}` privacy warning in Help |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).

@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.22.0] — 2026-09-02
+
+### Fixed
+- **Short text could make a prompt order the AI into the wrong language.** `{language}` — used by 21 of the 24 built-in prompts as "Stay in {language}" — trusted Apple's language detector without checking how confident it was. On short inputs that misfires badly: "LG Michael" was detected as Polish (confidence 0.21), "CINEWEB" as Polish (0.43), "Hi" as Catalan (0.80). Worse, when nothing was detected at all the placeholder resolved to an empty string, so the prompt literally read "Stay in . — do not translate." Detection now requires 0.85 confidence — measured against real short inputs, genuine German scores 0.93–1.00 while every misclassification scored ≤ 0.80 — and falls back to the valid instruction "the same language as the input" instead of an empty value. Verified against 10 real-world cases, all now correct.
+
+### Changed
+- **Few-shot examples for the most-used prompts.** Shorten, Summarize, Email reply, Make Formal and Humanize now carry concrete before/after examples, matching what the translation prompts and Improve already had. Small local models (the MLX 2B default) follow demonstrated behaviour far more reliably than described rules — this is the same change that fixed Improve in v1.20.0, applied to the rest of the core set. Email reply additionally got explicit instructions to match the original's formality and never invent facts, prices or commitments.
+- **Privacy warning for `{clipboard}`.** The variables Help section now states plainly that clipboard contents become part of the prompt and are sent to your AI provider, with the advice to use a local provider (MLX/Ollama) for such prompts — the variable was documented, the data-flow consequence wasn't.
+
 ## [1.21.1] — 2026-09-02
 
 ### Changed
