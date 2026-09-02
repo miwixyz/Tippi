@@ -61,7 +61,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ProviderModelPresets.migrateRetiredModels()
         // Best-effort, non-blocking: catch a provider retiring the configured
         // model (see ModelAvailabilityChecker) before a real task hits it.
-        Task { await ModelAvailabilityChecker.shared.checkAllConfigured() }
+        // Explicit .background priority — with several cloud providers
+        // configured this fires multiple concurrent network requests right
+        // at launch; background priority guarantees the scheduler never lets
+        // it compete with a hotkey press for CPU/thread time immediately
+        // after launch, even though the actual work is network-I/O-bound.
+        Task(priority: .background) { await ModelAvailabilityChecker.shared.checkAllConfigured() }
         // Clear temp WAVs left behind by a previous crash/force-quit.
         AudioRecorder.cleanupOrphanedRecordings()
         // Un-mute system audio if a previous crash/force-quit happened
