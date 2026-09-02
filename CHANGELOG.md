@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.21.1] — 2026-09-02
+
+### Changed
+- The launch-time model-availability check (v1.21.0) now runs at explicit `.background` task priority instead of an inherited default, so it can never compete with a hotkey press for CPU/thread time right after launch — the actual network I/O wait was already off the main thread either way, this just removes any theoretical scheduling contention on machines with several cloud providers configured.
+
 ## [1.21.0] — 2026-09-02
 
 ### Added

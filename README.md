@@ -413,6 +413,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.20.3 | ✅ Done | **"Switch provider" right in the result** — the preview footer got a provider picker so a disappointing result can be re-run with a different provider without leaving the window; persists as that prompt's override, same storage as the Settings picker |
 | v1.20.4 | ✅ Done | **Gemini model IDs updated** — `gemini-2.5-flash`/`gemini-2.5-flash-lite` started returning HTTP 404 ("no longer available to new users") ahead of Google's official Oct 2026 retirement; default and fastest-preset now point to the confirmed `gemini-3.5-flash`/`gemini-3.5-flash-lite` replacements |
 | v1.21.0 | ✅ Done | **OpenRouter provider (now 11)** — one key, 300+ models; **proactive model-retirement warning** — Tippi checks each configured provider's live catalogue at launch and flags a stale selection in Settings before a real task fails on it; retirement migration generalized from a Nebius-only table to a shared list that also reaches per-prompt provider overrides |
+| v1.21.1 | ✅ Done | The v1.21.0 launch-time model check now runs at explicit background task priority so it can never contend with a hotkey press right after launch |
 | v2.0    | Planned | Cross-platform (Windows port, likely Rust/Tauri) |
 
 Full version history → [CHANGELOG.md](CHANGELOG.md) (single source of truth).
