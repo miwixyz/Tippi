@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.24.0] — 2026-09-02
+
+### Fixed
+- **The update window could open behind other windows and never be seen.** In a menu-bar-only app there's no Dock icon to bounce, so an update prompt that lands behind a full-screen editor or browser is simply invisible. `NSApp.activate()` alone didn't fix it because Sparkle's delegate fires *before* the window exists — there was nothing to raise yet. Tippi now waits for the window to actually appear and forces it forward with `orderFrontRegardless()`, the one AppKit call that works while another application is frontmost. Applies to Sparkle's alerts ("You're up to date", errors) as well. The window is not pinned on top afterwards — it's raised once, then behaves normally so it can be left open while you work.
+
+### Added
+- **One-click fix for a retired model.** The "Model may be outdated" warning in Settings → Providers now offers a "Switch to <model>" button instead of leaving you to find a replacement yourself. The suggested model is verified against the *same* live catalogue that flagged the problem, so it can never propose another dead id; if no curated preset is live either, no button is shown rather than a bad guess.
+  Deliberately one click rather than a silent auto-switch: models differ in price and output quality, and the automatic path already exists for the cases that were curated and verified (`retiredModels`, applied at launch). Everything reaching this warning is a model Tippi only knows is *absent* — swapping that without asking would change what you pay and what you get.
+
 ## [1.23.0] — 2026-09-02
 
 Model catalogue audit. Every shipped model id was checked against its provider's own current documentation — four of the nine cloud providers were serving stale or already-deprecated defaults.

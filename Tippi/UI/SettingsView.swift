@@ -412,11 +412,21 @@ private struct ProviderRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if availabilityChecker.possiblyStale.contains(provider.id) {
-                    Label(String(localized: "settings.providers.modelStale"), systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .help(String(localized: "settings.providers.modelStale.help"))
+                if let stale = availabilityChecker.staleDetails[provider.id] {
+                    HStack(spacing: 8) {
+                        Label(String(localized: "settings.providers.modelStale"), systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .help(String(localized: "settings.providers.modelStale.help"))
+                        if let suggested = stale.suggested {
+                            Button(String(format: String(localized: "settings.providers.modelStale.fix"), suggested)) {
+                                availabilityChecker.applySuggestion(for: provider.id)
+                                load()
+                                onSaved()
+                            }
+                            .controlSize(.small)
+                        }
+                    }
                 }
 
                 if provider.requiresAPIKey {

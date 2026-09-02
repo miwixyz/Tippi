@@ -55,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// freeze on every hotkey press. Mutated on `@MainActor` only.
     private var isHandlingTrigger = false
 
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
         // Remap persisted Nebius model ids that the provider removed (they 404).
@@ -943,13 +944,69 @@ private func safetyHotKeyCallback(
 }
 
 // MARK: - Sparkle user driver delegate
-// Brings the update window to the front in menu-bar-only (LSUIElement) apps.
+//
+// Getting the update window actually *seen* in a menu-bar-only (LSUIElement)
+// app takes more than `NSApp.activate()`. Two things work against it:
+//
+//  1. This delegate fires BEFORE Sparkle builds its window, so activating
+//     here has nothing to raise yet — the window is then created while some
+//     other app owns the screen and quietly ends up behind a full-screen
+//     editor or browser. Reported from real use: "the update window isn't in
+//     front, with large windows open you never see it."
+//  2. An LSUIElement app has no Dock icon, so there is no second visual cue
+//     that something is waiting — if the window is covered, the update is
+//     simply invisible until the user happens to trigger it again.
+//
+// Fix: activate now, then catch the *next* window that becomes visible and
+// force it forward with `orderFrontRegardless()` — the one AppKit call that
+// works even when another application is frontmost. The observer is one-shot
+// and self-cancels after a short timeout so it can never grab an unrelated
+// window later in the session.
 extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
     func standardUserDriverWillHandleShowingUpdate(
         _ handleShowingUpdate: Bool,
         forUpdate update: SUAppcastItem,
         state: SPUUserUpdateState
     ) {
+        raiseNextWindowToFront()
+    }
+
+    /// Sparkle's own alerts (e.g. "You're up to date", error dialogs) go
+    /// through the modal-alert path instead, which needs the same treatment.
+    func standardUserDriverDidShowModalAlert() {
+        raiseNextWindowToFront()
+    }
+
+    /// Activates Tippi and forces whichever window Sparkle opens next to the
+    /// front. Deliberately does NOT pin it to `.floating`: an update prompt
+    /// the user wants to leave open while working shouldn't hover over
+    /// everything forever — it just needs to be seen once.
+    ///
+    /// AppKit has no "a window became visible" notification, so this snapshots
+    /// the current windows and briefly polls for one that wasn't there before.
+    /// Self-limiting: gives up after ~5 s, so a check that ends with no UI
+    /// (already up to date) costs a handful of no-op ticks and nothing else.
+    private func raiseNextWindowToFront() {
         NSApp.activate()
+        let known = Set(NSApp.windows.map(ObjectIdentifier.init))
+        pollForNewWindow(attemptsLeft: 20, known: known)
+    }
+
+    private func pollForNewWindow(attemptsLeft: Int, known: Set<ObjectIdentifier>) {
+        guard attemptsLeft > 0 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            let fresh = NSApp.windows.first {
+                $0.isVisible && !known.contains(ObjectIdentifier($0))
+            }
+            guard let window = fresh else {
+                self?.pollForNewWindow(attemptsLeft: attemptsLeft - 1, known: known)
+                return
+            }
+            // orderFrontRegardless is the one call that raises a window even
+            // while another application is frontmost — the whole point here.
+            NSApp.activate()
+            window.orderFrontRegardless()
+            window.makeKeyAndOrderFront(nil)
+        }
     }
 }
