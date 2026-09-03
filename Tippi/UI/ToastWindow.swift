@@ -11,6 +11,7 @@ private struct ToastView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.tint)
                 .font(.system(size: 13, weight: .medium))
+                .symbolEffect(.bounce)
             Text(message)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.primary)

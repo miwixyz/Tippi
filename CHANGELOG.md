@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.24.1] — 2026-09-03
+
+### Changed
+- **Small icon polish.** Two success checkmarks now use SF Symbols' built-in `.symbolEffect(.bounce)` animation instead of appearing static: the copy-toast checkmark and the two success checkmarks in the local-model (MLX) setup sheet. Deliberately left the error state (xmark) and the menu-bar status dot untouched — the dot is intentionally understated and the existing pulse animation on it already does what a symbol effect would.
+
 ## [1.24.0] — 2026-09-02
 
 ### Fixed

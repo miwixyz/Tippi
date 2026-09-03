@@ -98,6 +98,7 @@ struct MLXSetupSheet: View {
                       systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .font(.callout)
+                    .symbolEffect(.bounce)
             }
 
             // Actions
@@ -154,6 +155,7 @@ struct MLXSetupSheet: View {
             case .done:
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                    .symbolEffect(.bounce)
             case .failed:
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.red)
