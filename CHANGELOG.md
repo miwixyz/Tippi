@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.24.2] — 2026-09-04
+
+### Fixed
+- **Dictation cleanup could cold-start the local MLX server after transcription had already finished.** `MLXServerManager` only auto-starts the server at app launch when MLX is the *global* default provider — a dictation-only override to MLX (with a different global default elsewhere) left the server unstarted until the first real polish request, which then paid the full cold-start cost (process launch + weight load + Metal-kernel compile) squarely in the perceived-latency path. The dictation engine already warms itself while you're still speaking (`SpeechTranscriber.prewarm()`); the MLX polish server now does the same whenever the resolved post-process provider is MLX — global default or per-prompt override — so loading overlaps with the recording instead of stacking after it.
+
 ## [1.24.1] — 2026-09-03
 
 ### Changed

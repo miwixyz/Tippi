@@ -211,6 +211,17 @@ final class DictationController: ObservableObject {
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.
             SpeechTranscriber.prewarm()
+            // Same idea for the polish step: if it resolves to the local MLX
+            // provider, warm that server now too — otherwise MLXServerManager
+            // only auto-starts at app launch when MLX is the GLOBAL default
+            // provider (MLXServerManager.autoStartIfPreferred). A dictation-only
+            // override to MLX (global default set to a cloud provider) meant the
+            // server never started until the first real polish request, paying
+            // the full cold-start cost (process launch + weight load + Metal
+            // kernel compile) AFTER transcription already finished — squarely in
+            // the perceived-latency path. Mirrors WhisperBar's "model loads
+            // while you are still speaking" fix (changelog v1.16.0/v1.17.0).
+            warmPostProcessProviderIfNeeded()
         } catch {
             ToastWindowController.shared.show(message: error.localizedDescription)
             NSLog("Tippi: dictation start failed — \(error.localizedDescription)")
@@ -258,6 +269,23 @@ final class DictationController: ObservableObject {
 
         state = .idle
         transcriptionTask = nil
+    }
+
+    /// Fire-and-forget: if dictation post-process is enabled and resolves to
+    /// the local MLX provider, start warming its server now instead of
+    /// waiting for the first real polish request. Mirrors
+    /// `SpeechTranscriber.prewarm()` right above the call site — both let
+    /// model loading overlap with the time the user spends speaking.
+    /// Resolution mirrors `postProcessIfEnabled`: an explicit per-prompt
+    /// override wins, otherwise the global default provider.
+    private func warmPostProcessProviderIfNeeded() {
+        guard DictationSettings.postProcessEnabled else { return }
+        let override = DictationSettings.postProcessProviderOverride
+        let provider = override.isEmpty ? LLMRouter.shared.effectivePreferredProviderID() : override
+        guard provider == "mlx" else { return }
+        Task.detached(priority: .utility) {
+            try? await MLXServerManager.shared.start()
+        }
     }
 
     /// Run the raw Whisper transcript through the active LLM provider for
