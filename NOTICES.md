@@ -24,6 +24,26 @@ fetched from Hugging Face on first use.
 The default dictation engine remains whisper.cpp (bundled). Parakeet is opt-in
 under Settings → Voice → Speech engine.
 
+## Unicode CLDR + emoji-test.txt — emoji names and search keywords
+
+Tippi's emoji picker and `:name:` shortcodes ship a generated database
+(`Tippi/Resources/emoji-data.json`, ~282 KB) built from two Unicode sources.
+Unlike the entries above, this data **is bundled** in the app.
+
+- **emoji-test.txt** — the canonical list of emoji and their ordering
+  - Source: https://unicode.org/Public/emoji/16.0/emoji-test.txt
+  - Version pinned: **Emoji 16.0**
+- **CLDR annotations** — German and English names plus search keywords
+  - Source: https://github.com/unicode-org/cldr-json (`cldr-annotations-full`,
+    `cldr-annotations-derived-full`)
+  - Version pinned: **CLDR 48.2.1**
+- **License:** **Unicode License v3** — https://www.unicode.org/license.txt
+  Permits redistribution with attribution; this notice is that attribution.
+
+Regenerate with `python3 scripts/generate-emoji-data.py` (verify with
+`--check`). Both versions are pinned in that script, so the shipped database
+never changes silently underneath a release.
+
 ## Yams — YAML parsing (text snippets)
 
 Tippi's text-snippet engine reads Espanso match files (`~/Library/Application

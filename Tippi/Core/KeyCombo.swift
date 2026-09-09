@@ -31,6 +31,12 @@ struct KeyCombo: Codable, Equatable {
     /// hotkey (⌃⌥⌘T).
     static let translateDefault = KeyCombo(keyCode: 37, modifiers: [.option, .command])
 
+    /// Emoji picker default: ⌥⌘E (Option + Command + E — E for emoji).
+    /// Deliberately not ⌃⌘Space: that is macOS's own Character Viewer, and
+    /// shadowing a system shortcut would make Tippi look broken when the user
+    /// actually wanted Apple's palette.
+    static let emojiDefault = KeyCombo(keyCode: 14, modifiers: [.option, .command])
+
     var displayString: String {
         var parts: [String] = []
         let m = modifiers

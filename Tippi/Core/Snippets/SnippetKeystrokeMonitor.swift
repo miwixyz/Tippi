@@ -113,25 +113,54 @@ final class SnippetKeystrokeMonitor: ObservableObject {
             matcher.appendCharacter(char)
         }
 
-        guard let trigger = matcher.matchedTrigger(among: store.activeTriggers()),
-              let action = store.action(forTrigger: trigger) else {
+        // Snippets are checked first on purpose: a user-defined snippet whose
+        // trigger happens to look like an emoji name (":ok:") must win over
+        // the built-in emoji of the same name. Explicit configuration beats a
+        // shipped default.
+        if let trigger = matcher.matchedTrigger(among: store.activeTriggers()),
+           let action = store.action(forTrigger: trigger) {
+            expand(triggerLength: trigger.count) { [store] in await store.resolve(action) }
             return
         }
 
+        // `:rakete:` → 🚀. Only fires for a well-formed name that resolves to
+        // a real emoji; anything else leaves the typed text untouched.
+        if EmojiSettings.isInlineEnabled,
+           let candidate = EmojiInlineMatcher.candidate(in: matcher.buffer),
+           let emoji = EmojiDatabase.shared.emoji(forAlias: candidate.alias) {
+            EmojiSettings.rememberUse(of: emoji.character)
+            expand(triggerLength: candidate.triggerLength) { emoji.character }
+            return
+        }
+
+        // `:-)` → 🙂. Checked last: an emoticon has no closing delimiter, so
+        // it is the loosest of the three patterns and must not pre-empt an
+        // explicit snippet trigger or a `:name:` shortcode.
+        if EmojiSettings.isEmoticonEnabled,
+           let emoticon = EmoticonMatcher.match(in: matcher.buffer) {
+            EmojiSettings.rememberUse(of: emoticon.emoji)
+            expand(triggerLength: emoticon.triggerLength) { emoticon.emoji }
+            return
+        }
+    }
+
+    /// Shared tail of both expansion paths: clear the buffer, block re-entry,
+    /// resolve the replacement, and inject it.
+    ///
+    /// `defer`, not a bare trailing assignment: the real bug this guards
+    /// against (2026-09-09 pre-release audit) was a shell-var resolution that
+    /// could hang indefinitely (now fixed with its own timeout in
+    /// `SnippetVariableResolver`, but this is the second line of defense) —
+    /// without `defer`, any future path through resolve/replace that throws or
+    /// returns early would leave `isInjecting` stuck `true` forever, silently
+    /// and permanently disabling expansion until the app restarts.
+    private func expand(triggerLength: Int, resolve: @escaping () async -> String) {
         matcher.reset()
         isInjecting = true
         Task { @MainActor in
-            // `defer`, not a bare trailing assignment: the real bug this
-            // guards against (2026-09-09 pre-release audit) was a shell-var
-            // resolution that could hang indefinitely (now fixed with its
-            // own timeout in SnippetVariableResolver, but this is the
-            // second line of defense) — without `defer`, any future path
-            // through `resolve`/`replace` that throws or returns early
-            // would leave `isInjecting` stuck `true` forever, silently and
-            // permanently disabling snippet expansion until app restart.
             defer { isInjecting = false }
-            let text = await store.resolve(action)
-            await SnippetTextInjector.replace(triggerLength: trigger.count, with: text)
+            let text = await resolve()
+            await SnippetTextInjector.replace(triggerLength: triggerLength, with: text)
         }
     }
 }

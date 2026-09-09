@@ -8,6 +8,8 @@ struct SnippetsTab: View {
     @EnvironmentObject var store: SnippetStore
     @State private var editingSnippet: AppSnippet?
     @State private var isAddingNew = false
+    @State private var emojiInlineEnabled: Bool = EmojiSettings.isInlineEnabled
+    @State private var emoticonEnabled: Bool = EmojiSettings.isEmoticonEnabled
 
     var body: some View {
         Form {
@@ -25,6 +27,31 @@ struct SnippetsTab: View {
                         .frame(width: 60)
                         .multilineTextAlignment(.trailing)
                 }
+            }
+
+            // Lives here rather than in its own tab because it rides the exact
+            // same keystroke watcher as snippet expansion — turning either on
+            // starts it, turning both off stops it.
+            Section(String(localized: "settings.snippets.emoji.section")) {
+                Toggle(String(localized: "settings.snippets.emoji.enabled"), isOn: $emojiInlineEnabled)
+                    .onChange(of: emojiInlineEnabled) { _, new in
+                        EmojiSettings.isInlineEnabled = new
+                        (NSApp.delegate as? AppDelegate)?.applyKeystrokeMonitorState()
+                    }
+                Text(String(localized: "settings.snippets.emoji.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle(String(localized: "settings.snippets.emoticon.enabled"), isOn: $emoticonEnabled)
+                    .onChange(of: emoticonEnabled) { _, new in
+                        EmojiSettings.isEmoticonEnabled = new
+                        (NSApp.delegate as? AppDelegate)?.applyKeystrokeMonitorState()
+                    }
+                Text(String(localized: "settings.snippets.emoticon.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Section(String(localized: "settings.snippets.appManaged")) {

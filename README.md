@@ -18,6 +18,31 @@
 
 ---
 
+## One app instead of six
+
+Tippi started as an AI writing assistant. As of v2.1 it also covers the small
+utilities most people bolt onto macOS one by one — each with its own menu bar
+icon, its own Accessibility and Input Monitoring grants, its own update
+mechanism, and its own hotkeys to keep out of each other's way.
+
+| What you want | The usual separate app | In Tippi |
+|---|---|---|
+| Pick an emoji without the system palette | Rocket | **⌥⌘E picker + `:name:` shortcodes** (v2.1) |
+| Text shortcuts that expand while typing | Espanso, TextExpander | **Text Snippets** — reads existing Espanso files as-is (v2.0) |
+| Action bar next to any text selection | PopClip | **Selection action bar**, position configurable (v2.0) |
+| Dictation that runs on-device | MacWhisper, Superwhisper | **Dictation mode**, Whisper/Parakeet local (v1.7) |
+| Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
+| AI rewriting, grammar, tone | Grammarly, ChatGPT desktop | **24 built-in prompts + your own**, 11 providers |
+
+The point isn't only cost — Rocket and Espanso are free or cheap. It's that six
+background apps mean six sets of permissions to grant and re-grant after every
+macOS update, six things to keep current, six places a hotkey can collide, and
+six vendors with access to what you type. Tippi is one process, one permission
+set, one update path, and — because it's BYOK and open source — no vendor
+between you and your text.
+
+---
+
 ## Features
 
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
@@ -29,6 +54,7 @@
 - **Import / Export custom prompts** — share prompt collections as `.tippipack` files; merge or replace on import
 - **Local quick actions** — instantly format or transform selected text without an AI call: Bold, Italic, Underline, Strikethrough, Uppercase, Lowercase, Capitalize Words, Underscore, Hyphenate, Convert Umlauts (ä→ae, ö→oe, ü→ue, ß→ss — also applied automatically by Underscore/Hyphenate so filename-style output is actually web-safe), Brackets, Join Lines, Character Count, and Word Count. Available in the hotkey popup, or — opt-in — as an **auto-popup that appears next to any text selection, PopClip-style** (Settings → General; position below/above/left/right, auto-flips to the opposite side if the preferred one doesn't fit)
 - **Text Snippets (v2.0)** — type a trigger anywhere (`:mlg`, `:nl`, …) and it expands instantly, no hotkey. Reads real [Espanso](https://espanso.org) match files directly (existing setups migrate with zero file changes) or create simple triggers in Settings → Snippets. Dynamic values (today's date, a weekday this week ± N days, the current calendar week) are built with an "Insert Variable" picker — no shell syntax ever typed or seen. Every match file needs one-time approval before its triggers go live
+- **Emoji picker + `:name:` shortcodes (v2.1)** — a dedicated hotkey (default **⌥⌘E**) opens a Spotlight-style picker: type to filter, arrow keys to move, Return inserts at your cursor in whatever app you were in; recently used emoji come first. Or skip the picker entirely and type `:rakete:` — it becomes 🚀 instantly, anywhere, no hotkey. **Search and shortcodes work in German and English** (`:rakete:` = `:rocket:`, `kino` finds 🍿), backed by 1906 emoji from pinned Unicode data plus 135 hand-picked everyday shortcuts (`:daumen:` 👍, `:herz:` ❤️, `:danke:` 🙏). Unknown names are left exactly as typed — Tippi never guesses — and a shortcode must contain a letter, so `12:30:` or `10:1:` can't turn into an emoji mid-sentence. **Text emoticons** (`:-)`, `;-)`, `:(`, `<3`, `XD`, …) convert too, on their own toggle; they only fire after whitespace, so `a[:(b)]` and `http://` stay untouched
 - **11 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-5.6-luna`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
@@ -421,6 +447,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v1.23.0 | ✅ Done | **Model catalogue audit** — four of nine cloud providers were on stale or deprecated defaults: OpenAI's entire gpt-4o/gpt-5 line is gone (→ gpt-5.6 trio), Groq deprecated both shipped Llama models in June 2026 (→ gpt-oss), two Anthropic presets were a generation behind (→ Sonnet 5 / Opus 5). Gemini moved to the auto-updating `gemini-flash-latest` alias; all dead ids registered for automatic migration |
 | v1.22.1 | ✅ Done | **Fixed false "model may be outdated" warnings** — the v1.21.0 check didn't set a page size, so Anthropic's 20-result default hid working models like `claude-haiku-4-5`; now requests the full catalogue, never warns on a partial one, and tolerates alias-vs-pinned-version naming. Plus a new **"Which model for what?"** Help section with concrete recommendations |
 | v1.22.0 | ✅ Done | **Language-detection confidence gate** — short inputs like "LG Michael" were detected as Polish and the prompt then ordered the model to stay in that wrong language (and rendered "Stay in ." when nothing was detected); now requires 0.85 confidence with a valid fallback. Plus **few-shot examples** for Shorten/Summarize/Email reply/Make Formal/Humanize, and a `{clipboard}` privacy warning in Help |
+| v2.1.0  | ✅ Done | **Emoji picker (⌥⌘E) + `:name:` shortcodes** — Spotlight-style search-and-insert with arrow-key navigation and recents, plus inline expansion while typing (`:rakete:` → 🚀). German *and* English names from pinned Unicode data (Emoji 16.0 + CLDR 48.2.1, 1906 emoji) with 135 curated everyday shortcuts. Unknown names left untouched; letter requirement keeps timestamps and score lines from expanding. With this, Tippi covers what usually needs six separate menu-bar apps |
 | v2.0.1  | ✅ Done | **Critical fix**: the v2.0.0 selection action bar could make ⌘C/⌘V/⌘X/Delete/typing/Escape stop working in whatever app you'd selected text in — it was becoming the system's one key window despite having no text field to need one. Never becomes key now; clicks work via `acceptsFirstMouse`, Escape closes it directly |
 | v2.0.0  | ✅ Done | **Text Snippets** — Espanso-style live-typing expansion, built in, reads real Espanso match files directly, dynamic date/weekday variables via a no-shell-syntax picker, per-file approval gate. **Auto-popup on text selection** (PopClip-style, configurable position with auto-flip). **Translate Quick Panel**: source/target language pickers + selection pre-fill. **Umlaut transliteration** local action. **Help tab** restructured into searchable categories |
 | v3.0+   | Planned | Cross-platform (Windows port, likely Rust/Tauri) — unscheduled |

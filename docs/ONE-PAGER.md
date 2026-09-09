@@ -25,6 +25,30 @@ That's it. That's the product.
 | Cloud-only, your data leaves your Mac | **Two local engines** (MLX, Ollama) — fully offline option |
 | Subscription | **Free, open-source (MIT)**, bring your own key |
 | Telemetry, analytics, "anonymized" data | **Zero telemetry**, no analytics, no crash reports |
+| One utility per menu-bar icon | **One app instead of six** — see below |
+
+---
+
+## One app instead of six
+
+Most Macs accumulate a row of small utilities that each do one thing. Tippi now
+covers that whole row:
+
+| What you want | Usually a separate app | In Tippi |
+|---|---|---|
+| Emoji without the system palette | Rocket | **⌥⌘E picker + `:name:` shortcodes** |
+| Text shortcuts while typing | Espanso · TextExpander | **Text Snippets** (reads Espanso files as-is) |
+| Action bar at your text selection | PopClip | **Selection action bar** |
+| On-device dictation | MacWhisper · Superwhisper | **Dictation mode** (Whisper / Parakeet) |
+| Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
+| AI rewriting, grammar, tone | Grammarly · ChatGPT desktop | **24 prompts + your own**, 11 providers |
+
+Several of those are cheap or free — the saving isn't mainly money. It's six
+sets of Accessibility and Input Monitoring permissions to grant and re-grant
+after every macOS update, six background processes, six update mechanisms, six
+chances for a hotkey collision, and six vendors with a view of what you type.
+Tippi is one process, one permission set, one update path — and BYOK, so no
+vendor sits between you and your text.
 
 ---
 
@@ -34,6 +58,7 @@ That's it. That's the product.
 - **Type or speak a free-form instruction** — select text, then type ("reply to this email", "translate to Spanish") or speak it; Tippi applies it via AI directly
 - **Text Snippets (v2.0)** — type a trigger anywhere and it expands instantly, no hotkey; reads real Espanso match files directly, or create simple ones in Settings. Dynamic date/weekday values via a picker, no shell syntax
 - **Auto-popup on text selection (v2.0)** — PopClip-style quick-actions bar that appears next to any selection, position configurable, off by default
+- **Emoji picker + shortcodes (v2.1)** — ⌥⌘E opens a Spotlight-style picker (type to filter, arrows to move, Return inserts at your cursor, recents first), or type `:rakete:` and get 🚀 instantly without any hotkey. German *and* English names — `:rakete:` works as well as `:rocket:`, `kino` finds 🍿 — from pinned Unicode data, plus 135 curated everyday shortcuts. Classic text emoticons (`:-)`, `<3`, `XD`) convert too, on a separate toggle. Unknown names are never guessed at
 - **Translate Quick Panel** — press ⌥⌘L anywhere: pre-fills with your current selection if there is one, otherwise type/paste/speak. Source/target language pickers (DE/EN/ES/FR/JA) with a swap button, natural voice read-aloud. Voice input runs on-device; speech output is offline
 - **Streaming preview & iterative refine** — the result streams in token by token, then refine it in place ("shorter", "more formal") before replacing
 - **Custom prompts** with `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables that adapt to context at trigger time

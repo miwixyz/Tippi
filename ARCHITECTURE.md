@@ -28,47 +28,55 @@
 
 ## 2. Modul-Struktur
 
+Stand v2.1.0. Nur die tragenden Dateien — die vollständige Liste liefert
+`find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
+
 ```
 Tippi/
 ├── App/
 │   ├── TippiApp.swift              # @main, NSApplication-Setup
-│   └── AppDelegate.swift           # Permissions, MenuBar
+│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (4 Hotkeys)
 ├── Core/
-│   ├── HotkeyManager.swift         # Carbon + CGEventTap
+│   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
-│   ├── TextInsertion.swift         # Replace / Append / Copy
+│   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
 │   ├── KeychainStore.swift         # API-Keys
-│   └── PermissionsManager.swift    # Accessibility, Input Monitoring
-├── LLM/
-│   ├── LLMProvider.swift           # Protocol
-│   ├── OpenAIProvider.swift
-│   ├── AnthropicProvider.swift
-│   ├── GeminiProvider.swift
-│   ├── MistralProvider.swift
-│   ├── OllamaProvider.swift
-│   └── LLMRouter.swift             # Routing + Fehlerbehandlung
-├── Prompts/
-│   ├── Prompt.swift                # Struct
-│   ├── DefaultPrompts.swift        # P1..P6 fix codiert
-│   └── PromptRenderer.swift        # {selected_text}-Injection
+│   ├── PermissionsManager.swift    # Accessibility, Input Monitoring
+│   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
+│   ├── Snippets/                   # v2.0 — systemweite Tipp-Expansion
+│   │   ├── SnippetKeystrokeMonitor.swift   # DER Keystroke-Watcher (auch für Emoji)
+│   │   ├── SnippetMatcher.swift            # reine Trigger-Logik, unit-getestet
+│   │   ├── SnippetStore.swift              # App-Snippets + Espanso-Dateien + Freigabe-Gate
+│   │   ├── SnippetVariableResolver.swift   # date/shell-Vars, 5s-Hard-Timeout
+│   │   └── SnippetTextInjector.swift       # Backspaces + Einfügen
+│   ├── Emoji/                      # v2.1
+│   │   ├── EmojiDatabase.swift             # Laden, Alias-Map, EmojiSearch (rein)
+│   │   ├── EmojiInlineMatcher.swift        # `:name:`-Erkennung, rein + unit-getestet
+│   │   └── EmojiSettings.swift             # Hotkey, Toggles, Recents
+│   └── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
+├── LLM/                            # 11 Provider + Router
+│   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
+│   ├── LLMRouter.swift             # Registry, Routing, Fallback
+│   ├── ProviderModelPresets.swift  # kuratierte Modell-Listen + retiredModels-Migration
+│   ├── ModelAvailabilityChecker.swift  # Live-Katalog-Abgleich beim Start
+│   └── {OpenAI,Anthropic,Gemini,Mistral,Groq,Scaleway,Kimi,Nebius,OpenRouter,Ollama,MLX}Provider.swift
 ├── UI/
-│   ├── PopupWindow/
-│   │   ├── PopupView.swift
-│   │   └── PopupController.swift   # NSPanel, positioniert am Cursor
-│   ├── PreviewWindow/
-│   │   ├── PreviewView.swift
-│   │   └── PreviewController.swift
-│   ├── Settings/
-│   │   ├── SettingsView.swift
-│   │   ├── HotkeyTab.swift
-│   │   ├── ProvidersTab.swift
-│   │   └── …
-│   └── MenuBarItem.swift
-├── Localization/
-│   ├── en.lproj/Localizable.strings
-│   └── de.lproj/Localizable.strings
+│   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
+│   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
+│   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
+│   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
+│   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
+│   ├── SettingsView.swift          # alle 9 Tabs (großes File, private structs)
+│   └── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
+├── Voice/
+│   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate)
+│   ├── WhisperTranscriber.swift    # whisper-cli-Wrapper
+│   ├── ParakeetTranscriber.swift   # CoreML/ANE, Default-Engine seit v1.12.1
+│   └── SystemAudioMuter.swift      # optionales Mute während der Aufnahme
 └── Resources/
-    └── Assets.xcassets             # Icon, Symbole
+    ├── Assets.xcassets             # Icon, Symbole
+    ├── emoji-data.json             # generiert, Emoji 16.0 + CLDR 48.2.1
+    └── {en,de}.lproj/Localizable.strings
 ```
 
 ---

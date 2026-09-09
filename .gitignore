@@ -47,3 +47,4 @@ release.env.*
 graphify-out/
 .claude/
 build-check/
+build-test/

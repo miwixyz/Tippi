@@ -137,6 +137,25 @@ if [ "${DOC_ERRORS}" -ne 0 ]; then
     exit 1
 fi
 echo "  ✓ v${VERSION} mentioned in README.md + in-app Help (both languages)"
+
+# Generated emoji database must match its generator. Without this, a hand-edited
+# or half-regenerated emoji-data.json ships silently — the app would still build
+# and run, just with a database nobody can reproduce from the pinned sources.
+if [ -f scripts/generate-emoji-data.py ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 scripts/generate-emoji-data.py --check >/dev/null 2>&1; then
+            echo "  ✓ emoji-data.json matches generate-emoji-data.py (pinned Unicode sources)"
+        else
+            echo "  ✗ emoji-data.json is stale or hand-edited."
+            echo "    Run: python3 scripts/generate-emoji-data.py"
+            exit 1
+        fi
+    else
+        # Never skip a gate silently — say so and let the human decide.
+        echo "  ⚠ python3 not found — could NOT verify emoji-data.json is current."
+    fi
+fi
+
 echo "  ⚠ Not auto-checkable — confirm by hand before continuing if this release"
 echo "    touches user-facing behavior: docs/ONE-PAGER.md, docs/index.html (website),"
 echo "    other in-app Help sections beyond What's New (e.g. feature-specific bodies),"

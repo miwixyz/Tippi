@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.0] — 2026-09-09
+
+### Added
+- **Emoji picker (⌥⌘E) — search and insert emoji from anywhere.** A Spotlight-style panel: type to filter, arrow keys to move, Return to insert. The emoji lands wherever your cursor was, in whatever app you were in. Recently used emoji appear first, because the same handful covers most real usage. Search works in **German and English** — `rakete` and `rocket` both find 🚀, `kino` finds 🍿 — so you can type the word you were already thinking in.
+- **`:name:` shortcodes while typing.** Type `:rakete:` and it becomes 🚀 instantly, anywhere on the Mac, using the same keystroke engine as text snippets. 1906 emoji with German and English names, plus 135 hand-picked shortcuts for everyday words (`:daumen:` → 👍, `:herz:` → ❤️, `:danke:` → 🙏). Unknown names are left exactly as typed — a wrong guess never silently rewrites what you wrote. Your own snippets take precedence if a trigger collides.
+- **Emoji from text emoticons.** Typing `:-)`, `;-)`, `:(`, `<3`, `XD` and ~25 other classics converts them to the matching emoji as you type. Separate toggle (Settings → Snippets → Emoji); switching it off leaves the `:name:` shortcodes and the picker exactly as they are.
+- Emoji data is generated from pinned Unicode sources (Emoji 16.0 + CLDR 48.2.1) by `scripts/generate-emoji-data.py`, with a `--check` mode so a stale database fails loudly instead of shipping quietly. The release script now enforces it.
+
+### Notes
+- The picker deliberately **does** become the key window — the opposite of the v2.0.1 fix for the selection action bar. That bar is buttons only and had no business taking keyboard focus; this panel owns a real search field and cannot work without it. Same rule, opposite outcome.
+- Inline expansion refuses to fire on anything that isn't clearly an emoji name: a shortcode must contain at least one letter, so a timestamp (`12:30:`) or a score line (`10:1:` — CLDR really does list "1" as a keyword for 👍) can never turn into an emoji mid-sentence. Two-letter keywords are excluded for the same reason, which is what keeps the ordinary German word `:an:` from inserting a mathematical symbol.
+- Emoticons carry the same concern one step further, since `:(` has no closing delimiter and appears verbatim in Python slicing (`a[:(b)]`), C format strings (`"%s:(%d)"`) and every `http://`. They only expand when preceded by whitespace or the start of a line, and a known emoticon that fails that check aborts the scan rather than falling through to a shorter match. All three cases are pinned by tests.
+- Skin-tone variants are not included: they multiply every human emoji by six and flood search results with near-duplicates. Tippi inserts the neutral form.
+
 ## [2.0.1] — 2026-09-09
 
 ### Fixed

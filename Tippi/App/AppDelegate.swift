@@ -47,6 +47,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// of the main trigger — no AX capture, no source-app selection.
     let translateHotkeyManager = HotkeyManager(id: 3)
     private let translateQuickPanel = TranslateQuickPanel()
+    /// Fourth Carbon hot key (id 4) for the emoji picker. Like translate: no
+    /// AX capture, no selection needed — it only ever inserts.
+    let emojiHotkeyManager = HotkeyManager(id: 4)
+    private let emojiPickerPanel = EmojiPickerPanel()
 
     private var statusItem: NSStatusItem?
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
@@ -118,6 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         restartSelectionPopupEngine()
         restartDictationHotkey()
         restartTranslateHotkey()
+        restartEmojiHotkey()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -154,21 +159,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// system-wide keystroke watcher is a meaningfully bigger ask than the
     /// existing single-combo hotkey, so it only starts once the user opts in
     /// from Settings, and stops immediately if turned back off.
+    ///
+    /// The same watcher also drives `:name:` emoji expansion, so it has to run
+    /// when *either* feature is on — see `applyKeystrokeMonitorState`.
     private func startSnippetEngine() {
-        if snippetStore.isEnabled {
-            snippetMonitor.start()
-        }
+        applyKeystrokeMonitorState()
         snippetStore.$isEnabled
             .removeDuplicates()
             .sink { [weak self] enabled in
-                guard let self else { return }
-                if enabled {
-                    self.snippetMonitor.start()
-                } else {
-                    self.snippetMonitor.stop()
-                }
+                // `@Published` fires in `willSet`, so `snippetStore.isEnabled`
+                // still holds the *old* value here — the incoming parameter is
+                // the only trustworthy source of the new state.
+                self?.applyKeystrokeMonitorState(snippetsEnabled: enabled)
             }
             .store(in: &cancellables)
+    }
+
+    /// Starts or stops the single system-wide keystroke watcher shared by
+    /// snippet expansion and inline emoji expansion. Called at launch and from
+    /// the Settings toggles.
+    ///
+    /// Pass `snippetsEnabled` when reacting to the `@Published` change (see
+    /// above); omit it to read the current stored state.
+    func applyKeystrokeMonitorState(snippetsEnabled: Bool? = nil) {
+        let snippetsOn = snippetsEnabled ?? snippetStore.isEnabled
+        let inlineEmojiOn = EmojiSettings.isInlineEnabled
+        let emoticonsOn = EmojiSettings.isEmoticonEnabled
+
+        if inlineEmojiOn {
+            // Must be loaded *before* the first `:rakete:` is typed, not on
+            // first picker open — otherwise the very first inline expansion
+            // after launch silently does nothing while the database is still
+            // absent. Idempotent, decodes off the main thread.
+            // Emoticons deliberately don't require this: their mapping is a
+            // static table, so they work even if the database never loads.
+            EmojiDatabase.shared.load()
+        }
+
+        if snippetsOn || inlineEmojiOn || emoticonsOn {
+            snippetMonitor.start()
+        } else {
+            snippetMonitor.stop()
+        }
     }
 
     /// Off by default (see `SelectionPopupSettings.isEnabled`) — an ambient
@@ -702,6 +734,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         NSLog("Tippi: translate hot key registered (\(combo.displayString))")
+    }
+
+    /// (Re)registers the emoji picker hot key. Call after the setting changes.
+    /// Same shape as `restartTranslateHotkey` — no readiness gate, just the
+    /// enabled toggle.
+    func restartEmojiHotkey() {
+        emojiHotkeyManager.stop()
+        guard EmojiSettings.isPickerEnabled else {
+            NSLog("Tippi: emoji picker hot key inactive (disabled in settings)")
+            return
+        }
+
+        let combo = EmojiSettings.combo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+
+        emojiHotkeyManager.update(
+            trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
+        )
+        emojiHotkeyManager.start { [weak self] in
+            self?.emojiPickerPanel.toggle()
+        }
+        NSLog("Tippi: emoji picker hot key registered (\(combo.displayString))")
     }
 
     /// Toggles the Translate Quick Panel. When opening (not closing), captures

@@ -137,6 +137,8 @@ private struct HotkeysTab: View {
     @State private var savedFlash = false
     @State private var translateEnabled: Bool = TranslateSettings.isEnabled
     @State private var translateCombo: KeyCombo = TranslateSettings.combo
+    @State private var emojiPickerEnabled: Bool = EmojiSettings.isPickerEnabled
+    @State private var emojiCombo: KeyCombo = EmojiSettings.combo
 
     var body: some View {
         ScrollView {
@@ -226,6 +228,33 @@ private struct HotkeysTab: View {
                                 .onChange(of: translateCombo) { _, new in
                                     TranslateSettings.combo = new
                                     (NSApp.delegate as? AppDelegate)?.restartTranslateHotkey()
+                                }
+                        }
+                    }
+                    .padding(6)
+                }
+
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(isOn: $emojiPickerEnabled) {
+                            Text(String(localized: "settings.hotkeys.emoji.header"))
+                                .font(.headline)
+                        }
+                        .onChange(of: emojiPickerEnabled) { _, new in
+                            EmojiSettings.isPickerEnabled = new
+                            (NSApp.delegate as? AppDelegate)?.restartEmojiHotkey()
+                        }
+
+                        Text(String(localized: "settings.hotkeys.emoji.intro"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if emojiPickerEnabled {
+                            HotkeyRecorderField(combo: $emojiCombo)
+                                .onChange(of: emojiCombo) { _, new in
+                                    EmojiSettings.combo = new
+                                    (NSApp.delegate as? AppDelegate)?.restartEmojiHotkey()
                                 }
                         }
                     }
@@ -1371,6 +1400,8 @@ private struct HelpTab: View {
 
         HelpEntry(id: "snippets", icon: "text.badge.checkmark", category: .snippets,
                   title: String(localized: "settings.help.snippetsTitle"), body: String(localized: "settings.help.snippetsBody")),
+        HelpEntry(id: "emoji", icon: "face.smiling", category: .snippets,
+                  title: String(localized: "settings.help.emojiTitle"), body: String(localized: "settings.help.emojiBody")),
 
         HelpEntry(id: "api", icon: "key", category: .providers,
                   title: String(localized: "settings.help.apiTitle"), body: String(localized: "settings.help.apiBody")),
