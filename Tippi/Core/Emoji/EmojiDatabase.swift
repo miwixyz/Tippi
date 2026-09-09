@@ -73,7 +73,11 @@ final class EmojiDatabase: ObservableObject {
             self.all = decoded.emoji
             self.aliases = Self.buildAliases(from: decoded.emoji, curated: decoded.aliases)
             self.isLoaded = true
-            emojiLog.notice("emoji database loaded — \(decoded.count) emoji, Emoji \(decoded.emojiVersion), CLDR \(decoded.cldrVersion), \(self.aliases.count) aliases")
+            // `.public` on the version strings: os_log redacts interpolated
+            // strings by default, which is right for user content but useless
+            // here — these are build-time constants, and "<private>" in a bug
+            // report hides exactly the field you need to diagnose stale data.
+            emojiLog.notice("emoji database loaded — \(decoded.count) emoji, Emoji \(decoded.emojiVersion, privacy: .public), CLDR \(decoded.cldrVersion, privacy: .public), \(self.aliases.count) aliases")
         }
     }
 
