@@ -3,6 +3,15 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.0.1</title>
+            <pubDate>Wed, 09 Sep 2026 16:26:28 +0200</pubDate>
+            <sparkle:version>247</sparkle:version>
+            <sparkle:shortVersionString>2.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.0.1/Tippi-2.0.1.dmg" length="12275416" type="application/octet-stream" sparkle:edSignature="dq5lNJ867AAH14BV6h2bLdk2FlZ+lgxeWDB8bb1ui97Rlk+ZgFai7x77bI4FbOxsMduHdYHLgwgQO9fMDKKEDQ=="/>
+        </item>
+        <item>
             <title>2.0.0</title>
             <pubDate>Wed, 09 Sep 2026 16:16:54 +0200</pubDate>
             <sparkle:version>246</sparkle:version>
@@ -19,15 +28,6 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.24.2/Tippi-1.24.2.dmg" length="9413987" type="application/octet-stream" sparkle:edSignature="GyatLm+QMbeBJDUrdv8Ohivb9IE7sBHf/WxWYtut9rRCgXV+9r/l38vuiwR/fgbMOYMuGcy5V9nqvRX3G7M1AQ=="/>
-        </item>
-        <item>
-            <title>1.24.1</title>
-            <pubDate>Thu, 03 Sep 2026 15:28:57 +0200</pubDate>
-            <sparkle:version>242</sparkle:version>
-            <sparkle:shortVersionString>1.24.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v1.24.1/Tippi-1.24.1.dmg" length="9412848" type="application/octet-stream" sparkle:edSignature="wJWFhFBRAE810PhpODBkHDgNayAibzxih63alwuToDtamYpZdUJjbw7LYX20Gbb8EtLLKIacjlI87O/UAmmfAg=="/>
         </item>
     </channel>
 </rss>

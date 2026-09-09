@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.1] — 2026-09-09
+
+### Fixed
+- **Critical: the selection action bar (v2.0.0's auto-popup) could make text editing impossible in the app you were selecting text in.** It was set up to become the *key window* — the one macOS spot system-wide that receives keyboard input — the same pattern used for the Translate panel's text field. But the action bar has no text field, only buttons: once it became key, ⌘C/⌘V/⌘X, Delete, typing, and even Escape all stopped reaching the app you were actually working in, silently swallowed by a panel with nothing to do with them. It now never becomes key; buttons still respond to the very first click via `acceptsFirstMouse`, and Escape is watched for directly and closes the bar without needing key-window status.
+
 ## [2.0.0] — 2026-09-09
 
 ### Added

@@ -1,22 +1,41 @@
 import AppKit
 import SwiftUI
 
-/// Borderless, non-activating floating panel for the selection action bar.
-/// Same `NonActivatingKeyPanel` pattern as `TranslateQuickPanel`/
-/// `PromptPopupController` (proven in this codebase — `acceptsFirstResponder`
-/// override included, since without it borderless panels can silently fail
-/// to route mouse events even with `canBecomeKey` alone).
-private final class NonActivatingKeyPanel: NSPanel {
-    override var canBecomeKey: Bool { true }
+/// Non-activating, **non-key** floating panel for the selection action bar.
+///
+/// Deliberately NOT the `NonActivatingKeyPanel` pattern `TranslateQuickPanel`/
+/// `PromptPopupController` use — those panels have a text field the user
+/// types into, so THEY genuinely need key-window status to receive
+/// keystrokes. This bar is pure mouse-click buttons with no text input at
+/// all, and becoming key was a real showstopper bug (found 2026-09-09):
+/// on macOS there is exactly one key window system-wide, so once this panel
+/// became key, ⌘C/⌘V/⌘X/Delete/typing and even Escape all stopped reaching
+/// the app the user was actually working in — every one of those keystrokes
+/// was silently swallowed by a panel that has no text field to do anything
+/// with them.
+///
+/// `canBecomeKey` is explicitly `false` here. Buttons still respond to the
+/// very first click without that: `ClickableHostingView.acceptsFirstMouse`
+/// tells AppKit this view accepts clicks even while its window isn't key,
+/// which is the standard, narrower mechanism background utility panels use
+/// instead of grabbing key status wholesale.
+private final class NonKeyPanel: NSPanel {
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
-    override var acceptsFirstResponder: Bool { true }
+}
+
+/// `NSHostingView` doesn't accept clicks in a non-key window by default —
+/// this override is the whole reason the panel can stay non-key and still
+/// be clickable.
+private final class ClickableHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
 @MainActor
 final class SelectionActionBarPanel {
     private var panel: NSPanel?
     private var globalMouseMonitor: Any?
-    private var resignKeyObserver: NSObjectProtocol?
+    private var escapeKeyMonitor: Any?
 
     var isOpen: Bool { panel != nil }
 
@@ -43,19 +62,16 @@ final class SelectionActionBarPanel {
                 self?.close()
             }
         )
-        let hosting = NSHostingController(rootView: view)
-        hosting.sizingOptions = [.intrinsicContentSize]
 
         let popupSize = CGSize(width: SelectionActionBarView.width, height: SelectionActionBarView.height)
-        let panel = NonActivatingKeyPanel(
+        let panel = NonKeyPanel(
             contentRect: NSRect(origin: .zero, size: popupSize),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
-        panel.contentViewController = hosting
+        panel.contentView = ClickableHostingView(rootView: view)
         panel.isFloatingPanel = true
-        panel.becomesKeyOnlyIfNeeded = false
         panel.level = .popUpMenu
         panel.backgroundColor = .clear
         panel.isOpaque = false
@@ -63,6 +79,9 @@ final class SelectionActionBarPanel {
         panel.hidesOnDeactivate = false
         panel.worksWhenModal = true
         panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+        // Belt and suspenders alongside `canBecomeKey == false`: never let
+        // ordering this front pull key status onto it either.
+        panel.becomesKeyOnlyIfNeeded = true
 
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         // Two cases fall back to the mouse position instead of the AX
@@ -96,19 +115,19 @@ final class SelectionActionBarPanel {
         ) { [weak self] _ in
             Task { @MainActor in self?.close() }
         }
-        resignKeyObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.didResignKeyNotification,
-            object: panel,
-            queue: .main
-        ) { [weak self] _ in
+        // The panel is never key, so SwiftUI's `.onExitCommand` (which only
+        // fires for a key window) can't be used for Escape-to-dismiss —
+        // watch for it directly instead. Global, not local: Escape is
+        // pressed in the app the user is actually working in, not in Tippi.
+        escapeKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.keyCode == 53 else { return } // kVK_Escape
             Task { @MainActor in self?.close() }
         }
 
-        // Do NOT call NSApp.activate — matches TranslateQuickPanel/
-        // PromptPopupController exactly, for the same reason: the source
-        // app must stay frontmost, only this panel becomes key within
-        // Tippi's own process so its buttons receive clicks.
-        panel.makeKeyAndOrderFront(nil)
+        // `orderFront`, not `makeKeyAndOrderFront` — the whole point of this
+        // panel is that it never becomes key (see `NonKeyPanel`'s doc
+        // comment). The source app stays frontmost and keeps the keyboard.
+        panel.orderFront(nil)
     }
 
     func close() {
@@ -116,9 +135,9 @@ final class SelectionActionBarPanel {
             NSEvent.removeMonitor(monitor)
             globalMouseMonitor = nil
         }
-        if let observer = resignKeyObserver {
-            NotificationCenter.default.removeObserver(observer)
-            resignKeyObserver = nil
+        if let monitor = escapeKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            escapeKeyMonitor = nil
         }
         panel?.orderOut(nil)
         panel = nil
