@@ -35,6 +35,7 @@ struct LocalTextAction: Identifiable, Equatable {
         case capitalizeWords
         case underscore
         case hyphenate
+        case transliterateUmlauts
         case brackets
         case joinLines
         case characterCount
@@ -54,11 +55,12 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .italic, title: String(localized: "local.action.italic"), symbol: "italic", category: .formatting),
             LocalTextAction(kind: .underline, title: String(localized: "local.action.underline"), symbol: "underline", category: .formatting),
             LocalTextAction(kind: .strikethrough, title: String(localized: "local.action.strikethrough"), symbol: "strikethrough", category: .formatting),
-            LocalTextAction(kind: .uppercase, title: String(localized: "local.action.uppercase"), symbol: "textformat", category: .transform),
+            LocalTextAction(kind: .uppercase, title: String(localized: "local.action.uppercase"), symbol: "capslock", category: .transform),
             LocalTextAction(kind: .lowercase, title: String(localized: "local.action.lowercase"), symbol: "textformat", category: .transform),
             LocalTextAction(kind: .capitalizeWords, title: String(localized: "local.action.capitalizeWords"), symbol: "textformat.abc", category: .transform),
             LocalTextAction(kind: .underscore, title: String(localized: "local.action.underscore"), symbol: "underscore", category: .transform),
             LocalTextAction(kind: .hyphenate, title: String(localized: "local.action.hyphenate"), symbol: "minus", category: .transform),
+            LocalTextAction(kind: .transliterateUmlauts, title: String(localized: "local.action.transliterateUmlauts"), symbol: "character", category: .transform),
             LocalTextAction(kind: .brackets, title: String(localized: "local.action.brackets"), symbol: "parentheses", category: .transform),
             LocalTextAction(kind: .joinLines, title: String(localized: "local.action.joinLines"), symbol: "text.append", category: .transform),
             LocalTextAction(kind: .characterCount, title: String(localized: "local.action.characterCount"), symbol: "number", category: .info),
@@ -98,6 +100,8 @@ struct LocalTextAction: Identifiable, Equatable {
             return .plainReplacement(LocalTextTransformer.underscore(text))
         case .hyphenate:
             return .plainReplacement(LocalTextTransformer.hyphenate(text))
+        case .transliterateUmlauts:
+            return .plainReplacement(LocalTextTransformer.transliterateUmlauts(text))
         case .brackets:
             return .plainReplacement(LocalTextTransformer.brackets(text))
         case .joinLines:
@@ -123,12 +127,30 @@ enum LocalTextTransformer {
         text.localizedCapitalized
     }
 
+    /// German-to-ASCII transliteration for filenames, URLs, and identifiers
+    /// — the exact mapping the vault's own file-naming convention already
+    /// uses (ä→ae, ö→oe, ü→ue, ß→ss), case-preserving. Everything else is
+    /// left untouched; this is character substitution, not a full slugify
+    /// (no space/punctuation stripping) — that's what `underscore`/
+    /// `hyphenate` already do, and now do correctly instead of leaving raw
+    /// umlauts in an otherwise "web-safe" identifier.
+    static func transliterateUmlauts(_ text: String) -> String {
+        let map: [(String, String)] = [
+            ("ä", "ae"), ("ö", "oe"), ("ü", "ue"),
+            ("Ä", "Ae"), ("Ö", "Oe"), ("Ü", "Ue"),
+            ("ß", "ss"),
+        ]
+        return map.reduce(text) { partial, pair in
+            partial.replacingOccurrences(of: pair.0, with: pair.1)
+        }
+    }
+
     static func underscore(_ text: String) -> String {
-        words(in: text).joined(separator: "_")
+        words(in: transliterateUmlauts(text)).joined(separator: "_")
     }
 
     static func hyphenate(_ text: String) -> String {
-        words(in: text).joined(separator: "-")
+        words(in: transliterateUmlauts(text)).joined(separator: "-")
     }
 
     static func brackets(_ text: String) -> String {

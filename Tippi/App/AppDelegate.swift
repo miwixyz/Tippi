@@ -4,12 +4,37 @@ import Combine
 import QuartzCore
 import Sparkle
 import SwiftUI
+import os
+
+private let appDelegateLog = Logger(subsystem: "com.tippi.app", category: "app-delegate")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let permissions = PermissionsManager()
     let hotkeyManager = HotkeyManager()
     let keyMonitor = GlobalKeyMonitor(combo: KeyComboStore.load())
+    let snippetStore = SnippetStore()
+    /// `lazy` so it can reference `snippetStore` at construction time.
+    lazy var snippetMonitor = SnippetKeystrokeMonitor(store: snippetStore)
+    let selectionPopupPanel = SelectionActionBarPanel()
+    /// `lazy` so its closures can capture `self` at construction time.
+    lazy var selectionPopupMonitor = SelectionPopupMonitor(
+        onSelection: { [weak self] snapshot in
+            guard let self else { return }
+            self.selectionPopupPanel.show(
+                snapshot: snapshot,
+                onAction: { action, snap in
+                    self.performSelectionAction(action, snapshot: snap)
+                },
+                onTranslate: { text in
+                    self.translateQuickPanel.toggle(audioRecorder: self.audioRecorder, initialText: text)
+                }
+            )
+        },
+        onNoSelection: { [weak self] in
+            self?.selectionPopupPanel.close()
+        }
+    )
     let audioRecorder = AudioRecorder()
     /// Second Carbon hot key (id 2) for dictation mode. Distinct from the main
     /// trigger (id 1) and the safety hot key (id 99).
@@ -89,6 +114,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeyManager.update(trigger: loadHotkeyTrigger())
         registerSafetyHotKey()
         startGlobalKeyMonitor()
+        startSnippetEngine()
+        restartSelectionPopupEngine()
         restartDictationHotkey()
         restartTranslateHotkey()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
@@ -120,6 +147,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSLog("Tippi: GlobalKeyMonitor → triggerManually")
                 self?.triggerManually()
             }
+        }
+    }
+
+    /// Snippet expansion defaults OFF (see `SnippetStore.isEnabled`) — a
+    /// system-wide keystroke watcher is a meaningfully bigger ask than the
+    /// existing single-combo hotkey, so it only starts once the user opts in
+    /// from Settings, and stops immediately if turned back off.
+    private func startSnippetEngine() {
+        if snippetStore.isEnabled {
+            snippetMonitor.start()
+        }
+        snippetStore.$isEnabled
+            .removeDuplicates()
+            .sink { [weak self] enabled in
+                guard let self else { return }
+                if enabled {
+                    self.snippetMonitor.start()
+                } else {
+                    self.snippetMonitor.stop()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Off by default (see `SelectionPopupSettings.isEnabled`) — an ambient
+    /// popup on every text selection system-wide is a much bigger behavioral
+    /// change than an explicit hotkey. Called at launch and again from the
+    /// Settings toggle (same direct-call pattern `restartTranslateHotkey`
+    /// already uses — this file has no Combine publisher for plain
+    /// UserDefaults-backed settings, only for `SnippetStore`'s own
+    /// `ObservableObject`).
+    func restartSelectionPopupEngine() {
+        let enabled = SelectionPopupSettings.isEnabled
+        appDelegateLog.notice("restartSelectionPopupEngine called, isEnabled=\(enabled, privacy: .public)")
+        selectionPopupMonitor.stop()
+        if enabled {
+            selectionPopupMonitor.start()
+        }
+        appDelegateLog.notice("restartSelectionPopupEngine done, monitor.isActive=\(self.selectionPopupMonitor.isActive, privacy: .public), lastError=\(self.selectionPopupMonitor.lastError ?? "nil", privacy: .public)")
+    }
+
+    /// Applies a selection-bar action to the snapshot captured at the moment
+    /// the bar was shown, then writes the result back via AX (falling back
+    /// to clipboard paste exactly like `runLocalAction` does for the
+    /// hotkey-triggered popup — same three-way `replaceViaElement` outcome
+    /// handling, just against a snapshot instead of `lastSelectionElement`/
+    /// `lastSelectionRange`).
+    private func performSelectionAction(_ action: LocalTextAction, snapshot: SelectionSnapshot) {
+        switch action.perform(on: snapshot.text) {
+        case .plainReplacement(let text):
+            Task { @MainActor in
+                switch TextInsertion.replaceViaElement(snapshot.element, range: snapshot.range, with: text, expecting: snapshot.text) {
+                case .replaced:
+                    ToastWindowController.shared.show(message: action.title)
+                case .ignored:
+                    await TextInsertion.insertViaClipboard(text, into: snapshot.sourceApp)
+                    ToastWindowController.shared.show(message: action.title)
+                case .unavailable:
+                    await TextInsertion.replace(with: text, in: snapshot.sourceApp)
+                    ToastWindowController.shared.show(message: action.title)
+                }
+            }
+        case .richReplacement(let attributed, let fallback):
+            Task { @MainActor in
+                switch TextInsertion.replaceViaElement(snapshot.element, range: snapshot.range, with: fallback, expecting: snapshot.text) {
+                case .replaced:
+                    ToastWindowController.shared.show(message: action.title)
+                case .ignored:
+                    await TextInsertion.insertViaClipboard(fallback, into: snapshot.sourceApp)
+                    ToastWindowController.shared.show(message: action.title)
+                case .unavailable:
+                    await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: snapshot.sourceApp)
+                    ToastWindowController.shared.show(message: action.title)
+                }
+            }
+        case .info(let message):
+            ToastWindowController.shared.show(message: message)
         }
     }
 
@@ -270,6 +374,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(
             withTitle: String(localized: "menu.welcome"),
             action: #selector(showWelcomeWindow),
+            keyEquivalent: ""
+        )
+        menu.addItem(
+            withTitle: String(localized: "menu.help"),
+            action: #selector(showHelpWindow),
             keyEquivalent: ""
         )
         menu.addItem(
@@ -439,6 +548,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         welcomeWindowController?.window?.makeKeyAndOrderFront(nil)
     }
 
+    /// Menu bar → "Hilfe" — same window as "Einstellungen", just jumped
+    /// straight to the Help tab instead of whichever tab was last open.
+    @objc func showHelpWindow() {
+        SettingsNavigation.shared.pendingTab = .help
+        showSettingsWindow()
+    }
+
     @objc func showSettingsWindow() {
         NSApp.activate()
 
@@ -448,6 +564,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     .environmentObject(permissions)
                     .environmentObject(hotkeyManager)
                     .environmentObject(keyMonitor)
+                    .environmentObject(snippetStore)
             )
             let window = NSWindow(contentViewController: hostingController)
             window.title = String(localized: "settings.window.title")
@@ -580,10 +697,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
         )
         translateHotkeyManager.start { [weak self] in
-            guard let self else { return }
-            self.translateQuickPanel.toggle(audioRecorder: self.audioRecorder)
+            Task { @MainActor in
+                await self?.toggleTranslatePanel()
+            }
         }
         NSLog("Tippi: translate hot key registered (\(combo.displayString))")
+    }
+
+    /// Toggles the Translate Quick Panel. When opening (not closing), captures
+    /// whatever's currently selected in the source app first — same "acts on
+    /// your selection" feel as the main hotkey — before the panel steals key
+    /// focus. Empty/failed capture just leaves the field empty, exactly like
+    /// before this existed: nothing selected is not an error state here.
+    private func toggleTranslatePanel() async {
+        guard !translateQuickPanel.isOpen else {
+            translateQuickPanel.close()
+            return
+        }
+        let sourceApp = resolvedSourceAppForCapture()
+        let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
+        translateQuickPanel.toggle(audioRecorder: audioRecorder, initialText: captured?.text)
     }
 
     /// Manual trigger from menubar.
@@ -596,7 +729,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Manual trigger for the Translate Quick Panel from menubar.
     @objc func triggerTranslatePanel() {
-        translateQuickPanel.toggle(audioRecorder: audioRecorder)
+        Task { @MainActor in
+            await toggleTranslatePanel()
+        }
     }
 
     /// Permission-free demo entry used by the Welcome wizard's "Try Tippi" button.

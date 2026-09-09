@@ -22,3 +22,18 @@ ignore:
   - rule: R-5F5C6
     paths:
       - "Tippi/UI/SettingsView.swift"
+
+  # ── R-F7958 · "Veraltete API-Version" auf OpenRouter-Endpoint ──────────────
+  # Gemeldet auf `https://openrouter.ai/api/v1/chat/completions` in
+  # OpenRouterProvider.swift:22. Die Regel flaggt pauschal jedes "/v0/" oder
+  # "/v1/" in einer URL als potenziell veraltet.
+  #
+  # Das ist hier kein Legacy-Pfad, sondern OpenRouters aktuelle, stabile
+  # API-Version — es gibt keine v2, "v1" ist der permanente, dokumentierte
+  # Namespace. Derselbe Fehlalarm würde auch OpenAIProvider.swift treffen
+  # (`https://api.openai.com/v1/chat/completions`, siehe dort Zeile 17) —
+  # exakt dasselbe Muster, exakt derselbe aktuelle Endpoint.
+  # Analysiert 2026-09-09.
+  - rule: R-F7958
+    paths:
+      - "Tippi/LLM/OpenRouterProvider.swift"

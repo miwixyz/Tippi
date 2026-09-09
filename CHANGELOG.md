@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.0] — 2026-09-09
+
+### Added
+- **Text Snippets — Espanso-style live-typing expansion, built in.** Type a trigger anywhere on the Mac (`:mlg`, `:nl`, …) and it expands instantly, no hotkey needed. Reads real Espanso match files (`~/Library/Application Support/espanso/match/*.yml`) directly — existing setups migrate with zero file changes. Simple triggers can also be created right in Settings → Snippets, no YAML required. Dynamic values (today's date, a weekday this week ± N days, the current calendar week) are built with an "Insert Variable" picker — no shell syntax ever typed or shown. Every match file, not just ones using shell commands, needs one-time approval before its triggers go live, so nothing with write access to the watched folder can silently redefine an existing trigger.
+- **Auto-popup on text selection (PopClip-style).** Select text in any app and the local quick-actions bar appears right next to it automatically — off by default (Settings → General). Position is configurable (below/above/left/right) and auto-flips to the opposite side when the preferred one doesn't fit, so it never has to collide with another app's own selection popup (Safari's "Look Up", Pages' formatting bar). A Translate icon opens the Translate Quick Panel with the selection pre-filled.
+- **Translate Quick Panel: source/target language pickers.** Previously fixed to auto-detected German ⇄ Spanish only; now a proper source/target pair (German, English, Spanish, French, Japanese) with a one-click swap button, and the hotkey/menu trigger pre-fills the panel with whatever's currently selected instead of always starting empty.
+- **"Convert umlauts" local action**, plus the existing Underscore/Hyphenate actions now transliterate umlauts (ä→ae, ö→oe, ü→ue, ß→ss) before joining words — a filename/URL candidate like "Über uns" now correctly becomes "Ueber_uns", not "Über_uns".
+- **Help tab restructured**: 19 entries grouped into 7 collapsible categories with a live search field, instead of one long scroll. New "Hilfe…"/"Help…" menu-bar item jumps straight to it.
+
+### Fixed
+- **A hanging shell command in a snippet's dynamic variable could permanently disable snippet expansion.** `Process.waitUntilExit()` had no timeout — a command that never returns (blocked on stdin, an unreachable network call, an infinite loop) left the keystroke engine's re-entrancy guard stuck `true` forever. Shell variables now hard-timeout at 5s; the guard also gained a `defer` as a second line of defense.
+- **Espanso's real default config path is usually a symlink** (into a dotfiles repo, a synced vault, …) — `FileManager.contentsOfDirectory(at:)` silently returned an empty list through one instead of following it, so imported snippets never loaded with zero error trace. Now resolves symlinks first and logs a real error if listing still fails.
+
+### Security
+- Every Espanso match file — not only ones with `type: shell` vars — now needs one-time approval before its triggers go live (content-hash-gated, re-prompts if the file changes later). Originally only shell-containing files were gated; a plain text-only file could otherwise have silently redefined an existing trigger the moment anything else with write access to the watched folder dropped one there.
+- Dynamic snippet variables built via the in-app picker never expose or accept raw shell syntax — Tippi generates the underlying command from a fixed, reviewed template (weekday + offset + format), so they skip the file-approval gate entirely: there's no externally-authored command to review.
+- Pre-release audit (`code-audit --deep` + `rafter run`): one Rafter finding (`R-F7958`, "deprecated API version" on OpenRouter's `/v1/` endpoint) verified as a false positive and documented in `.rafter.yml` — `/v1/` is OpenRouter's current, stable namespace, same pattern as the existing OpenAI provider.
+
 ## [1.24.2] — 2026-09-04
 
 ### Fixed

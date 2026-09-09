@@ -32,7 +32,9 @@ That's it. That's the product.
 
 - **24 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Add emojis · Defuse · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
 - **Type or speak a free-form instruction** — select text, then type ("reply to this email", "translate to Spanish") or speak it; Tippi applies it via AI directly
-- **Translate Quick Panel** — press ⌥⌘L anywhere (no text selected) for a Spotlight-style window: type or speak, get an instant German ⇄ Spanish translation, and hear it read aloud with a natural voice. Voice input runs on-device; speech output is offline
+- **Text Snippets (v2.0)** — type a trigger anywhere and it expands instantly, no hotkey; reads real Espanso match files directly, or create simple ones in Settings. Dynamic date/weekday values via a picker, no shell syntax
+- **Auto-popup on text selection (v2.0)** — PopClip-style quick-actions bar that appears next to any selection, position configurable, off by default
+- **Translate Quick Panel** — press ⌥⌘L anywhere: pre-fills with your current selection if there is one, otherwise type/paste/speak. Source/target language pickers (DE/EN/ES/FR/JA) with a swap button, natural voice read-aloud. Voice input runs on-device; speech output is offline
 - **Streaming preview & iterative refine** — the result streams in token by token, then refine it in place ("shorter", "more formal") before replacing
 - **Custom prompts** with `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables that adapt to context at trigger time
 - **Voice input** — push-to-talk dictation with Whisper or Parakeet running fully on-device (no audio leaves your Mac); optionally mutes your Mac's system audio for the duration of the recording

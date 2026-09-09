@@ -24,6 +24,16 @@ fetched from Hugging Face on first use.
 The default dictation engine remains whisper.cpp (bundled). Parakeet is opt-in
 under Settings → Voice → Speech engine.
 
+## Yams — YAML parsing (text snippets)
+
+Tippi's text-snippet engine reads Espanso match files (`~/Library/Application
+Support/espanso/match/*.yml`) directly, so existing Espanso configurations
+work without any conversion step. Yams is linked as a Swift package
+dependency for that YAML parsing.
+
+- **Source:** https://github.com/jpsim/Yams
+- **License:** MIT
+
 ## Blitztext App — "Defuse" and "Add emojis" mode prompts
 
 - **Source repository:** https://github.com/cmagnussen/blitztext-app

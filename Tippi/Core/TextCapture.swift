@@ -95,6 +95,44 @@ enum TextCapture {
         return (focused, range)
     }
 
+    /// On-screen bounds of a selection range, for positioning the selection
+    /// action bar next to it. Returns AppKit screen coordinates (origin
+    /// bottom-left, Y increasing upward) — `kAXBoundsForRangeParameterizedAttribute`
+    /// itself reports Quartz/AX coordinates (origin top-left, Y increasing
+    /// downward, relative to the primary screen), so this converts before
+    /// returning. Not every app implements this parameterized attribute
+    /// (same class of app as the ones that don't expose `kAXValueAttribute`
+    /// for writes, per `TextInsertion`'s comments) — nil means "no bounds
+    /// available", the caller falls back to the mouse position instead.
+    static func boundsForSelection(element: AXUIElement, range: CFRange) -> CGRect? {
+        guard AXIsProcessTrusted() else { return nil }
+        var mutableRange = range
+        guard let axRange = AXValueCreate(.cfRange, &mutableRange) else { return nil }
+
+        var boundsRef: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element,
+            kAXBoundsForRangeParameterizedAttribute as CFString,
+            axRange,
+            &boundsRef
+        ) == .success, let boundsValue = boundsRef, CFGetTypeID(boundsValue) == AXValueGetTypeID() else {
+            return nil
+        }
+
+        var axRect = CGRect.zero
+        guard AXValueGetValue(boundsValue as! AXValue, .cgRect, &axRect) else { return nil }
+
+        // AX/Quartz coordinates are anchored to the primary screen's top-left
+        // corner, Y growing downward. `NSScreen.screens[0]` is always that
+        // primary screen (the one the coordinate system originates from),
+        // regardless of which physical display is "main" for window
+        // placement — using its height is what makes this conversion correct
+        // across multi-monitor setups, not just the single-display case.
+        guard let primaryScreenHeight = NSScreen.screens.first?.frame.height else { return nil }
+        let flippedY = primaryScreenHeight - axRect.origin.y - axRect.height
+        return CGRect(x: axRect.origin.x, y: flippedY, width: axRect.width, height: axRect.height)
+    }
+
     private static func resolvedSourceApp(_ sourceApp: NSRunningApplication?) -> NSRunningApplication? {
         if let sourceApp, sourceApp.bundleIdentifier != Bundle.main.bundleIdentifier {
             return sourceApp
@@ -188,7 +226,11 @@ enum TextCapture {
         return nil
     }
 
-    private static func selectedText(from element: AXUIElement) -> String? {
+    /// Reads the selected text directly off a specific element — used when
+    /// the caller already has a live `(element, range)` pair (from
+    /// `captureFocusedSelectionRange`) and doesn't need the broader
+    /// app-wide search `captureSelectedText` does.
+    static func selectedText(from element: AXUIElement) -> String? {
         if let direct = copyStringAttribute(element, kAXSelectedTextAttribute as CFString),
            !direct.isEmpty {
             return direct

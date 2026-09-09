@@ -26,22 +26,25 @@ final class TranslateQuickPanel {
     /// Opens the panel, or closes it if already open (toggle — same feel as
     /// Spotlight when you press its hotkey a second time). `audioRecorder`
     /// (the app-wide shared instance) powers the in-panel mic button; pass
-    /// nil to disable voice input.
-    func toggle(audioRecorder: AudioRecorder?) {
+    /// nil to disable voice input. `initialText` pre-fills the input field —
+    /// the caller captures the current selection (if any) before calling
+    /// this, so it's already known by the time the panel opens.
+    func toggle(audioRecorder: AudioRecorder?, initialText: String? = nil) {
         if isOpen {
             close()
         } else {
-            show(audioRecorder: audioRecorder)
+            show(audioRecorder: audioRecorder, initialText: initialText)
         }
     }
 
-    private func show(audioRecorder: AudioRecorder?) {
+    private func show(audioRecorder: AudioRecorder?, initialText: String?) {
         guard panel == nil else { return }
         self.audioRecorder = audioRecorder
 
         let view = TranslateQuickView(
             onClose: { [weak self] in self?.close() },
-            audioRecorder: audioRecorder
+            audioRecorder: audioRecorder,
+            initialText: initialText ?? ""
         )
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = [.intrinsicContentSize]

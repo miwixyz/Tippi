@@ -1,17 +1,31 @@
 import SwiftUI
 
-/// Spotlight-style "type text, get translation" view. Auto-detects German ⇄
-/// Spanish and translates to the other one — no language picker. Type or
-/// speak the input (mic button), read or hear the result (speaker button).
-/// Result is shown for manual copy only (⌘C or the Copy button); nothing is
-/// inserted or copied automatically.
+/// Spotlight-style "type text, get translation" view. Source/target language
+/// pickers at the top (source defaults to auto-detect, target to whatever
+/// was last used — persisted in `TranslateSettings`), with a swap button to
+/// flip direction in one click. Type or speak the input (mic button), read
+/// or hear the result (speaker button). Result is shown for manual copy
+/// only (⌘C or the Copy button); nothing is inserted or copied automatically.
 struct TranslateQuickView: View {
     let onClose: () -> Void
     /// Shared recorder (same instance dictation uses) for the mic button.
     /// nil disables voice input (e.g. if wiring is unavailable).
     let audioRecorder: AudioRecorder?
 
-    @State private var input = ""
+    @State private var input: String
+    @State private var sourceLanguage: TranslateLanguage = TranslateSettings.sourceLanguage
+    @State private var targetLanguage: TranslateLanguage = TranslateSettings.targetLanguage
+
+    /// `initialText` pre-fills the field from whatever was selected in the
+    /// source app at trigger time (empty if nothing was selected) — matches
+    /// the main hotkey's "acts on your selection" behavior, while still
+    /// supporting manual typing/pasting/dictation when there's nothing to
+    /// carry over.
+    init(onClose: @escaping () -> Void, audioRecorder: AudioRecorder?, initialText: String = "") {
+        self.onClose = onClose
+        self.audioRecorder = audioRecorder
+        self._input = State(initialValue: initialText)
+    }
     @State private var state: ViewState = .idle
     @State private var voice: VoiceState = .idle
     @State private var task: Task<Void, Never>?
@@ -34,6 +48,7 @@ struct TranslateQuickView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            languageRow
             inputRow
             if state != .idle {
                 Divider()
@@ -64,6 +79,54 @@ struct TranslateQuickView: View {
             if audioRecorder?.isRecording == true { _ = audioRecorder?.stop() }
             speech.stop()
         }
+        .onChange(of: sourceLanguage) { _, new in TranslateSettings.sourceLanguage = new }
+        .onChange(of: targetLanguage) { _, new in TranslateSettings.targetLanguage = new }
+    }
+
+    // MARK: - Language row
+
+    private var languageRow: some View {
+        HStack(spacing: 8) {
+            Picker("", selection: $sourceLanguage) {
+                ForEach(TranslateLanguage.allCases) { lang in
+                    Text(lang.displayName).tag(lang)
+                }
+            }
+            .labelsHidden()
+            .frame(maxWidth: 150)
+
+            Button(action: swapLanguages) {
+                Image(systemName: "arrow.left.arrow.right")
+                    .font(.system(size: 13))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(sourceLanguage == .auto ? Color.secondary.opacity(0.35) : Color.secondary)
+            .disabled(sourceLanguage == .auto)
+            .help(String(localized: "translate.panel.swap"))
+
+            Picker("", selection: $targetLanguage) {
+                ForEach(TranslateLanguage.targetOptions) { lang in
+                    Text(lang.displayName).tag(lang)
+                }
+            }
+            .labelsHidden()
+            .frame(maxWidth: 150)
+
+            Spacer()
+        }
+        .font(.system(size: 12))
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+    }
+
+    /// Only meaningful when the source is a concrete language — "auto" has
+    /// nothing definite to move into the target slot, and target must never
+    /// become "auto" (see `TranslateLanguage.targetOptions`).
+    private func swapLanguages() {
+        guard sourceLanguage != .auto else { return }
+        let oldSource = sourceLanguage
+        sourceLanguage = targetLanguage
+        targetLanguage = oldSource
     }
 
     // MARK: - Input row
@@ -191,7 +254,7 @@ struct TranslateQuickView: View {
         task = Task {
             do {
                 let result = try await LLMRouter.shared.complete(
-                    systemPrompt: TranslateSettings.systemPrompt,
+                    systemPrompt: TranslateSettings.systemPrompt(source: sourceLanguage, target: targetLanguage),
                     userText: text
                 )
                 guard !Task.isCancelled else { return }

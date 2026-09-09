@@ -3,26 +3,48 @@ import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
+    @State private var selection: SettingsTab = .general
+    @ObservedObject private var navigation = SettingsNavigation.shared
+
     var body: some View {
-        TabView {
+        TabView(selection: $selection) {
             GeneralSettingsTab()
+                .tag(SettingsTab.general)
                 .tabItem { Label(String(localized: "settings.tab.general"), systemImage: "gear") }
             HotkeysTab()
+                .tag(SettingsTab.hotkeys)
                 .tabItem { Label(String(localized: "settings.tab.hotkeys"), systemImage: "command") }
             ProvidersTab()
+                .tag(SettingsTab.providers)
                 .tabItem { Label(String(localized: "settings.tab.providers"), systemImage: "key") }
             PromptsTab()
+                .tag(SettingsTab.prompts)
                 .tabItem { Label(String(localized: "settings.tab.prompts"), systemImage: "text.bubble") }
+            SnippetsTab()
+                .tag(SettingsTab.snippets)
+                .tabItem { Label(String(localized: "settings.tab.snippets"), systemImage: "text.badge.checkmark") }
             VoiceTab()
+                .tag(SettingsTab.voice)
                 .tabItem { Label(String(localized: "settings.tab.voice"), systemImage: "mic") }
             HistoryTab()
+                .tag(SettingsTab.history)
                 .tabItem { Label(String(localized: "settings.tab.history"), systemImage: "clock.arrow.circlepath") }
             HelpTab()
+                .tag(SettingsTab.help)
                 .tabItem { Label(String(localized: "settings.tab.help"), systemImage: "questionmark.circle") }
             AboutTab()
+                .tag(SettingsTab.about)
                 .tabItem { Label(String(localized: "settings.tab.about"), systemImage: "info.circle") }
         }
         .frame(width: 640, height: 580)
+        // The Settings window is created once and just reordered front on
+        // repeat opens (AppDelegate.showSettingsWindow), so `.onAppear`
+        // alone would miss a second "jump to Help" request — this fires on
+        // every new request regardless of window lifecycle.
+        .onReceive(navigation.$pendingTab.compactMap { $0 }) { tab in
+            selection = tab
+            navigation.pendingTab = nil
+        }
     }
 }
 
@@ -33,6 +55,8 @@ private struct GeneralSettingsTab: View {
     @State private var autostartStatus: String = ""
     @State private var autostartIsError = false
     @AppStorage(LocalQuickActionSettings.showActionsKey) private var showLocalQuickActions: Bool = true
+    @AppStorage(SelectionPopupSettings.enabledKey) private var selectionPopupEnabled: Bool = false
+    @State private var selectionPopupPosition: SelectionPopupPosition = SelectionPopupSettings.position
 
     var body: some View {
         Form {
@@ -53,6 +77,28 @@ private struct GeneralSettingsTab: View {
                 Text(String(localized: "settings.general.localActions.hint"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle(String(localized: "settings.general.selectionPopup"), isOn: $selectionPopupEnabled)
+                    .onChange(of: selectionPopupEnabled) { _, _ in
+                        (NSApp.delegate as? AppDelegate)?.restartSelectionPopupEngine()
+                    }
+                Text(String(localized: "settings.general.selectionPopup.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if selectionPopupEnabled {
+                    Picker(String(localized: "settings.general.selectionPopup.position"), selection: $selectionPopupPosition) {
+                        Text(String(localized: "settings.general.selectionPopup.position.below")).tag(SelectionPopupPosition.below)
+                        Text(String(localized: "settings.general.selectionPopup.position.above")).tag(SelectionPopupPosition.above)
+                        Text(String(localized: "settings.general.selectionPopup.position.right")).tag(SelectionPopupPosition.right)
+                        Text(String(localized: "settings.general.selectionPopup.position.left")).tag(SelectionPopupPosition.left)
+                    }
+                    .onChange(of: selectionPopupPosition) { _, new in
+                        SelectionPopupSettings.position = new
+                    }
+                }
             }
         }
         .padding(24)
@@ -1259,104 +1305,172 @@ private struct PromptEditor: View {
 
 // MARK: - Help
 
+/// Groups a help entry under a category — pure data, no view logic, so the
+/// 19-and-growing list of entries stays one flat, readable declaration
+/// instead of view code, while `HelpTab` handles grouping/search/collapse.
+private struct HelpEntry: Identifiable {
+    let id: String // the title's localization key — stable, unique, no UUID churn on re-render
+    let icon: String
+    let category: HelpCategory
+    let title: String
+    let body: String
+}
+
+private enum HelpCategory: String, CaseIterable, Hashable {
+    case gettingStarted, automation, snippets, providers, voice, misc, troubleshooting
+
+    var title: String {
+        switch self {
+        case .gettingStarted: return String(localized: "settings.help.category.gettingStarted")
+        case .automation: return String(localized: "settings.help.category.automation")
+        case .snippets: return String(localized: "settings.help.category.snippets")
+        case .providers: return String(localized: "settings.help.category.providers")
+        case .voice: return String(localized: "settings.help.category.voice")
+        case .misc: return String(localized: "settings.help.category.misc")
+        case .troubleshooting: return String(localized: "settings.help.category.troubleshooting")
+        }
+    }
+}
+
+private struct HelpGroup: Identifiable {
+    let id: HelpCategory
+    let entries: [HelpEntry]
+}
+
 private struct HelpTab: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                helpSection(
-                    icon: "star.circle",
-                    title: String(localized: "settings.help.whatsNewTitle"),
-                    body: String(localized: "settings.help.whatsNewBody")
-                )
-                helpSection(
-                    icon: "cursorarrow.rays",
-                    title: String(localized: "settings.help.howTitle"),
-                    body: String(localized: "settings.help.howBody")
-                )
-                helpSection(
-                    icon: "keyboard",
-                    title: String(localized: "settings.help.instructTitle"),
-                    body: String(localized: "settings.help.instructBody")
-                )
-                helpSection(
-                    icon: "sparkles",
-                    title: String(localized: "settings.help.previewTitle"),
-                    body: String(localized: "settings.help.previewBody")
-                )
-                helpSection(
-                    icon: "text.bubble",
-                    title: String(localized: "settings.help.promptsTitle"),
-                    body: String(localized: "settings.help.promptsBody")
-                )
-                helpSection(
-                    icon: "arrow.right.circle",
-                    title: String(localized: "settings.help.chainsTitle"),
-                    body: String(localized: "settings.help.chainsBody")
-                )
-                helpSection(
-                    icon: "bolt",
-                    title: String(localized: "settings.help.localActionsTitle"),
-                    body: String(localized: "settings.help.localActionsBody")
-                )
-                helpSection(
-                    icon: "curlybraces",
-                    title: String(localized: "settings.help.variablesTitle"),
-                    body: String(localized: "settings.help.variablesBody")
-                )
-                helpSection(
-                    icon: "square.and.arrow.up.on.square",
-                    title: String(localized: "settings.help.importExportTitle"),
-                    body: String(localized: "settings.help.importExportBody")
-                )
-                helpSection(
-                    icon: "key",
-                    title: String(localized: "settings.help.apiTitle"),
-                    body: String(localized: "settings.help.apiBody")
-                )
-                helpSection(
-                    icon: "wand.and.stars.inverse",
-                    title: String(localized: "settings.help.pickModelTitle"),
-                    body: String(localized: "settings.help.pickModelBody")
-                )
-                helpSection(
-                    icon: "cpu",
-                    title: String(localized: "settings.help.mlxTitle"),
-                    body: String(localized: "settings.help.mlxBody")
-                )
-                helpSection(
-                    icon: "exclamationmark.triangle",
-                    title: String(localized: "settings.help.troubleTitle"),
-                    body: String(localized: "settings.help.troubleBody")
-                )
-                helpSection(
-                    icon: "mic",
-                    title: String(localized: "settings.help.voiceTitle"),
-                    body: String(localized: "settings.help.voiceBody")
-                )
-                helpSection(
-                    icon: "character.bubble",
-                    title: String(localized: "settings.help.translateTitle"),
-                    body: String(localized: "settings.help.translateBody")
-                )
-                helpSection(
-                    icon: "magnifyingglass",
-                    title: String(localized: "settings.help.commandPaletteTitle"),
-                    body: String(localized: "settings.help.commandPaletteBody")
-                )
-                helpSection(
-                    icon: "clock.arrow.circlepath",
-                    title: String(localized: "settings.help.historyTitle"),
-                    body: String(localized: "settings.help.historyBody")
-                )
-                helpSection(
-                    icon: "link",
-                    title: String(localized: "settings.help.linksTitle"),
-                    body: String(localized: "settings.help.linksBody")
-                )
+    @State private var searchText = ""
+    @State private var manuallyExpanded: Set<HelpCategory> = Set(HelpCategory.allCases)
+
+    // Built once per key path, not per body-render — a `static let` avoids
+    // reconstructing 19 localized strings (and the `String(localized:)`
+    // lookups behind them) on every keystroke while typing a search term.
+    private static let allEntries: [HelpEntry] = [
+        HelpEntry(id: "whatsNew", icon: "star.circle", category: .gettingStarted,
+                  title: String(localized: "settings.help.whatsNewTitle"), body: String(localized: "settings.help.whatsNewBody")),
+        HelpEntry(id: "how", icon: "cursorarrow.rays", category: .gettingStarted,
+                  title: String(localized: "settings.help.howTitle"), body: String(localized: "settings.help.howBody")),
+        HelpEntry(id: "instruct", icon: "keyboard", category: .gettingStarted,
+                  title: String(localized: "settings.help.instructTitle"), body: String(localized: "settings.help.instructBody")),
+
+        HelpEntry(id: "preview", icon: "sparkles", category: .automation,
+                  title: String(localized: "settings.help.previewTitle"), body: String(localized: "settings.help.previewBody")),
+        HelpEntry(id: "prompts", icon: "text.bubble", category: .automation,
+                  title: String(localized: "settings.help.promptsTitle"), body: String(localized: "settings.help.promptsBody")),
+        HelpEntry(id: "chains", icon: "arrow.right.circle", category: .automation,
+                  title: String(localized: "settings.help.chainsTitle"), body: String(localized: "settings.help.chainsBody")),
+        HelpEntry(id: "localActions", icon: "bolt", category: .automation,
+                  title: String(localized: "settings.help.localActionsTitle"), body: String(localized: "settings.help.localActionsBody")),
+        HelpEntry(id: "selectionPopup", icon: "rectangle.and.hand.point.up.left", category: .automation,
+                  title: String(localized: "settings.help.selectionPopupTitle"), body: String(localized: "settings.help.selectionPopupBody")),
+        HelpEntry(id: "variables", icon: "curlybraces", category: .automation,
+                  title: String(localized: "settings.help.variablesTitle"), body: String(localized: "settings.help.variablesBody")),
+        HelpEntry(id: "importExport", icon: "square.and.arrow.up.on.square", category: .automation,
+                  title: String(localized: "settings.help.importExportTitle"), body: String(localized: "settings.help.importExportBody")),
+        HelpEntry(id: "commandPalette", icon: "magnifyingglass", category: .automation,
+                  title: String(localized: "settings.help.commandPaletteTitle"), body: String(localized: "settings.help.commandPaletteBody")),
+
+        HelpEntry(id: "snippets", icon: "text.badge.checkmark", category: .snippets,
+                  title: String(localized: "settings.help.snippetsTitle"), body: String(localized: "settings.help.snippetsBody")),
+
+        HelpEntry(id: "api", icon: "key", category: .providers,
+                  title: String(localized: "settings.help.apiTitle"), body: String(localized: "settings.help.apiBody")),
+        HelpEntry(id: "pickModel", icon: "wand.and.stars.inverse", category: .providers,
+                  title: String(localized: "settings.help.pickModelTitle"), body: String(localized: "settings.help.pickModelBody")),
+        HelpEntry(id: "mlx", icon: "cpu", category: .providers,
+                  title: String(localized: "settings.help.mlxTitle"), body: String(localized: "settings.help.mlxBody")),
+
+        HelpEntry(id: "voice", icon: "mic", category: .voice,
+                  title: String(localized: "settings.help.voiceTitle"), body: String(localized: "settings.help.voiceBody")),
+        HelpEntry(id: "translate", icon: "character.bubble", category: .voice,
+                  title: String(localized: "settings.help.translateTitle"), body: String(localized: "settings.help.translateBody")),
+
+        HelpEntry(id: "history", icon: "clock.arrow.circlepath", category: .misc,
+                  title: String(localized: "settings.help.historyTitle"), body: String(localized: "settings.help.historyBody")),
+        HelpEntry(id: "links", icon: "link", category: .misc,
+                  title: String(localized: "settings.help.linksTitle"), body: String(localized: "settings.help.linksBody")),
+
+        HelpEntry(id: "trouble", icon: "exclamationmark.triangle", category: .troubleshooting,
+                  title: String(localized: "settings.help.troubleTitle"), body: String(localized: "settings.help.troubleBody")),
+    ]
+
+    private var groups: [HelpGroup] {
+        let matching = searchText.isEmpty
+            ? Self.allEntries
+            : Self.allEntries.filter {
+                $0.title.localizedCaseInsensitiveContains(searchText) ||
+                $0.body.localizedCaseInsensitiveContains(searchText)
             }
-            .padding(24)
+        let byCategory = Dictionary(grouping: matching, by: \.category)
+        return HelpCategory.allCases.compactMap { category in
+            guard let entries = byCategory[category], !entries.isEmpty else { return nil }
+            return HelpGroup(id: category, entries: entries)
+        }
+    }
+
+    private func isExpanded(_ category: HelpCategory) -> Binding<Bool> {
+        Binding(
+            // While searching, every category with a match is forced open —
+            // a collapsed section hiding the very result you searched for
+            // would defeat the point. Clearing the search restores whatever
+            // the user had manually expanded/collapsed before.
+            get: { !searchText.isEmpty || manuallyExpanded.contains(category) },
+            set: { expanded in
+                if expanded { manuallyExpanded.insert(category) } else { manuallyExpanded.remove(category) }
+            }
+        )
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            searchField
+            if groups.isEmpty {
+                Spacer()
+                Text(String(localized: "settings.help.noResults"))
+                    .foregroundStyle(.secondary)
+                Spacer()
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(groups) { group in
+                            DisclosureGroup(isExpanded: isExpanded(group.id)) {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    ForEach(group.entries) { entry in
+                                        helpSection(icon: entry.icon, title: entry.title, body: entry.body)
+                                    }
+                                }
+                                .padding(.top, 8)
+                            } label: {
+                                Text(group.id.title).font(.title3).fontWeight(.semibold)
+                            }
+                        }
+                    }
+                    .padding(24)
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+            TextField(String(localized: "settings.help.searchPlaceholder"), text: $searchText)
+                .textFieldStyle(.plain)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+            }
+        }
+        .padding(8)
+        .background(Color.gray.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding([.horizontal, .top], 16)
+        .padding(.bottom, 8)
     }
 
     private func helpSection(icon: String, title: String, body: String) -> some View {
