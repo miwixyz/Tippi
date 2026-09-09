@@ -775,7 +775,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let sourceApp = resolvedSourceAppForCapture()
         let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
-        translateQuickPanel.toggle(audioRecorder: audioRecorder, initialText: captured?.text)
+
+        // Grab the focused element + range while the selection is still live —
+        // opening the panel collapses it, and without these the write back has
+        // to fall back to a blind ⌘V at the cursor.
+        let selection = sourceApp.flatMap { TextCapture.captureFocusedSelectionRange(in: $0) }
+
+        // Replace is only offered when there was actually something selected.
+        var onReplace: ((String) -> Void)?
+        if let captured, !captured.text.isEmpty {
+            onReplace = { [weak self] translated in
+                Task { @MainActor in
+                    await self?.replaceTranslationSource(
+                        translated,
+                        original: captured.text,
+                        app: captured.sourceApp,
+                        element: selection?.element,
+                        range: selection?.range
+                    )
+                }
+            }
+        }
+
+        translateQuickPanel.toggle(
+            audioRecorder: audioRecorder,
+            initialText: captured?.text,
+            onReplace: onReplace
+        )
+    }
+
+    /// Writes a translation back over the text it came from, using the same
+    /// three-way AX/clipboard ladder as the popup's local quick actions —
+    /// `replaceViaElement` first (works cross-app without activating), then a
+    /// clipboard paste when an Electron/Chromium app silently ignores the AX
+    /// write, then a plain selection replace when AX isn't usable at all.
+    private func replaceTranslationSource(
+        _ text: String,
+        original: String,
+        app: NSRunningApplication?,
+        element: AXUIElement?,
+        range: CFRange?
+    ) async {
+        if let element, let range {
+            switch TextInsertion.replaceViaElement(element, range: range, with: text, expecting: original) {
+            case .replaced:
+                break
+            case .ignored:
+                await TextInsertion.insertViaClipboard(text, into: app)
+            case .unavailable:
+                await TextInsertion.replace(with: text, in: app)
+            }
+        } else {
+            await TextInsertion.replace(with: text, in: app)
+        }
+        ToastWindowController.shared.show(message: String(localized: "translate.panel.replaced"))
     }
 
     /// Manual trigger from menubar.

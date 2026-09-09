@@ -19,6 +19,16 @@ final class TranslateQuickPanel {
     private var globalMouseMonitor: Any?
     private var resignKeyObserver: NSObjectProtocol?
     private var appearanceObserver: NSObjectProtocol?
+    private var resizeObserver: NSObjectProtocol?
+    /// Screen y-coordinate of the panel's top edge, pinned at open.
+    ///
+    /// The panel's height follows its content (the result area appears after
+    /// translating, and the input field grows with multi-line text). macOS
+    /// positions windows from their *bottom* left, so a growing panel would
+    /// otherwise push its top edge upward and appear to jump away from where
+    /// the user is looking. Re-anchoring on every resize keeps the top still
+    /// and lets it extend downward instead.
+    private var anchoredTopY: CGFloat?
     private weak var audioRecorder: AudioRecorder?
 
     var isOpen: Bool { panel != nil }
@@ -29,22 +39,40 @@ final class TranslateQuickPanel {
     /// nil to disable voice input. `initialText` pre-fills the input field —
     /// the caller captures the current selection (if any) before calling
     /// this, so it's already known by the time the panel opens.
-    func toggle(audioRecorder: AudioRecorder?, initialText: String? = nil) {
+    /// `onReplace` writes the translation back over the selection the panel was
+    /// opened on; pass nil when there was none, and the Replace button is
+    /// hidden. The panel closes itself before handing the text over, so the
+    /// target app has focus back by the time the write lands.
+    func toggle(
+        audioRecorder: AudioRecorder?,
+        initialText: String? = nil,
+        onReplace: ((String) -> Void)? = nil
+    ) {
         if isOpen {
             close()
         } else {
-            show(audioRecorder: audioRecorder, initialText: initialText)
+            show(audioRecorder: audioRecorder, initialText: initialText, onReplace: onReplace)
         }
     }
 
-    private func show(audioRecorder: AudioRecorder?, initialText: String?) {
+    private func show(
+        audioRecorder: AudioRecorder?,
+        initialText: String?,
+        onReplace: ((String) -> Void)?
+    ) {
         guard panel == nil else { return }
         self.audioRecorder = audioRecorder
 
         let view = TranslateQuickView(
             onClose: { [weak self] in self?.close() },
             audioRecorder: audioRecorder,
-            initialText: initialText ?? ""
+            initialText: initialText ?? "",
+            onReplace: onReplace.map { handler in
+                { [weak self] text in
+                    self?.close()
+                    handler(text)
+                }
+            }
         )
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = [.intrinsicContentSize]
@@ -80,6 +108,19 @@ final class TranslateQuickPanel {
         }
 
         self.panel = panel
+        anchoredTopY = panel.frame.maxY
+        resizeObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResizeNotification,
+            object: panel,
+            queue: .main
+        ) { [weak self, weak panel] _ in
+            Task { @MainActor in
+                guard let self, let panel, let topY = self.anchoredTopY else { return }
+                let frame = panel.frame
+                guard abs(frame.maxY - topY) > 0.5 else { return }
+                panel.setFrameOrigin(NSPoint(x: frame.origin.x, y: topY - frame.height))
+            }
+        }
 
         // Close on click outside — same mechanism as PromptPopupController,
         // NOT an NSWindowDelegate callback (windowDidResignKey fired
@@ -139,6 +180,11 @@ final class TranslateQuickPanel {
             DistributedNotificationCenter.default().removeObserver(observer)
             appearanceObserver = nil
         }
+        if let observer = resizeObserver {
+            NotificationCenter.default.removeObserver(observer)
+            resizeObserver = nil
+        }
+        anchoredTopY = nil
         panel?.orderOut(nil)
         panel = nil
         // Stop any in-flight recording so the shared recorder is free for

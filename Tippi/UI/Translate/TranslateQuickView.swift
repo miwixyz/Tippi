@@ -11,6 +11,10 @@ struct TranslateQuickView: View {
     /// Shared recorder (same instance dictation uses) for the mic button.
     /// nil disables voice input (e.g. if wiring is unavailable).
     let audioRecorder: AudioRecorder?
+    /// Writes the translation back over the text that was selected when the
+    /// panel opened. nil when the panel was opened without a selection — the
+    /// Replace button is then hidden rather than shown doing nothing.
+    let onReplace: ((String) -> Void)?
 
     @State private var input: String
     @State private var sourceLanguage: TranslateLanguage = TranslateSettings.sourceLanguage
@@ -21,9 +25,15 @@ struct TranslateQuickView: View {
     /// the main hotkey's "acts on your selection" behavior, while still
     /// supporting manual typing/pasting/dictation when there's nothing to
     /// carry over.
-    init(onClose: @escaping () -> Void, audioRecorder: AudioRecorder?, initialText: String = "") {
+    init(
+        onClose: @escaping () -> Void,
+        audioRecorder: AudioRecorder?,
+        initialText: String = "",
+        onReplace: ((String) -> Void)? = nil
+    ) {
         self.onClose = onClose
         self.audioRecorder = audioRecorder
+        self.onReplace = onReplace
         self._input = State(initialValue: initialText)
     }
     @State private var state: ViewState = .idle
@@ -54,9 +64,15 @@ struct TranslateQuickView: View {
                 Divider()
                 resultArea
             }
-            Spacer(minLength: 0)
         }
-        .frame(width: 560, height: 260, alignment: .top)
+        // Height is content-driven, not fixed. It used to be a hard 260pt from
+        // when this panel was only ever typed into by hand; since v2.0.0 it
+        // pre-fills with the current selection, so multi-paragraph input is the
+        // normal case and a fixed box clipped both the input and the result.
+        // `NSHostingController.sizingOptions = [.intrinsicContentSize]` on the
+        // panel side makes the window follow this.
+        .frame(width: 560)
+        .fixedSize(horizontal: false, vertical: true)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -132,19 +148,28 @@ struct TranslateQuickView: View {
     // MARK: - Input row
 
     private var inputRow: some View {
-        HStack(spacing: 10) {
+        HStack(alignment: .top, spacing: 10) {
             Image(systemName: "character.bubble")
                 .font(.system(size: 18))
                 .foregroundStyle(.tint)
-            TextField(String(localized: "translate.panel.placeholder"), text: $input)
+                .padding(.top, 2)
+            // `axis: .vertical` + a line range: a single-line TextField holding
+            // multi-paragraph text rendered its overflow outside the field's
+            // own bounds, bleeding over the result area below it. Grows to 6
+            // lines, scrolls internally beyond that.
+            TextField(String(localized: "translate.panel.placeholder"), text: $input, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: 18))
+                .lineLimit(1...6)
                 .focused($inputFocused)
+                // Return translates; ⌥Return inserts a newline, so long input
+                // can still be edited by hand.
                 .onSubmit { translate() }
 
             if state == .loading || voice == .transcribing {
                 ProgressView()
                     .controlSize(.small)
+                    .padding(.top, 2)
             }
 
             micButton
@@ -197,10 +222,17 @@ struct TranslateQuickView: View {
 
         case .result(let text, let providerDisplay):
             VStack(alignment: .leading, spacing: 10) {
-                Text(text)
-                    .font(.system(size: 16))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                // Scrolls instead of clipping: a translated paragraph is often
+                // longer than its source, and the result used to be cut off at
+                // the panel's old fixed height with no way to see the rest.
+                ScrollView {
+                    Text(text)
+                        .font(.system(size: 16))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 220)
+                .fixedSize(horizontal: false, vertical: true)
 
                 HStack {
                     Text(providerDisplay)
@@ -227,6 +259,22 @@ struct TranslateQuickView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .keyboardShortcut("c", modifiers: .command)
+                    // Only present when the panel was opened on a real
+                    // selection — with hand-typed input there is nothing in
+                    // another app to replace, and a dead button would be worse
+                    // than none.
+                    if let onReplace {
+                        Button {
+                            onReplace(text)
+                        } label: {
+                            Label(String(localized: "translate.panel.replace"),
+                                  systemImage: "arrow.left.arrow.right.square")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .keyboardShortcut(.return, modifiers: .command)
+                        .help(String(localized: "translate.panel.replace.help"))
+                    }
                 }
             }
             .padding(16)
