@@ -51,7 +51,7 @@ struct SelectionActionBarView: View {
         }
         .padding(.horizontal, 10)
         .frame(width: Self.width, height: Self.height)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .tippiGlass(in: RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 1)

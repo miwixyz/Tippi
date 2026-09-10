@@ -151,7 +151,7 @@ private struct EmojiSuggestionView: View {
         }
         .padding(4)
         .frame(width: 260, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .tippiGlass(in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)

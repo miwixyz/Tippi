@@ -111,7 +111,7 @@ struct PromptPopupView: View {
             }
         }
         .frame(width: 290)
-        .background(.regularMaterial)
+        .tippiGlass()
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)

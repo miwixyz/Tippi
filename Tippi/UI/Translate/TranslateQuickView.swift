@@ -73,7 +73,7 @@ struct TranslateQuickView: View {
         // panel side makes the window follow this.
         .frame(width: 560)
         .fixedSize(horizontal: false, vertical: true)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .tippiGlass(in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 1)

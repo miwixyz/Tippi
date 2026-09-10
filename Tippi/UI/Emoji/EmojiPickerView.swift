@@ -29,7 +29,7 @@ struct EmojiPickerView: View {
             footer
         }
         .frame(width: 380)
-        .background(.regularMaterial)
+        .tippiGlass()
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
