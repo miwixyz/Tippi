@@ -12,6 +12,8 @@ enum DictationSettings {
     private static let postProcessPromptKey     = "dictation.postProcess.prompt"
     private static let postProcessProviderKey   = "dictation.postProcess.providerOverride"
     private static let postProcessModelKey      = "dictation.postProcess.modelOverride"
+    private static let modeKey                   = "dictation.inputMode.v1"
+    private static let tapOrHoldModifierKey      = "dictation.tapOrHold.modifier.v1"
 
     /// Below this many characters Tippi skips the LLM polish entirely —
     /// short utterances ("ja", "ok", "Hallo, wie geht's?") don't benefit
@@ -73,6 +75,43 @@ enum DictationSettings {
     static var isEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+    }
+
+    /// How the dictation hot key behaves.
+    enum InputMode: String, CaseIterable, Identifiable {
+        /// Classic key combination, one press toggles recording. Stays the
+        /// default so existing installs keep the hot key they configured.
+        case combo
+        /// One modifier key: a short tap toggles, holding records while held.
+        case tapOrHold
+        var id: String { rawValue }
+    }
+
+    /// Separates a tap from a hold. 250 ms sits comfortably above a deliberate
+    /// tap and below what anyone perceives as "I am holding this key down".
+    static let holdThresholdMs = 250
+
+    /// Safety limit for the hold gesture. A physically stuck key — or a release
+    /// event lost because another app grabbed the tap — would otherwise record
+    /// forever and quietly fill the disk.
+    static let maxHoldSeconds: TimeInterval = 300
+
+    static var mode: InputMode {
+        get {
+            guard let raw = UserDefaults.standard.string(forKey: modeKey),
+                  let mode = InputMode(rawValue: raw) else { return .combo }
+            return mode
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: modeKey) }
+    }
+
+    static var tapOrHoldModifier: ModifierKey {
+        get {
+            guard let raw = UserDefaults.standard.string(forKey: tapOrHoldModifierKey),
+                  let mod = ModifierKey(rawValue: raw) else { return .rightShift }
+            return mod
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: tapOrHoldModifierKey) }
     }
 
     static var combo: KeyCombo {
@@ -173,6 +212,11 @@ final class DictationController: ObservableObject {
     /// hotkey press during `.transcribing` can cancel it.
     private var transcriptionTask: Task<Void, Never>?
 
+    /// Stops a hold that never got a release event (stuck key, or the release
+    /// swallowed while another app owned the event tap). Without this, "record
+    /// while held" can mean "record until the disk is full".
+    private var holdWatchdog: Timer?
+
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion. A press while
     /// transcription is running cancels it.
@@ -186,6 +230,40 @@ final class DictationController: ObservableObject {
             NSLog("Tippi: dictation cancel requested")
             transcriptionTask?.cancel()
         }
+    }
+
+    /// Starts recording for the hold gesture. Deliberately a no-op unless idle:
+    /// a duplicate `.holdBegan` must never stack a second recorder onto the same
+    /// audio hardware.
+    func beginHoldRecording() async {
+        guard case .idle = state else { return }
+        await start()
+        // Only arm the watchdog if recording actually began — `start()` returns
+        // without recording when the mic permission is denied.
+        guard case .recording = state else { return }
+        holdWatchdog?.invalidate()
+        holdWatchdog = Timer.scheduledTimer(
+            withTimeInterval: DictationSettings.maxHoldSeconds,
+            repeats: false
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, case .recording(let url) = self.state else { return }
+                NSLog("Tippi: dictation hold exceeded \(Int(DictationSettings.maxHoldSeconds))s — stopping (stuck key?)")
+                ToastWindowController.shared.show(message: String(localized: "dictation.toast.holdTimeout"))
+                self.beginTranscription(wavURL: url, targetApp: nil)
+            }
+        }
+    }
+
+    /// Ends the hold gesture and transcribes. No-op unless recording, so a
+    /// release without a matching press cannot fire anything.
+    func endHoldRecording(targetApp: NSRunningApplication?) {
+        guard case .recording(let url) = state else {
+            holdWatchdog?.invalidate()
+            holdWatchdog = nil
+            return
+        }
+        beginTranscription(wavURL: url, targetApp: targetApp)
     }
 
     // MARK: - Private
@@ -229,6 +307,9 @@ final class DictationController: ObservableObject {
     }
 
     private func beginTranscription(wavURL: URL, targetApp: NSRunningApplication?) {
+        // Central exit from `.recording` — covers tap-toggle, hold release and watchdog.
+        holdWatchdog?.invalidate()
+        holdWatchdog = nil
         recorder.stop()
         state = .transcribing
         RecordingIndicatorWindowController.shared.show(

@@ -361,37 +361,62 @@ Bei jedem `xcodebuild` ohne stabile Code-Signatur ändert sich die Designated Re
 
 **Symptom, das nicht danach aussieht** (2026-09-09): `xcodebuild test` bricht nach ~5 Minuten mit `The test runner hung before establishing connection` ab, ohne dass ein einziger Test läuft. Ursache ist dieselbe — der Test-Host *ist* die App, und sie registriert beim Start Event-Taps und globale Monitore; fehlt der TCC-Grant für die ad-hoc signierte Debug-Binary, blockiert der Start, bevor der Runner sich verbinden kann. Es sieht aus wie ein kaputter Testfall, ist aber keiner. Vorgehen: erst `git stash` und gegen den zuletzt grünen Stand testen — hängt der auch, liegt es nicht am Code. Am nächsten Tag lief dieselbe Suite unverändert grün durch (121 Tests).
 
-### 8.2 NSEvent global monitor + selbst-signierte Builds
+### 8.2 Diktat-Geste „antippen oder halten" — nur manuell testbar
+
+Der `.tapOrHold`-Modus (Settings → Voice → Diktat, Einzeltaste, Standard rechte
+Umschalttaste) liegt hinter einem `CGEventTap` plus `Timer` in
+`HotkeyManager.handleFlagsChanged`. Die **Timing-Logik** — drücken → Schwelle →
+`holdBegan` → loslassen → `holdEnded` — lässt sich ohne Extraktion in einen reinen
+Typ nicht aus einem Unit-Test heraus antreiben. `DictationInputModeTests` deckt
+deshalb nur die persistierte Hälfte ab (Defaults, Round-Trip, Rückwärtskompatibilität
+gespeicherter Hotkeys).
+
+**Manuelle Testfälle vor jedem Release, das diesen Pfad anfasst:**
+
+1. Rechte Umschalttaste **antippen** → Aufnahme startet · erneut antippen → Text wird eingefügt
+2. Rechte Umschalttaste **halten** → Aufnahme startet nach ~250 ms · loslassen → Text wird eingefügt
+3. Sehr kurzer Tipper (< 250 ms) darf **nicht** als Halten zählen
+4. Moduswechsel in den Einstellungen während einer laufenden Aufnahme → kein hängender Recorder
+5. Umschalten auf „Tastenkombination" und zurück → Hotkey bleibt in beiden Richtungen funktionsfähig
+   (`HotkeyManager.update(trigger:)` muss den zum **neuen** Trigger passenden Callback
+   restaurieren — wird nur `onTrigger` gerettet, ist der Hotkey scheinbar registriert und tut nichts)
+
+**Bekannte Grenze:** Sind beide Umschalttasten gleichzeitig gedrückt und man lässt nur
+eine los, bleibt `maskShift` gesetzt — das Loslassen wird nicht erkannt. Gleiche Schwäche
+hat der bestehende `.hold`-Pfad; der Fünf-Minuten-Wächter in `DictationController`
+fängt den Extremfall ab.
+
+### 8.3 NSEvent global monitor + selbst-signierte Builds
 
 `NSEvent.addGlobalMonitorForEvents` gibt für selbst-signierte Builds manchmal non-nil zurück, liefert aber keine Events. Symptom: `isActive == true` aber Hotkey feuert nie.
 
 **Workaround:** Settings → Hotkeys → „macOS-Tastatur-Einstellungen öffnen". Nutzer bindet die Tastenkombi via macOS System Settings → Keyboard → Keyboard Shortcuts → App Shortcuts → Menütitel `Tippi auslösen…` an Tippi. macOS feuert dann direkt den Menüpunkt. Mit korrekt signierter Version funktioniert der in-App-Recorder.
 
-### 8.3 Apple Developer Account & Nachfolge
+### 8.4 Apple Developer Account & Nachfolge
 
 Sensible Daten (Apple ID, Team ID) ausschließlich in `release.env` (gitignored) — nicht in Code, Docs oder Commits, da das Repo public ist.
 
 Bei Verlängerung jährlich automatisch. **Wenn Account ausläuft**: keine neuen Versionen signierbar, alte Versionen funktionieren weiter (eingefroren). Nutzer bekommen keine Warnungen.
 
-### 8.4 macOS-Versions-Inkompatibilität
+### 8.5 macOS-Versions-Inkompatibilität
 
 `onKeyPress`, `SMAppService`, `ScrollView` mit dem aktuellen Styling und `LocalizedStringResource` brauchen macOS 14+. Min-Target ist 15.0. Bei Bedarf auf 14.0 senken via `project.yml` → `deploymentTarget`.
 
-### 8.5 Sandbox
+### 8.6 Sandbox
 
 Tippi läuft **außerhalb der Sandbox** (`com.apple.security.app-sandbox` = false in entitlements). Erforderlich für cross-app Text-Capture. Bedeutet: **kein** Mac App Store-Vertrieb möglich, ausschließlich Direkt-Distribution via Developer ID.
 
-### 8.6 PreviewWindowController — isOpen-Bug (v1.1.7, kritisch, behoben)
+### 8.7 PreviewWindowController — isOpen-Bug (v1.1.7, kritisch, behoben)
 
 **Problem:** `PreviewWindowController` hatte keinen `NSWindowDelegate`. Der rote X-Button schloss das Fenster, ohne `window = nil` zu setzen. Folge: `isOpen` blieb `true`, jeder weitere `handleTriggered`-Aufruf wurde geblockt — Tippi scheinbar eingefroren.
 
 **Fix:** `CloseDelegate: NSWindowDelegate` implementiert, auf `window.delegate` verdrahtet. `windowWillClose` setzt `window = nil` + ruft Cancel-Callback auf.
 
-### 8.7 `head -n -1` auf macOS (BSD head)
+### 8.8 `head -n -1` auf macOS (BSD head)
 
 BSD `head` unterstützt keine negativen Zeilenzahlen (`head -n -1` = "alle außer die letzte Zeile" in GNU head). In `scripts/release.sh` durch `awk 'NR>1{print prev} {prev=$0}'` ersetzt.
 
-### 8.8 Dark / Light Mode — Design-Entscheidungen
+### 8.9 Dark / Light Mode — Design-Entscheidungen
 
 Die App ist vollständig Dark/Light-Mode-konform:
 
@@ -402,15 +427,15 @@ Die App ist vollständig Dark/Light-Mode-konform:
 
 **Stolperstein beim Auswahlzustand im Popup:** Wenn eine Zeile ausgewählt ist (AccentColor-Hintergrund), muss der Text ablesbar bleiben. Statt `Color.white` (hardcoded) wird `Color(nsColor: .selectedMenuItemTextColor)` verwendet — der macOS-Systemtoken für Text auf einem ausgewählten Menüelement. Aktuell weiß, aber semantisch korrekt und zukunftssicher gegen Theme-Änderungen.
 
-### 8.8 whisper-cli Ausgabe-Pfad
+### 8.10 whisper-cli Ausgabe-Pfad
 
 `whisper-cli --output-txt` schreibt die Ausgabe als `<inputfile>.wav.txt` (nicht `<inputfile>.txt`). `WhisperTranscriber` liest daher explizit den `.wav.txt`-Sidecar. Nicht verwechseln — stilles Fehlschlagen wenn falscher Pfad.
 
-### 8.9 Sparkle Build-Nummer war hardcoded `1`
+### 8.11 Sparkle Build-Nummer war hardcoded `1`
 
 In früheren Builds war `CURRENT_PROJECT_VERSION` hardcoded `1` in `project.yml`. Updates wurden nie ausgeliefert, weil Sparkle keine höhere Build-Nummer sah. Fix: Build-Nummer per `git rev-list --count HEAD` dynamisch in `release.sh` gesetzt.
 
-### 8.10 Sparkle DMG-Hosting
+### 8.12 Sparkle DMG-Hosting
 
 Gist kann keine Binaries liefern (HTTP 406 / Redirect). Daher: GitHub Releases als Hosting. `generate_appcast` mit `--download-url-prefix https://github.com/miwixyz/Tippi/releases/download/v<version>/` aufrufen.
 

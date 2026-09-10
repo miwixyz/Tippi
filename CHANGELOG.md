@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Dictation on a single key: tap to toggle, hold to talk.** Settings → Voice → Dictation now offers a second hot key style next to the classic key combination: one modifier key, right Shift by default. Tapping it starts and stops recording exactly as before; holding it records only while you keep it down and inserts on release. Both gestures share one key, so short dictations no longer need a two-handed combination — your hand simply stays put.
+- The key combination style remains the default, so nobody's configured hot key changes on update. Any of the eight modifier keys can be chosen for the single-key style.
+
+### Notes
+- A hold that never receives a release event — a physically stuck key, or a release swallowed while another app owned the event tap — stops itself after five minutes. "Record while held" must not be able to mean "record until the disk is full".
+- Implemented on the existing `flagsChanged` event tap rather than a new key-down/key-up tap. Modifier keys report both press and release through that tap already, which is why this landed far below the original estimate — but it also means the gesture only works with modifier keys, not with ordinary letters.
+- The gesture timing itself (press → threshold → hold → release) is covered by manual testing, not unit tests: it lives behind a CGEventTap and a Timer. The persisted half — defaults, round-tripping, and backwards compatibility of previously saved hot keys — is unit-tested.
+
 ## [2.1.0] — 2026-09-09
 
 ### Added

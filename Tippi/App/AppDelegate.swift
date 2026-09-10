@@ -710,25 +710,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let combo = DictationSettings.combo
-        var flags: UInt32 = 0
-        let m = combo.modifiers
-        if m.contains(.command) { flags |= UInt32(cmdKey) }
-        if m.contains(.option)  { flags |= UInt32(optionKey) }
-        if m.contains(.control) { flags |= UInt32(controlKey) }
-        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+        switch DictationSettings.mode {
+        case .combo:
+            let combo = DictationSettings.combo
+            var flags: UInt32 = 0
+            let m = combo.modifiers
+            if m.contains(.command) { flags |= UInt32(cmdKey) }
+            if m.contains(.option)  { flags |= UInt32(optionKey) }
+            if m.contains(.control) { flags |= UInt32(controlKey) }
+            if m.contains(.shift)   { flags |= UInt32(shiftKey) }
 
-        dictationHotkeyManager.update(
-            trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
-        )
-        dictationHotkeyManager.start { [weak self] in
-            guard let self else { return }
-            Task { @MainActor in
-                let target = self.resolvedSourceAppForCapture()
-                await self.dictationController.toggle(targetApp: target)
+            dictationHotkeyManager.update(
+                trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
+            )
+            dictationHotkeyManager.start { [weak self] in
+                guard let self else { return }
+                Task { @MainActor in
+                    let target = self.resolvedSourceAppForCapture()
+                    await self.dictationController.toggle(targetApp: target)
+                }
             }
+            NSLog("Tippi: dictation hot key registered (\(combo.displayString))")
+
+        case .tapOrHold:
+            let modifier = DictationSettings.tapOrHoldModifier
+            dictationHotkeyManager.update(
+                trigger: .tapOrHold(
+                    modifier: modifier,
+                    holdThresholdMs: DictationSettings.holdThresholdMs
+                )
+            )
+            dictationHotkeyManager.start { [weak self] event in
+                guard let self else { return }
+                Task { @MainActor in
+                    // Resolved per event: the hold gesture keeps the user in the
+                    // same app, and the tap path needs the app that was frontmost
+                    // when the key fired.
+                    let target = self.resolvedSourceAppForCapture()
+                    switch event {
+                    case .tap:
+                        await self.dictationController.toggle(targetApp: target)
+                    case .holdBegan:
+                        await self.dictationController.beginHoldRecording()
+                    case .holdEnded:
+                        self.dictationController.endHoldRecording(targetApp: target)
+                    }
+                }
+            }
+            NSLog("Tippi: dictation hot key registered (tap or hold \(modifier.displayName))")
         }
-        NSLog("Tippi: dictation hot key registered (\(combo.displayString))")
     }
 
     /// (Re)registers the Translate Quick Panel hot key. Call after the

@@ -2,6 +2,15 @@ import AppKit
 import Carbon
 import CoreGraphics
 
+/// What a `.tapOrHold` trigger reports. Split out because dictation needs to
+/// distinguish "toggle" from "record only while held" — a single fire-and-forget
+/// callback cannot express the release half of a hold.
+enum HotkeyEvent {
+    case tap
+    case holdBegan
+    case holdEnded
+}
+
 @MainActor
 final class HotkeyManager: ObservableObject {
     @Published private(set) var isActive: Bool = false
@@ -10,6 +19,10 @@ final class HotkeyManager: ObservableObject {
 
     private(set) var currentTrigger: HotkeyTrigger
     private var onTrigger: (@MainActor () -> Void)?
+    private var onEvent: (@MainActor (HotkeyEvent) -> Void)?
+    /// True between `.holdBegan` and `.holdEnded`, so the release knows whether
+    /// it ends a hold or counts as a tap.
+    private var holdInProgress = false
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -41,7 +54,28 @@ final class HotkeyManager: ObservableObject {
             startEventTap()
         case .combo(let keyCode, let flags):
             registerCarbonHotKey(keyCode: keyCode, modifierFlags: flags)
+        case .tapOrHold:
+            // Never fail silently: this trigger carries three distinct events and
+            // cannot be squeezed into a single onTrigger callback.
+            lastError = "A .tapOrHold trigger must be started with start(onEvent:)."
+            NSLog("Tippi: \(lastError ?? "")")
         }
+    }
+
+    /// Starts a `.tapOrHold` trigger. Separate from `start(onTrigger:)` because
+    /// this one reports three events instead of one; the existing callers keep
+    /// working untouched.
+    func start(onEvent: @escaping @MainActor (HotkeyEvent) -> Void) {
+        guard !isActive else { return }
+        self.onEvent = onEvent
+        lastError = nil
+
+        guard case .tapOrHold = currentTrigger else {
+            lastError = "start(onEvent:) requires a .tapOrHold trigger."
+            NSLog("Tippi: \(lastError ?? "")")
+            return
+        }
+        startEventTap()
     }
 
     func stop() {
@@ -49,15 +83,29 @@ final class HotkeyManager: ObservableObject {
         unregisterCarbonHotKey()
         holdTimer?.invalidate()
         holdTimer = nil
+        holdInProgress = false
         isActive = false
+        // Deliberately NOT clearing onTrigger/onEvent: update(trigger:) restores
+        // them across a stop/start cycle. `isActive` is what an in-flight timer
+        // hop checks, so a stale callback can no longer fire on its own.
     }
 
     func update(trigger: HotkeyTrigger) {
         let wasActive = isActive
         let handler = onTrigger
+        let eventHandler = onEvent
         if wasActive { stop() }
         self.currentTrigger = trigger
-        if wasActive, let handler { start(onTrigger: handler) }
+        guard wasActive else { return }
+        // Restart on the path that matches the NEW trigger, not the old one.
+        // Restoring only `onTrigger` here would silently drop the callback when
+        // switching to or from .tapOrHold — the hot key would look registered
+        // and do nothing.
+        if case .tapOrHold = trigger {
+            if let eventHandler { start(onEvent: eventHandler) }
+        } else if let handler {
+            start(onTrigger: handler)
+        }
     }
 
     fileprivate func fireTrigger() {
@@ -164,6 +212,39 @@ final class HotkeyManager: ObservableObject {
 
         case .combo:
             return // handled by Carbon
+
+        case .tapOrHold(let modifier, let holdThresholdMs):
+            guard keyCode == modifier.keyCode else { return }
+            let pressed = isModifierPressed(group: modifier, flags: flags)
+            if pressed {
+                // Ignore repeat/duplicate press events while a gesture is running.
+                guard holdTimer == nil, !holdInProgress else { return }
+                holdTimer = Timer.scheduledTimer(
+                    withTimeInterval: Double(holdThresholdMs) / 1000.0,
+                    repeats: false
+                ) { [weak self] _ in
+                    Task { @MainActor in
+                        // The timer fires off-MainActor and hops here, so `stop()`
+                        // can land in between: dictation switched off, mode changed,
+                        // engine no longer ready. Without these guards the hop would
+                        // still open the microphone AFTER the hot key was torn down.
+                        guard let self, self.isActive else { return }
+                        guard case .tapOrHold = self.currentTrigger else { return }
+                        self.holdTimer = nil
+                        self.holdInProgress = true
+                        self.onEvent?(.holdBegan)
+                    }
+                }
+            } else {
+                holdTimer?.invalidate()
+                holdTimer = nil
+                if holdInProgress {
+                    holdInProgress = false
+                    onEvent?(.holdEnded)
+                } else {
+                    onEvent?(.tap)
+                }
+            }
         }
     }
 

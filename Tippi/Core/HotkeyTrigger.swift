@@ -44,6 +44,11 @@ enum HotkeyTrigger: Codable, Equatable {
     case doubleTap(modifier: ModifierKey, thresholdMs: Int)
     case hold(modifier: ModifierKey, durationMs: Int)
     case combo(keyCode: UInt32, carbonModifierFlags: UInt32)
+    /// One modifier key that carries both dictation gestures: a short tap
+    /// toggles recording on/off, holding it records only while held.
+    /// `holdThresholdMs` is what separates the two — below it the release is a
+    /// tap, above it the press already started a hold.
+    case tapOrHold(modifier: ModifierKey, holdThresholdMs: Int)
 
     static let `default`: HotkeyTrigger = .doubleTap(modifier: .rightOption, thresholdMs: 300)
 
@@ -55,6 +60,8 @@ enum HotkeyTrigger: Codable, Equatable {
             return "Hold \(mod.displayName) for \(ms) ms"
         case .combo:
             return "Custom key combo"
+        case .tapOrHold(let mod, _):
+            return "Tap or hold \(mod.displayName)"
         }
     }
 }

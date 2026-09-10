@@ -1617,6 +1617,8 @@ private struct VoiceTab: View {
     @State private var muteSystemAudio: Bool = AudioRecorder.muteSystemAudioDuringRecording
     @State private var dictationEnabled: Bool = DictationSettings.isEnabled
     @State private var dictationCombo: KeyCombo = DictationSettings.combo
+    @State private var dictationMode: DictationSettings.InputMode = DictationSettings.mode
+    @State private var dictationTapOrHoldModifier: ModifierKey = DictationSettings.tapOrHoldModifier
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
@@ -1756,11 +1758,41 @@ private struct VoiceTab: View {
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
-                    HotkeyRecorderField(combo: $dictationCombo)
-                        .onChange(of: dictationCombo) { _, new in
-                            DictationSettings.combo = new
+                    Picker(String(localized: "settings.voice.dictation.mode.label"),
+                           selection: $dictationMode) {
+                        Text(String(localized: "settings.voice.dictation.mode.combo"))
+                            .tag(DictationSettings.InputMode.combo)
+                        Text(String(localized: "settings.voice.dictation.mode.tapOrHold"))
+                            .tag(DictationSettings.InputMode.tapOrHold)
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: dictationMode) { _, new in
+                        DictationSettings.mode = new
+                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                    }
+
+                    if dictationMode == .combo {
+                        HotkeyRecorderField(combo: $dictationCombo)
+                            .onChange(of: dictationCombo) { _, new in
+                                DictationSettings.combo = new
+                                (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                            }
+                    } else {
+                        Picker(String(localized: "settings.voice.dictation.mode.modifier"),
+                               selection: $dictationTapOrHoldModifier) {
+                            ForEach(ModifierKey.allCases) { mod in
+                                Text(mod.displayName).tag(mod)
+                            }
+                        }
+                        .onChange(of: dictationTapOrHoldModifier) { _, new in
+                            DictationSettings.tapOrHoldModifier = new
                             (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
                         }
+
+                        Text(String(localized: "settings.voice.dictation.mode.tapOrHold.body"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
 
                     Divider().padding(.vertical, 4)
 
