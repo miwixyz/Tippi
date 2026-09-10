@@ -1,0 +1,422 @@
+#!/bin/bash
+# Tippi release pipeline: build → sign → notarize → DMG → ready for GitHub.
+#
+# Required env vars (or release.env in repo root):
+#   DEVELOPER_ID         "Developer ID Application: Michael Wildenauer (LTKJ6Z2VYB)"
+#   NOTARY_PROFILE       Keychain profile name for notarytool (default: tippi-notary)
+#
+# VERSION is always read from project.yml MARKETING_VERSION (single source of truth
+# since 2026-06-02). Bump it via: ./scripts/bump-version.sh X.Y.Z
+#
+# Setup notarytool profile once with:
+#   xcrun notarytool store-credentials tippi-notary \
+#       --apple-id miwimail@icloud.com \
+#       --team-id LTKJ6Z2VYB \
+#       --password <app-specific-password>
+#
+# Real values live in the Keychain (TIPPI_DEVELOPER_ID / TIPPI_NOTARY_PROFILE),
+# read via keys.sh below. Team ID is LTKJ6Z2VYB — matches every shipped build
+# since 1.12.x. (Header previously showed 54PMA7GFAN, which was never used.)
+
+set -euo pipefail
+
+# release.env (gitignored) optionally provides DEVELOPER_ID / NOTARY_PROFILE.
+# It must NOT carry VERSION — project.yml is the single source of truth.
+if [ -f release.env ]; then
+    # shellcheck disable=SC1091
+    set -a; source release.env; set +a
+    if [ -n "${VERSION:-}" ]; then
+        echo "✗ release.env still defines VERSION. Remove that line — project.yml is the single source of truth."
+        echo "  Bump via: ./scripts/bump-version.sh X.Y.Z"
+        exit 1
+    fi
+fi
+
+# ─── Keychain-Fallback (Migration 2026-05-17) ─────────────────────────────────
+# Wenn release.env die Vars nicht gesetzt hat: macOS Keychain konsultieren.
+# Doku: ~/MWs2ndBrain/04 Ressourcen/KI-Wissen/API-Keys – Inventory.md
+KEYS_SH="$HOME/MWs2ndBrain/04 Ressourcen/KI-Wissen/keys.sh"
+if [ -x "$KEYS_SH" ]; then
+    DEVELOPER_ID="${DEVELOPER_ID:-$(bash "$KEYS_SH" get TIPPI_DEVELOPER_ID 2>/dev/null || true)}"
+    NOTARY_PROFILE="${NOTARY_PROFILE:-$(bash "$KEYS_SH" get TIPPI_NOTARY_PROFILE 2>/dev/null || true)}"
+fi
+
+VERSION="$(awk -F'"' '/MARKETING_VERSION:/ { print $2; exit }' project.yml)"
+APP_NAME="Tippi"
+BUNDLE_ID="com.tippi.app"
+APP_BUNDLE="${APP_NAME}.app"
+BUILD_DIR="./build/Build/Products/Release"
+DIST_DIR="./dist"
+DEVELOPER_ID="${DEVELOPER_ID:-}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-tippi-notary}"
+
+if [ -z "${DEVELOPER_ID}" ]; then
+    echo "✗ DEVELOPER_ID not set. Add to release.env, export it, or store in Keychain (TIPPI_DEVELOPER_ID)."
+    echo "  Example: DEVELOPER_ID='Developer ID Application: Michael Wildenauer (54PMA7GFAN)'"
+    exit 1
+fi
+if [ -z "${VERSION}" ]; then
+    echo "✗ MARKETING_VERSION could not be read from project.yml."
+    echo "  Bump via: ./scripts/bump-version.sh X.Y.Z"
+    exit 1
+fi
+
+echo "▶ Tippi release pipeline"
+echo "  Version:     ${VERSION}"
+echo "  Signing:     ${DEVELOPER_ID}"
+echo "  Notary:      ${NOTARY_PROFILE}"
+# BUILD_NUMBER is set later (after git rev-list), printed during build step
+echo ""
+
+# CHANGELOG sanity: fail fast if release notes for this version are missing or
+# still contain the placeholder stub from bump-version.sh. Mirrors Hex's
+# "changesets fail-fast" pattern — releases must carry real notes.
+echo "▶ [CHANGELOG] Verifying release notes for ${VERSION}..."
+if [ ! -f CHANGELOG.md ]; then
+    echo "  ✗ CHANGELOG.md not found in repo root."
+    exit 1
+fi
+if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+    echo "  ✗ No '## [${VERSION}]' section in CHANGELOG.md."
+    echo "    Run: ./scripts/bump-version.sh ${VERSION}   (stamps the header stub)"
+    exit 1
+fi
+CHANGELOG_BODY="$(awk "/^## \[${VERSION}\]/{found=1;next} found && /^## \[/{exit} found{print}" CHANGELOG.md)"
+# Strip whitespace + blank lines for the emptiness check.
+CHANGELOG_CONTENT="$(echo "${CHANGELOG_BODY}" | sed '/^[[:space:]]*$/d')"
+if [ -z "${CHANGELOG_CONTENT}" ]; then
+    echo "  ✗ '## [${VERSION}]' section in CHANGELOG.md is empty."
+    echo "    Add release notes before running ./scripts/release.sh."
+    exit 1
+fi
+# Block the bump-version.sh placeholder stub. If the only content of the
+# section is "- _Add release notes here._", the section was never filled in.
+if [ "$(echo "${CHANGELOG_CONTENT}" | wc -l | tr -d ' ')" = "1" ] && \
+   echo "${CHANGELOG_CONTENT}" | grep -qE '^[[:space:]]*-[[:space:]]*_Add release notes here\._[[:space:]]*$'; then
+    echo "  ✗ '## [${VERSION}]' still contains the bump-version.sh placeholder ('_Add release notes here._')."
+    echo "    Write the actual release notes in CHANGELOG.md before running ./scripts/release.sh."
+    exit 1
+fi
+echo "  ✓ Release notes present ($(echo "${CHANGELOG_CONTENT}" | wc -l | tr -d ' ') lines)"
+echo ""
+
+# ─── DOCUMENTATION COMPLETENESS GATE ───────────────────────────────────────────
+# Added 2026-09-01, direct instruction after v1.20.0 shipped with a real
+# user-facing feature (system-audio mute) that was never mentioned in
+# README.md, docs/ONE-PAGER.md, the website, or the in-app "What's New" —
+# it took a separate explicit ask to catch and backfill it in v1.20.1/.2.
+# "Always" means a script checks it, not that a future session remembers to.
+#
+# Hard-gated (grep-able facts): does README.md and both in-app Help strings
+# mention this version at all. NOT proof the prose is good — just proof
+# nobody forgot to touch them. A generic multi-line reminder covers the
+# things that can't be auto-verified (ONE-PAGER, website, other Help
+# sections) — those need a human/agent judgment call on whether this
+# release touches them.
+echo "▶ [CHANGELOG] Documentation completeness check..."
+EN_STRINGS_DOC="Tippi/Resources/en.lproj/Localizable.strings"
+DE_STRINGS_DOC="Tippi/Resources/de.lproj/Localizable.strings"
+DOC_ERRORS=0
+if ! grep -q "v${VERSION}" README.md; then
+    echo "  ✗ README.md doesn't mention v${VERSION} anywhere (e.g. the Roadmap table)."
+    DOC_ERRORS=1
+fi
+if ! grep -q "v${VERSION}" "${EN_STRINGS_DOC}"; then
+    echo "  ✗ EN Localizable.strings doesn't mention v${VERSION} (settings.help.whatsNewBody)."
+    DOC_ERRORS=1
+fi
+if ! grep -q "v${VERSION}" "${DE_STRINGS_DOC}"; then
+    echo "  ✗ DE Localizable.strings doesn't mention v${VERSION} (settings.help.whatsNewBody)."
+    DOC_ERRORS=1
+fi
+if [ "${DOC_ERRORS}" -ne 0 ]; then
+    echo ""
+    echo "✗ Documentation is incomplete for v${VERSION} — refusing to release."
+    echo "  Add v${VERSION} to README.md's Roadmap table and to settings.help.whatsNewBody"
+    echo "  in BOTH Localizable.strings files before running ./scripts/release.sh."
+    exit 1
+fi
+echo "  ✓ v${VERSION} mentioned in README.md + in-app Help (both languages)"
+
+# Generated emoji database must match its generator. Without this, a hand-edited
+# or half-regenerated emoji-data.json ships silently — the app would still build
+# and run, just with a database nobody can reproduce from the pinned sources.
+if [ -f scripts/generate-emoji-data.py ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 scripts/generate-emoji-data.py --check >/dev/null 2>&1; then
+            echo "  ✓ emoji-data.json matches generate-emoji-data.py (pinned Unicode sources)"
+        else
+            echo "  ✗ emoji-data.json is stale or hand-edited."
+            echo "    Run: python3 scripts/generate-emoji-data.py"
+            exit 1
+        fi
+    else
+        # Never skip a gate silently — say so and let the human decide.
+        echo "  ⚠ python3 not found — could NOT verify emoji-data.json is current."
+    fi
+fi
+
+# Markdown/HTML docs must match the code. The in-app Help drift check below covers
+# Localizable.strings; this one covers README, ARCHITECTURE, CLAUDE.md, HANDOVER,
+# ONE-PAGER, index.html and pitch.html — the files that used to be "confirm by hand".
+# They were confirmed by hand for five releases and were wrong the whole time.
+if [ -f scripts/docs-drift-check.sh ]; then
+    if bash scripts/docs-drift-check.sh; then
+        :
+    else
+        rc=$?
+        if [ "${rc}" -eq 2 ]; then
+            echo "  ✗ docs-drift-check.sh could not parse the code (its own bug, not a docs bug)."
+            echo "    Fix the parser before releasing — do NOT treat this as 'no drift'."
+        else
+            echo "  ✗ Documentation contradicts the code. Update the docs, not the code."
+        fi
+        exit 1
+    fi
+else
+    # Never skip a gate silently.
+    echo "  ⚠ scripts/docs-drift-check.sh missing — Markdown/HTML docs NOT verified."
+fi
+
+echo "  ⚠ Not auto-checkable — confirm by hand before continuing if this release"
+echo "    touches user-facing behavior: in-app Help sections beyond What's New"
+echo "    (e.g. feature-specific bodies), and CONTRIBUTING.md if the dev workflow"
+echo "    itself changed. (Doc *numbers* and versions are now gated automatically.)"
+echo ""
+
+# ─── PRE-FLIGHT: Git sync check ───────────────────────────────────────────────
+# Prevent the Zwei-Mac disaster: a make-release on a stale local branch
+# would build successfully, push the DMG to GitHub, and then fail git push
+# (non-fast-forward) — having silently overwritten a release from the other Mac.
+# We check BEFORE building so the failure is fast and nothing is uploaded.
+echo "▶ [Pre-flight] Git sync check..."
+git fetch origin --quiet 2>/dev/null || { echo "  ⚠ git fetch failed — check network. Continuing anyway."; }
+
+# Check branch divergence (ahead/behind/diverged relative to origin).
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+LOCAL_HEAD=$(git rev-parse HEAD)
+REMOTE_HEAD=$(git rev-parse "origin/${CURRENT_BRANCH}" 2>/dev/null || echo "")
+MERGE_BASE=$(git merge-base HEAD "origin/${CURRENT_BRANCH}" 2>/dev/null || echo "")
+
+if [ -z "${REMOTE_HEAD}" ]; then
+    echo "  ⚠ Could not resolve remote branch. No upstream sync check possible."
+elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" = "${REMOTE_HEAD}" ]; then
+    echo "  ✗ ABORT: local branch is AHEAD of origin/${CURRENT_BRANCH} — bump-commit not pushed."
+    echo "    gh release create tags the REMOTE HEAD, not local HEAD — the release would be"
+    echo "    built from stale code (root cause of the v1.10.3 / v1.11.0 wrong-tag incidents)."
+    echo "    Fix: git push, then re-run make release."
+    exit 1
+elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" = "${LOCAL_HEAD}" ]; then
+    echo "  ✗ ABORT: local branch is BEHIND origin/${CURRENT_BRANCH}."
+    echo "    The other Mac has commits you don't have. Run: git pull --rebase"
+    echo "    Then re-run make release."
+    exit 1
+elif [ "${LOCAL_HEAD}" != "${REMOTE_HEAD}" ] && [ "${MERGE_BASE}" != "${LOCAL_HEAD}" ] && [ "${MERGE_BASE}" != "${REMOTE_HEAD}" ]; then
+    echo "  ✗ ABORT: local branch has DIVERGED from origin."
+    echo "    Local and remote have independent commits. Resolve manually before releasing."
+    echo "    Hint: git log --oneline HEAD...origin/main  (shows divergence)"
+    exit 1
+else
+    echo "  ✓ Branch in sync with origin."
+fi
+
+# Check if the release tag for this version already exists on remote.
+# If it does, that tag belongs to the other Mac's release — we must not clobber.
+EXISTING_REMOTE_TAG=$(git ls-remote --tags origin "refs/tags/v${VERSION}" 2>/dev/null | awk '{print $1}')
+if [ -n "${EXISTING_REMOTE_TAG}" ]; then
+    # Allow re-release only if the existing remote tag points to our commit or its parent.
+    LOCAL_TAGGED_COMMIT=$(git rev-list -n 1 "v${VERSION}" 2>/dev/null || echo "")
+    if [ "${EXISTING_REMOTE_TAG}" != "${LOCAL_TAGGED_COMMIT}" ] && [ "${EXISTING_REMOTE_TAG}" != "${LOCAL_HEAD}" ]; then
+        echo "  ✗ ABORT: remote tag v${VERSION} already exists and points to a DIFFERENT commit."
+        echo "    Remote tag:  ${EXISTING_REMOTE_TAG}"
+        echo "    Local HEAD:  ${LOCAL_HEAD}"
+        echo "    This version was already released from another Mac."
+        echo "    Bump the version first: ./scripts/bump-version.sh X.Y.Z"
+        exit 1
+    fi
+    echo "  ✓ Remote tag v${VERSION} matches local — safe to re-release."
+else
+    echo "  ✓ No remote tag v${VERSION} yet — this is a new release."
+fi
+echo ""
+
+# 0. Pre-release sanity: docs ↔ code drift check.
+# Catches features that were shipped in code but never reflected in user-facing
+# help texts. Fails the release if any provider or built-in prompt is mentioned
+# in code but missing from settings.help.apiBody / About-Tab features in either
+# Localizable.strings file.
+echo "▶ [0/7] Drift check: code ↔ Help texts..."
+LROUTER="Tippi/LLM/LLMRouter.swift"
+EN_STRINGS="Tippi/Resources/en.lproj/Localizable.strings"
+DE_STRINGS="Tippi/Resources/de.lproj/Localizable.strings"
+DRIFT_ERRORS=0
+
+# Extract provider names: e.g. "OpenAIProvider()" → "OpenAI"
+PROVIDERS=$(grep -oE '\b[A-Z][A-Za-z]+Provider\(\)' "${LROUTER}" | sed 's/Provider()//')
+for p in ${PROVIDERS}; do
+    case "${p}" in
+        Anthropic) needle_en="Anthropic"; needle_de="Anthropic";;
+        Mistral)   needle_en="Mistral";   needle_de="Mistral";;
+        OpenAI)    needle_en="OpenAI";    needle_de="OpenAI";;
+        Gemini)    needle_en="Gemini";    needle_de="Gemini";;
+        Ollama)    needle_en="Ollama";    needle_de="Ollama";;
+        MLX)       needle_en="MLX";       needle_de="MLX";;
+        *)         needle_en="${p}";      needle_de="${p}";;
+    esac
+    grep -q "settings.help.apiBody.*${needle_en}" "${EN_STRINGS}" || {
+        echo "  ✗ Provider '${p}' not mentioned in EN settings.help.apiBody"; DRIFT_ERRORS=1; }
+    grep -q "settings.help.apiBody.*${needle_de}" "${DE_STRINGS}" || {
+        echo "  ✗ Provider '${p}' not mentioned in DE settings.help.apiBody"; DRIFT_ERRORS=1; }
+done
+
+# About-Tab feature2: should mention the actual provider count.
+ACTUAL_COUNT=$(echo "${PROVIDERS}" | wc -w | tr -d ' ')
+if ! grep -q "settings.about.feature2.*${ACTUAL_COUNT}" "${EN_STRINGS}"; then
+    echo "  ✗ EN settings.about.feature2 doesn't mention the current provider count (${ACTUAL_COUNT})"
+    DRIFT_ERRORS=1
+fi
+if ! grep -q "settings.about.feature2.*${ACTUAL_COUNT}" "${DE_STRINGS}"; then
+    echo "  ✗ DE settings.about.feature2 doesn't mention the current provider count (${ACTUAL_COUNT})"
+    DRIFT_ERRORS=1
+fi
+
+if [ "${DRIFT_ERRORS}" -ne 0 ]; then
+    echo ""
+    echo "✗ Help texts are out of date — refusing to release with stale documentation."
+    echo "  Update Tippi/Resources/{en,de}.lproj/Localizable.strings, then retry."
+    exit 1
+fi
+echo "  ✓ Help texts match shipped code (${ACTUAL_COUNT} providers, both languages)"
+
+# 1. Clean previous build
+rm -rf build dist
+mkdir -p "${DIST_DIR}"
+
+# 2. Generate Xcode project
+echo "▶ [1/7] Generating Xcode project..."
+xcodegen generate >/dev/null
+
+# 3. Build Release
+# Build number = git commit count — monotonically increasing, no manual tracking needed.
+BUILD_NUMBER="$(git rev-list --count HEAD)"
+echo "▶ [2/7] Building Release with hardened runtime (build ${BUILD_NUMBER})..."
+xcodebuild \
+    -project Tippi.xcodeproj \
+    -scheme Tippi \
+    -configuration Release \
+    -derivedDataPath ./build \
+    MARKETING_VERSION="${VERSION}" \
+    CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
+    CODE_SIGN_STYLE=Manual \
+    CODE_SIGN_IDENTITY="${DEVELOPER_ID}" \
+    OTHER_CODE_SIGN_FLAGS="--options=runtime --timestamp" \
+    build >/dev/null
+
+APP_PATH="${BUILD_DIR}/${APP_BUNDLE}"
+if [ ! -d "${APP_PATH}" ]; then
+    echo "✗ Build failed — ${APP_PATH} not found"; exit 1
+fi
+
+# Write the build number we actually shipped back into project.yml.
+# bump-version.sh can only guess it (commits land between bump and release),
+# so without this the file drifts below the shipped build — 1.16.0 shipped as
+# 185 while project.yml still said 181. Commit it together with appcast.xml.
+PROJECT_BUILD="$(awk -F'"' '/CURRENT_PROJECT_VERSION:/ { print $2; exit }' project.yml)"
+if [ "${PROJECT_BUILD}" != "${BUILD_NUMBER}" ]; then
+    sed -i '' -E "s/(CURRENT_PROJECT_VERSION: )\"[^\"]+\"/\1\"${BUILD_NUMBER}\"/" project.yml
+    echo "  ✓ project.yml CURRENT_PROJECT_VERSION ${PROJECT_BUILD} → ${BUILD_NUMBER} (shipped build)"
+fi
+
+# 4a. Inject whisper-cli into bundle (static binary — no separate dylibs needed)
+echo "▶ [3/7] Injecting whisper-cli into bundle..."
+HELPERS_SRC="./Tippi/Helpers"
+if [ ! -f "${HELPERS_SRC}/whisper-cli" ]; then
+    echo "✗ ${HELPERS_SRC}/whisper-cli not found."
+    echo "  Run: make prepare-binary"
+    exit 1
+fi
+cp "${HELPERS_SRC}/whisper-cli" "${APP_PATH}/Contents/MacOS/whisper-cli"
+chmod +x "${APP_PATH}/Contents/MacOS/whisper-cli"
+
+# 4b. Re-sign: whisper-cli + Sparkle (inside → out), then outer app
+echo "▶ [3/7] Re-signing app with explicit entitlements + verifying..."
+SPARKLE_FW="${APP_PATH}/Contents/Frameworks/Sparkle.framework/Versions/B"
+
+# Sign whisper-cli binary
+codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" \
+    "${APP_PATH}/Contents/MacOS/whisper-cli"
+
+# Sign Sparkle executables
+for bin in \
+    "${SPARKLE_FW}/XPCServices/Installer.xpc/Contents/MacOS/Installer" \
+    "${SPARKLE_FW}/XPCServices/Downloader.xpc/Contents/MacOS/Downloader" \
+    "${SPARKLE_FW}/Autoupdate" \
+    "${SPARKLE_FW}/Updater.app/Contents/MacOS/Updater"; do
+    [ -f "$bin" ] && codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" "$bin"
+done
+
+# Sign Sparkle bundles
+for bundle in \
+    "${SPARKLE_FW}/XPCServices/Installer.xpc" \
+    "${SPARKLE_FW}/XPCServices/Downloader.xpc" \
+    "${SPARKLE_FW}/Updater.app"; do
+    [ -d "$bundle" ] && codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" "$bundle"
+done
+
+# Sign Sparkle framework
+codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" \
+    "${APP_PATH}/Contents/Frameworks/Sparkle.framework"
+
+# Sign outer app with our entitlements
+codesign --force --options runtime --timestamp \
+    --entitlements Tippi/Resources/Tippi.entitlements \
+    --sign "${DEVELOPER_ID}" \
+    "${APP_PATH}"
+codesign --verify --deep --strict "${APP_PATH}" && echo "  ✓ Signature valid"
+
+# 5. Create DMG
+echo "▶ [4/7] Creating DMG..."
+DMG_PATH="${DIST_DIR}/${APP_NAME}-${VERSION}.dmg"
+STAGING="${DIST_DIR}/dmg-staging"
+rm -rf "${STAGING}"
+mkdir -p "${STAGING}"
+cp -R "${APP_PATH}" "${STAGING}/"
+ln -s /Applications "${STAGING}/Applications"
+
+hdiutil create -volname "Tippi ${VERSION}" \
+    -srcfolder "${STAGING}" \
+    -ov -format UDZO \
+    "${DMG_PATH}" >/dev/null
+
+rm -rf "${STAGING}"
+
+# 6. Sign DMG
+echo "▶ [5/7] Signing DMG..."
+codesign --sign "${DEVELOPER_ID}" --timestamp "${DMG_PATH}"
+
+# 7. Notarize
+echo "▶ [6/7] Submitting to Apple notary service (this can take a few minutes)..."
+xcrun notarytool submit "${DMG_PATH}" \
+    --keychain-profile "${NOTARY_PROFILE}" \
+    --wait \
+    --output-format json > "${DIST_DIR}/notarization.json"
+
+STATUS="$(/usr/bin/plutil -extract status raw -o - "${DIST_DIR}/notarization.json")"
+if [ "${STATUS}" != "Accepted" ]; then
+    echo "✗ Notarization status: ${STATUS}"
+    cat "${DIST_DIR}/notarization.json"
+    exit 1
+fi
+echo "  ✓ Notarization accepted"
+
+# 8. Staple
+echo "▶ [7/7] Stapling notarization ticket..."
+xcrun stapler staple "${DMG_PATH}" >/dev/null
+SPCTL_OUTPUT="$(spctl --assess --type open --context context:primary-signature -v "${DMG_PATH}" 2>&1)"
+echo "${SPCTL_OUTPUT}" | awk 'NR <= 2 { print }'
+
+# 9. GitHub Release — upload DMG first so the download URL exists for the appcast
+echo ""
+echo "🛑 STOP vor Schritt 8/9 — kein GitHub-Release, kein Appcast, keine Auslieferung."
+echo "   Notarisiertes DMG: ${DMG_PATH}"
+exit 0
