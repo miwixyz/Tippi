@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: Mai 2026 · Version: **1.6.0** (siehe auch `docs/HANDOFF-CLAUDE.md` für die aktuelle Agenten-Übergabe)
+Stand: September 2026 · Version: **2.1.0** (siehe auch `docs/HANDOFF-CLAUDE.md` für die aktuelle Agenten-Übergabe)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist die **vollständige technische und betriebliche Übergabe** für das Projekt Tippi. Es ist primär für deinen eigenen Vault gedacht und dient als Referenz wenn du nach Monaten zurückkommst oder das Projekt jemandem übergibst.
@@ -226,6 +226,25 @@ Voice Input hat zwei Modi, gesteuert durch `VoiceMode` enum in `PromptPopupView.
 - **DMG-Hosting:** GitHub Releases (Gist kann keine Binaries liefern). `generate_appcast` mit `--download-url-prefix https://github.com/miwixyz/Tippi/releases/download/v<version>/` aufrufen
 - **Signierung der Updates:** `sign_update`-Tool aus sparkle-tools, Output-Key gehört in `SUPublicEDKey`
 
+### 5.8 Systemweite Tipp-Expansion (ab v2.0, erweitert in v2.1)
+
+Ein einziger Keystroke-Watcher (`SnippetKeystrokeMonitor`) bedient inzwischen **vier** Pfade. Das ist die wichtigste Regel dieses Bereichs: **niemals einen zweiten globalen Monitor registrieren** — jeder Tastendruck käme doppelt im Matcher an. Start/Stop ausschließlich über `AppDelegate.applyKeystrokeMonitorState()`, das die Feature-Schalter verodert; wird dort einer vergessen, feuert das betroffene Feature stillschweigend nie.
+
+Technik: `NSEvent.addGlobalMonitorForEvents` — braucht nur Accessibility, **kein** Input Monitoring, weil nie Tastenanschläge unterdrückt werden. Getippte Zeichen erreichen immer zuerst die Ziel-App und werden danach per synthetischer Backspaces zurückgenommen (`SnippetTextInjector`). Diese Eigenschaft bestimmt das gesamte Bedienkonzept.
+
+Reihenfolge der Prüfung pro Tastendruck (spezifisch vor unspezifisch):
+
+1. **Snippet-Trigger** — nutzerdefiniert, gewinnt immer
+2. **`:name:`-Emoji** — braucht beide Doppelpunkte; mindestens ein Buchstabe im Namen, sonst würden `12:30:` und `10:1:` expandieren
+3. **Emoticons** — `:-)` → 🙂; nur nach Leerzeichen/Zeilenanfang, sonst träfe es `a[:(b)]` und `http://`
+4. **Leertaste-Übernahme** aus der Vorschlagsliste
+
+Warum die Leertaste und nicht Tab oder Return: Da nichts unterdrückt werden kann, muss das Abschlusszeichen nachträglich zurücknehmbar sein. Ein Leerzeichen fügt überall genau ein Zeichen ein. Tab wechselt in Mail und Slack das Feld — die Backspaces landeten dann im falschen Feld. Return sendet die Nachricht.
+
+Die Vorschlagsliste (`EmojiSuggestionPanel`) darf **nie** Key-Window werden (`canBecomeKey = false`), sonst erreichen die Tastenanschläge des Nutzers die App nicht mehr, in der er schreibt — der v2.0.1-Showstopper. Deshalb hat sie bewusst keine Pfeiltasten-Navigation. Der Picker (`EmojiPickerPanel`, ⌥⌘E) **muss** dagegen Key-Window werden: Er hat ein echtes Suchfeld. Gleiche Regel, gegensätzliches Ergebnis — pro Panel entscheiden, nie das Muster kopieren.
+
+Emoji-Daten: `Tippi/Resources/emoji-data.json`, generiert von `scripts/generate-emoji-data.py` aus gepinnten Unicode-Quellen (Emoji 16.0 + CLDR 48.2.1). `--check` verifiziert, dass die committete Datei zum Generator passt; `release.sh` bricht ab, wenn nicht.
+
 ---
 
 ## 6. LLM-Provider — aktuelle Default-Modelle (Stand 2026-09-02, 11 Provider)
@@ -339,6 +358,8 @@ git add appcast.xml && git commit -m "release: v<version>" && git push
 Bei jedem `xcodebuild` ohne stabile Code-Signatur ändert sich die Designated Requirement. macOS sieht jeden Build als „neue App" und kann TCC-Einträge für Accessibility / Input Monitoring „verlieren".
 
 **Lösung:** Mit Developer ID signieren. Dann ist die Signatur stabil, TCC-Einträge persistieren über Rebuilds.
+
+**Symptom, das nicht danach aussieht** (2026-09-09): `xcodebuild test` bricht nach ~5 Minuten mit `The test runner hung before establishing connection` ab, ohne dass ein einziger Test läuft. Ursache ist dieselbe — der Test-Host *ist* die App, und sie registriert beim Start Event-Taps und globale Monitore; fehlt der TCC-Grant für die ad-hoc signierte Debug-Binary, blockiert der Start, bevor der Runner sich verbinden kann. Es sieht aus wie ein kaputter Testfall, ist aber keiner. Vorgehen: erst `git stash` und gegen den zuletzt grünen Stand testen — hängt der auch, liegt es nicht am Code. Am nächsten Tag lief dieselbe Suite unverändert grün durch (121 Tests).
 
 ### 8.2 NSEvent global monitor + selbst-signierte Builds
 

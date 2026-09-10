@@ -1,5 +1,12 @@
 # Tippi — Product Requirements Document
 
+> **Historisches Dokument — bewusst nicht fortgeschrieben.** Dies ist der
+> Ursprungs-Scope vom Mai 2026, festgehalten wie er damals formuliert wurde.
+> Er wird nicht nachgezogen, weil ein Vision-Papier seinen Wert verliert,
+> sobald man es rückwirkend an das anpasst, was tatsächlich gebaut wurde.
+> Aktueller Funktionsumfang: `README.md` · Änderungen pro Version:
+> `CHANGELOG.md` · Technische Übergabe: `docs/HANDOVER.md`.
+
 **Version:** 1.0-draft
 **Datum:** 2026-05-12
 **Plattform:** macOS (Apple Silicon, ab macOS 15 Sequoia)
