@@ -10,6 +10,7 @@ struct SnippetsTab: View {
     @State private var isAddingNew = false
     @State private var emojiInlineEnabled: Bool = EmojiSettings.isInlineEnabled
     @State private var emoticonEnabled: Bool = EmojiSettings.isEmoticonEnabled
+    @State private var emojiSuggestionsEnabled: Bool = EmojiSettings.isSuggestionsEnabled
 
     var body: some View {
         Form {
@@ -42,6 +43,17 @@ struct SnippetsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+
+                if emojiInlineEnabled {
+                    Toggle(String(localized: "settings.snippets.emojiSuggestions.enabled"), isOn: $emojiSuggestionsEnabled)
+                        .onChange(of: emojiSuggestionsEnabled) { _, new in
+                            EmojiSettings.isSuggestionsEnabled = new
+                        }
+                    Text(String(localized: "settings.snippets.emojiSuggestions.hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
                 Toggle(String(localized: "settings.snippets.emoticon.enabled"), isOn: $emoticonEnabled)
                     .onChange(of: emoticonEnabled) { _, new in

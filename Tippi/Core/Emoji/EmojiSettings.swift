@@ -12,6 +12,7 @@ enum EmojiSettings {
     private static let pickerEnabledKey = "emoji.picker.enabled.v1"
     private static let inlineEnabledKey = "emoji.inline.enabled.v1"
     private static let emoticonEnabledKey = "emoji.emoticon.enabled.v1"
+    private static let suggestionsEnabledKey = "emoji.suggestions.enabled.v1"
     private static let comboKey = "emoji.hotkeyCombo.v1"
     private static let recentsKey = "emoji.recents.v1"
 
@@ -30,6 +31,15 @@ enum EmojiSettings {
     static var isInlineEnabled: Bool {
         get { UserDefaults.standard.object(forKey: inlineEnabledKey) as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: inlineEnabledKey) }
+    }
+
+    /// Shows a live list of matching emoji while typing `:prefix`. Requires
+    /// `isInlineEnabled` (it is that feature's discovery aid, not a separate
+    /// one) but can be switched off on its own by anyone who knows the names
+    /// and doesn't want a popup appearing over their document.
+    static var isSuggestionsEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: suggestionsEnabledKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: suggestionsEnabledKey) }
     }
 
     /// `:-)` → 🙂 while typing. Independent of `isInlineEnabled` on purpose:

@@ -51,6 +51,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// AX capture, no selection needed — it only ever inserts.
     let emojiHotkeyManager = HotkeyManager(id: 4)
     private let emojiPickerPanel = EmojiPickerPanel()
+    /// Passive `:prefix` suggestion list. Never takes keyboard focus — see
+    /// `EmojiSuggestionPanel`.
+    private let emojiSuggestionPanel = EmojiSuggestionPanel()
 
     private var statusItem: NSStatusItem?
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
@@ -163,6 +166,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The same watcher also drives `:name:` emoji expansion, so it has to run
     /// when *either* feature is on — see `applyKeystrokeMonitorState`.
     private func startSnippetEngine() {
+        // Suggestions are rendered by the UI layer; Core only reports what to
+        // show. An empty list means "hide".
+        snippetMonitor.onSuggestionsChanged = { [weak self] suggestions in
+            guard let self else { return }
+            guard !suggestions.isEmpty else {
+                self.emojiSuggestionPanel.close()
+                return
+            }
+            // Anchor at the caret. Only queried when the list first opens (see
+            // EmojiSuggestionPanel.show) so Accessibility isn't hit on every
+            // keystroke; nil falls back to the mouse location.
+            var caret: CGRect?
+            if !self.emojiSuggestionPanel.isOpen,
+               let app = NSWorkspace.shared.frontmostApplication,
+               let selection = TextCapture.captureFocusedSelectionRange(in: app) {
+                caret = TextCapture.boundsForSelection(element: selection.element, range: selection.range)
+            }
+            self.emojiSuggestionPanel.show(suggestions: suggestions, anchor: caret) { [weak self] emoji in
+                self?.snippetMonitor.acceptSuggestion(emoji)
+            }
+        }
         applyKeystrokeMonitorState()
         snippetStore.$isEnabled
             .removeDuplicates()

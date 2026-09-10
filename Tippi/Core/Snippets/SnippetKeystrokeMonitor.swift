@@ -17,6 +17,16 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     private var matcher = SnippetMatcher()
     private let store: SnippetStore
 
+    /// Emoji suggestions for the `:prefix` currently being typed, newest first.
+    /// Held here (not only in the panel) because the Space shortcut needs to
+    /// know the top entry, and the panel is a pure renderer.
+    private var currentSuggestions: [Emoji] = []
+
+    /// Called with the ranked suggestions whenever the typed `:prefix`
+    /// changes, and with an empty array when the list should disappear. The
+    /// UI layer owns the panel — Core stays free of AppKit windows.
+    var onSuggestionsChanged: (([Emoji]) -> Void)?
+
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var appSwitchObserver: NSObjectProtocol?
@@ -96,10 +106,15 @@ final class SnippetKeystrokeMonitor: ObservableObject {
 
         if event.keyCode == Self.deleteKeyCode {
             matcher.deleteLastCharacter()
+            refreshSuggestions()
             return
         }
         if Self.resetKeyCodes.contains(event.keyCode) {
+            // Return/Tab/Escape/arrows all mean "no longer mid-word", so the
+            // suggestion list is stale — and Escape in particular is how a user
+            // dismisses it.
             matcher.reset()
+            clearSuggestions()
             return
         }
         // charactersIgnoringModifiers still reflects Shift (":" from
@@ -133,15 +148,78 @@ final class SnippetKeystrokeMonitor: ObservableObject {
             return
         }
 
-        // `:-)` → 🙂. Checked last: an emoticon has no closing delimiter, so
-        // it is the loosest of the three patterns and must not pre-empt an
-        // explicit snippet trigger or a `:name:` shortcode.
+        // `:-)` → 🙂. Checked last of the three expansions: an emoticon has no
+        // closing delimiter, so it is the loosest pattern and must not
+        // pre-empt an explicit snippet trigger or a `:name:` shortcode.
         if EmojiSettings.isEmoticonEnabled,
            let emoticon = EmoticonMatcher.match(in: matcher.buffer) {
             EmojiSettings.rememberUse(of: emoticon.emoji)
+            clearSuggestions()
             expand(triggerLength: emoticon.triggerLength) { emoticon.emoji }
             return
         }
+
+        // Space accepts the highlighted suggestion: `:lach` + ␣ → "😂 ".
+        //
+        // Space rather than Tab or Return, because this monitor cannot swallow
+        // keystrokes — the character always reaches the target app first and is
+        // retracted afterwards by backspaces. A space is the one key that
+        // reliably inserts exactly one character everywhere; Tab moves focus to
+        // the next field in Mail and Slack (the backspaces would then hit the
+        // wrong field), and Return sends the message.
+        if !currentSuggestions.isEmpty,
+           matcher.buffer.hasSuffix(" "),
+           let top = currentSuggestions.first,
+           let prefix = EmojiInlineMatcher.openPrefix(in: String(matcher.buffer.dropLast())) {
+            EmojiSettings.rememberUse(of: top.character)
+            clearSuggestions()
+            // ":" + prefix + the space just typed. The replacement re-adds the
+            // space so the user can keep typing without a missing separator.
+            expand(triggerLength: prefix.count + 2) { top.character + " " }
+            return
+        }
+
+        refreshSuggestions()
+    }
+
+    /// Recomputes the suggestion list for the `:prefix` at the end of the
+    /// buffer. Cheap when there is no open prefix (the common case): the
+    /// database is only searched once a colon-led word is actually in
+    /// progress, so ordinary typing never pays for it.
+    private func refreshSuggestions() {
+        guard EmojiSettings.isInlineEnabled, EmojiSettings.isSuggestionsEnabled else {
+            clearSuggestions()
+            return
+        }
+        guard let prefix = EmojiInlineMatcher.openPrefix(in: matcher.buffer) else {
+            clearSuggestions()
+            return
+        }
+        let matches = EmojiDatabase.shared.search(prefix, limit: EmojiSuggestionPanel.maxSuggestions)
+        guard !matches.isEmpty else {
+            clearSuggestions()
+            return
+        }
+        currentSuggestions = matches
+        onSuggestionsChanged?(matches)
+    }
+
+    private func clearSuggestions() {
+        guard !currentSuggestions.isEmpty else { return }
+        currentSuggestions = []
+        onSuggestionsChanged?([])
+    }
+
+    /// Inserts a suggestion the user clicked, replacing the `:prefix` they had
+    /// typed so far. Called from the panel via the UI layer.
+    func acceptSuggestion(_ emoji: Emoji) {
+        guard let prefix = EmojiInlineMatcher.openPrefix(in: matcher.buffer) else {
+            clearSuggestions()
+            return
+        }
+        EmojiSettings.rememberUse(of: emoji.character)
+        clearSuggestions()
+        expand(triggerLength: prefix.count + 1) { emoji.character }
     }
 
     /// Shared tail of both expansion paths: clear the buffer, block re-entry,
