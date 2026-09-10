@@ -371,6 +371,23 @@ Typ nicht aus einem Unit-Test heraus antreiben. `DictationInputModeTests` deckt
 deshalb nur die persistierte Hälfte ab (Defaults, Round-Trip, Rückwärtskompatibilität
 gespeicherter Hotkeys).
 
+**Gemessene Tastendruck-Dauern (Michael, Magic Keyboard, 2026-09-10):**
+
+Die Schwellen sind nicht geraten, sondern an echten Werten geprüft:
+
+| Geste | gemessen |
+|---|---|
+| Tap-Dauer | 107 · 108 · 116 · 117 · 144 · 181 ms |
+| Abstand zwischen zwei Taps | 179 · 187 · 204 ms |
+
+Daraus: **Halte-Schwelle 400 ms** (weit über dem längsten Tap von 181 ms) und
+**Doppel-Tap-Fenster 400 ms** (weit über dem größten Abstand von 204 ms). Beide
+Grenzen haben mehr als den doppelten Sicherheitsabstand.
+
+Die ursprüngliche Halte-Schwelle von 250 ms lag dagegen nur ~70 ms über dem
+längsten gemessenen Tap — zu knapp. Wer diese Werte ändert, sollte vorher neu
+messen statt zu schätzen.
+
 **Kombination vs. Antippen — der Fall, der das Feature sonst unbrauchbar macht:**
 
 Ein Modifier, der *mit* einer anderen Taste gedrückt wird (⇧A, ⌘C), ist kein Antippen.
