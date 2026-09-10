@@ -3,7 +3,7 @@
 ## [2.2.0] — 2026-09-10
 
 ### Added
-- **Dictation on a single key: tap to toggle, hold to talk.** Settings → Voice → Dictation now offers a second hot key style next to the classic key combination: one modifier key, right Shift by default. Tapping it starts and stops recording exactly as before; holding it records only while you keep it down and inserts on release. Both gestures share one key, so short dictations no longer need a two-handed combination — your hand simply stays put.
+- **Dictation on a single key: double-tap to toggle, hold to talk.** Settings → Voice → Dictation now offers a second hot key style next to the classic key combination: one modifier key, right Shift by default. Tapping it twice starts and stops recording; holding it records only while you keep it down and inserts on release. A single tap does nothing on purpose — a deliberate keypress runs anywhere from 100 to 500 ms and cannot be told apart from a short hold reliably, so a single-tap toggle both misfired and missed. Both gestures share one key, so short dictations no longer need a two-handed combination — your hand simply stays put.
 - The key combination style remains the default, so nobody's configured hot key changes on update. Any of the eight modifier keys can be chosen for the single-key style.
 
 - **A modifier used *with* another key is not a tap.** Shift down, letter, Shift up looks exactly like a tap to gesture detection — so without this, every capital letter would have started a recording, and ⌘C would have too. The tap now watches ordinary key presses as well and ignores the release when the modifier was part of a combination. A hold that already started recording is still always ended, so a stray keypress can never leave the microphone on.

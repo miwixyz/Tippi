@@ -6,7 +6,12 @@ import CoreGraphics
 /// distinguish "toggle" from "record only while held" — a single fire-and-forget
 /// callback cannot express the release half of a hold.
 enum HotkeyEvent {
-    case tap
+    /// The modifier was tapped twice in quick succession — toggles recording.
+    /// A *single* tap deliberately does nothing: it cannot be separated from an
+    /// ordinary keypress reliably (a deliberate press runs 100–500 ms and easily
+    /// crosses the hold threshold), which made a single-tap toggle fire when it
+    /// shouldn't and stay silent when it should.
+    case doubleTap
     case holdBegan
     case holdEnded
 }
@@ -27,6 +32,11 @@ final class HotkeyManager: ObservableObject {
     /// press means the modifier was used as a modifier (⇧A, ⌘C) — the release
     /// must then be ignored instead of firing a tap.
     private var otherKeyWhileHeld = false
+    /// When the previous tap was released, for double-tap detection.
+    private var lastTapReleaseAt: CFTimeInterval = 0
+    /// Gap allowed between the two taps. Matches the existing `.doubleTap`
+    /// trigger's default so both gestures feel the same.
+    private let doubleTapWindowMs = 400
 
     /// Called from the event tap for every ordinary key press.
     fileprivate func noteOtherKeyPressed() {
@@ -95,6 +105,7 @@ final class HotkeyManager: ObservableObject {
         holdTimer = nil
         holdInProgress = false
         otherKeyWhileHeld = false
+        lastTapReleaseAt = 0
         isActive = false
         // Deliberately NOT clearing onTrigger/onEvent: update(trigger:) restores
         // them across a stop/start cycle. `isActive` is what an in-flight timer
@@ -286,13 +297,23 @@ final class HotkeyManager: ObservableObject {
                 otherKeyWhileHeld = false
                 if holdInProgress {
                     holdInProgress = false
+                    lastTapReleaseAt = 0
                     // A hold already started recording, so it must always be
                     // ended — otherwise a stray keypress would leave the mic on.
                     onEvent?(.holdEnded)
-                } else if !wasCombination {
-                    onEvent?(.tap)
+                } else if wasCombination {
+                    // The modifier was part of a combination (⇧A, ⌘C). Not a tap,
+                    // and it must not count towards a double tap either.
+                    lastTapReleaseAt = 0
+                } else {
+                    let now = CFAbsoluteTimeGetCurrent()
+                    if (now - lastTapReleaseAt) * 1000 < Double(doubleTapWindowMs) {
+                        lastTapReleaseAt = 0
+                        onEvent?(.doubleTap)
+                    } else {
+                        lastTapReleaseAt = now
+                    }
                 }
-                // else: the modifier was part of a combination (⇧A, ⌘C) — not a tap.
             }
         }
     }

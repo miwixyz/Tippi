@@ -88,9 +88,11 @@ enum DictationSettings {
         var id: String { rawValue }
     }
 
-    /// Separates a tap from a hold. 250 ms sits comfortably above a deliberate
-    /// tap and below what anyone perceives as "I am holding this key down".
-    static let holdThresholdMs = 250
+    /// Separates a tap from a hold. Raised from 250 to 400 ms when the toggle
+    /// became a double tap: at 250 ms the first of the two taps was already read
+    /// as a hold and started a recording nobody asked for. A deliberate tap runs
+    /// 100–300 ms, so 400 leaves room without feeling sluggish.
+    static let holdThresholdMs = 400
 
     /// Safety limit for the hold gesture. A physically stuck key — or a release
     /// event lost because another app grabbed the tap — would otherwise record

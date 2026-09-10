@@ -748,7 +748,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // when the key fired.
                     let target = self.resolvedSourceAppForCapture()
                     switch event {
-                    case .tap:
+                    case .doubleTap:
                         await self.dictationController.toggle(targetApp: target)
                     case .holdBegan:
                         await self.dictationController.beginHoldRecording()
