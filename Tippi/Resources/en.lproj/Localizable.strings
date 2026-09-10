@@ -503,6 +503,9 @@
 "settings.voice.dictation.indicator.position" = "Indicator position";
 "settings.voice.dictation.indicator.bottom" = "Bottom";
 "settings.voice.dictation.indicator.top" = "Top";
+"settings.voice.dictation.mode.needsPermission" = "This style needs Input Monitoring. Without it the key does nothing.";
+"settings.voice.dictation.mode.grantPermission" = "Open Settings…";
+"settings.voice.dictation.mode.recheckPermission" = "Check again";
 "dictation.indicator.recording" = "Recording…";
 "dictation.indicator.transcribing" = "Transcribing…";
 "dictation.indicator.aiPolishing" = "AI cleanup…";

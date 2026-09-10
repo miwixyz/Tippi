@@ -1620,6 +1620,7 @@ private struct VoiceTab: View {
     @State private var dictationMode: DictationSettings.InputMode = DictationSettings.mode
     @State private var dictationTapOrHoldModifier: ModifierKey = DictationSettings.tapOrHoldModifier
     @State private var dictationIndicatorPosition: DictationSettings.IndicatorPosition = DictationSettings.indicatorPosition
+    @State private var inputMonitoringGranted: Bool = HotkeyManager.hasInputMonitoringPermission
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
@@ -1769,6 +1770,7 @@ private struct VoiceTab: View {
                     .pickerStyle(.segmented)
                     .onChange(of: dictationMode) { _, new in
                         DictationSettings.mode = new
+                        inputMonitoringGranted = HotkeyManager.hasInputMonitoringPermission
                         (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
                     }
 
@@ -1793,6 +1795,33 @@ private struct VoiceTab: View {
                         Text(String(localized: "settings.voice.dictation.mode.tapOrHold.body"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+
+                        // This style listens via a CGEventTap, unlike the key
+                        // combination (Carbon), which needs no permission. Without
+                        // this notice the hot key would simply do nothing and the
+                        // failure would only be visible in the system log.
+                        if !inputMonitoringGranted {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label(String(localized: "settings.voice.dictation.mode.needsPermission"),
+                                      systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(.orange)
+                                HStack(spacing: 8) {
+                                    Button(String(localized: "settings.voice.dictation.mode.grantPermission")) {
+                                        HotkeyManager.requestInputMonitoringPermission()
+                                        NSWorkspace.shared.open(URL(string:
+                                            "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
+                                    }
+                                    Button(String(localized: "settings.voice.dictation.mode.recheckPermission")) {
+                                        inputMonitoringGranted = HotkeyManager.hasInputMonitoringPermission
+                                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                                    }
+                                }
+                                .controlSize(.small)
+                            }
+                            .padding(8)
+                            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                        }
                     }
 
                     Picker(String(localized: "settings.voice.dictation.indicator.position"),

@@ -127,7 +127,9 @@ final class HotkeyManager: ObservableObject {
             callback: HotkeyManager.eventTapCallback,
             userInfo: selfPtr
         ) else {
-            lastError = "CGEvent.tapCreate failed — grant Input Monitoring permission and restart Tippi."
+            lastError = HotkeyManager.hasInputMonitoringPermission
+                ? "CGEvent.tapCreate failed even though Input Monitoring is granted."
+                : "Input Monitoring permission missing — this trigger cannot listen to the keyboard."
             NSLog("Tippi: \(lastError ?? "")")
             return
         }
@@ -150,6 +152,24 @@ final class HotkeyManager: ObservableObject {
         }
         runLoopSource = nil
         eventTap = nil
+    }
+
+    /// Whether this Mac has granted Input Monitoring.
+    ///
+    /// Every trigger except `.combo` needs it: Carbon hot keys are registered
+    /// with the system, a CGEventTap listens to the keyboard. Tippi shipped
+    /// Carbon-only for a long time, so an existing install has most likely never
+    /// been asked for this — the first tap-based trigger silently does nothing
+    /// unless we check and say so.
+    static var hasInputMonitoringPermission: Bool {
+        CGPreflightListenEventAccess()
+    }
+
+    /// Triggers the system prompt. Returns immediately; macOS shows the dialog
+    /// and the app must be restarted after granting.
+    @discardableResult
+    static func requestInputMonitoringPermission() -> Bool {
+        CGRequestListenEventAccess()
     }
 
     private static let eventTapCallback: CGEventTapCallBack = { _, type, event, userInfo in

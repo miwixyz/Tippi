@@ -482,6 +482,9 @@
 "settings.voice.dictation.indicator.position" = "Position der Anzeige";
 "settings.voice.dictation.indicator.bottom" = "Unten";
 "settings.voice.dictation.indicator.top" = "Oben";
+"settings.voice.dictation.mode.needsPermission" = "Diese Variante braucht die Eingabeüberwachung. Ohne sie passiert beim Tastendruck nichts.";
+"settings.voice.dictation.mode.grantPermission" = "Einstellungen öffnen …";
+"settings.voice.dictation.mode.recheckPermission" = "Erneut prüfen";
 "dictation.indicator.recording" = "Aufnahme …";
 "dictation.indicator.transcribing" = "Transkribiere …";
 "dictation.indicator.aiPolishing" = "KI-Bereinigung …";

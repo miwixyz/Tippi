@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2.2.0] — 2026-09-10
 
 ### Added
 - **Dictation on a single key: tap to toggle, hold to talk.** Settings → Voice → Dictation now offers a second hot key style next to the classic key combination: one modifier key, right Shift by default. Tapping it starts and stops recording exactly as before; holding it records only while you keep it down and inserts on release. Both gestures share one key, so short dictations no longer need a two-handed combination — your hand simply stays put.
