@@ -371,6 +371,18 @@ Typ nicht aus einem Unit-Test heraus antreiben. `DictationInputModeTests` deckt
 deshalb nur die persistierte Hälfte ab (Defaults, Round-Trip, Rückwärtskompatibilität
 gespeicherter Hotkeys).
 
+**Kombination vs. Antippen — der Fall, der das Feature sonst unbrauchbar macht:**
+
+Ein Modifier, der *mit* einer anderen Taste gedrückt wird (⇧A, ⌘C), ist kein Antippen.
+Ohne diese Unterscheidung würde **jeder Großbuchstabe eine Aufnahme starten** — Shift runter,
+Buchstabe, Shift hoch sieht für die Gestenerkennung exakt aus wie ein Tap. Der Event-Tap
+beobachtet deshalb bei `.tapOrHold` zusätzlich `keyDown` und setzt `otherKeyWhileHeld`.
+Ein bereits begonnenes Halten wird trotzdem immer beendet — sonst bliebe bei einem
+Tastendruck während der Aufnahme das Mikrofon an.
+
+Verifiziert mit synthetischen CGEvents (2026-09-10): Control+A → 0 Aufnahmen,
+Control allein → 1 Aufnahme.
+
 **Manuelle Testfälle vor jedem Release, das diesen Pfad anfasst:**
 
 1. Rechte Umschalttaste **antippen** → Aufnahme startet · erneut antippen → Text wird eingefügt

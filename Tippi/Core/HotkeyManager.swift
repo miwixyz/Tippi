@@ -23,6 +23,16 @@ final class HotkeyManager: ObservableObject {
     /// True between `.holdBegan` and `.holdEnded`, so the release knows whether
     /// it ends a hold or counts as a tap.
     private var holdInProgress = false
+    /// Set when any ordinary key is pressed while the modifier is held. Such a
+    /// press means the modifier was used as a modifier (⇧A, ⌘C) — the release
+    /// must then be ignored instead of firing a tap.
+    private var otherKeyWhileHeld = false
+
+    /// Called from the event tap for every ordinary key press.
+    fileprivate func noteOtherKeyPressed() {
+        guard holdTimer != nil || holdInProgress else { return }
+        otherKeyWhileHeld = true
+    }
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -84,6 +94,7 @@ final class HotkeyManager: ObservableObject {
         holdTimer?.invalidate()
         holdTimer = nil
         holdInProgress = false
+        otherKeyWhileHeld = false
         isActive = false
         // Deliberately NOT clearing onTrigger/onEvent: update(trigger:) restores
         // them across a stop/start cycle. `isActive` is what an in-flight timer
@@ -116,7 +127,14 @@ final class HotkeyManager: ObservableObject {
     // MARK: - CGEventTap (Double-Tap + Hold)
 
     private func startEventTap() {
-        let mask: CGEventMask = 1 << CGEventType.flagsChanged.rawValue
+        // A .tapOrHold trigger must also see ordinary keys: a modifier pressed
+        // *with* another key is being used as a modifier, not tapped. Without
+        // this, every capital letter (Shift down, letter, Shift up) would read as
+        // a tap and start a recording.
+        var mask: CGEventMask = 1 << CGEventType.flagsChanged.rawValue
+        if case .tapOrHold = currentTrigger {
+            mask |= 1 << CGEventType.keyDown.rawValue
+        }
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
 
         guard let tap = CGEvent.tapCreate(
@@ -186,6 +204,11 @@ final class HotkeyManager: ObservableObject {
         let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags
 
+        if type == .keyDown {
+            Task { @MainActor in manager.noteOtherKeyPressed() }
+            return Unmanaged.passUnretained(event)
+        }
+
         Task { @MainActor in
             manager.handleFlagsChanged(keyCode: keyCode, flags: flags)
         }
@@ -239,6 +262,7 @@ final class HotkeyManager: ObservableObject {
             if pressed {
                 // Ignore repeat/duplicate press events while a gesture is running.
                 guard holdTimer == nil, !holdInProgress else { return }
+                otherKeyWhileHeld = false
                 holdTimer = Timer.scheduledTimer(
                     withTimeInterval: Double(holdThresholdMs) / 1000.0,
                     repeats: false
@@ -258,12 +282,17 @@ final class HotkeyManager: ObservableObject {
             } else {
                 holdTimer?.invalidate()
                 holdTimer = nil
+                let wasCombination = otherKeyWhileHeld
+                otherKeyWhileHeld = false
                 if holdInProgress {
                     holdInProgress = false
+                    // A hold already started recording, so it must always be
+                    // ended — otherwise a stray keypress would leave the mic on.
                     onEvent?(.holdEnded)
-                } else {
+                } else if !wasCombination {
                     onEvent?(.tap)
                 }
+                // else: the modifier was part of a combination (⇧A, ⌘C) — not a tap.
             }
         }
     }
