@@ -1781,11 +1781,9 @@ private struct VoiceTab: View {
                                 (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
                             }
                     } else {
-                        Picker(String(localized: "settings.voice.dictation.mode.modifier"),
-                               selection: $dictationTapOrHoldModifier) {
-                            ForEach(ModifierKey.allCases) { mod in
-                                Text(mod.displayName).tag(mod)
-                            }
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(String(localized: "settings.voice.dictation.mode.modifier"))
+                            ModifierRecorderField(modifier: $dictationTapOrHoldModifier)
                         }
                         .onChange(of: dictationTapOrHoldModifier) { _, new in
                             DictationSettings.tapOrHoldModifier = new

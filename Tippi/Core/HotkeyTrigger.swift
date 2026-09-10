@@ -12,6 +12,18 @@ enum ModifierKey: String, Codable, CaseIterable, Identifiable, Equatable {
 
     var id: String { rawValue }
 
+    /// Resolves a raw virtual key code back to a modifier.
+    ///
+    /// Needed by the recorder field: the user presses a key and we have to name
+    /// it. Doing this the other way round — asking the user to pick "Left
+    /// Control" from a list — was a real failure: on 2026-09-10 the setting said
+    /// Left Control (59) while the key actually being pressed reported 55, the
+    /// left Command key. Nobody knows their modifiers by keycode; let them press
+    /// the key instead.
+    static func from(keyCode: UInt16) -> ModifierKey? {
+        allCases.first { $0.keyCode == keyCode }
+    }
+
     /// macOS virtual key code (kVK_*)
     var keyCode: UInt16 {
         switch self {

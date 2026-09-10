@@ -17,13 +17,13 @@ struct HotkeyRecorderField: View {
     /// closure) so removal stays idempotent — `NSEvent.removeMonitor` on an
     /// already-removed token over-releases it and crashes (SIGSEGV seen
     /// 2026-06-03 and 2026-06-10).
-    private static var activeMonitor: Any?
+    private static var activeMonitor: Any? {
+        get { RecorderMonitorStore.active }
+        set { RecorderMonitorStore.active = newValue }
+    }
 
     private static func releaseActiveMonitor() {
-        if let active = activeMonitor {
-            NSEvent.removeMonitor(active)
-        }
-        activeMonitor = nil
+        RecorderMonitorStore.release()
     }
 
     var body: some View {

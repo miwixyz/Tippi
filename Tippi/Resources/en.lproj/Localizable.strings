@@ -268,6 +268,8 @@
 "hotkey.recorder.pressNow" = "Press a key combination now…";
 "hotkey.recorder.changeHint" = "click to change";
 "hotkey.recorder.cancelHint" = "Esc to cancel";
+"modifier.recorder.pressNow" = "Press the key now…";
+"modifier.recorder.needsModifier" = "That is not a modifier key. Use Shift, Control, Option or Command.";
 
 "settings.hotkeys.mode" = "Trigger mode";
 "settings.hotkeys.mode.doubleTap" = "Double-tap a modifier key";
