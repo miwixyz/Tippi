@@ -1619,6 +1619,7 @@ private struct VoiceTab: View {
     @State private var dictationCombo: KeyCombo = DictationSettings.combo
     @State private var dictationMode: DictationSettings.InputMode = DictationSettings.mode
     @State private var dictationTapOrHoldModifier: ModifierKey = DictationSettings.tapOrHoldModifier
+    @State private var dictationIndicatorPosition: DictationSettings.IndicatorPosition = DictationSettings.indicatorPosition
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
@@ -1792,6 +1793,18 @@ private struct VoiceTab: View {
                         Text(String(localized: "settings.voice.dictation.mode.tapOrHold.body"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+
+                    Picker(String(localized: "settings.voice.dictation.indicator.position"),
+                           selection: $dictationIndicatorPosition) {
+                        Text(String(localized: "settings.voice.dictation.indicator.bottom"))
+                            .tag(DictationSettings.IndicatorPosition.bottom)
+                        Text(String(localized: "settings.voice.dictation.indicator.top"))
+                            .tag(DictationSettings.IndicatorPosition.top)
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: dictationIndicatorPosition) { _, new in
+                        DictationSettings.indicatorPosition = new
                     }
 
                     Divider().padding(.vertical, 4)

@@ -6,6 +6,8 @@
 - **Dictation on a single key: tap to toggle, hold to talk.** Settings → Voice → Dictation now offers a second hot key style next to the classic key combination: one modifier key, right Shift by default. Tapping it starts and stops recording exactly as before; holding it records only while you keep it down and inserts on release. Both gestures share one key, so short dictations no longer need a two-handed combination — your hand simply stays put.
 - The key combination style remains the default, so nobody's configured hot key changes on update. Any of the eight modifier keys can be chosen for the single-key style.
 
+- **The recording pill shows how long you have been speaking.** A running m:ss counter next to the waveform, in monospaced digits so the pill does not twitch on every tick. Beyond an hour it switches to h:mm:ss.
+- **The recording indicator can sit at the top of the screen.** Settings → Voice → Dictation → Indicator position. Bottom stays the default; both edges keep the same distance from menu bar and Dock.
 - **Liquid Glass on the floating surfaces.** The recording indicator, the cursor popup, the selection action bar, the emoji picker and suggestion list, the toast and the Translate panel now use Apple's Liquid Glass material on macOS 26 and later. Below that they render exactly as before — the deployment target stays at macOS 15, so no install loses the app over a look. Scope follows Apple's HIG: glass belongs in the functional layer (controls, navigation, transient UI), never in the content layer.
 
 ### Notes

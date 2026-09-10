@@ -14,6 +14,7 @@ enum DictationSettings {
     private static let postProcessModelKey      = "dictation.postProcess.modelOverride"
     private static let modeKey                   = "dictation.inputMode.v1"
     private static let tapOrHoldModifierKey      = "dictation.tapOrHold.modifier.v1"
+    private static let indicatorPositionKey      = "dictation.indicator.position.v1"
 
     /// Below this many characters Tippi skips the LLM polish entirely —
     /// short utterances ("ja", "ok", "Hallo, wie geht's?") don't benefit
@@ -95,6 +96,22 @@ enum DictationSettings {
     /// event lost because another app grabbed the tap — would otherwise record
     /// forever and quietly fill the disk.
     static let maxHoldSeconds: TimeInterval = 300
+
+    /// Where the recording indicator sits. Bottom is the historical position.
+    enum IndicatorPosition: String, CaseIterable, Identifiable {
+        case bottom
+        case top
+        var id: String { rawValue }
+    }
+
+    static var indicatorPosition: IndicatorPosition {
+        get {
+            guard let raw = UserDefaults.standard.string(forKey: indicatorPositionKey),
+                  let pos = IndicatorPosition(rawValue: raw) else { return .bottom }
+            return pos
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: indicatorPositionKey) }
+    }
 
     static var mode: InputMode {
         get {

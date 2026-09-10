@@ -479,6 +479,9 @@
 "settings.voice.dictation.mode.tapOrHold" = "Einzelne Sondertaste";
 "settings.voice.dictation.mode.tapOrHold.body" = "Taste antippen startet und stoppt die Aufnahme. Taste halten nimmt nur so lange auf, wie sie gedrückt bleibt — beim Loslassen wird eingefügt.";
 "settings.voice.dictation.mode.modifier" = "Taste";
+"settings.voice.dictation.indicator.position" = "Position der Anzeige";
+"settings.voice.dictation.indicator.bottom" = "Unten";
+"settings.voice.dictation.indicator.top" = "Oben";
 "dictation.indicator.recording" = "Aufnahme …";
 "dictation.indicator.transcribing" = "Transkribiere …";
 "dictation.indicator.aiPolishing" = "KI-Bereinigung …";

@@ -500,6 +500,9 @@
 "settings.voice.dictation.mode.tapOrHold" = "Single modifier key";
 "settings.voice.dictation.mode.tapOrHold.body" = "Tap the key to start and stop. Hold it to record only while held, then release to insert.";
 "settings.voice.dictation.mode.modifier" = "Key";
+"settings.voice.dictation.indicator.position" = "Indicator position";
+"settings.voice.dictation.indicator.bottom" = "Bottom";
+"settings.voice.dictation.indicator.top" = "Top";
 "dictation.indicator.recording" = "Recording…";
 "dictation.indicator.transcribing" = "Transcribing…";
 "dictation.indicator.aiPolishing" = "AI cleanup…";

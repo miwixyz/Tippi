@@ -19,6 +19,10 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     @Published private(set) var isRecording: Bool = false
     /// Linear amplitude 0…1 for waveform UI (updated at ~10 Hz while recording).
     @Published private(set) var level: Float = 0
+    /// Length of the take so far. Read from `AVAudioRecorder.currentTime`, which
+    /// counts actual recorded audio — a wall-clock stopwatch would drift away
+    /// from the file whenever the audio stack stalls.
+    @Published private(set) var elapsed: TimeInterval = 0
 
     private var recorder: AVAudioRecorder?
     private var levelTimer: Timer?
@@ -106,6 +110,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             recorder = rec
             outputURL = url
             isRecording = true
+            elapsed = 0
             startLevelTimer()
             muteSystemAudioIfEnabled()
             return url
@@ -193,6 +198,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
                 let dB = rec.averagePower(forChannel: 0) // -160…0
                 let clamped = max(-60, dB)
                 self.level = Float((clamped + 60) / 60)
+                self.elapsed = rec.currentTime
             }
         }
     }

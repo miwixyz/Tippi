@@ -31,6 +31,26 @@ private struct WaveformBars: View {
     }
 }
 
+// MARK: - Duration formatting
+
+/// Deliberately not nested in the view: this is pure logic and belongs where a
+/// unit test can reach it. `DateComponentsFormatter` was the alternative, but it
+/// is locale-dependent and would render "0:07" differently per region — the pill
+/// wants a stable, monospaced stopwatch, not a localized phrase.
+enum RecordingDuration {
+    /// m:ss below an hour, h:mm:ss beyond. Takes are short in practice, but the
+    /// toggle mode has no maximum at all, so the long form has to exist.
+    static func formatted(_ seconds: TimeInterval) -> String {
+        guard seconds.isFinite, seconds > 0 else { return "0:00" }
+        let total = Int(seconds.rounded(.down))
+        let s = total % 60
+        let m = (total / 60) % 60
+        let h = total / 3600
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s)
+                     : String(format: "%d:%02d", m, s)
+    }
+}
+
 // MARK: - Indicator view
 
 private struct RecordingIndicatorView: View {
@@ -49,6 +69,10 @@ private struct RecordingIndicatorView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
                 WaveformBars(level: recorder.level)
+                Text(RecordingDuration.formatted(recorder.elapsed))
+                    // Monospaced digits: without them the pill twitches on every
+                    // tick as glyph widths change, and the window is sized once.
+                    .font(.subheadline.weight(.medium).monospacedDigit())
                 Text(String(localized: "dictation.indicator.recording"))
                     .font(.subheadline.weight(.medium))
             case .transcribing:
@@ -117,10 +141,14 @@ final class RecordingIndicatorWindowController {
             NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
         } ?? NSScreen.main
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let origin = NSPoint(
-            x: visible.midX - size.width / 2,
-            y: visible.minY + 80
-        )
+        // `visibleFrame` already excludes menu bar and Dock, so both edges keep
+        // the same 80 pt breathing room without special-casing either chrome.
+        let y: CGFloat
+        switch DictationSettings.indicatorPosition {
+        case .bottom: y = visible.minY + 80
+        case .top:    y = visible.maxY - size.height - 80
+        }
+        let origin = NSPoint(x: visible.midX - size.width / 2, y: y)
 
         if let w = window {
             w.contentView = hostView
