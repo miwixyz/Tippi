@@ -12,13 +12,42 @@ private let injectorLog = Logger(subsystem: "com.tippi.app", category: "snippet-
 enum SnippetTextInjector {
     @MainActor
     static func replace(triggerLength: Int, with replacement: String) async {
+        // Espanso's `$|$` marks where the caret belongs. Strip it before typing —
+        // otherwise it lands in the user's text verbatim — and remember how far
+        // back to move afterwards.
+        let (text, caretOffset) = SnippetCursorHint.split(replacement)
         sendBackspaces(count: triggerLength)
         // Short settle delay before the paste roundtrip — mirrors the 40ms
         // pre-paste delay `TextInsertion.paste` already uses; without it,
         // a fast backspace-then-paste sequence can race ahead of the target
         // app's own event processing.
         try? await Task.sleep(nanoseconds: 20_000_000)
-        await TextInsertion.insertViaClipboard(replacement, into: NSWorkspace.shared.frontmostApplication)
+        await TextInsertion.insertViaClipboard(text, into: NSWorkspace.shared.frontmostApplication)
+
+        guard caretOffset > 0 else { return }
+        // Same reasoning as the pre-paste delay: the arrow keys must not overtake
+        // the paste the target app is still processing, or they move the caret
+        // from the wrong starting point.
+        try? await Task.sleep(nanoseconds: 30_000_000)
+        moveCaretLeft(count: caretOffset)
+    }
+
+    /// Moves the insertion point back by `count` characters using synthetic
+    /// arrow keys — the same approach as the backspaces above, and for the same
+    /// reason: it works in every app, including ones without Accessibility
+    /// text APIs.
+    private static func moveCaretLeft(count: Int) {
+        guard count > 0 else { return }
+        let src = CGEventSource(stateID: .hidSystemState)
+        let leftArrow: CGKeyCode = 123 // kVK_LeftArrow
+
+        for _ in 0..<count {
+            CGEvent(keyboardEventSource: src, virtualKey: leftArrow, keyDown: true)?
+                .post(tap: .cghidEventTap)
+            CGEvent(keyboardEventSource: src, virtualKey: leftArrow, keyDown: false)?
+                .post(tap: .cghidEventTap)
+        }
+        injectorLog.notice("moved caret back \(count) character(s) for cursor hint")
     }
 
     private static func sendBackspaces(count: Int) {

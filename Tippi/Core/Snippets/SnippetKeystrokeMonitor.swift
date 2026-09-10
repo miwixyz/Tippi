@@ -154,7 +154,6 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         if EmojiSettings.isEmoticonEnabled,
            let emoticon = EmoticonMatcher.match(in: matcher.buffer) {
             EmojiSettings.rememberUse(of: emoticon.emoji)
-            clearSuggestions()
             expand(triggerLength: emoticon.triggerLength) { emoticon.emoji }
             return
         }
@@ -234,6 +233,11 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     /// and permanently disabling expansion until the app restarts.
     private func expand(triggerLength: Int, resolve: @escaping () async -> String) {
         matcher.reset()
+        // Every expansion path ends here, so closing the suggestion list once in
+        // this one place cannot be forgotten in a new branch. Two branches did
+        // forget it (snippet trigger and `:name:` shortcode), which left the
+        // emoji list hanging over text that had already been replaced.
+        clearSuggestions()
         isInjecting = true
         Task { @MainActor in
             defer { isInjecting = false }

@@ -12,6 +12,9 @@
 - **The recording indicator can sit at the top of the screen.** Settings → Voice → Dictation → Indicator position. Bottom stays the default; both edges keep the same distance from menu bar and Dock.
 - **Liquid Glass on the floating surfaces.** The recording indicator, the cursor popup, the selection action bar, the emoji picker and suggestion list, the toast and the Translate panel now use Apple's Liquid Glass material on macOS 26 and later. Below that they render exactly as before — the deployment target stays at macOS 15, so no install loses the app over a look. Scope follows Apple's HIG: glass belongs in the functional layer (controls, navigation, transient UI), never in the content layer.
 
+- **Espanso's `$|$` cursor marker now works instead of being typed out.** A snippet like `:verl` → "…Kinoauswertung von: $|$" put the literal characters `$|$` into the text. Tippi reads Espanso's match files, so it has to understand Espanso's marker: it is stripped before insertion and the caret moves back to that spot afterwards. Only the first marker counts, as in Espanso; a stray `$` or `|` is left alone.
+- **The emoji suggestion list closes when a snippet expands.** Typing `:verl` replaced the text but left the emoji list hanging over it, offering matches for a prefix that no longer existed. Closing now happens once in the shared expansion path rather than per branch — two branches had simply forgotten it.
+
 ### Notes
 - The glass/material choice lives in one modifier (`Tippi/UI/GlassBackground.swift`), not scattered across seven views. The pre-26 branch is a one-for-one replacement of the previous `.background(.regularMaterial, in:)` call, so older systems are unchanged by construction.
 - The menu bar item and its menu are drawn by macOS, not by Tippi — they follow the system appearance and cannot be restyled by the app.
