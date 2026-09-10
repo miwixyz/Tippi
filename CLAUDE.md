@@ -72,7 +72,7 @@ Makefile                 ← convenience wrappers (make build, make release, mak
 | `Tippi/Core/Emoji/EmojiDatabase.swift` | emoji lookup + ranked search. `EmojiSearch.normalize` must stay in lockstep with `slugify()` in `scripts/generate-emoji-data.py` — a unit test pins both |
 | `scripts/generate-emoji-data.py` | regenerates `Tippi/Resources/emoji-data.json` from pinned Unicode sources. `--check` fails if the committed file is stale |
 | `scripts/docs-drift-check.sh` | verifies Markdown/HTML docs against the code (provider count, built-in prompt count, version headers, ARCHITECTURE paths). Exit 1 = docs drift, exit 2 = the parser itself broke — never treat 2 as "clean". Historical lines (roadmaps, `v1.x` mentions) and lines marked `drift-ok` are skipped by design |
-| `scripts/release.sh` | release pipeline. Includes drift check that aborts if Help strings don't match provider count, plus the docs-drift gate above |
+| `scripts/release.sh` | release pipeline. `--no-publish` stops after the notarized DMG (no GitHub release, no appcast) — use it to test a build in release quality without shipping to users. Includes drift check that aborts if Help strings don't match provider count, plus the docs-drift gate above |
 
 ## Build / run
 

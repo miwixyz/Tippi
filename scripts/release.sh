@@ -20,6 +20,18 @@
 
 set -euo pipefail
 
+# --no-publish: build, sign, notarize and staple the DMG, but stop before the
+# GitHub release and the appcast. Used to test a build in full release quality
+# without pushing an update to every user. A separate copy of this script was
+# used for that once — a copy that would silently drift from the original, which
+# is exactly the failure this project's docs gate exists to prevent.
+PUBLISH=1
+for arg in "$@"; do
+    case "${arg}" in
+        --no-publish) PUBLISH=0 ;;
+    esac
+done
+
 # release.env (gitignored) optionally provides DEVELOPER_ID / NOTARY_PROFILE.
 # It must NOT carry VERSION — project.yml is the single source of truth.
 if [ -f release.env ]; then
@@ -416,6 +428,14 @@ SPCTL_OUTPUT="$(spctl --assess --type open --context context:primary-signature -
 echo "${SPCTL_OUTPUT}" | awk 'NR <= 2 { print }'
 
 # 9. GitHub Release — upload DMG first so the download URL exists for the appcast
+if [ "${PUBLISH}" -eq 0 ]; then
+    echo ""
+    echo "🛑 --no-publish: stopping before the GitHub release and appcast."
+    echo "   Notarized DMG: ${DMG_PATH}"
+    echo "   Nothing was published; no user receives this build."
+    exit 0
+fi
+
 echo "▶ [8/9] Creating GitHub release..."
 GH_RELEASE_URL="https://github.com/miwixyz/Tippi/releases/download/v${VERSION}"
 # Extract release notes for this version from CHANGELOG.md
