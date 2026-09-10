@@ -26,9 +26,11 @@ set -euo pipefail
 # used for that once — a copy that would silently drift from the original, which
 # is exactly the failure this project's docs gate exists to prevent.
 PUBLISH=1
+PRUNE=1
 for arg in "$@"; do
     case "${arg}" in
         --no-publish) PUBLISH=0 ;;
+        --no-prune)   PRUNE=0 ;;
     esac
 done
 
@@ -476,6 +478,14 @@ fi
 
 # 11. Final report
 echo ""
+# House rule: at most 5 releases. Runs after the appcast on purpose — the prune
+# reads it to decide what is still in use, so it must be the fresh one.
+# --no-prune skips this; the script itself never deletes tags.
+if [ "${PRUNE:-1}" -eq 1 ] && [ -x scripts/prune-releases.sh ]; then
+    echo ""
+    ./scripts/prune-releases.sh || echo "  ⚠ prune failed — releases left as they are, fix by hand"
+fi
+
 echo "✓ Release complete"
 echo "  DMG:  ${DMG_PATH}"
 echo "  Size: $(du -h "${DMG_PATH}" | cut -f1)"
