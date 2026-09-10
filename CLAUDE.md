@@ -71,7 +71,8 @@ Makefile                 ← convenience wrappers (make build, make release, mak
 | `Tippi/Core/Snippets/SnippetKeystrokeMonitor.swift` | the **one** system-wide keystroke watcher. Serves both snippet expansion and `:name:` emoji expansion — runs if either is enabled (`AppDelegate.applyKeystrokeMonitorState`). Snippets are matched first so a user trigger beats a built-in emoji name |
 | `Tippi/Core/Emoji/EmojiDatabase.swift` | emoji lookup + ranked search. `EmojiSearch.normalize` must stay in lockstep with `slugify()` in `scripts/generate-emoji-data.py` — a unit test pins both |
 | `scripts/generate-emoji-data.py` | regenerates `Tippi/Resources/emoji-data.json` from pinned Unicode sources. `--check` fails if the committed file is stale |
-| `scripts/release.sh` | release pipeline. Includes drift check that aborts if Help strings don't match provider count |
+| `scripts/docs-drift-check.sh` | verifies Markdown/HTML docs against the code (provider count, built-in prompt count, version headers, ARCHITECTURE paths). Exit 1 = docs drift, exit 2 = the parser itself broke — never treat 2 as "clean". Historical lines (roadmaps, `v1.x` mentions) and lines marked `drift-ok` are skipped by design |
+| `scripts/release.sh` | release pipeline. Includes drift check that aborts if Help strings don't match provider count, plus the docs-drift gate above |
 
 ## Build / run
 

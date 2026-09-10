@@ -156,10 +156,32 @@ if [ -f scripts/generate-emoji-data.py ]; then
     fi
 fi
 
+# Markdown/HTML docs must match the code. The in-app Help drift check below covers
+# Localizable.strings; this one covers README, ARCHITECTURE, CLAUDE.md, HANDOVER,
+# ONE-PAGER, index.html and pitch.html — the files that used to be "confirm by hand".
+# They were confirmed by hand for five releases and were wrong the whole time.
+if [ -f scripts/docs-drift-check.sh ]; then
+    if bash scripts/docs-drift-check.sh; then
+        :
+    else
+        rc=$?
+        if [ "${rc}" -eq 2 ]; then
+            echo "  ✗ docs-drift-check.sh could not parse the code (its own bug, not a docs bug)."
+            echo "    Fix the parser before releasing — do NOT treat this as 'no drift'."
+        else
+            echo "  ✗ Documentation contradicts the code. Update the docs, not the code."
+        fi
+        exit 1
+    fi
+else
+    # Never skip a gate silently.
+    echo "  ⚠ scripts/docs-drift-check.sh missing — Markdown/HTML docs NOT verified."
+fi
+
 echo "  ⚠ Not auto-checkable — confirm by hand before continuing if this release"
-echo "    touches user-facing behavior: docs/ONE-PAGER.md, docs/index.html (website),"
-echo "    other in-app Help sections beyond What's New (e.g. feature-specific bodies),"
-echo "    and CONTRIBUTING.md / docs/HANDOVER.md if the dev workflow itself changed."
+echo "    touches user-facing behavior: in-app Help sections beyond What's New"
+echo "    (e.g. feature-specific bodies), and CONTRIBUTING.md if the dev workflow"
+echo "    itself changed. (Doc *numbers* and versions are now gated automatically.)"
 echo ""
 
 # ─── PRE-FLIGHT: Git sync check ───────────────────────────────────────────────

@@ -249,7 +249,7 @@ enum KeychainStore {
 
 - **NSPanel** mit `.borderless`, `.nonactivatingPanel`, level `.statusBar`
 - Positioning: `NSEvent.mouseLocation` oder via AX caret rect
-- Width: 280 pt, Height: dynamisch (~280 pt bei 6 Prompts)
+- Width: 280 pt, Height: dynamisch (~280 pt bei 6 Prompts) <!-- drift-ok: UI-Maß, keine Gesamtzahl -->
 - Translucent background (`.hudWindow`-Style)
 
 ### 8.2 Preview-Window
