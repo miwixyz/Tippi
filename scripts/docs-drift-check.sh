@@ -62,6 +62,8 @@ VERSION=$(grep -E 'MARKETING_VERSION:' project.yml | head -1 | sed -E 's/.*"([^"
 printf '\n▶ Truth from the code\n'
 ok "$PROVIDERS providers · $PROMPTS prompts ($BUILTIN builtIn − $CHAINS chain(s)) · version $VERSION"
 
+MINOR="${VERSION%.*}"   # 2.2.0 -> 2.2, the granularity feature markers use
+
 # ── 2. Recognise historical lines ─────────────────────────────────────────────
 # Roadmap and changelog-style lines quote old numbers on purpose ("v1.14.x — now 10
 # providers"). Those are correct. Reporting them would make someone "fix" accurate history —
@@ -141,6 +143,84 @@ while IFS= read -r dir; do
 done < <(grep -oE '[├└│]──[[:space:]]+[A-Z][A-Za-z0-9_]*/' ARCHITECTURE.md | grep -oE '[A-Z][A-Za-z0-9_]*' | sort -u)
 
 ok "$path_checked path name(s) checked"
+
+# ── 5. Permission coverage (the code asks → the docs must say so) ─────────────
+# The real failure this catches (2026-09-11): v2.2.0 added a single-key dictation hot key
+# that needs Input Monitoring. README.md said so; docs/index.html and docs/ONE-PAGER.md did
+# not. Anyone following the website granted Accessibility, pressed the key, and nothing
+# happened — with no error to explain why. Provider counts, prompt counts and version
+# headers were all correct, so every dimension above stayed green through it.
+#
+# Rule: a document that discusses ANY permission must discuss ALL of them. That
+# self-calibrates — documents with no setup section (pitch.html, ARCHITECTURE.md) drop out
+# on their own, so nobody has to maintain a list of "setup documents" that would itself drift.
+printf '\n▶ Permission coverage (code asks → docs must say)\n'
+
+# api-regex :: human label :: doc-regex (German AND English — see the LANGUAGE note at top)
+PERMS=(
+  'IOHIDCheckAccess|IOHIDRequestAccess|CGPreflightListenEventAccess::Input Monitoring::input monitoring|eingabeüberwachung'
+  'AXIsProcessTrusted::Accessibility::accessibility|bedienungshilfen'
+  'AVCaptureDevice::Microphone::mikrofon|microphone'
+)
+ANY_PERM='accessibility|bedienungshilfen|input monitoring|eingabeüberwachung|mikrofon|microphone'
+
+# Only the surfaces a USER is set up by. ARCHITECTURE.md and CLAUDE.md discuss permissions
+# too, but for developers — an omission there costs nobody a working hot key. The first cut
+# of this check used "any document that mentions a permission" to avoid maintaining a list;
+# it promptly flagged both of them. A named list of three is honest; a heuristic that
+# misclassifies is the checker-is-broken case CLAUDE.md warns about.
+USER_DOCS=(README.md docs/ONE-PAGER.md docs/index.html)
+
+PERM_DOCS=()
+for d in "${USER_DOCS[@]}"; do
+  [ -f "$d" ] || continue
+  if grep -qiE "$ANY_PERM" "$d" 2>/dev/null; then PERM_DOCS+=("$d"); fi
+done
+
+perm_checked=0
+if [ "${#PERM_DOCS[@]}" -eq 0 ]; then
+  ok "no document discusses permissions — nothing to cross-check"
+else
+  for entry in "${PERMS[@]}"; do
+    api="${entry%%::*}"; rest="${entry#*::}"
+    label="${rest%%::*}"; docre="${rest#*::}"
+    # Only demand documentation for permissions the code actually requests.
+    grep -rqE "$api" Tippi/ 2>/dev/null || continue
+    for d in "${PERM_DOCS[@]}"; do
+      perm_checked=$((perm_checked + 1))
+      grep -qiE "$docre" "$d" 2>/dev/null \
+        || bad "$d discusses permissions but never mentions '$label' — the code requests it ($api)"
+    done
+  done
+  ok "$perm_checked permission/document pair(s) checked across ${#PERM_DOCS[@]} document(s)"
+fi
+
+# ── 6. Marketing surfaces name the current feature version ────────────────────
+# Dimension 4 only sees lines that START with "Stand"/"Version"/"# … v1.2.3". The
+# user-facing surfaces have no such header, so on 2026-09-11 both sat on the v2.1.0 feature
+# set while project.yml said 2.2.0 — and this script reported no drift at all.
+#
+# Honest limit: a marker can be bumped without touching a single feature sentence. It cannot
+# prove the text is current; it only makes "ship a release without looking at the page" an
+# explicit act rather than an oversight. That is the whole claim.
+printf '\n▶ Marketing surfaces mention v%s\n' "$MINOR"
+marker_checked=0
+if [ -f docs/ONE-PAGER.md ]; then
+  marker_checked=$((marker_checked + 1))
+  grep -qF "(v$MINOR)" docs/ONE-PAGER.md \
+    || bad "docs/ONE-PAGER.md has no '(v$MINOR)' feature marker — page still describes an older release"
+fi
+if [ -f docs/index.html ]; then
+  marker_checked=$((marker_checked + 1))
+  claimed_html=$(grep -oE 'name="tippi:documented-version" content="[0-9]+\.[0-9]+\.[0-9]+"' docs/index.html \
+                 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+  if [ -z "$claimed_html" ]; then
+    bad "docs/index.html is missing its <meta name=\"tippi:documented-version\"> marker"
+  elif [ "$claimed_html" != "$VERSION" ]; then
+    bad "docs/index.html documents $claimed_html, project.yml says $VERSION — review the page, then bump the marker"
+  fi
+fi
+ok "$marker_checked marketing surface(s) checked"
 
 # ── Result ────────────────────────────────────────────────────────────────────
 printf '\n'

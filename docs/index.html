@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
+<meta name="tippi:documented-version" content="2.2.0">
 <title>Tippi — System-wide AI writing assistant for macOS</title>
 <meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 11 AI providers, fully local option via MLX. macOS only.">
 
@@ -436,8 +438,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>
         <h3 data-lang="en">Voice input</h3>
         <h3 data-lang="de">Spracheingabe</h3>
-        <p data-lang="en">Push-to-talk dictation with Whisper or Parakeet running fully on-device. No audio leaves your Mac. Can optionally mute your system audio while recording.</p>
-        <p data-lang="de">Push-to-Talk-Diktat mit Whisper oder Parakeet komplett lokal. Audio verlässt deinen Mac nicht. Kann optional das Systemaudio während der Aufnahme stummschalten.</p>
+        <p data-lang="en">Dictate on a single key: double-tap it to toggle recording, or hold it to record only while you keep it down. The classic key combination still works. Whisper or Parakeet run fully on-device — no audio leaves your Mac. A running timer shows how long you have been speaking, and the indicator sits at the bottom or the top of the screen, your choice.</p>
+        <p data-lang="de">Diktieren auf einer einzigen Taste: zweimal antippen startet und stoppt die Aufnahme, gedrückt halten nimmt nur so lange auf, wie du die Taste hältst. Die klassische Tastenkombination bleibt daneben bestehen. Whisper oder Parakeet laufen komplett lokal — Audio verlässt deinen Mac nicht. Ein mitlaufender Zähler zeigt, wie lange du schon sprichst, und der Indikator sitzt wahlweise unten oder oben am Bildschirm.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"></path><path d="M4 21l3-7 3 7"></path><path d="M4.5 19h5"></path></svg></div>
@@ -673,8 +675,8 @@
       </details>
       <details>
         <summary><span data-lang="en">Can I dictate and translate by voice?</span><span data-lang="de">Kann ich diktieren und per Sprache übersetzen?</span></summary>
-        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the German ⇄ Spanish translation read back aloud — voice in, speech out, both on-device.</p>
-        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
+        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor — either on a key combination, or on a single key you double-tap to toggle and hold to talk. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the German ⇄ Spanish translation read back aloud — voice in, speech out, both on-device.</p>
+        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein — entweder per Tastenkombination oder über eine einzelne Taste, die du zum Umschalten zweimal antippst und zum Sprechen gedrückt hältst. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
       </details>
       <details>
         <summary><span data-lang="en">Can I chain prompts together?</span><span data-lang="de">Kann ich Prompts verketten?</span></summary>
@@ -688,8 +690,8 @@
       </details>
       <details>
         <summary><span data-lang="en">What do I need to run it?</span><span data-lang="de">Was brauche ich dafür?</span></summary>
-        <p data-lang="en">macOS 15 Sequoia or later on Apple Silicon (M1–M5), and at least one AI provider — a cloud API key or a locally installed model. The setup wizard walks you through Accessibility permission and adding a provider in about 30 seconds.</p>
-        <p data-lang="de">macOS 15 Sequoia oder neuer auf Apple Silicon (M1–M5) und mindestens einen KI-Anbieter — einen Cloud-API-Key oder ein lokal installiertes Modell. Der Einrichtungs-Assistent führt dich in rund 30 Sekunden durch Bedienungshilfen-Berechtigung und Anbieter-Setup.</p>
+        <p data-lang="en">macOS 15 Sequoia or later on Apple Silicon (M1–M5), and at least one AI provider — a cloud API key or a locally installed model. The setup wizard walks you through Accessibility permission and adding a provider in about 30 seconds. Dictation asks for Microphone access the first time you use it. If you want to dictate using the single-key hot key, macOS additionally asks for Input Monitoring — without it the key is simply ignored, with no error message to tell you why.</p>
+        <p data-lang="de">macOS 15 Sequoia oder neuer auf Apple Silicon (M1–M5) und mindestens einen KI-Anbieter — einen Cloud-API-Key oder ein lokal installiertes Modell. Der Einrichtungs-Assistent führt dich in rund 30 Sekunden durch Bedienungshilfen-Berechtigung und Anbieter-Setup. Beim ersten Diktat fragt macOS nach Zugriff auf das Mikrofon. Für das Diktat per Einzeltaste verlangt macOS zusätzlich die Eingabeüberwachung — ohne sie bleibt die Taste wirkungslos, ohne jede Fehlermeldung.</p>
       </details>
     </div>
   </div>
@@ -700,8 +702,8 @@
   <div class="wrap">
     <h2 data-lang="en">Try it in 60 seconds</h2>
     <h2 data-lang="de">In 60 Sekunden ausprobieren</h2>
-    <p class="lead" data-lang="en">Download the DMG, grant Accessibility, add one API key (or install MLX with one click). Done.</p>
-    <p class="lead" data-lang="de">DMG laden, Bedienungshilfen erlauben, einen API-Key eintragen (oder MLX in einem Klick installieren). Fertig.</p>
+    <p class="lead" data-lang="en">Download the DMG, grant Accessibility (and Input Monitoring if you want key-based dictation), add one API key (or install MLX with one click). Done.</p>
+    <p class="lead" data-lang="de">DMG laden, Bedienungshilfen erlauben (und die Eingabeüberwachung, wenn du per Einzeltaste diktieren willst), einen API-Key eintragen (oder MLX in einem Klick installieren). Fertig.</p>
 
     <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
@@ -724,6 +726,7 @@
       <a href="https://github.com/miwixyz" target="_blank" rel="noopener">Michael Wlr</a>
     </p>
     <p style="margin-top:8px"><a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">github.com/miwixyz/Tippi</a></p>
+    <p style="margin-top:8px"><a href="impressum.html">Impressum</a> &nbsp;·&nbsp; <a href="datenschutz.html">Datenschutz</a></p>
   </div>
 </footer>
 

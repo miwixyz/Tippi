@@ -56,15 +56,16 @@ vendor sits between you and your text.
 
 - **24 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Add emojis · Defuse · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
 - **Type or speak a free-form instruction** — select text, then type ("reply to this email", "translate to Spanish") or speak it; Tippi applies it via AI directly
-- **Text Snippets (v2.0)** — type a trigger anywhere and it expands instantly, no hotkey; reads real Espanso match files directly, or create simple ones in Settings. Dynamic date/weekday values via a picker, no shell syntax
+- **Text Snippets (v2.0)** — type a trigger anywhere and it expands instantly, no hotkey; reads real Espanso match files directly, or create simple ones in Settings. Dynamic date/weekday values via a picker, no shell syntax. Espanso's `$|$` cursor marker is honoured — it is stripped on insertion and the caret lands exactly there
 - **Auto-popup on text selection (v2.0)** — PopClip-style quick-actions bar that appears next to any selection, position configurable, off by default
 - **Emoji picker + shortcodes (v2.1)** — ⌥⌘E opens a Spotlight-style picker (type to filter, arrows to move, Return inserts at your cursor, recents first), or type `:rakete:` and get 🚀 instantly without any hotkey. German *and* English names — `:rakete:` works as well as `:rocket:`, `kino` finds 🍿 — from pinned Unicode data, plus 135 curated everyday shortcuts. From `:e` onwards a live suggestion list appears next to the cursor — Space takes the top match, a click takes any. Classic text emoticons (`:-)`, `<3`, `XD`) convert too, on a separate toggle. Unknown names are never guessed at
 - **Translate Quick Panel** — press ⌥⌘L anywhere: pre-fills with your current selection if there is one, otherwise type/paste/speak. Source/target language pickers (DE/EN/ES/FR/JA) with a swap button, natural voice read-aloud, and **Replace (⌘⏎)** to write the translation back over your selection. Voice input runs on-device; speech output is offline
 - **Streaming preview & iterative refine** — the result streams in token by token, then refine it in place ("shorter", "more formal") before replacing
 - **Custom prompts** with `{clipboard}`, `{app_name}`, `{language}`, `{selected_text}` variables that adapt to context at trigger time
-- **Voice input** — push-to-talk dictation with Whisper or Parakeet running fully on-device (no audio leaves your Mac); optionally mutes your Mac's system audio for the duration of the recording
+- **Dictation on a single key (v2.2)** — double-tap one modifier key to toggle recording, or hold it to record only while it is down; the classic key combination remains the default and is untouched by the update. The key is recorded by pressing it, not picked from a list of names. A running m:ss timer in the recording pill shows how long you have been speaking, and the indicator can sit at the bottom or the top of the screen. Whisper or Parakeet run fully on-device (no audio leaves your Mac); optionally mutes your Mac's system audio for the duration of the recording
 - **11 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · Scaleway (EU) · Groq · Kimi (Moonshot) · Nebius (EU) · OpenRouter (300+ models, one key) · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
 - **One-click MLX setup** from Settings — no Terminal needed
+- **Liquid Glass (v2.2)** — the floating surfaces (recording indicator, cursor popup, selection action bar, emoji picker, toast, Translate panel) use Apple's Liquid Glass material on macOS 26 and later, and render exactly as before below it
 - **Auto-updates** via Sparkle 2
 - **DE + EN UI**
 - Native Swift / SwiftUI / AppKit, signed and notarized
@@ -86,7 +87,7 @@ vendor sits between you and your text.
 
 1. Download the latest DMG from [GitHub Releases](https://github.com/miwixyz/Tippi/releases)
 2. Drag **Tippi.app** to `/Applications`
-3. Launch — the setup wizard takes 30 seconds (grant Accessibility, add one API key OR install MLX with one click)
+3. Launch — the setup wizard takes 30 seconds (grant Accessibility, add one API key OR install MLX with one click). For dictation on a single key, macOS also asks for Input Monitoring
 4. Select any text, press **⌥⌘T**
 
 ---
@@ -96,6 +97,7 @@ vendor sits between you and your text.
 - macOS 15 Sequoia or later
 - Apple Silicon (M1 / M2 / M3 / M4 / M5)
 - At least one AI provider — bring your own key for cloud, or run fully locally with MLX / Ollama
+- Accessibility permission; Microphone access for dictation; additionally Input Monitoring if you use the single-key dictation hot key — without it the key is ignored silently
 
 ---
 
