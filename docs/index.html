@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
 <meta name="tippi:documented-version" content="2.2.0">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>Tippi — System-wide AI writing assistant for macOS</title>
 <meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 11 AI providers, fully local option via MLX. macOS only.">
 
@@ -103,7 +104,7 @@
   .hero img.mascot {
     width: 112px; height: 112px; border-radius: 50%;
     margin-bottom: 28px;
-    box-shadow: 0 12px 40px rgba(59,140,255,.3);
+    box-shadow: 0 14px 34px rgba(4,9,20,.55);   /* navy-getoent statt blauer Aura: Tiefe, kein Leuchten */
   }
   h1 {
     font-size: clamp(34px, 6vw, 60px);
@@ -234,6 +235,30 @@
     section { padding: 56px 0; }
     .hero { padding: 56px 0 40px; }
   }
+
+  /* ── Zugaenglichkeit & Interaktion (2026-09-11, redesign-audit) ──────────
+     Additiv. Bestehende :hover/transition-Regeln bleiben unberuehrt.        */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .btn:active,
+  .lang-toggle button:active { transform: translateY(1px); }
+  .nav-links a,
+  footer a { transition: color .15s ease; }
+
+  h1, h2, h3 { text-wrap: balance; }
+  p, .lead   { text-wrap: pretty; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -261,6 +286,7 @@
 </nav>
 
 <!-- ── Hero ──────────────────────────────────────────────────────────────── -->
+<main id="content">
 <header class="hero">
   <div class="wrap">
     <img src="mascot.png" class="mascot" alt="Tippi mascot">
@@ -269,7 +295,7 @@
     <h1 data-lang="de">Text markieren.<br><span class="accent">⌥⌘T drücken.</span> KI macht den Rest.</h1>
 
     <p class="sub" data-lang="en">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in. Open-source, BYOK, with a fully local option.</p>
-    <p class="sub" data-lang="de">Ein systemweiter KI-Schreibassistent für macOS — der dich nicht aus deiner App reißt. Open Source, BYOK, mit voll-lokaler Option.</p>
+    <p class="sub" data-lang="de">Ein systemweiter KI-Schreibassistent für macOS, der dich nicht aus deiner App reißt. Open Source, BYOK, mit voll-lokaler Option.</p>
 
     <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
@@ -315,8 +341,8 @@
         <div class="n">1</div>
         <h3 data-lang="en">Select text anywhere</h3>
         <h3 data-lang="de">Text irgendwo markieren</h3>
-        <p data-lang="en">Mail, Safari, Notes, Slack, VS Code, Pages — any text field, any app on macOS.</p>
-        <p data-lang="de">Mail, Safari, Notes, Slack, VS Code, Pages — jedes Textfeld, jede App unter macOS.</p>
+        <p data-lang="en">Mail, Safari, Notes, Slack, VS Code, Pages: any text field, any app on macOS.</p>
+        <p data-lang="de">Mail, Safari, Notes, Slack, VS Code, Pages: jedes Textfeld, jede App unter macOS.</p>
       </div>
       <div class="step">
         <div class="n">2</div>
@@ -330,7 +356,7 @@
         <h3 data-lang="en">Replace in place</h3>
         <h3 data-lang="de">An Ort und Stelle ersetzen</h3>
         <p data-lang="en">Watch the AI's rewrite stream in side-by-side with the original, refine it in place, then replace, append, copy, or regenerate.</p>
-        <p data-lang="de">KI-Vorschlag streamt live neben dem Original ein, direkt verfeinerbar — dann ersetzen, anhängen, kopieren oder neu generieren.</p>
+        <p data-lang="de">KI-Vorschlag streamt live neben dem Original ein, direkt verfeinerbar. Dann ersetzen, anhängen, kopieren oder neu generieren.</p>
       </div>
     </div>
   </div>
@@ -389,7 +415,7 @@
     <h2 data-lang="en">What's in the box</h2>
     <h2 data-lang="de">Was drinsteckt</h2>
     <p class="lead" data-lang="en">Built to fit into your existing workflow, not replace it.</p>
-    <p class="lead" data-lang="de">Gebaut um sich in deinen Workflow einzufügen — nicht ihn zu ersetzen.</p>
+    <p class="lead" data-lang="de">Gebaut um sich in deinen Workflow einzufügen, nicht ihn zu ersetzen.</p>
 
     <div class="features">
       <div class="feature">
@@ -403,8 +429,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="0.5" fill="currentColor"></circle></svg></div>
         <h3 data-lang="en">24 curated built-in prompts</h3>
         <h3 data-lang="de">24 kuratierte Built-in-Prompts</h3>
-        <p data-lang="en">Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize, and more — plus your own custom prompts.</p>
-        <p data-lang="de">Verbessern, Rechtschreibung, Übersetzen, Zusammenfassen, TL;DR, LinkedIn-Post, E-Mail-Antwort, Menschlicher — plus deine eigenen Prompts.</p>
+        <p data-lang="en">Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize, and more, plus your own custom prompts.</p>
+        <p data-lang="de">Verbessern, Rechtschreibung, Übersetzen, Zusammenfassen, TL;DR, LinkedIn-Post, E-Mail-Antwort, Menschlicher, plus deine eigenen Prompts.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
@@ -417,22 +443,22 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4"></path><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"></path></svg></div>
         <h3 data-lang="en">Streaming preview &amp; refine</h3>
         <h3 data-lang="de">Live-Vorschau &amp; Verfeinern</h3>
-        <p data-lang="en">The result streams in token by token — then refine it in place ("shorter", "more formal") as many times as you like before replacing.</p>
-        <p data-lang="de">Das Ergebnis streamt Token für Token ein — danach beliebig oft verfeinern („kürzer", „förmlicher"), bevor du ersetzt.</p>
+        <p data-lang="en">The result streams in token by token, then refine it in place ("shorter", "more formal") as many times as you like before replacing.</p>
+        <p data-lang="de">Das Ergebnis streamt Token für Token ein, danach beliebig oft verfeinern („kürzer", „förmlicher"), bevor du ersetzt.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div>
         <h3 data-lang="en">Prompt chains</h3>
         <h3 data-lang="de">Prompt-Ketten</h3>
-        <p data-lang="en">Link several prompts behind one hotkey — each step's output feeds the next. Live „Step 2/3" progress, the final step streams in, and a failed step keeps the last good result editable. Ships with a built-in „Cleanup → English" chain.</p>
-        <p data-lang="de">Mehrere Prompts hinter einem Hotkey verketten — die Ausgabe jedes Schritts wird zur nächsten Eingabe. Live-Fortschritt „Schritt 2/3", der letzte Schritt streamt ein, und ein Fehler lässt das letzte gültige Ergebnis bearbeitbar. Mit eingebauter Kette „Cleanup → Englisch".</p>
+        <p data-lang="en">Link several prompts behind one hotkey: each step's output feeds the next. Live „Step 2/3" progress, the final step streams in, and a failed step keeps the last good result editable. Ships with a built-in „Cleanup → English" chain.</p>
+        <p data-lang="de">Mehrere Prompts hinter einem Hotkey verketten: die Ausgabe jedes Schritts wird zur nächsten Eingabe. Live-Fortschritt „Schritt 2/3", der letzte Schritt streamt ein, und ein Fehler lässt das letzte gültige Ergebnis bearbeitbar. Mit eingebauter Kette „Cleanup → Englisch".</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></div>
         <h3 data-lang="en">Ambient prompt filtering</h3>
         <h3 data-lang="de">Ambient-Prompt-Filter</h3>
-        <p data-lang="en">The prompt list narrows live as you type — from the popup or the instruction field. Match count in the header, digit shortcuts 1–9 still fire, and ⎋ clears the query before it closes the popup.</p>
-        <p data-lang="de">Die Prompt-Liste filtert live beim Tippen — aus dem Popup oder dem Anweisungsfeld. Treffer-Zähler im Header, Ziffern-Shortcuts 1–9 funktionieren weiter, und ⎋ löscht erst die Suche, bevor es das Popup schließt.</p>
+        <p data-lang="en">The prompt list narrows live as you type, from the popup or the instruction field. Match count in the header, digit shortcuts 1–9 still fire, and ⎋ clears the query before it closes the popup.</p>
+        <p data-lang="de">Die Prompt-Liste filtert live beim Tippen, aus dem Popup oder dem Anweisungsfeld. Treffer-Zähler im Header, Ziffern-Shortcuts 1–9 funktionieren weiter, und ⎋ löscht erst die Suche, bevor es das Popup schließt.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>
@@ -445,15 +471,15 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"></path><path d="M4 21l3-7 3 7"></path><path d="M4.5 19h5"></path></svg></div>
         <h3 data-lang="en">Translate Quick Panel</h3>
         <h3 data-lang="de">Übersetzungs-Fenster</h3>
-        <p data-lang="en">Press ⌥⌘L anywhere for a Spotlight-style window — it pre-fills with your selection, or type, paste or speak. Five languages with a swap button, read-aloud, and <strong>Replace (⌘⏎)</strong> to write the translation straight back over your selection. Voice in, speech out, both on-device.</p>
-        <p data-lang="de">⌥⌘L überall drücken für ein Spotlight-artiges Fenster — übernimmt deine Markierung automatisch, oder tippen, einfügen, sprechen. Fünf Sprachen mit Tausch-Knopf, Vorlesen, und <strong>Ersetzen (⌘⏎)</strong> schreibt die Übersetzung direkt über den markierten Text zurück. Voice rein, Sprache raus, beides lokal.</p>
+        <p data-lang="en">Press ⌥⌘L anywhere for a Spotlight-style window: es füllt sich with your selection, or type, paste or speak. Five languages with a swap button, read-aloud, and <strong>Replace (⌘⏎)</strong> to write the translation straight back over your selection. Voice in, speech out, both on-device.</p>
+        <p data-lang="de">⌥⌘L überall drücken für ein Spotlight-artiges Fenster: es übernimmt deine Markierung automatisch, oder tippen, einfügen, sprechen. Fünf Sprachen mit Tausch-Knopf, Vorlesen, und <strong>Ersetzen (⌘⏎)</strong> schreibt die Übersetzung direkt über den markierten Text zurück. Voice rein, Sprache raus, beides lokal.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><line x1="9" y1="9.5" x2="9.01" y2="9.5"></line><line x1="15" y1="9.5" x2="15.01" y2="9.5"></line></svg></div>
         <h3 data-lang="en">Emoji picker &amp; shortcodes</h3>
         <h3 data-lang="de">Emoji-Auswahl &amp; Kürzel</h3>
-        <p data-lang="en">Press ⌥⌘E for a Spotlight-style picker — type to filter, arrows to move, Return inserts at your cursor, recents first. Or skip it and type <code>:rocket:</code> for an instant 🚀, anywhere, no hotkey. German <em>and</em> English names: <code>:rakete:</code> works too, and „kino" finds 🍿. From <code>:e</code> onwards a suggestion list appears next to your cursor — Space takes the top match, a click takes any. Classic emoticons convert as well — <code>:-)</code>, <code>&lt;3</code>, <code>XD</code> — on their own toggle. Unknown names are left exactly as typed.</p>
-        <p data-lang="de">⌥⌘E öffnet eine Spotlight-artige Auswahl — tippen filtert, Pfeiltasten wählen, Return fügt an der Cursor-Position ein, zuletzt genutzte oben. Oder direkt <code>:rakete:</code> tippen für ein sofortiges 🚀, überall, ohne Hotkey. Deutsche <em>und</em> englische Namen: <code>:rocket:</code> geht genauso, und „kino" findet 🍿. Ab <code>:e</code> erscheint eine Vorschlagsliste neben dem Cursor — Leertaste nimmt den obersten, Klick einen beliebigen. Auch klassische Emoticons werden umgewandelt — <code>:-)</code>, <code>&lt;3</code>, <code>XD</code> — mit eigenem Schalter. Unbekannte Namen bleiben unverändert stehen.</p>
+        <p data-lang="en">Press ⌥⌘E for a Spotlight-style picker: type to filter, arrows to move, Return inserts at your cursor, recents first. Or skip it and type <code>:rocket:</code> for an instant 🚀, anywhere, no hotkey. German <em>and</em> English names: <code>:rakete:</code> works too, and „kino" finds 🍿. From <code>:e</code> onwards a suggestion list appears next to your cursor — Space takes the top match, a click takes any. Classic emoticons convert as well — <code>:-)</code>, <code>&lt;3</code>, <code>XD</code> — on their own toggle. Unknown names are left exactly as typed.</p>
+        <p data-lang="de">⌥⌘E öffnet eine Spotlight-artige Auswahl: tippen filtert, Pfeiltasten wählen, Return fügt an der Cursor-Position ein, zuletzt genutzte oben. Oder direkt <code>:rakete:</code> tippen für ein sofortiges 🚀, überall, ohne Hotkey. Deutsche <em>und</em> englische Namen: <code>:rocket:</code> geht genauso, und „kino" findet 🍿. Ab <code>:e</code> erscheint eine Vorschlagsliste neben dem Cursor — Leertaste nimmt den obersten, Klick einen beliebigen. Auch klassische Emoticons werden umgewandelt — <code>:-)</code>, <code>&lt;3</code>, <code>XD</code> — mit eigenem Schalter. Unbekannte Namen bleiben unverändert stehen.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v2"></path><path d="M16 3h2a2 2 0 0 1 2 2v2"></path><path d="M8 21H6a2 2 0 0 1-2-2v-2"></path><path d="M16 21h2a2 2 0 0 0 2-2v-2"></path><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg></div>
@@ -466,8 +492,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg></div>
         <h3 data-lang="en">One-click local AI</h3>
         <h3 data-lang="de">Lokale KI in einem Klick</h3>
-        <p data-lang="en">Run AI fully locally on Apple Silicon. Tippi installs the MLX toolchain from Settings — no Terminal required.</p>
-        <p data-lang="de">KI komplett lokal auf Apple Silicon. Tippi installiert die MLX-Toolchain aus den Einstellungen — kein Terminal nötig.</p>
+        <p data-lang="en">Run AI fully locally on Apple Silicon. Tippi installs the MLX toolchain from Settings, no Terminal required.</p>
+        <p data-lang="de">KI komplett lokal auf Apple Silicon. Tippi installiert die MLX-Toolchain aus den Einstellungen, kein Terminal nötig.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg></div>
@@ -480,8 +506,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><polyline points="7 9 10 12 7 15"></polyline><line x1="12" y1="15" x2="16" y2="15"></line></svg></div>
         <h3 data-lang="en">Text Snippets (v2.0)</h3>
         <h3 data-lang="de">Text-Snippets (v2.0)</h3>
-        <p data-lang="en">Type a trigger anywhere, it expands instantly — no hotkey. Reads real Espanso match files directly; dynamic date/weekday values built with a picker, no shell syntax ever typed.</p>
-        <p data-lang="de">Kürzel tippen, sofortige Ersetzung — kein Hotkey nötig. Liest echte Espanso-Dateien direkt; dynamische Datums-/Wochentag-Werte per Auswahl, ohne Shell-Syntax.</p>
+        <p data-lang="en">Type a trigger anywhere, it expands instantly, no hotkey. Reads real Espanso match files directly; dynamic date/weekday values built with a picker, no shell syntax ever typed.</p>
+        <p data-lang="de">Kürzel tippen, sofortige Ersetzung, kein Hotkey nötig. Liest echte Espanso-Dateien direkt; dynamische Datums-/Wochentag-Werte per Auswahl, ohne Shell-Syntax.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v4M4 4h4M20 4v4M20 4h-4M4 20v-4M4 20h4M20 20v-4M20 20h-4"></path><rect x="9" y="9" width="6" height="6" rx="1"></rect></svg></div>
@@ -597,8 +623,8 @@
         <div>
           <strong data-lang="en">Fully local option</strong>
           <strong data-lang="de">Voll-lokale Option</strong>
-          <p data-lang="en">MLX and Ollama backends run on your Mac — no cloud round-trip at all.</p>
-          <p data-lang="de">MLX und Ollama laufen lokal — kein Cloud-Roundtrip.</p>
+          <p data-lang="en">MLX and Ollama backends run on your Mac, no cloud round-trip at all.</p>
+          <p data-lang="de">MLX und Ollama laufen lokal, kein Cloud-Roundtrip.</p>
         </div>
       </div>
       <div class="privacy-item">
@@ -665,8 +691,8 @@
       </details>
       <details>
         <summary><span data-lang="en">Does my text get sent to a server?</span><span data-lang="de">Wird mein Text an einen Server geschickt?</span></summary>
-        <p data-lang="en">Only to the AI provider you explicitly configured — nowhere else. Tippi has zero telemetry and no analytics. If you choose a local engine (MLX or Ollama), nothing leaves your Mac at all. Voice transcription always runs on-device.</p>
-        <p data-lang="de">Nur an den KI-Anbieter, den du selbst eingerichtet hast — sonst nirgendwohin. Tippi hat keine Telemetrie und keine Analytics. Wählst du eine lokale Engine (MLX oder Ollama), verlässt gar nichts deinen Mac. Die Sprach-Transkription läuft immer lokal.</p>
+        <p data-lang="en">Only to the AI provider you explicitly configured, nowhere else. Tippi has zero telemetry and no analytics. If you choose a local engine (MLX or Ollama), nothing leaves your Mac at all. Voice transcription always runs on-device.</p>
+        <p data-lang="de">Nur an den KI-Anbieter, den du selbst eingerichtet hast, sonst nirgendwohin. Tippi hat keine Telemetrie und keine Analytics. Wählst du eine lokale Engine (MLX oder Ollama), verlässt gar nichts deinen Mac. Die Sprach-Transkription läuft immer lokal.</p>
       </details>
       <details>
         <summary><span data-lang="en">Which AI providers are supported?</span><span data-lang="de">Welche KI-Anbieter werden unterstützt?</span></summary>
@@ -675,13 +701,13 @@
       </details>
       <details>
         <summary><span data-lang="en">Can I dictate and translate by voice?</span><span data-lang="de">Kann ich diktieren und per Sprache übersetzen?</span></summary>
-        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor — either on a key combination, or on a single key you double-tap to toggle and hold to talk. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the German ⇄ Spanish translation read back aloud — voice in, speech out, both on-device.</p>
-        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein — entweder per Tastenkombination oder über eine einzelne Taste, die du zum Umschalten zweimal antippst und zum Sprechen gedrückt hältst. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
+        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor: either on a key combination, or on a single key you double-tap to toggle and hold to talk. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the German ⇄ Spanish translation read back aloud — voice in, speech out, both on-device.</p>
+        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein: entweder per Tastenkombination oder über eine einzelne Taste, die du zum Umschalten zweimal antippst und zum Sprechen gedrückt hältst. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
       </details>
       <details>
         <summary><span data-lang="en">Can I chain prompts together?</span><span data-lang="de">Kann ich Prompts verketten?</span></summary>
-        <p data-lang="en">Yes. A prompt can run several prompts in a row — each step's output becomes the next step's input, all behind one hotkey. In the prompt editor switch the type to "Chain" and add two or more steps (any built-in or custom prompt). The preview shows the current step live and streams the final result; if a step fails, the last good intermediate stays editable. A ready-made "Cleanup → English" chain ships built in.</p>
-        <p data-lang="de">Ja. Ein Prompt kann mehrere Prompts nacheinander ausführen — die Ausgabe jedes Schritts wird zur Eingabe des nächsten, alles hinter einem Hotkey. Im Prompt-Editor den Typ auf „Kette" stellen und zwei oder mehr Schritte hinzufügen (beliebige Built-in- oder eigene Prompts). Die Vorschau zeigt den aktuellen Schritt live und streamt das Endergebnis; scheitert ein Schritt, bleibt das letzte gültige Zwischenergebnis bearbeitbar. Eine fertige „Cleanup → Englisch"-Kette ist eingebaut.</p>
+        <p data-lang="en">Yes. A prompt can run several prompts in a row: each step's output becomes the next step's input, all behind one hotkey. In the prompt editor switch the type to "Chain" and add two or more steps (any built-in or custom prompt). The preview shows the current step live and streams the final result; if a step fails, the last good intermediate stays editable. A ready-made "Cleanup → English" chain ships built in.</p>
+        <p data-lang="de">Ja. Ein Prompt kann mehrere Prompts nacheinander ausführen: die Ausgabe jedes Schritts wird zur Eingabe des nächsten, alles hinter einem Hotkey. Im Prompt-Editor den Typ auf „Kette" stellen und zwei oder mehr Schritte hinzufügen (beliebige Built-in- oder eigene Prompts). Die Vorschau zeigt den aktuellen Schritt live und streamt das Endergebnis; scheitert ein Schritt, bleibt das letzte gültige Zwischenergebnis bearbeitbar. Eine fertige „Cleanup → Englisch"-Kette ist eingebaut.</p>
       </details>
       <details>
         <summary><span data-lang="en">Does it work in every app?</span><span data-lang="de">Funktioniert es in jeder App?</span></summary>
@@ -690,8 +716,8 @@
       </details>
       <details>
         <summary><span data-lang="en">What do I need to run it?</span><span data-lang="de">Was brauche ich dafür?</span></summary>
-        <p data-lang="en">macOS 15 Sequoia or later on Apple Silicon (M1–M5), and at least one AI provider — a cloud API key or a locally installed model. The setup wizard walks you through Accessibility permission and adding a provider in about 30 seconds. Dictation asks for Microphone access the first time you use it. If you want to dictate using the single-key hot key, macOS additionally asks for Input Monitoring — without it the key is simply ignored, with no error message to tell you why.</p>
-        <p data-lang="de">macOS 15 Sequoia oder neuer auf Apple Silicon (M1–M5) und mindestens einen KI-Anbieter — einen Cloud-API-Key oder ein lokal installiertes Modell. Der Einrichtungs-Assistent führt dich in rund 30 Sekunden durch Bedienungshilfen-Berechtigung und Anbieter-Setup. Beim ersten Diktat fragt macOS nach Zugriff auf das Mikrofon. Für das Diktat per Einzeltaste verlangt macOS zusätzlich die Eingabeüberwachung — ohne sie bleibt die Taste wirkungslos, ohne jede Fehlermeldung.</p>
+        <p data-lang="en">macOS 15 Sequoia or later on Apple Silicon (M1–M5), and at least one AI provider: a cloud API key or a locally installed model. The setup wizard walks you through Accessibility permission and adding a provider in about 30 seconds. Dictation asks for Microphone access the first time you use it. If you want to dictate using the single-key hot key, macOS additionally asks for Input Monitoring — without it the key is simply ignored, with no error message to tell you why.</p>
+        <p data-lang="de">macOS 15 Sequoia oder neuer auf Apple Silicon (M1–M5) und mindestens einen KI-Anbieter: einen Cloud-API-Key oder ein lokal installiertes Modell. Der Einrichtungs-Assistent führt dich in rund 30 Sekunden durch Bedienungshilfen-Berechtigung und Anbieter-Setup. Beim ersten Diktat fragt macOS nach Zugriff auf das Mikrofon. Für das Diktat per Einzeltaste verlangt macOS zusätzlich die Eingabeüberwachung — ohne sie bleibt die Taste wirkungslos, ohne jede Fehlermeldung.</p>
       </details>
     </div>
   </div>
@@ -717,6 +743,8 @@
     </div>
   </div>
 </section>
+
+</main>
 
 <footer>
   <div class="wrap">
