@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.3.0] — 2026-09-13
+
+### Added
+- **Notes window (⌥⌘N)** — a resizable notes window, separate from the main hotkey flow: a list on the left, a plain-text editor on the right. Hotkey and enable toggle are configurable in Settings → Hotkeys, same as Translate and the emoji picker.
+- **Notes sync via iCloud.** Each note is its own plain `.txt` file in the app's iCloud container — readable directly in Finder, no proprietary format, no lock-in. Falls back to local storage when iCloud isn't available (not signed in, Documents & Data off), and migrates automatically into iCloud the first time it becomes available. Window size/position and sort order sync too, via `NSUbiquitousKeyValueStore` — note content never touches that store, and neither do API keys or any other credential.
+- **Clean paste, always.** Paste an email, a web page, a styled document — it lands as plain text automatically, with a quiet "Formatting removed" toast confirming it happened. No menu, no extra step.
+- **Native spell check** in the notes editor.
+- **Live word/character counter** under the editor.
+
+### Notes
+- Sync is deliberately simple: the list refreshes when the Notes window opens, not continuously — no long-lived background query. Conflict handling is last-write-wins by modification time, which is the right tradeoff for one person's quick notes across two Macs, not for simultaneous multi-device editing.
+- Storage format is plain `.txt`, one file per note — `createdAt`/`modifiedAt` come from the file's own filesystem attributes rather than being embedded, so a note file really is just its own content and nothing else.
+- Requires the app's iCloud container entitlement (added via Xcode Signing & Capabilities) — first build after pulling this needs a fresh `xcodegen generate` and a signing team with iCloud capability enabled on the App ID.
+
 ## [2.2.0] — 2026-09-10
 
 ### Added

@@ -28,14 +28,14 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.2.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.3.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
 Tippi/
 ├── App/
 │   ├── TippiApp.swift              # @main, NSApplication-Setup
-│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (4 Hotkeys)
+│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (5 Hotkeys)
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
@@ -53,7 +53,11 @@ Tippi/
 │   │   ├── EmojiDatabase.swift             # Laden, Alias-Map, EmojiSearch (rein)
 │   │   ├── EmojiInlineMatcher.swift        # `:name:`-Erkennung, rein + unit-getestet
 │   │   └── EmojiSettings.swift             # Hotkey, Toggles, Recents
-│   └── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
+│   ├── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
+│   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync
+│       ├── Note.swift                      # Model, nicht Codable (1 .txt-Datei/Notiz)
+│       ├── NotesStore.swift                # iCloud-Container + lokaler Fallback, NSFileCoordinator
+│       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings)
 ├── LLM/                            # 11 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
 │   ├── LLMRouter.swift             # Registry, Routing, Fallback
@@ -66,6 +70,12 @@ Tippi/
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
 │   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
+│   ├── Notes/                      # v2.3 — resizable Fenster, Liste + Editor
+│   │   ├── NotesWindowController.swift     # NSWindow, aktivierend (kein Panel wie Preview/Translate)
+│   │   ├── NotesRootView.swift             # Split View
+│   │   ├── NotesListView.swift             # Liste + Neu/Löschen (Bestätigungsdialog)
+│   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
+│   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck
 │   ├── SettingsView.swift          # alle 9 Tabs (großes File, private structs)
 │   └── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
 ├── Voice/

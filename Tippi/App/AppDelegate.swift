@@ -51,6 +51,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// AX capture, no selection needed — it only ever inserts.
     let emojiHotkeyManager = HotkeyManager(id: 4)
     private let emojiPickerPanel = EmojiPickerPanel()
+    /// Fifth Carbon hot key (id 5) for the Notes window. Remappable + toggle
+    /// in Settings → Hotkeys, same shape as translate/emoji (see
+    /// `NotesSettings`, `restartNotesHotkey`).
+    let notesHotkeyManager = HotkeyManager(id: 5)
     /// Passive `:prefix` suggestion list. Never takes keyboard focus — see
     /// `EmojiSuggestionPanel`.
     private let emojiSuggestionPanel = EmojiSuggestionPanel()
@@ -73,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastSelectionRange: CFRange?
     private let popupController = PromptPopupController()
     private let previewWindowController = PreviewWindowController()
+    private let notesWindowController = NotesWindowController()
     private var cancellables = Set<AnyCancellable>()
     private var updaterController: SPUStandardUpdaterController?
 
@@ -126,6 +131,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         restartDictationHotkey()
         restartTranslateHotkey()
         restartEmojiHotkey()
+        restartNotesHotkey()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -399,6 +405,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         menu.addItem(translateItem)
 
+        let notesItem = NSMenuItem(
+            title: String(localized: "menu.notes"),
+            action: #selector(showNotesWindow),
+            keyEquivalent: "n"
+        )
+        notesItem.keyEquivalentModifierMask = [.command, .option]
+        menu.addItem(notesItem)
+
         menu.addItem(.separator())
 
         let updateItem = NSMenuItem(
@@ -637,6 +651,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc func showNotesWindow() {
+        notesWindowController.show()
+    }
+
+    /// (Re)registers the Notes window hot key. Call after the setting
+    /// changes. Same shape as restartTranslateHotkey/restartEmojiHotkey —
+    /// no readiness gate, just the enabled toggle + remappable combo.
+    func restartNotesHotkey() {
+        notesHotkeyManager.stop()
+        guard NotesSettings.isEnabled else {
+            NSLog("Tippi: notes hot key inactive (disabled in settings)")
+            return
+        }
+
+        let combo = NotesSettings.combo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+
+        notesHotkeyManager.update(
+            trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
+        )
+        notesHotkeyManager.start { [weak self] in
+            Task { @MainActor in self?.showNotesWindow() }
+        }
+        NSLog("Tippi: notes hot key registered (\(combo.displayString))")
     }
 
     // MARK: - Frontmost-app tracking

@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: September 2026 · Version: **2.2.0** (siehe auch `docs/HANDOFF-CLAUDE.md` für die aktuelle Agenten-Übergabe)
+Stand: September 2026 · Version: **2.3.0** (siehe auch `docs/HANDOFF-CLAUDE.md` für die aktuelle Agenten-Übergabe)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist die **vollständige technische und betriebliche Übergabe** für das Projekt Tippi. Es ist primär für deinen eigenen Vault gedacht und dient als Referenz wenn du nach Monaten zurückkommst oder das Projekt jemandem übergibst.
@@ -70,7 +70,11 @@ Tippi/
 │   ├── TextCapture.swift           AX-API zuerst, Pasteboard-Fallback
 │   ├── TextInsertion.swift         Replace / Append / Copy via simuliertem ⌘V
 │   ├── CustomPrompt.swift          User-Prompts + JSON-Persistierung
-│   └── TippiColors.swift           Color.tippiNavy / .tippiSurface / .tippiMist Extensions
+│   ├── TippiColors.swift           Color.tippiNavy / .tippiSurface / .tippiMist Extensions
+│   └── Notes/                      (ab v2.3.0)
+│       ├── Note.swift              Model — id/content/createdAt/modifiedAt, nicht Codable
+│       ├── NotesStore.swift        iCloud-Ubiquity-Container + lokaler Fallback, NSFileCoordinator
+│       └── NotesSettings.swift     Hotkey-Enable/Combo, UserDefaults — Muster von TranslateSettings
 ├── LLM/
 │   ├── LLMProvider.swift           Protocol + LLMError
 │   ├── OpenAIProvider.swift        gpt-5.6-luna, /v1/chat/completions
@@ -93,9 +97,16 @@ Tippi/
 │   │   ├── PromptPopupView.swift   SwiftUI-Popup-Inhalt; enthält VoiceMode enum (.dictate /
 │   │   │                           .voicePrompt), VoiceSection, DirectInsertRow
 │   │   └── PromptPopupController.swift  NSPanel, Positionierung am Cursor
-│   └── Preview/
-│       ├── PreviewView.swift       Original | Suggestion Side-by-Side
-│       └── PreviewWindowController.swift  NSWindow, Floating-Level; CloseDelegate wired
+│   ├── Preview/
+│   │   ├── PreviewView.swift       Original | Suggestion Side-by-Side
+│   │   └── PreviewWindowController.swift  NSWindow, Floating-Level; CloseDelegate wired
+│   └── Notes/                      (ab v2.3.0)
+│       ├── NotesWindowController.swift  Resizable NSWindow (aktivierend, kein Panel — anders als
+│       │                           Preview/Translate: Notes ist ein eigenständiges Editier-Fenster)
+│       ├── NotesRootView.swift     Split View, refresh() bei .onAppear
+│       ├── NotesListView.swift     Liste + Neu/Löschen (Löschen nur mit Bestätigungsdialog)
+│       ├── NotesEditorView.swift   Autosave debounced, Wort-/Zeichenzähler
+│       └── PlainTextEditor.swift   NSViewRepresentable — Paste-Erkennung + Rechtschreibprüfung
 ├── Helpers/
 │   └── whisper-cli                 Statischer Binary (gitignored), via `make prepare-binary`
 └── Resources/
@@ -244,6 +255,17 @@ Warum die Leertaste und nicht Tab oder Return: Da nichts unterdrückt werden kan
 Die Vorschlagsliste (`EmojiSuggestionPanel`) darf **nie** Key-Window werden (`canBecomeKey = false`), sonst erreichen die Tastenanschläge des Nutzers die App nicht mehr, in der er schreibt — der v2.0.1-Showstopper. Deshalb hat sie bewusst keine Pfeiltasten-Navigation. Der Picker (`EmojiPickerPanel`, ⌥⌘E) **muss** dagegen Key-Window werden: Er hat ein echtes Suchfeld. Gleiche Regel, gegensätzliches Ergebnis — pro Panel entscheiden, nie das Muster kopieren.
 
 Emoji-Daten: `Tippi/Resources/emoji-data.json`, generiert von `scripts/generate-emoji-data.py` aus gepinnten Unicode-Quellen (Emoji 16.0 + CLDR 48.2.1). `--check` verifiziert, dass die committete Datei zum Generator passt; `release.sh` bricht ab, wenn nicht.
+
+### 5.9 Notizen + iCloud-Sync (ab v2.3.0)
+
+Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedliche Anforderungen haben:
+
+- **Notiz-Inhalt** → iCloud-Ubiquity-Container (`FileManager.url(forUbiquityContainerIdentifier: nil)`, Container-ID `iCloud.dev.mwlr.Tippi`). Eine reine `.txt`-Datei pro Notiz (Dateiname = `<uuid>.txt`), kein JSON-Wrapper — `createdAt`/`modifiedAt` kommen aus den Dateisystem-Attributen, nicht eingebettet. Lesen/Schreiben/Löschen laufen **immer** durch `NSFileCoordinator` — ohne Koordinator race'd jeder Zugriff mit dem iCloud-Sync-Daemon und kann Daten korrumpieren oder verlieren.
+- **Fenster-Settings** (Größe/Position, Sortierung) → `NSUbiquitousKeyValueStore` (`NotesPreferences.swift`) — bewusst getrennt vom Inhalt, weil dieser Store auf 1 MB/1024 Keys begrenzt ist und für genau solche kleinen Key-Value-Daten gebaut ist. **Enthält nie** Notiz-Text, API-Keys oder sonstige Credentials.
+- **Kein Live-Sync.** Die Liste aktualisiert nur beim Öffnen des Fensters (`NotesStore.refresh()`), kein dauerhafter `NSMetadataQuery`. Eine Notiz, die gerade erst auf dem anderen Mac erstellt wurde, kann beim ersten Öffnen noch als iCloud-Platzhalter vorliegen — `startDownloadingUbiquitousItem` wird angestoßen, die Datei erscheint dann beim nächsten Öffnen. Konfliktauflösung ist Last-Write-Wins über `modifiedAt` — für eine Einzelnutzer-Notizliste ausreichend, kein CloudKit-Aufwand nötig.
+- **Fallback ohne iCloud:** Ist kein iCloud-Account aktiv, schreibt `NotesStore` lokal nach `~/Library/Application Support/Tippi/Notes/` — Feature funktioniert immer, Sync ist Bonus. Einmalige Migration lokal→iCloud sobald der Container verfügbar wird, mit echtem Fehler-Handling (kein `try?`, das Original wird nur nach verifiziertem Kopiererfolg gelöscht).
+- **Entitlement-Voraussetzung:** `com.apple.developer.icloud-container-identifiers` + `icloud-services: [CloudDocuments]` + `ubiquity-kvstore-identifier` in `Tippi.entitlements` — via Xcode → Signing & Capabilities → „+ iCloud" gesetzt (Portal-Capability + Provisioning-Profil legt Xcode dabei selbst an). App bleibt unsandboxed (siehe 8.6) — CloudKit/Ubiquity funktioniert trotzdem, das Entitlement bestimmt nur, wohin iCloud schreibt.
+- **Hotkey:** fünfter Carbon-Hotkey (`hotKeyID = 5`), Default ⌥⌘N, remappbar über `NotesSettings` (gleiches Muster wie `TranslateSettings`/`EmojiSettings`) — Settings → Hotkeys.
 
 ---
 
@@ -493,6 +515,8 @@ Gist kann keine Binaries liefern (HTTP 406 / Redirect). Daher: GitHub Releases a
 - **Default Provider:** Selbe plist, Key: `defaultProvider`
 - **Per-Provider-Modell:** Selbe plist, Keys: `defaultModel.<provider-id>`
 - **Whisper Models:** `~/Library/Application Support/Tippi/Models/` (z.B. `ggml-base.en.bin`)
+- **Notizen:** iCloud-Container `iCloud.dev.mwlr.Tippi` (Documents/Notes/`<uuid>.txt`), lokaler Fallback `~/Library/Application Support/Tippi/Notes/` ohne iCloud
+- **Notizen-Fenster-Settings:** `NSUbiquitousKeyValueStore`, Key `notes.window.frame.v1` — nicht in der lokalen plist
 - **Crash-Logs:** `~/Library/Logs/Tippi/` (falls aktiviert)
 
 ### Permissions löschen / zurücksetzen

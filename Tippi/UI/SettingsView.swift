@@ -139,6 +139,8 @@ private struct HotkeysTab: View {
     @State private var translateCombo: KeyCombo = TranslateSettings.combo
     @State private var emojiPickerEnabled: Bool = EmojiSettings.isPickerEnabled
     @State private var emojiCombo: KeyCombo = EmojiSettings.combo
+    @State private var notesEnabled: Bool = NotesSettings.isEnabled
+    @State private var notesCombo: KeyCombo = NotesSettings.combo
 
     var body: some View {
         ScrollView {
@@ -255,6 +257,33 @@ private struct HotkeysTab: View {
                                 .onChange(of: emojiCombo) { _, new in
                                     EmojiSettings.combo = new
                                     (NSApp.delegate as? AppDelegate)?.restartEmojiHotkey()
+                                }
+                        }
+                    }
+                    .padding(6)
+                }
+
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(isOn: $notesEnabled) {
+                            Text(String(localized: "settings.hotkeys.notes.header"))
+                                .font(.headline)
+                        }
+                        .onChange(of: notesEnabled) { _, new in
+                            NotesSettings.isEnabled = new
+                            (NSApp.delegate as? AppDelegate)?.restartNotesHotkey()
+                        }
+
+                        Text(String(localized: "settings.hotkeys.notes.intro"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if notesEnabled {
+                            HotkeyRecorderField(combo: $notesCombo)
+                                .onChange(of: notesCombo) { _, new in
+                                    NotesSettings.combo = new
+                                    (NSApp.delegate as? AppDelegate)?.restartNotesHotkey()
                                 }
                         }
                     }
@@ -1415,6 +1444,8 @@ private struct HelpTab: View {
         HelpEntry(id: "translate", icon: "character.bubble", category: .voice,
                   title: String(localized: "settings.help.translateTitle"), body: String(localized: "settings.help.translateBody")),
 
+        HelpEntry(id: "notes", icon: "note.text", category: .misc,
+                  title: String(localized: "settings.help.notesTitle"), body: String(localized: "settings.help.notesBody")),
         HelpEntry(id: "history", icon: "clock.arrow.circlepath", category: .misc,
                   title: String(localized: "settings.help.historyTitle"), body: String(localized: "settings.help.historyBody")),
         HelpEntry(id: "links", icon: "link", category: .misc,

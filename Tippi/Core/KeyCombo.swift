@@ -37,6 +37,11 @@ struct KeyCombo: Codable, Equatable {
     /// actually wanted Apple's palette.
     static let emojiDefault = KeyCombo(keyCode: 14, modifiers: [.option, .command])
 
+    /// Notes window default: ⌥⌘N (Option + Command + N — N for Notes).
+    /// Distinct from main (⌥⌘T), dictation (⌃⌥⌘M), translate (⌥⌘L),
+    /// emoji (⌥⌘E) and the hardcoded safety hotkey (⌃⌥⌘T).
+    static let notesDefault = KeyCombo(keyCode: 45, modifiers: [.option, .command])
+
     var displayString: String {
         var parts: [String] = []
         let m = modifiers
