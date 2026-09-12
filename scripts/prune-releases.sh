@@ -44,7 +44,15 @@ APPCAST="appcast.xml"
 echo "▶ Release prune (keeping newest ${KEEP})"
 
 # Newest first — gh lists in that order.
-mapfile -t TAGS < <(gh release list --limit 100 --json tagName --jq '.[].tagName')
+# Not `mapfile` (bash 4+ only) — macOS ships bash 3.2 as /usr/bin/bash for
+# licensing reasons, and this script's #!/usr/bin/env bash resolves to that
+# unless the caller's PATH puts a newer bash first. Real failure, not
+# theoretical: this exact line broke the very first time this script ran
+# for real (2026-09-13, v2.3.0 release) — `mapfile: command not found`.
+TAGS=()
+while IFS= read -r line; do
+    TAGS+=("${line}")
+done < <(gh release list --limit 100 --json tagName --jq '.[].tagName')
 TOTAL=${#TAGS[@]}
 
 if [ "${TOTAL}" -le "${KEEP}" ]; then
