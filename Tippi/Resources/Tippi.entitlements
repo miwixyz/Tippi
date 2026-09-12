@@ -15,7 +15,7 @@
 		<string>iCloud.dev.mwlr.Tippi</string>
 	</array>
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<string>LTKJ6Z2VYB.*</string>
 	<key>com.apple.security.app-sandbox</key>
 	<false/>
 	<key>com.apple.security.device.audio-input</key>
