@@ -82,7 +82,16 @@ enum DynamicVariableBuilder {
     static func makeVar(name: String, kind: DynamicVariableKind) -> SnippetVar {
         switch kind {
         case .today(let format):
-            return SnippetVar(name: name, type: "date", params: SnippetVarParams(cmd: nil, format: format.strftimeFormat))
+            // Routed through the shell (`LC_TIME=...` prefix), not the
+            // direct-`strftime()` `type: "date"` path `SnippetVariableResolver`
+            // also supports — that path calls C `strftime` with whatever
+            // locale the process happens to have, with no override, which is
+            // exactly the "%B renders as English 'June', not German 'Juni'"
+            // bug this project already found and fixed once for `.weekday`
+            // (see the comment there). Found in a second-pass code review,
+            // 2026-09-13: `.today` had the identical bug the whole time.
+            let cmd = "LC_TIME=de_DE.UTF-8 date +\"\(format.strftimeFormat)\""
+            return SnippetVar(name: name, type: "shell", params: SnippetVarParams(cmd: cmd, format: nil))
 
         case .weekday(let weekday, let extraDays, let format):
             // `%B` (month name) without an explicit locale renders in

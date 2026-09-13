@@ -25,11 +25,11 @@ That's it. That's the product.
 | Cloud-only, your data leaves your Mac | **Two local engines** (MLX, Ollama) — fully offline option |
 | Subscription | **Free, open-source (MIT)**, bring your own key |
 | Telemetry, analytics, "anonymized" data | **Zero telemetry**, no analytics, no crash reports |
-| One utility per menu-bar icon | **One app instead of six** — see below |
+| One utility per menu-bar icon | **One app instead of eight** — see below |
 
 ---
 
-## One app instead of six
+## One app instead of eight
 
 Most Macs accumulate a row of small utilities that each do one thing. Tippi now
 covers that whole row:
@@ -41,14 +41,16 @@ covers that whole row:
 | Action bar at your text selection | PopClip | **Selection action bar** |
 | On-device dictation | MacWhisper · Superwhisper | **Dictation mode** (Whisper / Parakeet) |
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
+| Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
 | AI rewriting, grammar, tone | Grammarly · ChatGPT desktop | **24 prompts + your own**, 11 providers |
+| Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |
 
-Several of those are cheap or free — the saving isn't mainly money. It's six
+Several of those are cheap or free — the saving isn't mainly money. It's eight
 sets of Accessibility and Input Monitoring permissions to grant and re-grant
-after every macOS update, six background processes, six update mechanisms, six
-chances for a hotkey collision, and six vendors with a view of what you type.
-Tippi is one process, one permission set, one update path — and BYOK, so no
-vendor sits between you and your text.
+after every macOS update, eight background processes, eight update mechanisms,
+and eight chances for a hotkey collision. Tippi is one process, one permission
+set, one update path — and BYOK, so no vendor sits between you and your text
+for anything that touches AI.
 
 ---
 

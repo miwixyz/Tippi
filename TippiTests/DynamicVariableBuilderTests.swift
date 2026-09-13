@@ -2,11 +2,17 @@ import XCTest
 @testable import Tippi
 
 final class DynamicVariableBuilderTests: XCTestCase {
-    func testTodayGeneratesDateTypeWithFormat() {
+    /// `.today` is routed through the shell with an explicit `LC_TIME`
+    /// prefix, same as `.weekday` — NOT the direct-`strftime()` `type: "date"`
+    /// path, which has no locale override and silently renders month names
+    /// in whatever locale the process inherits. Real bug found in a second
+    /// code-review pass, 2026-09-13, after the identical bug had already been
+    /// fixed once for `.weekday`.
+    func testTodayGeneratesLCTimeShellCommand() {
         let variable = DynamicVariableBuilder.makeVar(name: "v1", kind: .today(format: .dayMonthYear))
-        XCTAssertEqual(variable.type, "date")
-        XCTAssertEqual(variable.params.format, "%d. %B %Y")
-        XCTAssertNil(variable.params.cmd)
+        XCTAssertEqual(variable.type, "shell")
+        XCTAssertEqual(variable.params.cmd, "LC_TIME=de_DE.UTF-8 date +\"%d. %B %Y\"")
+        XCTAssertNil(variable.params.format)
     }
 
     func testWeekdayWithoutExtraDaysGeneratesPlainDateVCommand() {

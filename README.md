@@ -10,7 +10,7 @@
 
 **🌐 Website:** [miwixyz.github.io/Tippi](https://miwixyz.github.io/Tippi/) (EN / DE) · **📄 One-pager:** [docs/ONE-PAGER.md](docs/ONE-PAGER.md)
 
-**Tippi** is a system-wide AI writing assistant for macOS. Select text in any app, hit a hotkey, let AI transform it — improve writing, fix grammar, translate, shorten, lengthen, or run your own custom prompts. Results land back in your original app with one click. No text selected? Trigger the hotkey to record voice — Whisper transcribes locally, then optionally applies an AI prompt.
+**Tippi** is a system-wide AI writing assistant for macOS. Select text in any app, hit a hotkey, let AI transform it — improve writing, fix grammar, translate, shorten, lengthen, or run your own custom prompts. Results land back in your original app with one click. No text selected? Trigger the hotkey to record voice — Whisper transcribes locally, then optionally applies an AI prompt. It's grown into more than an AI tool since: on-device dictation, a translation panel, text snippets, an emoji picker, and iCloud-synced quick notes all live in the same menu-bar app.
 
 > Mark text anywhere. Hit ⌥⌘T. Let AI do the rest.
 
@@ -18,9 +18,9 @@
 
 ---
 
-## One app instead of six
+## One app instead of eight
 
-Tippi started as an AI writing assistant. As of v2.1 it also covers the small
+Tippi started as an AI writing assistant. Since v2.1 it also covers the small
 utilities most people bolt onto macOS one by one — each with its own menu bar
 icon, its own Accessibility and Input Monitoring grants, its own update
 mechanism, and its own hotkeys to keep out of each other's way.
@@ -32,15 +32,16 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Action bar next to any text selection | PopClip | **Selection action bar**, position configurable (v2.0) |
 | Dictation that runs on-device | MacWhisper, Superwhisper | **Dictation mode**, Whisper/Parakeet local (v1.7) |
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
-| Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud (v2.3) |
+| Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
 | AI rewriting, grammar, tone | Grammarly, ChatGPT desktop | **24 built-in prompts + your own**, 11 providers |
+| Text case/formatting one-offs (bold, UPPERCASE, join lines, word count) | TextSoap, a word-count widget | **Local Quick Actions** — instant, no AI call, works offline (v2.0) |
 
-The point isn't only cost — Rocket and Espanso are free or cheap. It's that six
-background apps mean six sets of permissions to grant and re-grant after every
-macOS update, six things to keep current, six places a hotkey can collide, and
-six vendors with access to what you type. Tippi is one process, one permission
-set, one update path, and — because it's BYOK and open source — no vendor
-between you and your text.
+The point isn't only cost — Rocket and Espanso are free or cheap. It's that
+eight background apps mean eight sets of permissions to grant and re-grant
+after every macOS update, eight things to keep current, and eight places a
+hotkey can collide. Tippi is one process, one permission set, one update
+path, and — because it's BYOK and open source — no vendor between you and
+your text for anything that touches AI.
 
 ---
 

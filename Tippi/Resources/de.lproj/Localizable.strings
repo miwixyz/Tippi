@@ -1,5 +1,4 @@
 /* Menubar */
-"menu.status" = "Status: %@";
 "status.ready" = "Bereit";
 "status.warming" = "Modell lädt…";
 "status.error" = "Fehler";
@@ -570,3 +569,7 @@
 "notes.pin.pin" = "Notizen-Fenster anpinnen (bleibt beim App-Wechsel sichtbar)";
 "notes.pin.unpin" = "Anpinnen aufheben";
 "notes.counter" = "%d Wörter · %d Zeichen";
+"notes.favorite" = "Zu Favoriten hinzufügen";
+"notes.unfavorite" = "Aus Favoriten entfernen";
+"notes.section.favorites" = "Favoriten";
+"notes.section.all" = "Alle Notizen";

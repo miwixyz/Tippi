@@ -17,6 +17,7 @@ enum NotesPreferences {
         static let pinned = "notes.window.pinned.v1"
         static let fontName = "notes.editor.fontName.v1"
         static let fontSize = "notes.editor.fontSize.v1"
+        static let favoriteIDs = "notes.favoriteIDs.v1"
     }
 
     /// `nil` when no frame has been saved yet (first launch on this
@@ -63,6 +64,31 @@ enum NotesPreferences {
     static var fontSize: Double {
         get { store.double(forKey: Keys.fontSize) }
         set { store.set(newValue, forKey: Keys.fontSize) }
+    }
+
+    /// IDs of starred notes — small metadata (a list of UUIDs), same
+    /// justification as everything else in this type. Stored as an array of
+    /// UUID strings since `NSUbiquitousKeyValueStore` has no native Set type.
+    static var favoriteIDs: Set<UUID> {
+        get { parseFavoriteIDs(from: store.array(forKey: Keys.favoriteIDs) as? [String] ?? []) }
+        set { store.set(Array(newValue).map(\.uuidString), forKey: Keys.favoriteIDs) }
+    }
+
+    static func toggleFavorite(_ id: UUID) {
+        var ids = favoriteIDs
+        if ids.contains(id) {
+            ids.remove(id)
+        } else {
+            ids.insert(id)
+        }
+        favoriteIDs = ids
+    }
+
+    /// Extracted so the parsing logic (drop anything that isn't a real UUID —
+    /// e.g. a stray value synced from some future, incompatible version) is
+    /// unit-testable without touching the real `NSUbiquitousKeyValueStore`.
+    static func parseFavoriteIDs(from raw: [String]) -> Set<UUID> {
+        Set(raw.compactMap(UUID.init(uuidString:)))
     }
 
     /// Resolves the two stored values into an actual font, falling back to

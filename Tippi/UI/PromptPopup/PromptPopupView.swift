@@ -258,12 +258,12 @@ struct PromptPopupView: View {
     }
 
     private var localActionsSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "local.actions.title"))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 12)
-                .padding(.top, 8)
+                .padding(.top, 10)
 
             if !localActionsReady {
                 Text(String(localized: "local.actions.needsSelection"))
@@ -275,7 +275,7 @@ struct PromptPopupView: View {
             LazyVGrid(
                 columns: [GridItem(.flexible()), GridItem(.flexible())],
                 alignment: .leading,
-                spacing: 4
+                spacing: 6
             ) {
                 ForEach(localActions) { action in
                     LocalActionButton(action: action) {
@@ -289,7 +289,7 @@ struct PromptPopupView: View {
                     }
                 }
             }
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 10)
 
             if let localActionMessage {
                 Text(localActionMessage)
@@ -300,20 +300,40 @@ struct PromptPopupView: View {
                     .transition(.opacity)
             }
         }
-        .padding(.bottom, 6)
+        .padding(.bottom, 8)
+    }
+}
+
+/// Category → accent color for the small icon badge, same idea as macOS
+/// System Settings' own colored row icons — a native reference, not a
+/// borrowed brand color. Kept local to the UI layer so `LocalTextAction`
+/// itself (Core) never needs to import SwiftUI.
+private extension LocalTextActionCategory {
+    var tint: Color {
+        switch self {
+        case .formatting: return .blue
+        case .transform: return .purple
+        case .info: return .teal
+        }
     }
 }
 
 private struct LocalActionButton: View {
     let action: LocalTextAction
     let onTap: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 6) {
-                Image(systemName: action.symbol)
-                    .frame(width: 14)
-                    .foregroundStyle(Color.accentColor)
+            HStack(spacing: 7) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(action.category.tint.opacity(0.16))
+                        .frame(width: 20, height: 20)
+                    Image(systemName: action.symbol)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(action.category.tint)
+                }
                 Text(action.title)
                     .font(.caption)
                     .lineLimit(1)
@@ -326,9 +346,11 @@ private struct LocalActionButton: View {
         }
         .buttonStyle(.plain)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.secondary.opacity(0.08))
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Color.secondary.opacity(isHovering ? 0.14 : 0.07))
         )
+        .onHover { isHovering = $0 }
+        .animation(.easeOut(duration: 0.1), value: isHovering)
     }
 }
 

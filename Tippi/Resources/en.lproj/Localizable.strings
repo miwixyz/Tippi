@@ -1,5 +1,4 @@
 /* Menubar */
-"menu.status" = "Status: %@";
 "status.ready" = "Ready";
 "status.warming" = "Loading model…";
 "status.error" = "Error";
@@ -568,3 +567,7 @@
 "notes.pin.pin" = "Pin note window (stays visible when you switch apps)";
 "notes.pin.unpin" = "Unpin note window";
 "notes.counter" = "%d words · %d characters";
+"notes.favorite" = "Add to Favorites";
+"notes.unfavorite" = "Remove from Favorites";
+"notes.section.favorites" = "Favorites";
+"notes.section.all" = "All Notes";

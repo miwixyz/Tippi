@@ -64,8 +64,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// refreshed when the user picks a language from its submenu.
     private var dictationLanguageMenuItem: NSMenuItem?
     /// Disabled menu header showing the readiness status in words ("Ready" /
-    /// "Loading model…" / "Error"). Mirrors the colored badge on the icon.
-    private var statusMenuItem: NSMenuItem?
+    /// "Loading model…" / "Error"), colored to match. Mirrors the colored
+    /// badge on the icon. Backed by a custom `NSView` (`StatusMenuRowView`)
+    /// rather than `NSMenuItem.attributedTitle` — a disabled `NSMenuItem`'s
+    /// own dimming can override attributed-string colors, which would
+    /// silently defeat the entire point of a colored status row; a custom
+    /// view draws exactly what it's told, disabled or not.
+    private var statusRowView: StatusMenuRowView?
     /// Colored dot sublayer on the menubar button signalling readiness.
     private var statusBadgeLayer: CALayer?
     private var welcomeWindowController: NSWindowController?
@@ -378,17 +383,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
 
-        // Readiness status header (disabled; mirrors the colored icon badge).
-        let statusMI = NSMenuItem(
-            title: String(format: String(localized: "menu.status"),
-                          TippiStatusMonitor.shared.status.label),
-            action: nil,
-            keyEquivalent: ""
-        )
+        // Readiness status header (disabled) — colored icon + colored label,
+        // same "at a glance" idea as MacWhisper's status row, built on the
+        // native NSMenu (not a custom popover, so every system convention —
+        // keyboard nav, submenus, VoiceOver — keeps working for free).
+        let statusMI = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         statusMI.isEnabled = false
+        let rowView = StatusMenuRowView(frame: NSRect(x: 0, y: 0, width: 230, height: 22))
+        statusMI.view = rowView
         menu.addItem(statusMI)
         menu.addItem(.separator())
-        statusMenuItem = statusMI
+        statusRowView = rowView
 
         let triggerItem = NSMenuItem(
             title: String(localized: "menu.trigger"),
@@ -396,6 +401,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: "t"
         )
         triggerItem.keyEquivalentModifierMask = [.command, .shift]
+        triggerItem.image = menuIcon("wand.and.stars")
         menu.addItem(triggerItem)
 
         let translateItem = NSMenuItem(
@@ -403,6 +409,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             action: #selector(triggerTranslatePanel),
             keyEquivalent: ""
         )
+        translateItem.image = menuIcon("character.book.closed")
         menu.addItem(translateItem)
 
         let notesItem = NSMenuItem(
@@ -411,6 +418,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: "n"
         )
         notesItem.keyEquivalentModifierMask = [.command, .option]
+        notesItem.image = menuIcon("note.text")
         menu.addItem(notesItem)
 
         menu.addItem(.separator())
@@ -421,6 +429,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         updateItem.target = self
+        updateItem.image = menuIcon("arrow.triangle.2.circlepath")
         menu.addItem(updateItem)
 
         menu.addItem(.separator())
@@ -436,34 +445,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             keyEquivalent: ""
         )
         languageItem.submenu = buildDictationLanguageSubmenu()
+        languageItem.image = menuIcon("waveform")
         menu.addItem(languageItem)
         dictationLanguageMenuItem = languageItem
 
         menu.addItem(.separator())
 
-        menu.addItem(
+        let welcomeItem = menu.addItem(
             withTitle: String(localized: "menu.welcome"),
             action: #selector(showWelcomeWindow),
             keyEquivalent: ""
         )
-        menu.addItem(
+        welcomeItem.image = menuIcon("hand.wave")
+        let helpItem = menu.addItem(
             withTitle: String(localized: "menu.help"),
             action: #selector(showHelpWindow),
             keyEquivalent: ""
         )
-        menu.addItem(
+        helpItem.image = menuIcon("questionmark.circle")
+        let settingsItem = menu.addItem(
             withTitle: String(localized: "menu.settings"),
             action: #selector(showSettingsWindow),
             keyEquivalent: ","
         )
+        settingsItem.image = menuIcon("gearshape")
 
         menu.addItem(.separator())
 
-        menu.addItem(
+        let quitItem = menu.addItem(
             withTitle: String(localized: "menu.quit"),
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
+        quitItem.image = menuIcon("power")
 
         for entry in menu.items where entry.action != #selector(NSApplication.terminate(_:)) {
             entry.target = self
@@ -506,27 +520,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateStatusBadge(TippiStatusMonitor.shared.status)
     }
 
-    /// Repositions + recolors the status dot and updates the menu header.
+    /// Repositions + recolors the status dot and updates the menu header —
+    /// a colored glyph + colored label ("● Ready" in green, in words) instead
+    /// of the old plain "Status: Ready" text, closer to what a status-bar
+    /// utility's own readiness readout usually looks like (colored menu icons
+    /// for state are themselves a native pattern — Wi-Fi, Bluetooth battery,
+    /// Do Not Disturb all do this in the stock menu bar).
     private func updateStatusBadge(_ status: TippiStatusMonitor.Status) {
-        statusMenuItem?.title = String(
-            format: String(localized: "menu.status"), status.label
-        )
+        let color: NSColor
+        let symbol: String
+        switch status {
+        case .ready:   color = .systemGreen; symbol = "checkmark.circle.fill"
+        case .warming: color = .systemYellow; symbol = "clock.fill"
+        case .error:   color = .systemRed; symbol = "exclamationmark.triangle.fill"
+        }
+
+        statusRowView?.configure(symbol: symbol, color: color, text: status.label)
+
         guard let button = statusItem?.button, let dot = statusBadgeLayer else { return }
         let size: CGFloat = 6
         let b = button.bounds
         // Bottom-right corner (layer origin is bottom-left), small inset.
         dot.frame = CGRect(x: b.maxX - size - 1, y: 1, width: size, height: size)
-        let color: NSColor
-        switch status {
-        case .ready:   color = .systemGreen
-        case .warming: color = .systemYellow
-        case .error:   color = .systemRed
-        }
         // Instant, un-animated color change.
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         dot.backgroundColor = color.cgColor
         CATransaction.commit()
+    }
+
+    /// Builds a monochrome (template) SF Symbol menu icon at a size that
+    /// matches the system's own menu items — every regular action stays
+    /// plain/adaptive like a native app's menu (Safari, Mail, …); only the
+    /// disabled status header above deliberately breaks that rule with color,
+    /// since colored state glyphs are themselves the native convention there.
+    private func menuIcon(_ symbolName: String) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config)
+        image?.isTemplate = true
+        return image
     }
 
     /// Starts/stops a subtle opacity-pulse animation on the menubar icon
@@ -1352,5 +1385,57 @@ extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
             window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
         }
+    }
+}
+
+/// Custom view for the menu bar's disabled status header row (colored icon +
+/// colored label, e.g. a green checkmark + "Ready"). Deliberately NOT built
+/// with `NSMenuItem.image`/`.attributedTitle` on a disabled item — AppKit's
+/// own disabled-item dimming can override attributed-string colors and
+/// desaturate a non-template image, which would silently defeat the whole
+/// point of a colored readiness indicator. A menu item with a custom `.view`
+/// draws exactly what it's told regardless of `isEnabled`, at the cost of
+/// having to lay it out by hand.
+private final class StatusMenuRowView: NSView {
+    private let iconView = NSImageView()
+    private let label = NSTextField(labelWithString: "")
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
+        label.lineBreakMode = .byTruncatingTail
+        addSubview(iconView)
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 15),
+            iconView.heightAnchor.constraint(equalToConstant: 15),
+            label.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 7),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -14),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func configure(symbol: String, color: NSColor, text: String) {
+        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            .applying(.init(paletteColors: [color]))
+        let icon = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config)
+        icon?.isTemplate = false
+        iconView.image = icon
+        label.stringValue = text
+        label.textColor = color
+    }
+
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: NSView.noIntrinsicMetric, height: 22)
     }
 }
