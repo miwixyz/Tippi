@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.8.4] — 2026-09-13
+
+### Fixed
+- **The toast pill ("Formatting removed", "Dictation inserted", …) could still get stuck on screen** even after the v2.7.0 generation-counter fix. `NSAnimationContext`'s fade-out completion handler isn't guaranteed to fire in every situation (e.g. the display sleeping mid-fade) — there was nothing left to ever call `orderOut` if it didn't. A hard-deadline safety net now force-hides it regardless, independent of whether the animation's own completion handler ran.
+
 ## [2.8.3] — 2026-09-13
 
 ### Fixed

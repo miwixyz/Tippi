@@ -107,6 +107,23 @@ final class ToastWindowController {
                     }
                 })
             }
+
+            // Safety net: still reported stuck ("bleibt manchmal hängen",
+            // 2026-09-13) even after the generation-counter fix above closed
+            // the overlapping-dismiss race. `NSAnimationContext`'s completion
+            // handler is not guaranteed to fire in every situation — e.g. the
+            // display sleeping mid-fade — leaving the window sitting at a
+            // partial or full alpha with nothing left to ever call
+            // `orderOut`. Forces it hidden after a hard deadline regardless
+            // of whether the animation's own completion handler already did
+            // — idempotent (hiding an already-hidden window is a no-op), and
+            // still generation-guarded so it can't hide a *newer* toast.
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self, self.generation == myGeneration else { return }
+                self.window?.orderOut(nil)
+            }
         }
     }
 }
