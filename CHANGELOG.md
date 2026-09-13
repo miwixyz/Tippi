@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.1] — 2026-09-13
+
+### Fixed
+- **Letter-ending emoticons (`:o`, `:O`, `:p`, `:P`) no longer fire mid-word.** `:ot` converted to "😮t" — `:o` completed and converted the instant "o" was typed, destroying a real snippet trigger (`:ot`) before it ever got a chance to match. These now wait for one more non-word character (space/punctuation) before converting, then re-insert it. Punctuation-ending emoticons (`:)`, `<3`, `XD`) are unaffected — they never had this problem.
+- **The "Insert Variable" weekday picker rendered month names in the wrong locale.** A generated variable like "Thursday, day + month" showed "June" instead of "Juni" — the underlying command never set `LC_TIME=de_DE.UTF-8`. Fixed; day-only/year-only formats were never affected (no month name to mistranslate).
+
 ## [2.3.0] — 2026-09-13
 
 ### Added
