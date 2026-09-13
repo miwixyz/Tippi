@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Plain-text editor for one note (v1 minimal scope — no Markdown rendering).
@@ -36,7 +37,7 @@ struct NotesEditorView: View {
 
             Divider()
 
-            HStack {
+            HStack(spacing: 14) {
                 Button {
                     generateTitle()
                 } label: {
@@ -53,14 +54,42 @@ struct NotesEditorView: View {
                 .help(String(localized: "notes.generateTitle"))
                 .disabled(isGeneratingTitle || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
+                Button {
+                    exportAsText()
+                } label: {
+                    Label(String(localized: "notes.export"), systemImage: "square.and.arrow.up")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help(String(localized: "notes.export"))
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
                 Spacer()
 
                 Text(String(format: String(localized: "notes.counter"), wordCount, text.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+    }
+
+    /// Notes already live as `.txt` on disk (`iCloud Drive → Tippi → Notes`,
+    /// see `NotesStore`) — this is for sending a copy somewhere else
+    /// (Desktop, a message, a different folder) without having to know
+    /// that path exists. Real request, 2026-09-13.
+    private func exportAsText() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "\(note.title).txt"
+        panel.isExtensionHidden = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try text.write(to: url, atomically: true, encoding: .utf8)
+        } catch {
+            ToastWindowController.shared.show(message: String(localized: "notes.export.failed"))
         }
     }
 

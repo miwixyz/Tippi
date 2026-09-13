@@ -23,7 +23,9 @@ struct PlainTextEditor: NSViewRepresentable {
         textView.isGrammarCheckingEnabled = true
         textView.font = NotesPreferences.editorFont
         textView.usesFontPanel = true
-        textView.textContainerInset = NSSize(width: 8, height: 8)
+        // Real feedback, 2026-09-13: text sat "gequetscht" (cramped) right
+        // against the top/side edges at the old 8pt inset.
+        textView.textContainerInset = NSSize(width: 16, height: 16)
         textView.string = text
         textView.onPasteStrippedFormatting = onPasteStrippedFormatting
         textView.isEditable = true

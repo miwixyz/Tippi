@@ -37,8 +37,20 @@ final class ToastWindowController {
 
     private var window: NSWindow?
     private var dismissTask: Task<Void, Never>?
+    /// Bumped on every `show()`. A dismiss sequence scheduled by an older
+    /// call checks this before it's allowed to touch the window — real bug,
+    /// reported 2026-09-13 ("manchmal bleibt diese Pill hängen"): once an old
+    /// dismiss's 1.5s sleep elapses and it starts its `NSAnimationContext`
+    /// fade, `dismissTask?.cancel()` below can no longer stop it — Task
+    /// cancellation only affects code that hasn't executed past its next
+    /// cancellation check yet, not an animation block already in flight. The
+    /// old fade (and its `orderOut` completion) then races a newer toast that
+    /// reused the same window, clobbering or hiding its fresh content.
+    private var generation = 0
 
     func show(message: String) {
+        generation += 1
+        let myGeneration = generation
         // Cancel any in-flight dismiss so rapid consecutive toasts don't flicker.
         dismissTask?.cancel()
 
@@ -83,13 +95,16 @@ final class ToastWindowController {
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             guard !Task.isCancelled else { return }
             await MainActor.run {
-                guard let self else { return }
+                guard let self, self.generation == myGeneration else { return }
                 let win = self.window
                 NSAnimationContext.runAnimationGroup({ ctx in
                     ctx.duration = 0.3
                     win?.animator().alphaValue = 0
-                }, completionHandler: {
-                    win?.orderOut(nil)
+                }, completionHandler: { [weak self] in
+                    Task { @MainActor in
+                        guard let self, self.generation == myGeneration else { return }
+                        win?.orderOut(nil)
+                    }
                 })
             }
         }

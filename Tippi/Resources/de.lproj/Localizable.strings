@@ -565,6 +565,8 @@
 "notes.generateTitle" = "Titel mit KI generieren";
 "notes.generateTitle.failed" = "Titel konnte nicht generiert werden — KI-Anbieter in den Einstellungen prüfen";
 "notes.font.choose" = "Schriftart wählen";
+"notes.export" = "Als .txt exportieren…";
+"notes.export.failed" = "Notiz konnte nicht exportiert werden";
 "notes.pin.pin" = "Notizen-Fenster anpinnen (bleibt beim App-Wechsel sichtbar)";
 "notes.pin.unpin" = "Anpinnen aufheben";
 "notes.counter" = "%d Wörter · %d Zeichen";

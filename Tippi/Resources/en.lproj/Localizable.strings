@@ -563,6 +563,8 @@
 "notes.generateTitle" = "Generate title with AI";
 "notes.generateTitle.failed" = "Couldn't generate a title — check your AI provider in Settings";
 "notes.font.choose" = "Choose font";
+"notes.export" = "Export as .txt…";
+"notes.export.failed" = "Couldn't export the note";
 "notes.pin.pin" = "Pin note window (stays visible when you switch apps)";
 "notes.pin.unpin" = "Unpin note window";
 "notes.counter" = "%d words · %d characters";
