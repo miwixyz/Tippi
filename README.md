@@ -110,7 +110,7 @@ between you and your text.
 
 ### From the latest release
 
-1. Download the latest **[Tippi-1.24.1.dmg](https://github.com/miwixyz/Tippi/releases/tag/v1.24.1)** (or any version from [Releases](https://github.com/miwixyz/Tippi/releases))
+1. Download the DMG from **[the latest release](https://github.com/miwixyz/Tippi/releases/latest)** (or pick an older version from [Releases](https://github.com/miwixyz/Tippi/releases))
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant Accessibility permission, optionally enter an API key)
