@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.7.0] — 2026-09-13
+
+### Added
+- **Export a note as `.txt`** — toolbar button in the editor opens a save panel, for sending a copy somewhere outside iCloud Drive.
+
+### Fixed
+- **Toast notifications ("Formatting removed", dictation confirmations, …) could get stuck on screen.** A fast second toast could race an earlier one's fade-out animation — `Task` cancellation can't stop an `NSAnimationContext` animation already in flight. Fixed with a generation check.
+- **Notes window titlebar** no longer looks unnaturally transparent — reverted to a standard Mac titlebar; only the content area is glass.
+- **Notes editor text and word/character counter** were cramped against the window edges — more breathing room.
+
 ## [2.6.0] — 2026-09-13
 
 ### Added
