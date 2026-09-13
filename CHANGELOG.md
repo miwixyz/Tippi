@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.1] — 2026-09-13
+
+### Changed
+- **Notes are now a visible "Tippi" folder in iCloud Drive** (`iCloud Drive → Tippi → Notes → <file>.txt`), not just a synced-but-invisible app container. No data moved — same files, same path inside the container, now exposed to Finder.
+
 ## [2.4.0] — 2026-09-13
 
 ### Added
