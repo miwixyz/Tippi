@@ -562,6 +562,8 @@
 "notes.delete.confirm.cancel" = "Abbrechen";
 "notes.delete.confirm.ok" = "Löschen";
 "notes.formattingRemoved" = "Formatierung entfernt";
+"notes.generateTitle" = "Titel mit KI generieren";
+"notes.generateTitle.failed" = "Titel konnte nicht generiert werden — KI-Anbieter in den Einstellungen prüfen";
 "notes.pin.pin" = "Notizen-Fenster anpinnen (bleibt beim App-Wechsel sichtbar)";
 "notes.pin.unpin" = "Anpinnen aufheben";
 "notes.counter" = "%d Wörter · %d Zeichen";

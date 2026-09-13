@@ -141,6 +141,7 @@ struct SnippetsTab: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .sheet(item: $editingSnippet) { snippet in
             SnippetEditorSheet(trigger: snippet.trigger, replacement: snippet.replacement, vars: snippet.vars) { newTrigger, newReplacement, newVars in
                 var updated = snippet

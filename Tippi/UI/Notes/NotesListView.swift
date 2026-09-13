@@ -28,6 +28,7 @@ struct NotesListView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
         .toolbar {
             ToolbarItem {
                 Button {

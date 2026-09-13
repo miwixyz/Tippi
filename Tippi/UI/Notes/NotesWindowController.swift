@@ -40,6 +40,10 @@ final class NotesWindowController {
         window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         window.minSize = minSize
         window.isReleasedWhenClosed = false
+        // Clear + NotesRootView's own .tippiGlass() (Liquid Glass on macOS
+        // 26+, .regularMaterial below) instead of the default opaque fill.
+        window.backgroundColor = .clear
+        window.titlebarAppearsTransparent = true
         window.delegate = FrameSaveDelegate.shared
         applyPinnedState(to: window)
 

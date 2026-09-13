@@ -35,6 +35,7 @@ struct NotesRootView: View {
             }
         }
         .frame(minWidth: 480, minHeight: 320)
+        .tippiGlass()
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

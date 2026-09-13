@@ -37,6 +37,7 @@ struct SettingsView: View {
                 .tabItem { Label(String(localized: "settings.tab.about"), systemImage: "info.circle") }
         }
         .frame(width: 640, height: 580)
+        .tippiGlass()
         // The Settings window is created once and just reordered front on
         // repeat opens (AppDelegate.showSettingsWindow), so `.onAppear`
         // alone would miss a second "jump to Help" request — this fires on
@@ -103,6 +104,7 @@ private struct GeneralSettingsTab: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .scrollContentBackground(.hidden)
         .onAppear { refresh() }
     }
 

@@ -55,6 +55,7 @@ struct WelcomeView: View {
             }
             .padding()
         }
+        .tippiGlass()
     }
 }
 

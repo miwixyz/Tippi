@@ -73,6 +73,9 @@ final class PreviewWindowController {
         window.contentViewController = hosting
         window.title = "Tippi"
         window.titlebarAppearsTransparent = true
+        // Clear + PreviewView's own .tippiGlass() (Liquid Glass on macOS 26+,
+        // .regularMaterial below) instead of the default opaque panel fill.
+        window.backgroundColor = .clear
         window.level = .floating
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.moveToActiveSpace]

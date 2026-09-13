@@ -38,6 +38,7 @@ struct HistoryTab: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .onAppear { if isEnabled { refresh() } }
         .sheet(item: $selectedEntry) { entry in
             HistoryDetailView(entry: entry) { selectedEntry = nil }

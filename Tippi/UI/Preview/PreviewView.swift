@@ -64,6 +64,7 @@ struct PreviewView: View {
             footer
         }
         .frame(width: 640, height: 480)
+        .tippiGlass()
         .onAppear { runCompletion() }
         .onDisappear { task?.cancel() }
     }

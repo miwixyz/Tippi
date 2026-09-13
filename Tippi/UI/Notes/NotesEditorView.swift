@@ -11,6 +11,8 @@ struct NotesEditorView: View {
     let note: Note
     @State private var text: String
     @State private var saveTask: Task<Void, Never>?
+    @State private var isGeneratingTitle = false
+    @State private var titleTask: Task<Void, Never>?
 
     init(store: NotesStore, note: Note) {
         self.store = store
@@ -28,16 +30,34 @@ struct NotesEditorView: View {
             }
             .onDisappear {
                 saveTask?.cancel()
+                titleTask?.cancel()
                 flush()
             }
 
             Divider()
 
             HStack {
+                Button {
+                    generateTitle()
+                } label: {
+                    if isGeneratingTitle {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Label(String(localized: "notes.generateTitle"), systemImage: "sparkles")
+                            .labelStyle(.iconOnly)
+                    }
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help(String(localized: "notes.generateTitle"))
+                .disabled(isGeneratingTitle || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                Spacer()
+
                 Text(String(format: String(localized: "notes.counter"), wordCount, text.count))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Spacer()
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -46,6 +66,43 @@ struct NotesEditorView: View {
 
     private var wordCount: Int {
         text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+    }
+
+    /// Asks Tippi's configured AI provider for a short title and inserts it
+    /// as a new first line above the existing content — "insert", not
+    /// "replace", per the actual request: nothing the user wrote is
+    /// touched. Tracked in `titleTask` and cancelled on `onDisappear` (same
+    /// discipline as `saveTask`) so a slow response arriving after the user
+    /// has already switched to a different note can never write into the
+    /// wrong one — `text`/`note` here are this view's own `@State`, tied to
+    /// this specific note via `.id(note.id)` at the call site, but the task
+    /// itself keeps running in the background unless explicitly cancelled.
+    private func generateTitle() {
+        let content = text
+        guard !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        isGeneratingTitle = true
+        titleTask = Task {
+            defer { isGeneratingTitle = false }
+            do {
+                let result = try await LLMRouter.shared.complete(
+                    systemPrompt: """
+                    Generate a short, descriptive title (3-6 words) for the following note. \
+                    Return ONLY the title itself — no quotes, no trailing punctuation, no \
+                    explanation. Write it in the same language as the note.
+                    """,
+                    userText: content
+                )
+                guard !Task.isCancelled else { return }
+                let title = result.text
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "\"“”'—-"))
+                guard !title.isEmpty else { return }
+                text = "\(title)\n\n\(content)"
+            } catch {
+                guard !Task.isCancelled else { return }
+                ToastWindowController.shared.show(message: String(localized: "notes.generateTitle.failed"))
+            }
+        }
     }
 
     /// Saves are always gated on the note still existing in the store —

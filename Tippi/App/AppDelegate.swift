@@ -606,11 +606,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 600, height: 480))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
-            window.backgroundColor = NSColor(name: nil) { appearance in
-                appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                    ? NSColor(red: 0.008, green: 0.043, blue: 0.114, alpha: 1) // #020B1D dark
-                    : NSColor.windowBackgroundColor // system default light
-            }
+            // Clear + WelcomeView's own .tippiGlass() (Liquid Glass on macOS
+            // 26+, .regularMaterial below) — replaces the old solid brand-navy
+            // fallback now that every Tippi window uses the same glass look.
+            window.backgroundColor = .clear
             window.center()
             welcomeWindowController = NSWindowController(window: window)
         }
@@ -641,11 +640,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 640, height: 580))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
-            window.backgroundColor = NSColor(name: nil) { appearance in
-                appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                    ? NSColor(red: 0.008, green: 0.043, blue: 0.114, alpha: 1) // #020B1D dark
-                    : NSColor.windowBackgroundColor // system default light
-            }
+            // Clear + SettingsView's own .tippiGlass() (Liquid Glass on macOS
+            // 26+, .regularMaterial below) — replaces the old solid brand-navy
+            // fallback now that every Tippi window uses the same glass look.
+            window.backgroundColor = .clear
             window.center()
             settingsWindowController = NSWindowController(window: window)
         }
