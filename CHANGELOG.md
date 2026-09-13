@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.8.2] — 2026-09-13
+
+### Fixed
+- **Choosing a font in Notes could silently do nothing.** `changeFont(_:)` only reaches the editor's text view via the responder chain if it's already the window's first responder — clicking the "Aa" toolbar button without having clicked into the note body first left nothing to receive the change. The button now focuses the editor before opening the Font Panel.
+
 ## [2.8.1] — 2026-09-13
 
 ### Fixed

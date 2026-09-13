@@ -101,3 +101,18 @@ struct PlainTextEditor: NSViewRepresentable {
         }
     }
 }
+
+extension NSView {
+    /// Depth-first search for the first subview of a given type — used by
+    /// the Notes font-panel button to find the note's `PasteAwareTextView`
+    /// and force focus onto it before the panel opens, since `changeFont(_:)`
+    /// only reaches a view via the responder chain if it's already first
+    /// responder at the moment a font gets picked.
+    func firstDescendant<T: NSView>(ofType type: T.Type) -> T? {
+        for subview in subviews {
+            if let match = subview as? T { return match }
+            if let found = subview.firstDescendant(ofType: type) { return found }
+        }
+        return nil
+    }
+}

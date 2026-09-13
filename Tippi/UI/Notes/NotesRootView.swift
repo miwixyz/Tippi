@@ -40,6 +40,21 @@ struct NotesRootView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
+                    // `changeFont(_:)` only reaches the text view via the
+                    // responder chain if it's already first responder at the
+                    // moment a font gets picked in the panel. Clicking this
+                    // toolbar button is very often the very first thing a
+                    // user does after opening a note — the editor was never
+                    // clicked into, so it was never first responder, and the
+                    // font choice silently went nowhere. Real bug report,
+                    // 2026-09-13: "Die Schriftarten werden nicht übernommen."
+                    // Forcing focus onto the editor's text view here, right
+                    // before the panel opens, makes it work regardless of
+                    // whatever had focus a moment ago.
+                    if let window = NSApp.keyWindow,
+                       let textView = window.contentView?.firstDescendant(ofType: PlainTextEditor.PasteAwareTextView.self) {
+                        window.makeFirstResponder(textView)
+                    }
                     NSFontManager.shared.orderFrontFontPanel(nil)
                 } label: {
                     Label(String(localized: "notes.font.choose"), systemImage: "textformat")
