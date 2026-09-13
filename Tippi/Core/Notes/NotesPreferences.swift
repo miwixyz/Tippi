@@ -14,6 +14,7 @@ enum NotesPreferences {
 
     private enum Keys {
         static let frame = "notes.window.frame.v1"
+        static let pinned = "notes.window.pinned.v1"
     }
 
     /// `nil` when no frame has been saved yet (first launch on this
@@ -30,5 +31,15 @@ enum NotesPreferences {
                 store.removeObject(forKey: Keys.frame)
             }
         }
+    }
+
+    /// Whether the Notes window floats above every other app's windows and
+    /// stays visible when switching apps, Spaces, or into a full-screen app —
+    /// the macOS meaning of "pin". Off by default: a window that silently
+    /// outranks everything else is a bigger behavioral change than an
+    /// explicit opt-in belongs to.
+    static var isPinned: Bool {
+        get { store.bool(forKey: Keys.pinned) }
+        set { store.set(newValue, forKey: Keys.pinned) }
     }
 }

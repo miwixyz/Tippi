@@ -6,6 +6,11 @@ import SwiftUI
 struct NotesRootView: View {
     @ObservedObject private var store = NotesStore.shared
     @State private var selectedNoteID: UUID?
+    @State private var isPinned: Bool = NotesPreferences.isPinned
+
+    /// Applies the actual AppKit-level pin (window level + collection
+    /// behavior) — this view only owns the toolbar icon's on/off state.
+    var onTogglePin: () -> Void = {}
 
     var body: some View {
         NavigationSplitView {
@@ -30,5 +35,20 @@ struct NotesRootView: View {
             }
         }
         .frame(minWidth: 480, minHeight: 320)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    isPinned.toggle()
+                    onTogglePin()
+                } label: {
+                    Label(pinLabel, systemImage: isPinned ? "pin.fill" : "pin")
+                }
+                .help(pinLabel)
+            }
+        }
+    }
+
+    private var pinLabel: String {
+        String(localized: isPinned ? "notes.pin.unpin" : "notes.pin.pin")
     }
 }

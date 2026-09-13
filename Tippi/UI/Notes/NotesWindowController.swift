@@ -32,13 +32,16 @@ final class NotesWindowController {
     }
 
     private func makeWindowController() -> NSWindowController {
-        let hosting = NSHostingController(rootView: NotesRootView())
+        let hosting = NSHostingController(rootView: NotesRootView(onTogglePin: { [weak self] in
+            self?.togglePin()
+        }))
         let window = NSWindow(contentViewController: hosting)
         window.title = String(localized: "notes.window.title")
         window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         window.minSize = minSize
         window.isReleasedWhenClosed = false
         window.delegate = FrameSaveDelegate.shared
+        applyPinnedState(to: window)
 
         if let savedFrame = NotesPreferences.windowFrame {
             window.setFrame(savedFrame, display: false)
@@ -48,6 +51,28 @@ final class NotesWindowController {
         }
 
         return NSWindowController(window: window)
+    }
+
+    /// Toggles "pinned": `.floating` window level + `.canJoinAllSpaces` keeps
+    /// the Notes window visible above whatever app becomes frontmost —
+    /// switching apps (⌘Tab), Spaces, even into a full-screen app — instead
+    /// of it getting buried like a normal window does. Persisted via
+    /// `NotesPreferences` so it survives a relaunch on this Mac.
+    func togglePin() {
+        NotesPreferences.isPinned.toggle()
+        if let window = windowController?.window {
+            applyPinnedState(to: window)
+        }
+    }
+
+    private func applyPinnedState(to window: NSWindow) {
+        let pinned = NotesPreferences.isPinned
+        window.level = pinned ? .floating : .normal
+        if pinned {
+            window.collectionBehavior.insert(.canJoinAllSpaces)
+        } else {
+            window.collectionBehavior.remove(.canJoinAllSpaces)
+        }
     }
 
     /// Persists the frame to `NotesPreferences` (iCloud key-value store) on

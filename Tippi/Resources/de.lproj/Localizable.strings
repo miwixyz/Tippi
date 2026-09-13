@@ -562,4 +562,6 @@
 "notes.delete.confirm.cancel" = "Abbrechen";
 "notes.delete.confirm.ok" = "Löschen";
 "notes.formattingRemoved" = "Formatierung entfernt";
+"notes.pin.pin" = "Notizen-Fenster anpinnen (bleibt beim App-Wechsel sichtbar)";
+"notes.pin.unpin" = "Anpinnen aufheben";
 "notes.counter" = "%d Wörter · %d Zeichen";
