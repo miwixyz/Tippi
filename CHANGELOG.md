@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.0] — 2026-09-13
+
+### Added
+- **Pin the Notes window.** A toolbar button keeps it floating above every other app's windows — switch apps with ⌘Tab, move to a different Space, or open a full-screen app, and it stays visible instead of getting buried like a normal window. Off by default; the toggle state is remembered across launches.
+
 ## [2.3.1] — 2026-09-13
 
 ### Fixed
