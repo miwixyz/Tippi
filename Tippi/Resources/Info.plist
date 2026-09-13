@@ -41,5 +41,23 @@
         <string>en</string>
         <string>de</string>
     </array>
+    <!-- Without this, NotesStore's iCloud container (Documents/Notes/*.txt)
+         syncs but stays invisible in Finder's iCloud Drive — just an opaque
+         app container. This exposes it as a named "Tippi" folder there,
+         exactly matching NotesStore's Documents/Notes path (real request,
+         2026-09-13: notes should live in "an eigenem Tippi-Ordner" in
+         iCloud, not just synced-but-hidden). -->
+    <key>NSUbiquitousContainers</key>
+    <dict>
+        <key>iCloud.dev.mwlr.Tippi</key>
+        <dict>
+            <key>NSUbiquitousContainerIsDocumentScopePublic</key>
+            <true/>
+            <key>NSUbiquitousContainerSupportedFolderLevels</key>
+            <string>Any</string>
+            <key>NSUbiquitousContainerName</key>
+            <string>Tippi</string>
+        </dict>
+    </dict>
 </dict>
 </plist>
