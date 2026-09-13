@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0] — 2026-09-13
+
+### Added
+- **Notes show their title in Finder.** Files in `iCloud Drive → Tippi → Notes` are now named after the note's first line (e.g. "Meeting notes — 3F2A1B….txt") instead of a bare UUID, and rename automatically when the title changes.
+- **Choosable font + size in Notes**, via the standard macOS Font Panel (toolbar button).
+- **Notes window now appears in ⌘Tab** while open, with a temporary Dock icon — Tippi's normal menu-bar-only mode otherwise excludes every window from the app switcher entirely, with no way to opt just one in. Reverts the moment Notes closes.
+
 ## [2.5.0] — 2026-09-13
 
 ### Added
