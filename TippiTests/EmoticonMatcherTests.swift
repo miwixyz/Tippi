@@ -45,6 +45,38 @@ final class EmoticonMatcherTests: XCTestCase {
         XCTAssertEqual(EmoticonMatcher.match(in: "ok ;-)")?.emoji, "😉")
     }
 
+    // MARK: - Letter-ending emoticons need a trailing boundary (2026-09-13)
+
+    /// The reported bug: typing `:ot` converted `:o` to 😮 the instant "o"
+    /// completed it, leaving "😮t" once "t" landed. `:o` is a real word
+    /// prefix (open, other, only, …) — it must never fire until something
+    /// that clearly isn't a word continuation follows.
+    func testAmbiguousLetterEmoticonDoesNotFireMidWord() {
+        XCTAssertNil(EmoticonMatcher.match(in: "sag :o"))     // "o" just typed, could still be a word
+        XCTAssertNil(EmoticonMatcher.match(in: "sag :ot"))    // confirmed: it was a word
+        XCTAssertNil(EmoticonMatcher.match(in: "sag :ot"), "must stay nil however long the word gets")
+    }
+
+    func testAmbiguousLetterEmoticonFiresOnceConfirmedByBoundary() {
+        let match = EmoticonMatcher.match(in: "sag :o ")
+        XCTAssertEqual(match?.emoji, "😮")
+        XCTAssertEqual(match?.replacement, "😮 ", "the confirming space must be re-inserted, not swallowed")
+        XCTAssertEqual(match?.triggerLength, 3, "\":o\" (2) + the confirming space (1)")
+    }
+
+    func testAmbiguousLetterEmoticonFiresOnPunctuationBoundaryToo() {
+        XCTAssertEqual(EmoticonMatcher.match(in: "wow :p!")?.replacement, "😛!")
+        XCTAssertEqual(EmoticonMatcher.match(in: "wow :-O.")?.replacement, "😮.")
+    }
+
+    /// Bare letter combos with no colon/semicolon prefix aren't ambiguous the
+    /// same way — nothing accidentally starts a word with "XD" — so they must
+    /// keep firing immediately, same as before this fix.
+    func testBareLetterEmoticonStillFiresImmediately() {
+        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD")?.emoji, "😆")
+        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD")?.replacement, "😆")
+    }
+
     // MARK: - Must NOT match (the whole reason the boundary rule exists)
 
     func testDoesNotFireInsidePythonSlicing() {

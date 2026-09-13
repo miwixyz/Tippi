@@ -154,7 +154,7 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         if EmojiSettings.isEmoticonEnabled,
            let emoticon = EmoticonMatcher.match(in: matcher.buffer) {
             EmojiSettings.rememberUse(of: emoticon.emoji)
-            expand(triggerLength: emoticon.triggerLength) { emoticon.emoji }
+            expand(triggerLength: emoticon.triggerLength) { emoticon.replacement }
             return
         }
 
