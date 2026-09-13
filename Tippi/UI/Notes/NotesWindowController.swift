@@ -22,7 +22,18 @@ final class NotesWindowController {
     /// "show", never "toggle" — a hotkey press while the user is mid-typing
     /// closing the window on them would feel like data loss, even though
     /// content autosaves (see `NotesEditorView`).
+    ///
+    /// Real question, 2026-09-13: "the Notes window doesn't show up when I
+    /// ⌘Tab through open apps — does that need a Dock icon?" Yes — an
+    /// LSUIElement app (Tippi's normal menu-bar-only mode) is categorically
+    /// excluded from ⌘Tab regardless of window level or collection behavior;
+    /// there is no API to opt a single window into the switcher without it.
+    /// `.setActivationPolicy(.regular)` while Notes is open gives it both a
+    /// Dock icon and a ⌘Tab entry; `FrameSaveDelegate.windowWillClose` flips
+    /// back to `.accessory` (the LSUIElement-equivalent Tippi normally runs
+    /// as) once Notes closes, so the rest of the app is unaffected.
     func show() {
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate()
 
         if windowController == nil {
@@ -87,7 +98,11 @@ final class NotesWindowController {
         static let shared = FrameSaveDelegate()
         func windowDidEndLiveResize(_ notification: Notification) { persist(notification) }
         func windowDidMove(_ notification: Notification) { persist(notification) }
-        func windowWillClose(_ notification: Notification) { persist(notification) }
+        func windowWillClose(_ notification: Notification) {
+            persist(notification)
+            // Back to menu-bar-only — see the doc comment on `show()`.
+            NSApp.setActivationPolicy(.accessory)
+        }
 
         private func persist(_ notification: Notification) {
             guard let window = notification.object as? NSWindow else { return }

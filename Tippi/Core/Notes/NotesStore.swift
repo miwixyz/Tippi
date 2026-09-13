@@ -245,12 +245,15 @@ final class NotesStore: ObservableObject {
     // writing without a coordinator races the sync daemon and can corrupt or
     // silently drop data.
 
-    /// Only files named `<uuid>.txt` (app-created notes) are recognized —
-    /// any other `.txt` dropped into the folder by hand is skipped, not
-    /// adopted. (Arbitrary external file adoption is a real possible
-    /// follow-up, not part of this scope.)
+    /// Filenames are `<title> — <uuid>.txt` once a note has a first line, or
+    /// plain `<uuid>.txt` before that — so identity is always recoverable by
+    /// pulling the trailing 36-character UUID off the stem, regardless of
+    /// whatever human-readable title currently precedes it. Any other `.txt`
+    /// dropped into the folder by hand (no parseable trailing UUID) is
+    /// skipped, not adopted. (Arbitrary external file adoption is a real
+    /// possible follow-up, not part of this scope.)
     private nonisolated static func readNoteFile(at url: URL) -> Note? {
-        guard let id = UUID(uuidString: url.deletingPathExtension().lastPathComponent) else {
+        guard let id = uuidSuffix(of: url.deletingPathExtension().lastPathComponent) else {
             notesLog.notice("skipped non-note file \(url.lastPathComponent, privacy: .public)")
             return nil
         }
@@ -272,12 +275,19 @@ final class NotesStore: ObservableObject {
         return Note(id: id, content: content, createdAt: created, modifiedAt: modified)
     }
 
+    /// Writes under a filename that reflects the note's current title (its
+    /// first line) — real request, 2026-09-13: notes visible in Finder
+    /// (`iCloud Drive → Tippi → Notes`, see v2.4.1) must show a readable name,
+    /// not a bare UUID. Every write recomputes the desired name and only
+    /// actually renames on disk when it changed since the last save — which
+    /// only happens when the first line itself changed, not on every
+    /// keystroke elsewhere in the note.
     private nonisolated static func writeNoteFile(_ note: Note, to directory: URL) throws {
-        let url = directory.appendingPathComponent("\(note.id.uuidString).\(fileExtension)")
+        let newURL = directory.appendingPathComponent(filename(for: note))
         var coordinatorError: NSError?
         var writeError: Error?
         let coordinator = NSFileCoordinator()
-        coordinator.coordinate(writingItemAt: url, options: .forReplacing, error: &coordinatorError) { coordinatedURL in
+        coordinator.coordinate(writingItemAt: newURL, options: .forReplacing, error: &coordinatorError) { coordinatedURL in
             do {
                 try note.content.write(to: coordinatedURL, atomically: true, encoding: .utf8)
             } catch {
@@ -286,11 +296,22 @@ final class NotesStore: ObservableObject {
         }
         if let coordinatorError { throw coordinatorError }
         if let writeError { throw writeError }
+
+        // The title changed (or was just added) since the last write — the
+        // file under the previous name is now a stale duplicate of this same
+        // note (same UUID suffix). Only removed after the new name's write is
+        // confirmed above, so a failure never leaves zero copies on disk.
+        if let oldURL = existingFileURL(forID: note.id, in: directory), oldURL.lastPathComponent != newURL.lastPathComponent {
+            try? deleteFile(at: oldURL)
+        }
     }
 
     private nonisolated static func deleteNoteFile(id: UUID, in directory: URL) throws {
-        let url = directory.appendingPathComponent("\(id.uuidString).\(fileExtension)")
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        guard let url = existingFileURL(forID: id, in: directory) else { return }
+        try deleteFile(at: url)
+    }
+
+    private nonisolated static func deleteFile(at url: URL) throws {
         var coordinatorError: NSError?
         var deleteError: Error?
         let coordinator = NSFileCoordinator()
@@ -303,5 +324,49 @@ final class NotesStore: ObservableObject {
         }
         if let coordinatorError { throw coordinatorError }
         if let deleteError { throw deleteError }
+    }
+
+    // MARK: - Filename ↔ UUID
+
+    /// A UUID string is always exactly 36 characters — pulling the suffix
+    /// works whether the stem is a bare UUID or `<title> — <uuid>`.
+    private nonisolated static func uuidSuffix(of stem: String) -> UUID? {
+        guard stem.count >= 36 else { return nil }
+        return UUID(uuidString: String(stem.suffix(36)))
+    }
+
+    /// `<uuid>.txt` for a note with no first line yet; `<title> — <uuid>.txt`
+    /// once it has one. Deliberately not `Note.title` (that returns a
+    /// localized "Untitled" placeholder for display) — an empty first line
+    /// here means "no title yet", so the plain-UUID form is used instead of
+    /// baking a locale-specific placeholder string into a filename.
+    private nonisolated static func filename(for note: Note) -> String {
+        let firstLine = note.content
+            .split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+            .first.map(String.init) ?? ""
+        let title = firstLine.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return "\(note.id.uuidString).\(fileExtension)" }
+
+        // "/" is POSIX-illegal in a filename; ":" is legacy-illegal in Finder
+        // (HFS+ path separator) and still worth avoiding.
+        let sanitized = title
+            .components(separatedBy: CharacterSet(charactersIn: "/:"))
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespaces)
+        guard !sanitized.isEmpty else { return "\(note.id.uuidString).\(fileExtension)" }
+
+        // Keep the visible part short — Finder listings with an 80+ char
+        // title are unreadable anyway, and HFS+/APFS's 255-char ceiling is
+        // not the binding constraint here.
+        let truncated = String(sanitized.prefix(80))
+        return "\(truncated) — \(note.id.uuidString).\(fileExtension)"
+    }
+
+    private nonisolated static func existingFileURL(forID id: UUID, in directory: URL) -> URL? {
+        let suffix = "\(id.uuidString).\(fileExtension)"
+        guard let entries = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
+            return nil
+        }
+        return entries.first { $0.lastPathComponent.hasSuffix(suffix) }
     }
 }

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Split view: note list on the left, editor for the selected note on the
@@ -37,6 +38,14 @@ struct NotesRootView: View {
         .frame(minWidth: 480, minHeight: 320)
         .tippiGlass()
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    NSFontManager.shared.orderFrontFontPanel(nil)
+                } label: {
+                    Label(String(localized: "notes.font.choose"), systemImage: "textformat")
+                }
+                .help(String(localized: "notes.font.choose"))
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     isPinned.toggle()

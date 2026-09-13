@@ -21,7 +21,8 @@ struct PlainTextEditor: NSViewRepresentable {
         textView.isAutomaticTextReplacementEnabled = false
         textView.isContinuousSpellCheckingEnabled = true
         textView.isGrammarCheckingEnabled = true
-        textView.font = .systemFont(ofSize: NSFont.systemFontSize)
+        textView.font = NotesPreferences.editorFont
+        textView.usesFontPanel = true
         textView.textContainerInset = NSSize(width: 8, height: 8)
         textView.string = text
         textView.onPasteStrippedFormatting = onPasteStrippedFormatting
@@ -79,6 +80,22 @@ struct PlainTextEditor: NSViewRepresentable {
             if hadRichContent {
                 onPasteStrippedFormatting?()
             }
+        }
+
+        /// Called by AppKit when the user picks a font in the system Font
+        /// Panel (`NSFontManager.shared.orderFrontFontPanel`, wired to the
+        /// toolbar button in `NotesRootView`). With `isRichText = false`
+        /// there's no per-character attribute storage to update piecemeal —
+        /// setting `font` directly is the correct, and only, way to apply a
+        /// uniform font to plain-text content. Persisted immediately so the
+        /// next note opened (a fresh `PlainTextEditor` instance, since
+        /// `NotesEditorView` is recreated per `.id(note.id)`) picks it up too.
+        override func changeFont(_ sender: Any?) {
+            guard let manager = sender as? NSFontManager else { return }
+            let newFont = manager.convert(font ?? NotesPreferences.editorFont)
+            font = newFont
+            NotesPreferences.fontName = newFont.fontName
+            NotesPreferences.fontSize = Double(newFont.pointSize)
         }
     }
 }

@@ -15,6 +15,8 @@ enum NotesPreferences {
     private enum Keys {
         static let frame = "notes.window.frame.v1"
         static let pinned = "notes.window.pinned.v1"
+        static let fontName = "notes.editor.fontName.v1"
+        static let fontSize = "notes.editor.fontSize.v1"
     }
 
     /// `nil` when no frame has been saved yet (first launch on this
@@ -41,5 +43,36 @@ enum NotesPreferences {
     static var isPinned: Bool {
         get { store.bool(forKey: Keys.pinned) }
         set { store.set(newValue, forKey: Keys.pinned) }
+    }
+
+    /// `nil` means "system font" — `PlainTextEditor` falls back to that, not
+    /// to a hardcoded family, so a fresh install matches whatever the user's
+    /// Mac already looks like everywhere else.
+    static var fontName: String? {
+        get { store.string(forKey: Keys.fontName) }
+        set {
+            if let newValue {
+                store.set(newValue, forKey: Keys.fontName)
+            } else {
+                store.removeObject(forKey: Keys.fontName)
+            }
+        }
+    }
+
+    /// 0 means "not set yet" — caller falls back to `NSFont.systemFontSize`.
+    static var fontSize: Double {
+        get { store.double(forKey: Keys.fontSize) }
+        set { store.set(newValue, forKey: Keys.fontSize) }
+    }
+
+    /// Resolves the two stored values into an actual font, falling back to
+    /// the system font whenever the name is unset or no longer installed
+    /// (e.g. synced from a Mac that has a font this one doesn't).
+    static var editorFont: NSFont {
+        let size = fontSize > 0 ? CGFloat(fontSize) : NSFont.systemFontSize
+        if let fontName, let font = NSFont(name: fontName, size: size) {
+            return font
+        }
+        return .systemFont(ofSize: size)
     }
 }

@@ -562,6 +562,7 @@
 "notes.formattingRemoved" = "Formatting removed";
 "notes.generateTitle" = "Generate title with AI";
 "notes.generateTitle.failed" = "Couldn't generate a title — check your AI provider in Settings";
+"notes.font.choose" = "Choose font";
 "notes.pin.pin" = "Pin note window (stays visible when you switch apps)";
 "notes.pin.unpin" = "Unpin note window";
 "notes.counter" = "%d words · %d characters";
