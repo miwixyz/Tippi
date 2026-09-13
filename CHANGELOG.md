@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.8.1] — 2026-09-13
+
+### Fixed
+- **A note could appear twice, most visibly in the new Favorites section.** Renaming a note's file when it got a title (e.g. via "Generate title with AI") could silently fail to delete the old filename — both ended up on disk, both parsing to the same note, so it rendered as two rows everywhere the list is shown. Already-affected notes clean themselves up automatically the next time the Notes window opens; no manual fix needed.
+
 ## [2.8.0] — 2026-09-13
 
 ### Added

@@ -217,6 +217,15 @@ final class NotesStore: ObservableObject {
     /// Lists every note file in `directory`. Any ubiquitous item not yet
     /// downloaded locally is skipped this pass (download is kicked off, it
     /// will appear on the next `refresh()`) rather than blocking here.
+    ///
+    /// Also self-heals duplicate-UUID files — a real bug (fixed 2026-09-13
+    /// in `writeNoteFile`) could leave a note's previous filename behind
+    /// after a title-triggered rename, so an install that hit it once has a
+    /// stray file sitting in this folder forever, resolving to the same
+    /// note ID and rendering as a ghost duplicate everywhere the list is
+    /// used (e.g. showing twice in Favorites). Keeps whichever copy was
+    /// modified most recently and quietly deletes the rest, rather than
+    /// requiring every already-affected install to be manually cleaned up.
     private nonisolated static func loadAllNotes(from directory: URL) -> [Note] {
         guard let entries = try? FileManager.default.contentsOfDirectory(
             at: directory,
@@ -225,18 +234,36 @@ final class NotesStore: ObservableObject {
             return []
         }
 
-        var result: [Note] = []
+        var bestByID: [UUID: (note: Note, url: URL)] = [:]
+        var staleURLs: [URL] = []
+
         for url in entries where url.pathExtension == fileExtension {
             if let status = try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]).ubiquitousItemDownloadingStatus,
                status != .current {
                 try? FileManager.default.startDownloadingUbiquitousItem(at: url)
                 continue
             }
-            if let note = readNoteFile(at: url) {
-                result.append(note)
+            guard let note = readNoteFile(at: url) else { continue }
+            if let existing = bestByID[note.id] {
+                if note.modifiedAt > existing.note.modifiedAt {
+                    staleURLs.append(existing.url)
+                    bestByID[note.id] = (note, url)
+                } else {
+                    staleURLs.append(url)
+                }
+            } else {
+                bestByID[note.id] = (note, url)
             }
         }
-        return result
+
+        if !staleURLs.isEmpty {
+            notesLog.notice("cleaning up \(staleURLs.count, privacy: .public) stale duplicate note file(s) left behind by a fixed rename bug")
+            for url in staleURLs {
+                try? deleteFile(at: url)
+            }
+        }
+
+        return bestByID.values.map(\.note)
     }
 
     // MARK: - File Coordinator wrapped I/O
@@ -298,17 +325,40 @@ final class NotesStore: ObservableObject {
         if let writeError { throw writeError }
 
         // The title changed (or was just added) since the last write — the
-        // file under the previous name is now a stale duplicate of this same
-        // note (same UUID suffix). Only removed after the new name's write is
-        // confirmed above, so a failure never leaves zero copies on disk.
-        if let oldURL = existingFileURL(forID: note.id, in: directory), oldURL.lastPathComponent != newURL.lastPathComponent {
-            try? deleteFile(at: oldURL)
+        // file(s) under any previous name are now stale duplicates of this
+        // same note (same UUID suffix). Only removed after the new name's
+        // write is confirmed above, so a failure never leaves zero copies on
+        // disk. Deletes every match, not just one, and explicitly excludes
+        // `newURL` itself — real bug found 2026-09-13: the old lookup
+        // ("first entry whose name ends in this UUID") could
+        // non-deterministically return the file that was just written above
+        // (its own name also ends in the same UUID+extension), since
+        // `contentsOfDirectory` order isn't guaranteed. That silently
+        // skipped the delete and left the actual old file orphaned on disk
+        // forever, later re-appearing as a ghost duplicate of the same note
+        // (self-healed for already-affected installs in `loadAllNotes`).
+        for staleURL in staleFileURLs(forID: note.id, in: directory, excluding: newURL.lastPathComponent) {
+            try? deleteFile(at: staleURL)
         }
     }
 
+    /// Deletes every file matching this note's ID — normally exactly one,
+    /// but defensively cleans up all of them in case a stale duplicate (see
+    /// `writeNoteFile`) is still sitting around. Best-effort: keeps trying
+    /// remaining matches even if one fails, so a single locked/coordinated
+    /// file never leaves the rest behind.
     private nonisolated static func deleteNoteFile(id: UUID, in directory: URL) throws {
-        guard let url = existingFileURL(forID: id, in: directory) else { return }
-        try deleteFile(at: url)
+        let urls = staleFileURLs(forID: id, in: directory, excluding: nil)
+        guard !urls.isEmpty else { return }
+        var lastError: Error?
+        for url in urls {
+            do {
+                try deleteFile(at: url)
+            } catch {
+                lastError = error
+            }
+        }
+        if let lastError { throw lastError }
     }
 
     private nonisolated static func deleteFile(at url: URL) throws {
@@ -362,11 +412,17 @@ final class NotesStore: ObservableObject {
         return "\(truncated) — \(note.id.uuidString).\(fileExtension)"
     }
 
-    private nonisolated static func existingFileURL(forID id: UUID, in directory: URL) -> URL? {
+    /// Every file in `directory` whose stem ends in this note's UUID —
+    /// normally exactly one, but can legitimately return more than one for
+    /// the reasons documented at both call sites (a stale rename leftover,
+    /// or the file just written by the caller itself, which `excludedFilename`
+    /// lets callers exclude explicitly rather than relying on "first match"
+    /// — the bug this replaced).
+    private nonisolated static func staleFileURLs(forID id: UUID, in directory: URL, excluding excludedFilename: String?) -> [URL] {
         let suffix = "\(id.uuidString).\(fileExtension)"
         guard let entries = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
-            return nil
+            return []
         }
-        return entries.first { $0.lastPathComponent.hasSuffix(suffix) }
+        return entries.filter { $0.lastPathComponent.hasSuffix(suffix) && $0.lastPathComponent != excludedFilename }
     }
 }
