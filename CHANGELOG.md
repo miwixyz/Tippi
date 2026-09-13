@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.5.0] — 2026-09-13
+
+### Added
+- **Liquid Glass on every Tippi window.** Settings, Welcome, Preview, and Notes now use the same glass material as the floating panels (Notes, Translate, emoji picker, toast) instead of a solid brand-navy background — one consistent look across the whole app, on macOS 26 and later (`.regularMaterial` unchanged below that).
+- **AI-generated note titles.** A sparkles button in the Notes editor asks your configured AI provider for a short title and inserts it above your text — nothing you wrote is replaced or touched.
+
 ## [2.4.1] — 2026-09-13
 
 ### Changed
