@@ -85,7 +85,15 @@ enum DynamicVariableBuilder {
             return SnippetVar(name: name, type: "date", params: SnippetVarParams(cmd: nil, format: format.strftimeFormat))
 
         case .weekday(let weekday, let extraDays, let format):
-            var cmd = "date -v +\(weekday.dateFlag)"
+            // `%B` (month name) without an explicit locale renders in
+            // whatever locale the shell process inherits — verified against
+            // a real date: without this prefix, June rendered as "June", not
+            // "Juni". `%d`/`%Y` are locale-independent, so the prefix is a
+            // harmless no-op for `.dayDot`/`.year`; always including it here
+            // avoids relying on the runtime environment being German by
+            // chance. Matches the LC_TIME Michael's own kinowoche.yml already
+            // used for the exact same reason.
+            var cmd = "LC_TIME=de_DE.UTF-8 date -v +\(weekday.dateFlag)"
             if extraDays != 0 {
                 let sign = extraDays > 0 ? "+" : "-"
                 cmd += " -v \(sign)\(abs(extraDays))d"
