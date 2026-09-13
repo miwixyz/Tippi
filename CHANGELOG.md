@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.8.0] — 2026-09-13
+
+### Added
+- **Favorite notes** — star a note from the list row or its context menu; starred notes sort into their own "Favorites" section above the rest. Synced via the same small iCloud key-value store as other Notes window settings — never note content.
+- **Menu bar icons** — every item now has a small SF Symbol icon (translate, notes, updates, dictation language, settings, …), and the readiness header ("Ready" / "Loading model…" / "Error") shows a matching colored icon and label instead of plain gray text.
+- **Local Quick Actions popup redesign** — each action (bold, uppercase, join lines, …) now has a small colored icon badge grouped by category, with tighter spacing and hover feedback, replacing the flat gray-pill grid.
+
+### Fixed
+- **The "Insert Today" variable could render month names in English instead of German** (`%B` → "June" instead of "Juni") — the same locale bug already fixed once for the weekday variable, found in a second code-review pass and missed the first time because it uses a different code path.
+- **Favorited notes could go stale on a second Mac** until the app was relaunched — the Favorites section now re-reads on every Notes window open, matching how note content itself already refreshes.
+
 ## [2.7.0] — 2026-09-13
 
 ### Added
