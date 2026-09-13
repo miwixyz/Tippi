@@ -80,6 +80,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// steals focus). Used to re-select and replace for local quick actions.
     private var lastSelectionElement: AXUIElement?
     private var lastSelectionRange: CFRange?
+    /// Same idea as `lastSelectionElement`/`lastSelectionRange`, but for when
+    /// the trigger fired inside Tippi's OWN Notes editor instead of some
+    /// other app's text field. Real bug, 2026-09-13: the normal path resolves
+    /// "which app to act on" via `resolvedSourceAppForCapture()`, which is
+    /// built entirely around "find the last app that ISN'T Tippi" — with the
+    /// Notes window focused, that can never correctly mean "Notes itself",
+    /// so capture/replace either targeted the wrong app or fell through to a
+    /// blind clipboard paste that appended instead of replacing. Populated
+    /// instead of `lastSelectionElement`/`lastSelectionRange` (never both) —
+    /// direct AppKit access to our own text view, no Accessibility needed.
+    private var lastNativeTextView: NSTextView?
+    private var lastNativeRange: NSRange?
     private let popupController = PromptPopupController()
     private let previewWindowController = PreviewWindowController()
     private let notesWindowController = NotesWindowController()
@@ -265,32 +277,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch action.perform(on: snapshot.text) {
         case .plainReplacement(let text):
             Task { @MainActor in
-                switch TextInsertion.replaceViaElement(snapshot.element, range: snapshot.range, with: text, expecting: snapshot.text) {
-                case .replaced:
-                    ToastWindowController.shared.show(message: action.title)
-                case .ignored:
-                    await TextInsertion.insertViaClipboard(text, into: snapshot.sourceApp)
-                    ToastWindowController.shared.show(message: action.title)
-                case .unavailable:
-                    await TextInsertion.replace(with: text, in: snapshot.sourceApp)
-                    ToastWindowController.shared.show(message: action.title)
-                }
+                await applySnapshotResult(text, attributed: nil, snapshot: snapshot)
+                ToastWindowController.shared.show(message: action.title)
             }
         case .richReplacement(let attributed, let fallback):
             Task { @MainActor in
-                switch TextInsertion.replaceViaElement(snapshot.element, range: snapshot.range, with: fallback, expecting: snapshot.text) {
-                case .replaced:
-                    ToastWindowController.shared.show(message: action.title)
-                case .ignored:
-                    await TextInsertion.insertViaClipboard(fallback, into: snapshot.sourceApp)
-                    ToastWindowController.shared.show(message: action.title)
-                case .unavailable:
-                    await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: snapshot.sourceApp)
-                    ToastWindowController.shared.show(message: action.title)
-                }
+                await applySnapshotResult(fallback, attributed: attributed, snapshot: snapshot)
+                ToastWindowController.shared.show(message: action.title)
             }
         case .info(let message):
             ToastWindowController.shared.show(message: message)
+        }
+    }
+
+    /// Same "native vs. AX" branch as `applyCapturedResult`, keyed off a
+    /// `SelectionSnapshot`'s own fields instead of the hotkey flow's
+    /// `last*` instance state — this is the auto-popup-on-selection path
+    /// (`SelectionActionBarPanel`), which captures everything up front in
+    /// the snapshot rather than storing it on `self`.
+    private func applySnapshotResult(_ plainText: String, attributed: NSAttributedString?, snapshot: SelectionSnapshot) async {
+        if let textView = snapshot.nativeTextView, let range = snapshot.nativeRange {
+            applyNativeReplacement(plainText, in: textView, range: range)
+            return
+        }
+        guard let element = snapshot.element, let range = snapshot.range else {
+            if let attributed {
+                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: snapshot.sourceApp)
+            } else {
+                await TextInsertion.replace(with: plainText, in: snapshot.sourceApp)
+            }
+            return
+        }
+        switch TextInsertion.replaceViaElement(element, range: range, with: plainText, expecting: snapshot.text) {
+        case .replaced:
+            return
+        case .ignored:
+            await TextInsertion.insertViaClipboard(plainText, into: snapshot.sourceApp)
+        case .unavailable:
+            if let attributed {
+                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: snapshot.sourceApp)
+            } else {
+                await TextInsertion.replace(with: plainText, in: snapshot.sourceApp)
+            }
         }
     }
 
@@ -1034,18 +1062,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return lastNonTippiApp
     }
 
+    /// The Notes editor's text view, if it's the thing actually focused right
+    /// now — as opposed to merely "some Tippi window is open". Checking
+    /// `firstResponder` (not just window identity) means this stays `nil`
+    /// while focus is on, say, the note list or a Settings text field, where
+    /// none of this native-replacement machinery applies.
+    static func focusedNotesTextView() -> NSTextView? {
+        NSApp.keyWindow?.firstResponder as? PlainTextEditor.PasteAwareTextView
+    }
+
     private enum TriggerSource { case hotkey, manual }
 
-    private func handleTriggered(from source: TriggerSource) async {
-        NSLog("Tippi: handleTriggered from=\(source)")
-        guard !isHandlingTrigger,
-              !popupController.isOpen,
-              !previewWindowController.isOpen else {
-            NSLog("Tippi: handleTriggered ignored (in-flight=\(isHandlingTrigger), popup=\(popupController.isOpen), preview=\(previewWindowController.isOpen))")
-            return
+    /// Resolves what to capture for a trigger — either Tippi's own focused
+    /// Notes editor (native, no Accessibility involved) or some other app's
+    /// text field (the original Accessibility-based path, unchanged). Always
+    /// updates exactly one of the two selection-state pairs
+    /// (`lastNativeTextView`/`lastNativeRange` vs. `lastSelectionElement`/
+    /// `lastSelectionRange`) and clears the other, so later replace/append
+    /// calls can tell which one applies.
+    private func captureForTrigger() async -> (sourceApp: NSRunningApplication?, captured: CapturedText?) {
+        if let textView = Self.focusedNotesTextView() {
+            let range = textView.selectedRange()
+            lastSelectionElement = nil
+            lastSelectionRange = nil
+            lastNativeTextView = textView
+            lastNativeRange = range.length > 0 ? range : nil
+            NSLog("Tippi: native capture in Notes editor, range loc=\(range.location) len=\(range.length)")
+            guard range.length > 0 else { return (nil, nil) }
+            let text = (textView.string as NSString).substring(with: range)
+            return (nil, CapturedText(text: text, sourceApp: nil, usedClipboardFallback: false))
         }
-        isHandlingTrigger = true
-        defer { isHandlingTrigger = false }
+
+        lastNativeTextView = nil
+        lastNativeRange = nil
 
         let sourceApp = resolvedSourceAppForCapture()
         NSLog("Tippi: source app = \(sourceApp?.localizedName ?? "nil")")
@@ -1064,6 +1113,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             lastSelectionElement = nil
             lastSelectionRange = nil
         }
+        return (sourceApp, captured)
+    }
+
+    private func handleTriggered(from source: TriggerSource) async {
+        NSLog("Tippi: handleTriggered from=\(source)")
+        guard !isHandlingTrigger,
+              !popupController.isOpen,
+              !previewWindowController.isOpen else {
+            NSLog("Tippi: handleTriggered ignored (in-flight=\(isHandlingTrigger), popup=\(popupController.isOpen), preview=\(previewWindowController.isOpen))")
+            return
+        }
+        isHandlingTrigger = true
+        defer { isHandlingTrigger = false }
+
+        let (sourceApp, captured) = await captureForTrigger()
 
         if source == .hotkey {
             try? await Task.sleep(nanoseconds: 40_000_000)
@@ -1189,50 +1253,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch action.perform(on: cap.text) {
         case .plainReplacement(let text):
             popupController.close()
-            let message: String
-            if let el = lastSelectionElement, let range = lastSelectionRange {
-                switch TextInsertion.replaceViaElement(el, range: range, with: text, expecting: cap.text) {
-                case .replaced:
-                    message = action.title
-                case .ignored:
-                    // AX write was silently discarded (Electron/Chromium). The selection
-                    // has collapsed, so we can't replace it — insert at current cursor
-                    // position via clipboard + ⌘V as best effort.
-                    await TextInsertion.insertViaClipboard(text, into: cap.sourceApp)
-                    message = action.title
-                case .unavailable:
-                    await TextInsertion.replace(with: text, in: cap.sourceApp)
-                    message = action.title
-                }
-            } else {
-                await TextInsertion.replace(with: text, in: cap.sourceApp)
-                message = action.title
-            }
-            ToastWindowController.shared.show(message: message)
+            await applyCapturedResult(plainText: text, attributed: nil, expecting: cap.text, sourceApp: cap.sourceApp)
+            ToastWindowController.shared.show(message: action.title)
             return nil
         case .richReplacement(let attributed, let fallback):
             popupController.close()
-            let message: String
-            if let el = lastSelectionElement, let range = lastSelectionRange {
-                switch TextInsertion.replaceViaElement(el, range: range, with: fallback, expecting: cap.text) {
-                case .replaced:
-                    message = action.title
-                case .ignored:
-                    await TextInsertion.insertViaClipboard(fallback, into: cap.sourceApp)
-                    message = action.title
-                case .unavailable:
-                    await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: cap.sourceApp)
-                    message = action.title
-                }
-            } else {
-                await TextInsertion.replace(with: attributed, fallbackPlainText: fallback, in: cap.sourceApp)
-                message = action.title
-            }
-            ToastWindowController.shared.show(message: message)
+            await applyCapturedResult(plainText: fallback, attributed: attributed, expecting: cap.text, sourceApp: cap.sourceApp)
+            ToastWindowController.shared.show(message: action.title)
             return nil
         case .info(let message):
             return message
         }
+    }
+
+    /// Writes a result back over whatever was captured at trigger time —
+    /// either directly into Tippi's own Notes editor (`lastNativeTextView`/
+    /// `lastNativeRange`, no Accessibility involved) or into another app's
+    /// text field via the original three-way Accessibility/clipboard ladder.
+    /// Shared by local quick actions (`runLocalAction`) and full AI prompt
+    /// replace/append (`replaceCapturedSelection`) — both need exactly this
+    /// same "native vs. AX" branch, so it lives in one place instead of two.
+    private func applyCapturedResult(
+        plainText: String,
+        attributed: NSAttributedString?,
+        expecting originalText: String?,
+        sourceApp: NSRunningApplication?
+    ) async {
+        if let textView = lastNativeTextView, let range = lastNativeRange {
+            applyNativeReplacement(plainText, in: textView, range: range)
+            return
+        }
+        guard let el = lastSelectionElement, let range = lastSelectionRange else {
+            if let attributed {
+                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: sourceApp)
+            } else {
+                await TextInsertion.replace(with: plainText, in: sourceApp)
+            }
+            return
+        }
+        switch TextInsertion.replaceViaElement(el, range: range, with: plainText, expecting: originalText) {
+        case .replaced:
+            return
+        case .ignored:
+            // AX write was silently discarded (Electron/Chromium). The selection
+            // has collapsed, so we can't replace it — insert at current cursor
+            // position via clipboard + ⌘V as best effort.
+            await TextInsertion.insertViaClipboard(plainText, into: sourceApp)
+        case .unavailable:
+            if let attributed {
+                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: sourceApp)
+            } else {
+                await TextInsertion.replace(with: plainText, in: sourceApp)
+            }
+        }
+    }
+
+    /// Replaces `range` in `textView` directly via AppKit — used for Tippi's
+    /// own Notes editor instead of the Accessibility/clipboard machinery
+    /// built for other apps' text fields. Bracketed with
+    /// `shouldChangeText`/`didChangeText` (the correct way to make a
+    /// programmatic edit look identical to a user-typed one) so undo and the
+    /// SwiftUI text binding both update correctly.
+    private func applyNativeReplacement(_ text: String, in textView: NSTextView, range: NSRange) {
+        guard textView.shouldChangeText(in: range, replacementString: text) else { return }
+        textView.replaceCharacters(in: range, with: text)
+        textView.didChangeText()
     }
 
     private func showPreview(prompt: DemoPrompt, captured: CapturedText) {
@@ -1263,22 +1348,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// collapsed the live selection), re-selecting and replacing via Accessibility.
     /// Falls back to focused-element replace / clipboard paste when no range was captured.
     private func replaceCapturedSelection(with text: String, originalText: String?, sourceApp: NSRunningApplication?) async {
-        if let el = lastSelectionElement, let range = lastSelectionRange {
-            switch TextInsertion.replaceViaElement(el, range: range, with: text, expecting: originalText) {
-            case .replaced:
-                return
-            case .ignored:
-                // AX write was silently discarded (Electron/Chromium). The captured
-                // selection is gone, so we can't replace it directly — activate the
-                // source app and synthesise ⌘V into the still-active selection
-                // (preserved because the popup + preview are non-activating).
-                await TextInsertion.insertViaClipboard(text, into: sourceApp)
-                return
-            case .unavailable:
-                break
-            }
-        }
-        await TextInsertion.replace(with: text, in: sourceApp)
+        await applyCapturedResult(plainText: text, attributed: nil, expecting: originalText, sourceApp: sourceApp)
     }
 
     private func pasteBack(_ text: String, into app: NSRunningApplication?) async {

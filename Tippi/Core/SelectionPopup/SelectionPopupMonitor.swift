@@ -8,15 +8,25 @@ private let selectionPopupLog = Logger(subsystem: "com.tippi.app", category: "se
 /// selected text — captured once at mouse-up time while the selection is
 /// still live, matching the same "capture the AX element+range early" habit
 /// `AppDelegate.handleTriggered` already uses for the hotkey flow.
+///
+/// `element`/`range`/`sourceApp` are for a selection in some OTHER app,
+/// read/written via Accessibility. `nativeTextView`/`nativeRange` are for a
+/// selection inside Tippi's OWN Notes editor — direct AppKit access instead
+/// of chasing our own process through the Accessibility server, which proved
+/// unreliable for self-inspection (real bug, 2026-09-13: a local action's
+/// result got appended after the original text instead of replacing it).
+/// Exactly one pair is populated, never both.
 struct SelectionSnapshot {
     let text: String
-    let element: AXUIElement
-    let range: CFRange
+    let element: AXUIElement?
+    let range: CFRange?
     /// nil when the source app doesn't implement the bounds-for-range AX
     /// attribute — the panel falls back to the mouse position instead of
     /// refusing to show at all.
     let bounds: CGRect?
     let sourceApp: NSRunningApplication?
+    let nativeTextView: NSTextView?
+    let nativeRange: NSRange?
 }
 
 /// Watches for text selections system-wide via a mouse-up monitor, the same
@@ -106,6 +116,21 @@ final class SelectionPopupMonitor: ObservableObject {
     }
 
     private func checkSelection() {
+        // Tippi's own Notes editor bypasses the "never trigger while Tippi
+        // itself is active" guard below — that guard exists to stop this bar
+        // popping up over Settings or other Tippi chrome, but Notes is a
+        // real content-editing surface where the same feature is exactly as
+        // wanted as in any other app. Uses direct AppKit, not Accessibility,
+        // for both the same self-inspection reasons documented on
+        // `SelectionSnapshot`.
+        if NSApp.isActive, let textView = AppDelegate.focusedNotesTextView() {
+            checkNativeSelection(in: textView)
+            return
+        }
+
+        // Never trigger while interacting with any OTHER Tippi UI (Settings,
+        // the snippet editor, this bar itself) — same guard the snippet
+        // keystroke engine uses for the same reason.
         guard let app = NSWorkspace.shared.frontmostApplication,
               app.bundleIdentifier != Bundle.main.bundleIdentifier else {
             selectionPopupLog.notice("checkSelection: no eligible frontmost app")
@@ -130,6 +155,30 @@ final class SelectionPopupMonitor: ObservableObject {
         }
         let bounds = TextCapture.boundsForSelection(element: element, range: range)
         selectionPopupLog.notice("checkSelection: match, \(text.count, privacy: .public) chars, bounds=\(bounds.map { "\($0)" } ?? "nil", privacy: .public), app=\(app.localizedName ?? "?", privacy: .public)")
-        onSelection(SelectionSnapshot(text: text, element: element, range: range, bounds: bounds, sourceApp: app))
+        onSelection(SelectionSnapshot(
+            text: text, element: element, range: range, bounds: bounds, sourceApp: app,
+            nativeTextView: nil, nativeRange: nil
+        ))
+    }
+
+    private func checkNativeSelection(in textView: NSTextView) {
+        let range = textView.selectedRange()
+        guard range.length >= Self.minimumSelectionLength else {
+            selectionPopupLog.notice("checkNativeSelection: range too short (\(range.length, privacy: .public) chars)")
+            onNoSelection()
+            return
+        }
+        let text = (textView.string as NSString).substring(with: range)
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            onNoSelection()
+            return
+        }
+        let bounds = textView.firstRect(forCharacterRange: range, actualRange: nil)
+        selectionPopupLog.notice("checkNativeSelection: match, \(text.count, privacy: .public) chars in Notes editor")
+        onSelection(SelectionSnapshot(
+            text: text, element: nil, range: nil,
+            bounds: bounds.isNull || bounds == .zero ? nil : bounds,
+            sourceApp: nil, nativeTextView: textView, nativeRange: range
+        ))
     }
 }

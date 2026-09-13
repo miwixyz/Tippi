@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.8.3] — 2026-09-13
+
+### Fixed
+- **Tippi's own AI/formatting tools didn't work inside its own Notes editor.** The selection action bar never appeared over Notes (it deliberately stays away from Tippi's own windows, to avoid popping up over Settings), and the ⌥⌘T popup's local actions and AI prompts resolved "which app to write the result back into" via logic built entirely around "find some OTHER app" — which can never mean Notes itself. A local action like Bold ended up appending its result after the original text instead of replacing it. Notes now gets a direct, native path (no Accessibility involved) for both the auto-popup and the manual-trigger popup, so selecting text in a note and running any local action or AI prompt on it now replaces correctly.
+
 ## [2.8.2] — 2026-09-13
 
 ### Fixed
