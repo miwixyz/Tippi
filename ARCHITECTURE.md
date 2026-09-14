@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.9.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.9.1. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -48,6 +48,10 @@ Tippi/
 │   │   ├── SnippetMatcher.swift            # reine Trigger-Logik, unit-getestet
 │   │   ├── SnippetStore.swift              # App-Snippets + Espanso-Dateien + Freigabe-Gate
 │   │   ├── SnippetVariableResolver.swift   # date/shell-Vars, 5s-Hard-Timeout
+│   │   ├── SnippetApproval.swift           # v2.9.1 — HMAC-Freigabe für Shell-Snippets
+│   │   │                                   #   (Schlüssel im Keychain, fail-closed).
+│   │   │                                   #   Gebaut, noch NICHT verdrahtet — siehe
+│   │   │                                   #   docs/SECURE-DESIGN-espanso-import.md
 │   │   └── SnippetTextInjector.swift       # Backspaces + Einfügen
 │   ├── Emoji/                      # v2.1
 │   │   ├── EmojiDatabase.swift             # Laden, Alias-Map, EmojiSearch (rein)

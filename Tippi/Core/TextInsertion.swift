@@ -139,13 +139,45 @@ enum TextInsertion {
 
         let valueBefore = axStringValue(element)
 
+        // Restoring the range is not optional bookkeeping — it decides whether
+        // the write below *replaces* or *inserts*. Setting kAXSelectedText
+        // overwrites the current selection; with no selection it inserts at the
+        // caret. So if an app declines the range restore, writing anyway
+        // appends the transformed text next to the original instead of
+        // replacing it. That is the doubling reported on 2026-09-14
+        // ("Wichtig ist nurWichtig ist nur"), and the old code could not see it
+        // coming because it discarded this result and then judged success by
+        // "did the value change at all" — which appending satisfies.
         var mutableRange = range
-        if let axRange = AXValueCreate(.cfRange, &mutableRange) {
-            AXUIElementSetAttributeValue(
-                element,
-                kAXSelectedTextRangeAttribute as CFString,
-                axRange
-            )
+        guard let axRange = AXValueCreate(.cfRange, &mutableRange) else {
+            insertLog.notice("replaceViaElement → unavailable (could not build AX range)")
+            return .unavailable
+        }
+        let rangeSet = AXUIElementSetAttributeValue(
+            element,
+            kAXSelectedTextRangeAttribute as CFString,
+            axRange
+        )
+        guard rangeSet == .success else {
+            insertLog.notice(
+                "replaceViaElement → ignored (app refused range restore, set=\(rangeSet.rawValue, privacy: .public)) — not writing, a write here would append")
+            return .ignored
+        }
+
+        // Read the range back. A success status only means the app accepted the
+        // message, not that the selection actually moved; Electron-based apps
+        // answer .success and keep a collapsed caret.
+        var verifyRef: CFTypeRef?
+        if AXUIElementCopyAttributeValue(
+            element, kAXSelectedTextRangeAttribute as CFString, &verifyRef) == .success,
+           let verifyValue = verifyRef, CFGetTypeID(verifyValue) == AXValueGetTypeID() {
+            var actual = CFRange()
+            if AXValueGetValue(verifyValue as! AXValue, .cfRange, &actual),
+               actual.length != range.length {
+                insertLog.notice(
+                    "replaceViaElement → ignored (selection did not take: asked for len \(range.length, privacy: .public), got \(actual.length, privacy: .public))")
+                return .ignored
+            }
         }
 
         // Capture selectedText *after* the range re-selection, before the write.

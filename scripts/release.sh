@@ -59,7 +59,6 @@ VERSION="$(awk -F'"' '/MARKETING_VERSION:/ { print $2; exit }' project.yml)"
 APP_NAME="Tippi"
 BUNDLE_ID="com.tippi.app"
 APP_BUNDLE="${APP_NAME}.app"
-BUILD_DIR="./build/Build/Products/Release"
 DIST_DIR="./dist"
 DEVELOPER_ID="${DEVELOPER_ID:-}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-tippi-notary}"
@@ -314,19 +313,38 @@ xcodegen generate >/dev/null
 # Build number = git commit count — monotonically increasing, no manual tracking needed.
 BUILD_NUMBER="$(git rev-list --count HEAD)"
 echo "▶ [2/7] Building Release with hardened runtime (build ${BUILD_NUMBER})..."
+# archive + exportArchive, not plain `build`. Manual signing without a profile
+# specifier embeds no provisioning profile at all, which was invisible until
+# v2.3.0 added iCloud entitlements on 2026-09-13: entitlements that no embedded
+# profile authorises make amfid kill the app at launch with -413 "No matching
+# profile found". Releases before that carried no entitlements, so the gap
+# never showed. The export path makes Xcode fetch (and if needed create) the
+# "Mac Team Direct" Developer ID profile, which is valid on every Mac rather
+# than only registered ones, and embeds it.
 xcodebuild \
     -project Tippi.xcodeproj \
     -scheme Tippi \
     -configuration Release \
     -derivedDataPath ./build \
+    -archivePath ./build/Tippi.xcarchive \
     MARKETING_VERSION="${VERSION}" \
     CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
-    CODE_SIGN_STYLE=Manual \
-    CODE_SIGN_IDENTITY="${DEVELOPER_ID}" \
-    OTHER_CODE_SIGN_FLAGS="--options=runtime --timestamp" \
-    build >/dev/null
+    -allowProvisioningUpdates \
+    archive >/dev/null
 
-APP_PATH="${BUILD_DIR}/${APP_BUNDLE}"
+xcodebuild -exportArchive \
+    -archivePath ./build/Tippi.xcarchive \
+    -exportPath ./build/export \
+    -exportOptionsPlist scripts/exportOptions-developer-id.plist \
+    -allowProvisioningUpdates >/dev/null
+
+APP_PATH="./build/export/${APP_BUNDLE}"
+if [ ! -f "${APP_PATH}/Contents/embedded.provisionprofile" ]; then
+    echo "✗ Export produced no embedded provisioning profile — the app would be"
+    echo "  killed at launch on every Mac (amfid -413). Check the Apple account"
+    echo "  in Xcode and that com.tippi.app has iCloud enabled."
+    exit 1
+fi
 if [ ! -d "${APP_PATH}" ]; then
     echo "✗ Build failed — ${APP_PATH} not found"; exit 1
 fi
@@ -381,12 +399,45 @@ done
 codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" \
     "${APP_PATH}/Contents/Frameworks/Sparkle.framework"
 
-# Sign outer app with our entitlements
+# Sign outer app with the entitlements the export actually produced, not with
+# the source file. Xcode derives application-identifier and team-identifier
+# from the provisioning profile and adds them to the bundle; passing the raw
+# Tippi.entitlements here would replace the whole set and drop those two keys,
+# leaving amfid unable to match the embedded profile (-413 at launch).
+EFFECTIVE_ENT="./build/effective.entitlements"
+codesign -d --entitlements "${EFFECTIVE_ENT}" --xml "${APP_PATH}" 2>/dev/null
+if [ ! -s "${EFFECTIVE_ENT}" ]; then
+    echo "✗ Could not read effective entitlements from the exported bundle"; exit 1
+fi
 codesign --force --options runtime --timestamp \
-    --entitlements Tippi/Resources/Tippi.entitlements \
+    --entitlements "${EFFECTIVE_ENT}" \
     --sign "${DEVELOPER_ID}" \
     "${APP_PATH}"
 codesign --verify --deep --strict "${APP_PATH}" && echo "  ✓ Signature valid"
+
+# Verify the effect, not the step. A bundle can be perfectly signed and still
+# be killed on launch when profile and entitlements disagree — that is exactly
+# the failure this section exists to prevent, and it is invisible until a user
+# double-clicks the app.
+for key in application-identifier team-identifier icloud-container-identifiers; do
+    codesign -d --entitlements - "${APP_PATH}" 2>/dev/null | grep -q "${key}" || {
+        echo "✗ Entitlement ${key} missing after re-sign — app would not launch"; exit 1; }
+done
+# Launch briefly and kill it again rather than checking an exit code: Tippi is
+# a GUI app with no --version flag, so a plain invocation would open a window
+# mid-release. A profile mismatch shows up as SIGKILL within milliseconds, so
+# surviving two seconds is the signal we need.
+"${APP_PATH}/Contents/MacOS/${APP_NAME}" >/dev/null 2>&1 &
+LAUNCH_PID=$!
+sleep 2
+if kill -0 "${LAUNCH_PID}" 2>/dev/null; then
+    kill "${LAUNCH_PID}" 2>/dev/null
+    wait "${LAUNCH_PID}" 2>/dev/null
+    echo "  ✓ Profile, entitlements and launch verified"
+else
+    echo "✗ App died immediately on launch — profile/entitlement mismatch (amfid -413)"
+    exit 1
+fi
 
 # 5. Create DMG
 echo "▶ [4/7] Creating DMG..."

@@ -1,11 +1,17 @@
 .PHONY: help generate open build clean lint icons prepare-binary release release-dry-run bump
 
+TEAM_ID          := LTKJ6Z2VYB
+# Local builds only. scripts/release.sh signs with the Developer ID identity
+# for notarised distribution; the two must not be swapped.
+DEV_IDENTITY     := Apple Development: Michael Wildenauer (54PMA7GFAN)
+DEV_ENTITLEMENTS := build/Tippi.dev.entitlements
+
 help:
 	@echo "Tippi — Make Targets"
 	@echo ""
 	@echo "  make generate         Generate Tippi.xcodeproj from project.yml (XcodeGen)"
 	@echo "  make open             Generate + open in Xcode"
-	@echo "  make build            Build Release configuration (Developer ID signed — stable TCC identity)"
+	@echo "  make build            Build Release configuration (Apple Development signed — matches the embedded dev profile)"
 	@echo "  make clean            Remove generated project and build artifacts"
 	@echo "  make icons            Open icons/ folder"
 	@echo ""
@@ -29,7 +35,36 @@ build: generate
 	xcodebuild -project Tippi.xcodeproj -scheme Tippi -configuration Release -derivedDataPath ./build build
 	cp Tippi/Helpers/whisper-cli build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli
 	chmod +x build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli
-	codesign --force --deep --sign "Developer ID Application: Michael Wildenauer (LTKJ6Z2VYB)" --entitlements Tippi/Resources/Tippi.entitlements build/Build/Products/Release/Tippi.app
+# Local builds sign with DEV_IDENTITY, not the Developer ID used for
+# distribution. The profile Xcode embeds is a *development* profile and lists
+# only "Apple Development" certificates; signing the bundle with Developer ID
+# leaves amfid unable to match profile to signature, and it kills the app at
+# launch with -413 "No matching profile found". That made this target unusable,
+# builds moved to Xcode, and Xcode does not copy whisper-cli — which is how the
+# installed 2.9.0 ended up without a dictation binary (found 2026-09-14).
+# scripts/release.sh keeps Developer ID: notarised distribution is a different
+# trust path and must not be changed here.
+	codesign --force --options runtime --sign "$(DEV_IDENTITY)" build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli
+# `--entitlements <file>` replaces the entitlement set wholesale, dropping the
+# application-identifier and team-identifier keys Xcode injects from the
+# profile — without them amfid rejects the launch too. They are derived here
+# rather than committed to Tippi.entitlements so scripts/release.sh keeps
+# seeing the unmodified file. `--options runtime` is required as well: a
+# re-sign without it silently drops the hardened runtime flag (0x10000 → 0x0).
+# PlistBuddy, not plutil: plutil treats dots in a key as key-path separators,
+# so `-insert com.apple.application-identifier` looks for a nested dictionary
+# and fails with "Key path not found".
+	@plutil -convert xml1 -o "$(DEV_ENTITLEMENTS)" Tippi/Resources/Tippi.entitlements
+	@/usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $(TEAM_ID).com.tippi.app" "$(DEV_ENTITLEMENTS)" >/dev/null
+	@/usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $(TEAM_ID)" "$(DEV_ENTITLEMENTS)" >/dev/null
+	codesign --force --options runtime --sign "$(DEV_IDENTITY)" --entitlements "$(DEV_ENTITLEMENTS)" build/Build/Products/Release/Tippi.app
+# Verify the effect, not the step: a helper that cannot start is exactly the
+# failure this target shipped silently before.
+	@codesign -d --entitlements - build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli 2>&1 | grep -q icloud \
+		&& { echo "✗ whisper-cli still carries iCloud entitlements — it will be killed on launch"; exit 1; } || true
+	@build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli --help >/dev/null 2>&1; \
+		test $$? -ne 137 || { echo "✗ whisper-cli killed on launch (SIGKILL) — dictation would fail silently"; exit 1; }
+	@echo "✓ whisper-cli bundled, signed and able to start"
 
 clean:
 	rm -rf Tippi.xcodeproj build/ DerivedData/ dist/

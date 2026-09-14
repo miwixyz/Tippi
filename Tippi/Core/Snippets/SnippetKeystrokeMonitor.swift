@@ -116,18 +116,26 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         // Recorded before every guard below: this is the only honest answer to
         // "do keystrokes reach the watcher at all?"
         lastKeystrokeAt = Date()
-        monitorLog.notice(
+        // `.debug`, never `.notice`: this fires on every single keystroke the
+        // user types in any app. At `.notice` it is written to the persistent
+        // system log, so `log show` replays hours of key codes for anything
+        // typed while Tippi runs — passwords included. `.debug` is only
+        // materialised while someone actively streams the log, which is
+        // exactly when it is wanted. `lastKeystrokeAt` above carries the
+        // diagnostic value (are keystrokes arriving at all?) without recording
+        // what was typed.
+        monitorLog.debug(
             "keystroke received keyCode=\(event.keyCode) injecting=\(self.isInjecting) appActive=\(NSApp.isActive)")
 
         guard !isInjecting else {
-            monitorLog.notice("  → discarded: isInjecting")
+            monitorLog.debug("  → discarded: isInjecting")
             return
         }
         // Never expand while Tippi itself is the frontmost app — typing a
         // trigger string into the "new snippet" editor in Settings must not
         // expand itself.
         if NSApp.isActive {
-            monitorLog.notice("  → discarded: Tippi is frontmost")
+            monitorLog.debug("  → discarded: Tippi is frontmost")
             return
         }
 

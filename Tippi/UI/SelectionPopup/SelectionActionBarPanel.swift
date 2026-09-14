@@ -29,6 +29,20 @@ private final class NonKeyPanel: NSPanel {
 /// be clickable.
 private final class ClickableHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    /// `glassEffect` can only sample what is behind it. The panel itself is
+    /// already `isOpaque = false` with a clear background, but the hosting
+    /// view in between kept its own opaque backing layer, so the bar rendered
+    /// as a flat light slab instead of glass (reported 2026-09-14). Making
+    /// this view transparent too completes the chain from the glass material
+    /// down to the screen behind the window.
+    override var isOpaque: Bool { false }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.isOpaque = false
+    }
 }
 
 @MainActor
@@ -36,6 +50,15 @@ final class SelectionActionBarPanel {
     private var panel: NSPanel?
     private var globalMouseMonitor: Any?
     private var escapeKeyMonitor: Any?
+    private var autoHideTimer: Timer?
+    private var idleSeconds: TimeInterval = 0
+
+    /// The bar disappears on its own after this much time without the pointer
+    /// on it. Before this existed it sat there until the user clicked
+    /// somewhere or pressed Escape — so selecting text and then just reading
+    /// it left a floating bar covering the next line.
+    private static let autoHideAfter: TimeInterval = 5
+    private static let autoHideTick: TimeInterval = 0.5
 
     var isOpen: Bool { panel != nil }
 
@@ -93,9 +116,23 @@ final class SelectionActionBarPanel {
         // selected line instead of clearly above/below it — a suspiciously
         // large height is the signal that happened, not a genuine
         // multi-line selection.
+        // (3) Degenerate bounds. Electron-based apps answer the bounds query
+        // with an all-zero rect instead of failing it — measured 2026-09-14,
+        // `bounds=(0.0, 0.0, 0.0, 0.0)`. Zero height passed the "not too tall"
+        // test below, so the bar was anchored at the screen origin, which on
+        // macOS is the *bottom left* corner: the popup appeared in a different
+        // corner of the display from the text it belonged to.
         let maxPlausibleSelectionHeight: CGFloat = 80
+        let isUsable: (CGRect) -> Bool = { rect in
+            rect.width > 0
+                && rect.height > 0
+                && rect.height <= maxPlausibleSelectionHeight
+                // A selection has to sit on a screen the user can see. An
+                // off-screen rect is another way apps signal "no idea".
+                && NSScreen.screens.contains { $0.frame.intersects(rect) }
+        }
         let anchorBounds: CGRect
-        if let bounds = snapshot.bounds, bounds.height <= maxPlausibleSelectionHeight {
+        if let bounds = snapshot.bounds, isUsable(bounds) {
             anchorBounds = bounds
         } else {
             anchorBounds = CGRect(origin: NSEvent.mouseLocation, size: .zero)
@@ -128,9 +165,47 @@ final class SelectionActionBarPanel {
         // panel is that it never becomes key (see `NonKeyPanel`'s doc
         // comment). The source app stays frontmost and keeps the keyboard.
         panel.orderFront(nil)
+        startAutoHide()
+    }
+
+    // MARK: - Auto-hide
+
+    /// Polls the pointer instead of using an `NSTrackingArea`. The bar is a
+    /// non-key panel whose hosting view deliberately dodges the normal
+    /// responder chain (see `ClickableHostingView`), and tracking areas on it
+    /// miss enter/exit often enough to hide the bar out from under a pointer
+    /// that is heading for a button. Half-second polling costs nothing and
+    /// cannot get the state wrong.
+    private func startAutoHide() {
+        stopAutoHide()
+        idleSeconds = 0
+        autoHideTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.autoHideTick, repeats: true
+        ) { [weak self] _ in
+            Task { @MainActor in self?.tickAutoHide() }
+        }
+    }
+
+    private func tickAutoHide() {
+        guard let panel else { return stopAutoHide() }
+        // Pointer on the bar means the user is reaching for it — that is the
+        // one moment it must not vanish. Reset rather than pause, so moving
+        // away restarts the full countdown instead of the remainder.
+        if NSMouseInRect(NSEvent.mouseLocation, panel.frame, false) {
+            idleSeconds = 0
+            return
+        }
+        idleSeconds += Self.autoHideTick
+        if idleSeconds >= Self.autoHideAfter { close() }
+    }
+
+    private func stopAutoHide() {
+        autoHideTimer?.invalidate()
+        autoHideTimer = nil
     }
 
     func close() {
+        stopAutoHide()
         if let monitor = globalMouseMonitor {
             NSEvent.removeMonitor(monitor)
             globalMouseMonitor = nil

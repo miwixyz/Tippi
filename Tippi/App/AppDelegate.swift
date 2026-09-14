@@ -125,8 +125,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isHandlingTrigger = false
 
 
+    /// True while the app is only serving as the unit-test host.
+    ///
+    /// Unit tests load this bundle into the real app, so without this the full
+    /// menu-bar app boots for every test run: global key monitors, the
+    /// Accessibility selection watcher, provider network calls. Two concrete
+    /// problems, both observed on 2026-09-14 — the test runner hung before it
+    /// could establish its connection ("The test runner hung before
+    /// establishing connection", 330 s of the app happily logging
+    /// `checkSelection` against Obsidian and Messages), and the monitors read
+    /// real keystrokes from whatever the developer was typing at the time.
+    static var isRunningUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        if Self.isRunningUnitTests {
+            NSLog("Tippi: unit-test host — skipping app startup (no monitors, no network)")
+            return
+        }
         // Remap persisted Nebius model ids that the provider removed (they 404).
         ProviderModelPresets.migrateRetiredModels()
         // Best-effort, non-blocking: catch a provider retiring the configured
@@ -216,10 +234,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // EmojiSuggestionPanel.show) so Accessibility isn't hit on every
             // keystroke; nil falls back to the mouse location.
             var caret: CGRect?
-            if !self.emojiSuggestionPanel.isOpen,
-               let app = NSWorkspace.shared.frontmostApplication,
-               let selection = TextCapture.captureFocusedSelectionRange(in: app) {
-                caret = TextCapture.boundsForSelection(element: selection.element, range: selection.range)
+            if !self.emojiSuggestionPanel.isOpen {
+                // Measurement point, not decoration: the panel showing up far
+                // away from the caret (reported 2026-09-14) can come from three
+                // different places, and without this log they are
+                // indistinguishable — no focused app, no selection range, or a
+                // range that yields no bounds. Each one silently falls back to
+                // the mouse location. Fires only when the list opens, not per
+                // keystroke.
+                let app = NSWorkspace.shared.frontmostApplication
+                let selection = app.flatMap { TextCapture.captureFocusedSelectionRange(in: $0) }
+                caret = selection.flatMap {
+                    TextCapture.boundsForSelection(element: $0.element, range: $0.range)
+                }
+                let reason: String
+                if app == nil { reason = "no frontmost app" }
+                else if selection == nil { reason = "no selection range" }
+                else if caret == nil { reason = "no bounds for range" }
+                else { reason = "ok" }
+                appDelegateLog.notice(
+                    """
+                    emoji suggestion anchor: \(reason, privacy: .public) \
+                    app=\(app?.localizedName ?? "nil", privacy: .public) \
+                    len=\(selection?.range.length ?? -1, privacy: .public) \
+                    caret=\(caret.map { "\($0.origin.x),\($0.origin.y) \($0.size.width)x\($0.size.height)" } ?? "nil", privacy: .public) \
+                    mouse=\(NSEvent.mouseLocation.x, privacy: .public),\(NSEvent.mouseLocation.y, privacy: .public)
+                    """)
             }
             self.emojiSuggestionPanel.show(suggestions: suggestions, anchor: caret) { [weak self] emoji in
                 self?.snippetMonitor.acceptSuggestion(emoji)
@@ -291,6 +331,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func performSelectionAction(_ action: LocalTextAction, snapshot: SelectionSnapshot) {
         switch action.perform(on: snapshot.text) {
         case .plainReplacement(let text):
+            // A transform that changes nothing must not be written at all.
+            // Writing identical text leaves the document byte-for-byte the
+            // same, which the no-op detector downstream reads as "the app
+            // ignored the write" — so it falls through to a clipboard paste
+            // and appends a second copy. Reported 2026-09-14 for "Umlaute
+            // umwandeln" on text without umlauts; the same applied to
+            // lowercase on already-lowercase text, splitting underscores in
+            // text that has none, and every other identity case.
+            guard text != snapshot.text else {
+                ToastWindowController.shared.show(message: String(localized: "local.action.noChange"))
+                return
+            }
             Task { @MainActor in
                 await applySnapshotResult(text, attributed: nil, snapshot: snapshot)
                 ToastWindowController.shared.show(message: action.title)
@@ -828,6 +880,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     NSLog("Tippi: Accessibility granted — (re)starting keystroke monitor")
                     self.snippetMonitor.stop()
                     self.applyKeystrokeMonitorState()
+
+                    // The selection popup is the third consumer of the same
+                    // permission and was the only one never restarted here.
+                    // At launch TCC still answers "not trusted", all three
+                    // monitors give up; seconds later the permission arrives
+                    // and the other two came back while the popup stayed dead
+                    // until the next app launch — observed 2026-09-14, the
+                    // "no popup on selection" report.
+                    NSLog("Tippi: Accessibility granted — (re)starting selection popup")
+                    self.restartSelectionPopupEngine()
                 }
             }
             .store(in: &cancellables)

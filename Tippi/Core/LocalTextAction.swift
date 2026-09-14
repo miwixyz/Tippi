@@ -34,6 +34,8 @@ struct LocalTextAction: Identifiable, Equatable {
         case lowercase
         case capitalizeWords
         case underscore
+        case splitUnderscore
+        case slugify
         case hyphenate
         case transliterateUmlauts
         case brackets
@@ -44,10 +46,29 @@ struct LocalTextAction: Identifiable, Equatable {
 
     let kind: Kind
     let title: String
+    /// SF Symbol name. Empty when `label` carries the button instead.
     let symbol: String
+    /// Typographic label shown *instead of* an icon.
+    ///
+    /// Case and separator transforms are about letterforms, so a pictogram has
+    /// to encode something the glyphs already say better. Two real failures on
+    /// 2026-09-14: the `underscore` SF Symbol does not exist at all, so that
+    /// button rendered blank and was clicked past for weeks, and `textformat`
+    /// renders as "Aa" for *lowercase*, which reads as the opposite. `AA` /
+    /// `aa` / `A_B` need no legend.
+    let label: String?
     let category: LocalTextActionCategory
 
     var id: String { kind.rawValue }
+
+    init(kind: Kind, title: String, symbol: String = "", label: String? = nil,
+         category: LocalTextActionCategory) {
+        self.kind = kind
+        self.title = title
+        self.symbol = symbol
+        self.label = label
+        self.category = category
+    }
 
     static var all: [LocalTextAction] {
         [
@@ -55,12 +76,14 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .italic, title: String(localized: "local.action.italic"), symbol: "italic", category: .formatting),
             LocalTextAction(kind: .underline, title: String(localized: "local.action.underline"), symbol: "underline", category: .formatting),
             LocalTextAction(kind: .strikethrough, title: String(localized: "local.action.strikethrough"), symbol: "strikethrough", category: .formatting),
-            LocalTextAction(kind: .uppercase, title: String(localized: "local.action.uppercase"), symbol: "capslock", category: .transform),
-            LocalTextAction(kind: .lowercase, title: String(localized: "local.action.lowercase"), symbol: "textformat", category: .transform),
-            LocalTextAction(kind: .capitalizeWords, title: String(localized: "local.action.capitalizeWords"), symbol: "textformat.abc", category: .transform),
-            LocalTextAction(kind: .underscore, title: String(localized: "local.action.underscore"), symbol: "underscore", category: .transform),
-            LocalTextAction(kind: .hyphenate, title: String(localized: "local.action.hyphenate"), symbol: "minus", category: .transform),
-            LocalTextAction(kind: .transliterateUmlauts, title: String(localized: "local.action.transliterateUmlauts"), symbol: "character", category: .transform),
+            LocalTextAction(kind: .uppercase, title: String(localized: "local.action.uppercase"), label: "AA", category: .transform),
+            LocalTextAction(kind: .lowercase, title: String(localized: "local.action.lowercase"), label: "aa", category: .transform),
+            LocalTextAction(kind: .capitalizeWords, title: String(localized: "local.action.capitalizeWords"), label: "Aa", category: .transform),
+            LocalTextAction(kind: .underscore, title: String(localized: "local.action.underscore"), label: "A_b", category: .transform),
+            LocalTextAction(kind: .slugify, title: String(localized: "local.action.slugify"), label: "a_b", category: .transform),
+            LocalTextAction(kind: .splitUnderscore, title: String(localized: "local.action.splitUnderscore"), label: "A b", category: .transform),
+            LocalTextAction(kind: .hyphenate, title: String(localized: "local.action.hyphenate"), label: "A-b", category: .transform),
+            LocalTextAction(kind: .transliterateUmlauts, title: String(localized: "local.action.transliterateUmlauts"), label: "äöü", category: .transform),
             LocalTextAction(kind: .brackets, title: String(localized: "local.action.brackets"), symbol: "parentheses", category: .transform),
             LocalTextAction(kind: .joinLines, title: String(localized: "local.action.joinLines"), symbol: "text.append", category: .transform),
             LocalTextAction(kind: .characterCount, title: String(localized: "local.action.characterCount"), symbol: "number", category: .info),
@@ -98,6 +121,10 @@ struct LocalTextAction: Identifiable, Equatable {
             return .plainReplacement(LocalTextTransformer.capitalizeWords(text))
         case .underscore:
             return .plainReplacement(LocalTextTransformer.underscore(text))
+        case .splitUnderscore:
+            return .plainReplacement(LocalTextTransformer.splitUnderscore(text))
+        case .slugify:
+            return .plainReplacement(LocalTextTransformer.slugify(text))
         case .hyphenate:
             return .plainReplacement(LocalTextTransformer.hyphenate(text))
         case .transliterateUmlauts:
@@ -147,6 +174,34 @@ enum LocalTextTransformer {
 
     static func underscore(_ text: String) -> String {
         words(in: transliterateUmlauts(text)).joined(separator: "_")
+    }
+
+    /// Inverse of `underscore`: `hallo_welt` → `hallo welt`.
+    ///
+    /// Deliberately not routed through `words(in:)` like its counterpart.
+    /// Word enumeration would also split on every other boundary, so
+    /// `snake_case.and.dots` would lose its dots too — but the user asked for
+    /// underscores back, nothing else. Line breaks survive for the same
+    /// reason: a multi-line selection keeps its shape.
+    static func splitUnderscore(_ text: String) -> String {
+        text
+            .components(separatedBy: .newlines)
+            .map { line -> String in
+                line
+                    .replacingOccurrences(of: "_", with: " ")
+                    // `a__b` would otherwise become `a  b`. Collapse runs of
+                    // spaces the replacement itself produced, without touching
+                    // the user's own indentation at the start of the line.
+                    .replacingOccurrences(of: " {2,}", with: " ", options: .regularExpression)
+            }
+            .joined(separator: "\n")
+    }
+
+    /// Lowercase plus underscores in one step: `Wichtig ist nur` →
+    /// `wichtig_ist_nur`. The combination people actually want for file names
+    /// and identifiers, which previously took two clicks in the right order.
+    static func slugify(_ text: String) -> String {
+        underscore(text).lowercased()
     }
 
     static func hyphenate(_ text: String) -> String {

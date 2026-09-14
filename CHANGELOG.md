@@ -1,5 +1,134 @@
 # Changelog
 
+## [2.9.1] — 2026-09-14
+
+> **2.9.0 was never published.** It was built and installed locally on 2026-09-14
+> but the release pipeline turned out to be broken (see *Build and release* below),
+> so its changes ship here. The 2.9.0 section further down still describes what it
+> contained.
+
+### Fixed
+
+- **The selection action bar stopped appearing until Tippi was restarted.** At
+  launch macOS often reports Accessibility as not-yet-granted for a moment, and
+  all three consumers of that permission give up. The observer that reacts when
+  the permission does arrive restarted two of them — the global key monitor and
+  the snippet/emoji keystroke watcher — but not `selectionPopupMonitor`. The
+  selection bar therefore stayed dead for the rest of the session while hot keys
+  and snippets worked, which is exactly the combination that makes a bug look
+  like "sometimes it just doesn't work". Measured in the log: at 16:50:50 all
+  three reported *not trusted*, at 16:51:20 only the first two came back.
+- **Replacing a selection could duplicate the text instead of replacing it.**
+  Writing to `kAXSelectedText` overwrites the current selection — with no
+  selection it *inserts at the caret*. Tippi restored the captured range first,
+  but discarded the result of that call. When an app declined the restore, the
+  write appended a second copy next to the original (`Wichtig ist nurWichtig ist
+  nur`). The success check afterwards asked only "did the document change at
+  all", which appending satisfies just as well as replacing — so the log happily
+  reported `replaced`. The range restore is now checked *and* read back, because
+  a `.success` status only means the app accepted the message, not that the
+  selection moved; Electron-based apps answer success and keep a collapsed
+  caret. If the selection cannot be confirmed, Tippi no longer writes and falls
+  back to the clipboard path, which uses the app's own real selection.
+- **A transform that changed nothing appended a copy of the selection.**
+  "Convert umlauts" on text without umlauts, "split underscores" on text without
+  any, lowercase on already-lowercase text: the replacement was identical, so
+  the document was byte-for-byte unchanged afterwards — which the no-op detector
+  reads as "the app ignored the write", falling through to a clipboard paste
+  that appended. Identity results are now recognised before anything is written
+  and reported as *Nothing to change*.
+- **The selection bar appeared in the bottom-left corner of the screen in
+  Obsidian and other Electron apps.** They answer the bounds query with an
+  all-zero rectangle instead of failing it. The plausibility check only rejected
+  bounds that were *too tall*, and a height of zero passes that — so the bar was
+  anchored at the screen origin, which on macOS is the bottom-left corner.
+  Bounds must now have positive width and height and intersect an actual screen;
+  otherwise the pointer position is used.
+- **The "underscore" button was invisible and had been since it shipped.**
+  `underscore` is not an SF Symbol, so the button rendered as empty space. The
+  existing test asserted that all icon names are *unique* — not that they
+  *exist*. Users clicked the neighbouring button by mistake. All case and
+  separator transforms now render typographic labels instead of icons, and a new
+  test verifies every remaining symbol name actually resolves.
+- **"Lowercase" showed an icon reading "Aa"** (`textformat`), which reads as the
+  opposite of what it does. Labels are now literal: `AA`, `aa`, `Aa`, `A_b`,
+  `a_b`, `A b`, `A-b`, `äöü`.
+- **The German UI called "Unterstriche verbinden" by its English name**
+  ("Underscore").
+- **Dictation was unavailable in locally built copies.** `whisper-cli` was not
+  in the bundle: `make build` could not run at all (see below), so builds came
+  from Xcode, which does not perform the Makefile's copy step. The binary is
+  bundled and verified again.
+- **Every keystroke was written to the persistent system log.** The diagnostic
+  instrumentation added while chasing the snippet bug logged at `.notice`, so
+  `log show` replayed hours of key codes for anything typed while Tippi ran.
+  Lowered to `.debug`, which is only materialised while someone is actively
+  streaming the log. The timestamp-only `lastKeystrokeAt` keeps the diagnostic
+  value without recording what was typed.
+- **Unit tests booted the full menu-bar app.** The test bundle loads into the
+  real app, so every test run started the global key monitors, the Accessibility
+  watcher and provider network calls. The app read real keystrokes from whatever
+  the developer was typing, and the test runner hung before it could connect.
+  The app now skips startup when running as a test host.
+
+### Added
+
+- **Split underscores** (`A b`) — the inverse of *join with underscores*.
+  Deliberately touches only underscores: `snake_case.and-dots` becomes
+  `snake case.and-dots`, and line breaks survive.
+- **Lowercase + underscores** (`a_b`) — `Wichtig ist nur` → `wichtig_ist_nur` in
+  one click, the combination that previously needed two in the right order.
+- **The selection bar hides itself after five seconds.** It used to stay until
+  something was clicked or Escape was pressed, so selecting text and then just
+  reading it left a bar covering the next line. The countdown resets while the
+  pointer is over the bar — the one moment it must not vanish is while someone
+  is reaching for it.
+
+### Changed
+
+- **The selection bar's width is derived from the action list** instead of being
+  a hand-maintained constant. Adding the fourteenth action clipped the translate
+  button off the trailing edge: the arithmetic needed 591 pt against a
+  hard-coded 590. The generous allowance is kept, because SwiftUI's rendered
+  control widths are not exactly the numbers in the layout.
+
+### Build and release
+
+None of this is visible in the app, but it is why 2.9.0 never shipped.
+
+- **`make build` was unusable.** Four separate faults, each silent: `project.yml`
+  set no `DEVELOPMENT_TEAM`, so automatic signing worked in Xcode (which reads
+  the team from its UI) but not from the command line; a manually specified
+  provisioning profile conflicted with automatic signing; the single
+  `codesign --deep --entitlements` call handed `whisper-cli` the app's iCloud
+  entitlements, for which a helper binary has no profile, so macOS killed it the
+  moment dictation started; and re-signing without `--options runtime` dropped
+  the hardened-runtime flag Xcode had set. Signing is now inside-out, with
+  `whisper-cli` signed separately and without entitlements.
+- **The release pipeline would have produced an app that could not launch on any
+  other Mac.** `release.sh` built with manual signing and no profile specifier,
+  which embeds no provisioning profile at all. That was harmless until 2.3.0
+  added iCloud entitlements on 2026-09-13: entitlements no embedded profile
+  authorises make `amfid` refuse the launch with -413 *No matching profile
+  found*. Releases before that carried no entitlements, which is why it never
+  showed. The pipeline now builds via `archive` + `exportArchive`, so Xcode
+  fetches (and if necessary creates) the Developer ID profile — valid on every
+  Mac rather than only registered ones — and embeds it. Re-signing uses the
+  entitlements the export actually produced rather than the source file, because
+  `--entitlements <file>` replaces the whole set and would drop the
+  `application-identifier` key the profile is matched on. A new gate verifies
+  the finished bundle carries its profile, keeps its entitlements, and survives
+  being launched.
+- **Local builds sign with the Apple Development identity**, matching the
+  development profile Xcode embeds. Distribution keeps Developer ID; the two are
+  different trust paths and must not be swapped.
+
+### Known issues
+
+- The test suite cannot be executed on macOS 27 with the current Xcode
+  installation: the runner hangs before establishing its connection. Compilation
+  succeeds. Everything above was verified by hand instead.
+
 ## [2.9.0] — 2026-09-14
 
 ### Fixed
