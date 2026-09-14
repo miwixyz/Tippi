@@ -590,3 +590,13 @@
 "error.monitor.globalKey" = "Could not start global keyboard monitoring.";
 "error.monitor.snippets" = "Could not start snippet monitoring.";
 "error.monitor.selection" = "Could not start selection monitoring.";
+
+/* Snippets: keystroke-watcher status — previously invisible. */
+"settings.snippets.monitorActive" = "Snippet monitoring active — triggers are being watched";
+"settings.snippets.monitorInactive" = "Snippet monitoring is not running — restart Tippi, or toggle snippets off and on";
+
+/* Snippets: keystroke diagnostics — separates "nothing arrives" from "arrives but filtered". */
+"settings.snippets.diag.noKeystrokes" = "⚠︎ No keystroke received yet — the watcher is getting no events";
+"settings.snippets.diag.received" = "Last keystroke received: %ds ago";
+"settings.snippets.diag.processed" = "processed: %ds ago";
+"settings.snippets.diag.allFiltered" = "⚠︎ all discarded (Tippi itself frontmost?)";

@@ -592,3 +592,13 @@
 "error.monitor.globalKey" = "Globale Tastaturüberwachung konnte nicht gestartet werden.";
 "error.monitor.snippets" = "Snippet-Überwachung konnte nicht gestartet werden.";
 "error.monitor.selection" = "Auswahl-Überwachung konnte nicht gestartet werden.";
+
+/* Snippets: keystroke-watcher status — previously invisible. */
+"settings.snippets.monitorActive" = "Snippet-Überwachung aktiv — Kürzel werden erkannt";
+"settings.snippets.monitorInactive" = "Snippet-Überwachung läuft nicht — Tippi neu starten oder Snippets aus- und wieder einschalten";
+
+/* Snippets: keystroke diagnostics — separates "nothing arrives" from "arrives but filtered". */
+"settings.snippets.diag.noKeystrokes" = "⚠︎ Bisher KEIN Tastendruck empfangen — die Überwachung bekommt keine Ereignisse";
+"settings.snippets.diag.received" = "Letzter Tastendruck empfangen: vor %d s";
+"settings.snippets.diag.processed" = "verarbeitet: vor %d s";
+"settings.snippets.diag.allFiltered" = "⚠︎ alle verworfen (Tippi selbst im Vordergrund?)";

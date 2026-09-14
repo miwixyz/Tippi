@@ -815,6 +815,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     NSLog("Tippi: Accessibility granted — (re)starting key monitor")
                     self.startGlobalKeyMonitor()
                 }
+                // The snippet/emoji keystroke watcher needs the same treatment,
+                // and it cannot be guarded on its own `isActive`:
+                // `addGlobalMonitorForEvents` hands back a non-nil token even
+                // without Accessibility and then simply never delivers an event
+                // (the reason GlobalKeyMonitor gates on AXIsProcessTrusted()).
+                // So the watcher reported "active" while nothing expanded —
+                // observed 2026-09-14 after a tccutil reset. Stop-then-start is
+                // idempotent and only runs on an actual change thanks to
+                // removeDuplicates().
+                if granted {
+                    NSLog("Tippi: Accessibility granted — (re)starting keystroke monitor")
+                    self.snippetMonitor.stop()
+                    self.applyKeystrokeMonitorState()
+                }
             }
             .store(in: &cancellables)
     }

@@ -6,6 +6,7 @@ import SwiftUI
 /// source of truth for anything using shell/date vars).
 struct SnippetsTab: View {
     @EnvironmentObject var store: SnippetStore
+
     @State private var editingSnippet: AppSnippet?
     @State private var isAddingNew = false
     @State private var emojiInlineEnabled: Bool = EmojiSettings.isInlineEnabled
@@ -21,6 +22,7 @@ struct SnippetsTab: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                monitorStatusLine
                 HStack {
                     Text(String(localized: "settings.snippets.prefix"))
                     Spacer()
@@ -162,6 +164,97 @@ struct SnippetsTab: View {
                 onApprove: { store.approveFile(file) },
                 onDecline: { store.declineFile(file) }
             )
+        }
+    }
+
+    /// Shows whether the keystroke watcher is actually running. Without this,
+    /// "snippets don't expand" and "the monitor never started" look identical
+    /// from the outside.
+    ///
+    /// Read through a computed property rather than an `@ObservedObject` with a
+    /// custom `init()`: adding an initializer to this view interfered with how
+    /// SwiftUI sets up its `@State`/`@EnvironmentObject` storage, and every
+    /// toggle rendered as "off" while UserDefaults still said on (2026-09-14).
+    /// The status is polled on redraw, which is enough for a settings pane.
+    private var monitor: SnippetKeystrokeMonitor? { AppDelegate.shared?.snippetMonitor }
+
+    /// Turns the two timestamps into one plain sentence. Deliberately not
+    /// localized as marketing copy — this is a diagnostic line.
+    private func diagnosticLine(received: Date?, processed: Date?) -> String {
+        guard let received else {
+            return String(localized: "settings.snippets.diag.noKeystrokes")
+        }
+        let age = Int(Date().timeIntervalSince(received))
+        let recvText = String(format: String(localized: "settings.snippets.diag.received"), age)
+        guard let processed else {
+            return recvText + " · " + String(localized: "settings.snippets.diag.allFiltered")
+        }
+        let pAge = Int(Date().timeIntervalSince(processed))
+        return recvText + " · " + String(format: String(localized: "settings.snippets.diag.processed"), pAge)
+    }
+
+    @ViewBuilder
+    private var monitorStatusLine: some View {
+        if let error = monitor?.lastError {
+            VStack(alignment: .leading, spacing: 6) {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .textSelection(.enabled)
+                if !AXIsProcessTrusted() {
+                    Button(String(localized: "settings.permissions.grant")) {
+                        let url = URL(string: "x-apple.systempreferences:"
+                            + "com.apple.preference.security?Privacy_Accessibility")!
+                        NSWorkspace.shared.open(url)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            NSWorkspace.shared.runningApplications
+                                .first { $0.bundleIdentifier == "com.apple.systempreferences" }?
+                                .activate(options: [.activateAllWindows])
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+            }
+        } else if let m = monitor, m.isActive, AXIsProcessTrusted() {
+            VStack(alignment: .leading, spacing: 4) {
+                Label(String(localized: "settings.snippets.monitorActive"),
+                      systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                // Diagnostics: "active" alone has proven unreliable. These two
+                // separate "no keystrokes arrive" from "keystrokes arrive but
+                // get filtered out" (e.g. Tippi itself frontmost).
+                Text(diagnosticLine(received: m.lastKeystrokeAt,
+                                    processed: m.lastProcessedAt))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+        } else if monitor?.isActive == true && !AXIsProcessTrusted() {
+            VStack(alignment: .leading, spacing: 6) {
+                Label(String(localized: "error.accessibility.snippets"),
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                Button(String(localized: "settings.permissions.grant")) {
+                    let url = URL(string: "x-apple.systempreferences:"
+                        + "com.apple.preference.security?Privacy_Accessibility")!
+                    NSWorkspace.shared.open(url)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        NSWorkspace.shared.runningApplications
+                            .first { $0.bundleIdentifier == "com.apple.systempreferences" }?
+                            .activate(options: [.activateAllWindows])
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+        } else {
+            Label(String(localized: "settings.snippets.monitorInactive"),
+                  systemImage: "pause.circle")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

@@ -14,6 +14,19 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     @Published private(set) var isActive: Bool = false
     @Published private(set) var lastError: String?
 
+    /// When the watcher last *received* a key event — set before any filtering,
+    /// so it answers one question and only one: are keystrokes arriving at all?
+    ///
+    /// `isActive` cannot answer it: `addGlobalMonitorForEvents` returns a
+    /// non-nil token even without permission and then never delivers anything,
+    /// so the watcher reported "running" while nothing expanded (2026-09-14).
+    @Published private(set) var lastKeystrokeAt: Date?
+
+    /// When an event last survived filtering and reached the matcher. If
+    /// `lastKeystrokeAt` advances but this does not, events arrive and are
+    /// being discarded — e.g. because Tippi itself is the frontmost app.
+    @Published private(set) var lastProcessedAt: Date?
+
     private var matcher = SnippetMatcher()
     private let store: SnippetStore
 
@@ -64,6 +77,8 @@ final class SnippetKeystrokeMonitor: ObservableObject {
             self?.handle(event)
             return event
         }
+        monitorLog.notice(
+            "start(): trusted=\(AXIsProcessTrusted()) globalMonitor=\(self.globalMonitor != nil) localMonitor=\(self.localMonitor != nil) snippetsEnabled=\(self.store.isEnabled)")
 
         // A different app (or window) means the buffer no longer reflects
         // what's actually behind the cursor — stale buffer content must
@@ -98,11 +113,25 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     }
 
     private func handle(_ event: NSEvent) {
-        guard !isInjecting else { return }
+        // Recorded before every guard below: this is the only honest answer to
+        // "do keystrokes reach the watcher at all?"
+        lastKeystrokeAt = Date()
+        monitorLog.notice(
+            "keystroke received keyCode=\(event.keyCode) injecting=\(self.isInjecting) appActive=\(NSApp.isActive)")
+
+        guard !isInjecting else {
+            monitorLog.notice("  → discarded: isInjecting")
+            return
+        }
         // Never expand while Tippi itself is the frontmost app — typing a
         // trigger string into the "new snippet" editor in Settings must not
         // expand itself.
-        if NSApp.isActive { return }
+        if NSApp.isActive {
+            monitorLog.notice("  → discarded: Tippi is frontmost")
+            return
+        }
+
+        lastProcessedAt = Date()
 
         if event.keyCode == Self.deleteKeyCode {
             matcher.deleteLastCharacter()
