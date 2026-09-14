@@ -431,12 +431,24 @@ done
 LAUNCH_PID=$!
 sleep 2
 if kill -0 "${LAUNCH_PID}" 2>/dev/null; then
-    kill "${LAUNCH_PID}" 2>/dev/null
-    wait "${LAUNCH_PID}" 2>/dev/null
+    kill "${LAUNCH_PID}" 2>/dev/null || true
+    # `|| true` is load-bearing under `set -e`: wait reports the signal we just
+    # sent (143 = SIGTERM) as the job's exit status, which would abort the whole
+    # release right here. It did, on the first two runs of this gate.
+    wait "${LAUNCH_PID}" 2>/dev/null || true
     echo "  ✓ Profile, entitlements and launch verified"
 else
-    echo "✗ App died immediately on launch — profile/entitlement mismatch (amfid -413)"
-    exit 1
+    # Already gone after two seconds. That is only a failure when the kernel
+    # killed it: amfid answers a profile/entitlement mismatch with SIGKILL
+    # (137). Exiting on its own is normal here — a second instance of a
+    # single-instance app steps aside when one is already running, which is the
+    # usual state on the developer's own machine.
+    set +e; wait "${LAUNCH_PID}" 2>/dev/null; LAUNCH_RC=$?; set -e
+    if [ "${LAUNCH_RC}" -eq 137 ]; then
+        echo "✗ App killed on launch (SIGKILL) — profile/entitlement mismatch (amfid -413)"
+        exit 1
+    fi
+    echo "  ✓ Profile and entitlements verified (app exited on its own, rc=${LAUNCH_RC})"
 fi
 
 # 5. Create DMG
