@@ -36,7 +36,6 @@ struct NotesRootView: View {
             }
         }
         .frame(minWidth: 480, minHeight: 320)
-        .tippiGlass()
         // Without this the toolbar paints its own opaque strip across the full
         // window width, which sits visibly on top of the glass below it — the
         // "seam" seen on 2026-09-13. Hiding the titlebar chrome alone (see

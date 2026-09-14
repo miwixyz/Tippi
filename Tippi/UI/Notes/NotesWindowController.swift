@@ -51,19 +51,20 @@ final class NotesWindowController {
         window.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         window.minSize = minSize
         window.isReleasedWhenClosed = false
-        // Clear + NotesRootView's own .tippiGlass() (Liquid Glass on macOS
-        // 26+, .regularMaterial below) instead of the default opaque fill.
-        //
-        // 2026-09-13 this was tried with `titlebarAppearsTransparent` alone and
-        // produced a visible seam ("Titelleiste sieht noch nicht schön aus"), so
-        // it was reverted to the opaque standard chrome. The missing half was
-        // the toolbar: it paints its own opaque strip across the full width, so
-        // clearing only the titlebar moved the edge instead of removing it.
-        // Now both go — see `.toolbarBackground(.hidden, ...)` in NotesRootView.
-        // The Preview window has had a transparent titlebar all along; it simply
-        // has no toolbar, which is why it never showed the seam.
+        // Transparent titlebar merges into the window body; the toolbar's own
+        // opaque strip is hidden in NotesRootView, otherwise the edge just moves
+        // down a few points instead of disappearing (2026-09-13: "Titelleiste
+        // sieht noch nicht schön aus").
         window.titlebarAppearsTransparent = true
-        window.backgroundColor = .clear
+        // The window keeps its DEFAULT (solid) background on purpose.
+        //
+        // It used to be `.clear` with a translucent material over the whole
+        // content. That material blurs the wallpaper down to its average colour,
+        // so a purple desktop turned the entire window into pink fog — glassEffect
+        // and .regularMaterial produced an identical wash (measured 2026-09-14).
+        // Finder, Mail and Notes.app do the opposite: solid window body,
+        // translucent sidebar only. NotesListView keeps its
+        // .scrollContentBackground(.hidden) for exactly that sidebar effect.
         window.delegate = FrameSaveDelegate.shared
         applyPinnedState(to: window)
 

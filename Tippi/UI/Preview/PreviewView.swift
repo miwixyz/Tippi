@@ -64,6 +64,8 @@ struct PreviewView: View {
             footer
         }
         .frame(width: 640, height: 480)
+        // Stays Liquid Glass: this is a non-activating, floating panel — the
+        // functional layer the HIG intends it for, not a window body.
         .tippiGlass()
         .onAppear { runCompletion() }
         .onDisappear { task?.cancel() }

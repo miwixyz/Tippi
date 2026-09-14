@@ -682,10 +682,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 600, height: 480))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
-            // Clear + WelcomeView's own .tippiGlass() (Liquid Glass on macOS
-            // 26+, .regularMaterial below) — replaces the old solid brand-navy
-            // fallback now that every Tippi window uses the same glass look.
-            window.backgroundColor = .clear
+            // Default (solid) window background on purpose — see
+            // NotesWindowController for the measurement: a clear window plus a
+            // translucent content material blurs the wallpaper to its average
+            // colour and the window reads as fog, not glass. Liquid Glass stays
+            // where the HIG puts it: floating panels, popups, toasts.
             window.center()
             welcomeWindowController = NSWindowController(window: window)
         }
@@ -716,10 +717,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.setContentSize(NSSize(width: 640, height: 580))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
-            // Clear + SettingsView's own .tippiGlass() (Liquid Glass on macOS
-            // 26+, .regularMaterial below) — replaces the old solid brand-navy
-            // fallback now that every Tippi window uses the same glass look.
-            window.backgroundColor = .clear
+            // Default (solid) window background on purpose — see
+            // NotesWindowController for the measurement: a clear window plus a
+            // translucent content material blurs the wallpaper to its average
+            // colour and the window reads as fog, not glass. Liquid Glass stays
+            // where the HIG puts it: floating panels, popups, toasts.
             window.center()
             settingsWindowController = NSWindowController(window: window)
         }

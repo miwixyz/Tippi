@@ -27,6 +27,9 @@ extension View {
     ///
     /// Replaces `.background(.regularMaterial, in: shape)` one-for-one, so the
     /// pre-26 rendering is unchanged by construction.
+    ///
+    /// **Functional layer only** — floating panels, popups, toasts, indicators.
+    /// For a window's own content area use `tippiWindowBackground()`.
     func tippiGlass<S: Shape>(in shape: S) -> some View {
         modifier(GlassBackground(shape: shape))
     }
@@ -35,4 +38,22 @@ extension View {
     func tippiGlass() -> some View {
         modifier(GlassBackground(shape: Rectangle()))
     }
+
 }
+
+// MARK: - Why window bodies have no modifier here
+//
+// Until 2026-09-14 the Settings, Notes and Welcome windows were `.clear` with
+// `tippiGlass()` across their whole content, contradicting the scope note
+// above. Any full-window translucency blurs the wallpaper down to its average
+// colour: on a purple desktop the windows read as pink fog. Swapping
+// `glassEffect` for `.regularMaterial` changed nothing — measured, both look
+// the same — because the problem is the translucency itself, not which
+// material provides it.
+//
+// Finder, Mail and Notes.app do it the other way round: solid window body,
+// translucent sidebar only. Tippi now does the same — the windows simply keep
+// their default background and set no modifier, while `NotesListView` keeps
+// `.scrollContentBackground(.hidden)` so the sidebar stays translucent.
+// Liquid Glass remains where the HIG wants it: floating panels, popups,
+// toasts, indicators.
