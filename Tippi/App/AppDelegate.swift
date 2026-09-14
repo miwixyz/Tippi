@@ -10,6 +10,21 @@ private let appDelegateLog = Logger(subsystem: "com.tippi.app", category: "app-d
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// Reliable handle on the delegate.
+    ///
+    /// With `@NSApplicationDelegateAdaptor`, `NSApp.delegate` is not guaranteed
+    /// to be this instance — SwiftUI may hand back its own wrapper. Every
+    /// `NSApp.delegate as? AppDelegate` call site then silently evaluated to
+    /// `nil` and, thanks to optional chaining, did *nothing at all*: changing a
+    /// hot key stored the new combo but never re-registered it, which is why a
+    /// new hot key only ever worked after restarting Tippi.
+    static private(set) var shared: AppDelegate?
+
+    override init() {
+        super.init()
+        AppDelegate.shared = self
+    }
+
     let permissions = PermissionsManager()
     let hotkeyManager = HotkeyManager()
     let keyMonitor = GlobalKeyMonitor(combo: KeyComboStore.load())
@@ -709,7 +724,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settingsWindowController = NSWindowController(window: window)
         }
 
-        settingsWindowController?.window?.makeKeyAndOrderFront(nil)
+        // `makeKeyAndOrderFront` alone leaves the window visible but unfocused
+        // when another app is frontmost — in an LSUIElement app that means the
+        // first click only activates Tippi and the second one finally hits the
+        // control. Same problem the Sparkle path already solves; use the same
+        // remedy. Activating again *after* the window exists matters: the call
+        // at the top of this method ran before it was created.
+        let window = settingsWindowController?.window
+        window?.makeKeyAndOrderFront(nil)
+        window?.orderFrontRegardless()
+        NSApp.activate()
     }
 
     @objc func showNotesWindow() {
@@ -1001,6 +1025,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func triggerTranslatePanel() {
         Task { @MainActor in
             await toggleTranslatePanel()
+        }
+    }
+
+    /// Fires the emoji picker without a key press — used by the "test trigger"
+    /// button in Settings, so a hot key that never registered can still be told
+    /// apart from a feature that is broken.
+    @objc func triggerEmojiPicker() {
+        Task { @MainActor in
+            emojiPickerPanel.toggle()
         }
     }
 

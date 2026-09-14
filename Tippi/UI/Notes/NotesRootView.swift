@@ -37,6 +37,12 @@ struct NotesRootView: View {
         }
         .frame(minWidth: 480, minHeight: 320)
         .tippiGlass()
+        // Without this the toolbar paints its own opaque strip across the full
+        // window width, which sits visibly on top of the glass below it — the
+        // "seam" seen on 2026-09-13. Hiding the titlebar chrome alone (see
+        // NotesWindowController) is only half the fix; the toolbar backdrop has
+        // to go with it, otherwise the edge just moves down a few points.
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

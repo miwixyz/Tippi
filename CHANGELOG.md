@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.9.0] — 2026-09-14
+
+### Fixed
+- **Changing any hot key had no effect until Tippi was restarted.** The root cause was one line repeated in 21 places: `(NSApp.delegate as? AppDelegate)?`. With `@NSApplicationDelegateAdaptor`, `NSApp.delegate` is not guaranteed to be the `AppDelegate` instance — SwiftUI may return its own wrapper. The cast then evaluated to `nil` and, because of optional chaining, the call **did nothing at all, silently**: the new combination was written to `UserDefaults`, but `restart…Hotkey()` never ran. On the next launch Tippi read the stored value and registered it, which is exactly why a new hot key only ever worked after a restart. All call sites now go through `AppDelegate.shared`. The same dead cast also disabled "Test trigger" and the permission button.
+- **Granting Accessibility while Tippi was running went unnoticed.** `PermissionsManager` polled for 15 seconds after launch and never checked again — but walking to System Settings, ticking the box and coming back takes longer. The permission was live while Tippi still reported it missing, and only a restart helped. Permissions are now re-checked whenever Tippi becomes the active app, which is precisely the moment the user returns from System Settings. The observer that restarts the key monitor was already correct; it simply never got told.
+- **The hot-key status never refreshed.** It read `AXIsProcessTrusted()` directly — a plain function call cannot trigger a SwiftUI update, so the warning stayed on screen after the permission had been granted. It now observes `PermissionsManager`.
+- **Notes window: seam under the title bar.** `titlebarAppearsTransparent` alone (tried in 2.8.x) only moved the edge down, because the toolbar paints its own opaque strip across the full window width. Title bar **and** toolbar background are now both transparent, so the glass runs uninterrupted. The Preview window never showed this because it has no toolbar.
+- **Settings window needed two clicks.** In a menu-bar-only app `makeKeyAndOrderFront` leaves the window visible but unfocused when another app is frontmost — the first click only activated Tippi. Now uses `orderFrontRegardless()` plus activation after the window exists, the same remedy the Sparkle path already used.
+
+### Added
+- **Reset, "Test trigger" and a live status line for the Translate, Emoji and Notes hot keys** — previously only the main trigger had them. The status line shows the actual registration state including the error reported by `RegisterEventHotKey`, which until now was recorded and thrown away. A hot key that never registered looked exactly like one that worked.
+- **"Grant permission …" button** next to permission errors. A message telling the user to go somewhere is not enough; it is now one click away. Shown only while the permission is actually missing.
+
+### Changed
+- **Correct System Settings path for macOS 26+.** The in-app help pointed to "Privacy & Security → Accessibility", which no longer exists — the section is called "Gerätesteuerung und Datenzugriff" ("Device Control and Data Access"). Users were sent looking for an entry that isn't there.
+- **Seven user-visible error messages are now localized.** Accessibility failures in `GlobalKeyMonitor`, `SnippetKeystrokeMonitor` and `SelectionPopupMonitor`, plus the monitor and hot-key registration failures, were hardcoded English and appeared verbatim in the German UI.
+- Secondary hot keys no longer reuse the main trigger's labels: the reset button had "(⌥⌘T)" baked into its text, and the inactive state told users to grant Input Monitoring — a permission Carbon hot keys do not need at all.
+- Reset and test buttons now match the main hot key's styling (bordered / prominent, default control size).
+
+### Documentation
+- `docs/BRANDKIT.md` documents the web contrast variant (`#1565C0` / `#0D4FA0`) as an intentional accessibility variant. Signal Blue `#3B8CFF` reaches only 3.29:1 on white — below WCAG AA for white body text on a filled button. Values computed, not estimated.
+
 ## [2.8.4] — 2026-09-13
 
 ### Fixed

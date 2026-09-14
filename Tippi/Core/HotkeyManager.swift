@@ -341,7 +341,7 @@ final class HotkeyManager: ObservableObject {
             &ref
         )
         guard status == noErr, ref != nil else {
-            lastError = "RegisterEventHotKey failed (\(status))"
+            lastError = String(format: String(localized: "error.hotkey.registerFailed"), Int(status))
             NSLog("Tippi: \(lastError ?? "")")
             return
         }

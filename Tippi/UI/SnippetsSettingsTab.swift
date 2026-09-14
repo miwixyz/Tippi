@@ -37,7 +37,7 @@ struct SnippetsTab: View {
                 Toggle(String(localized: "settings.snippets.emoji.enabled"), isOn: $emojiInlineEnabled)
                     .onChange(of: emojiInlineEnabled) { _, new in
                         EmojiSettings.isInlineEnabled = new
-                        (NSApp.delegate as? AppDelegate)?.applyKeystrokeMonitorState()
+                        AppDelegate.shared?.applyKeystrokeMonitorState()
                     }
                 Text(String(localized: "settings.snippets.emoji.hint"))
                     .font(.caption)
@@ -58,7 +58,7 @@ struct SnippetsTab: View {
                 Toggle(String(localized: "settings.snippets.emoticon.enabled"), isOn: $emoticonEnabled)
                     .onChange(of: emoticonEnabled) { _, new in
                         EmojiSettings.isEmoticonEnabled = new
-                        (NSApp.delegate as? AppDelegate)?.applyKeystrokeMonitorState()
+                        AppDelegate.shared?.applyKeystrokeMonitorState()
                     }
                 Text(String(localized: "settings.snippets.emoticon.hint"))
                     .font(.caption)

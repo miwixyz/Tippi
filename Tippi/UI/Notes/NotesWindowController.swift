@@ -52,15 +52,17 @@ final class NotesWindowController {
         window.minSize = minSize
         window.isReleasedWhenClosed = false
         // Clear + NotesRootView's own .tippiGlass() (Liquid Glass on macOS
-        // 26+, .regularMaterial below) instead of the default opaque fill —
-        // for the CONTENT area only. `titlebarAppearsTransparent` is
-        // deliberately NOT set: real feedback, 2026-09-13 ("Titelleiste
-        // sieht noch nicht schön aus... nicht voll transparent") — a fully
-        // transparent unified titlebar over a NavigationSplitView + toolbar
-        // rendered a visible seam artifact and didn't read as "Mac-like".
-        // The standard opaque titlebar chrome (with the toolbar buttons
-        // still living in it, same as Finder/Notes.app) stays untouched;
-        // only the split view content below it is glass.
+        // 26+, .regularMaterial below) instead of the default opaque fill.
+        //
+        // 2026-09-13 this was tried with `titlebarAppearsTransparent` alone and
+        // produced a visible seam ("Titelleiste sieht noch nicht schön aus"), so
+        // it was reverted to the opaque standard chrome. The missing half was
+        // the toolbar: it paints its own opaque strip across the full width, so
+        // clearing only the titlebar moved the edge instead of removing it.
+        // Now both go — see `.toolbarBackground(.hidden, ...)` in NotesRootView.
+        // The Preview window has had a transparent titlebar all along; it simply
+        // has no toolbar, which is why it never showed the seam.
+        window.titlebarAppearsTransparent = true
         window.backgroundColor = .clear
         window.delegate = FrameSaveDelegate.shared
         applyPinnedState(to: window)

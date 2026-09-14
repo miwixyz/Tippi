@@ -31,7 +31,7 @@ final class GlobalKeyMonitor: ObservableObject {
         // (same check the capture/insertion paths use); otherwise the hotkey
         // would silently never fire while isActive falsely reported true.
         guard AXIsProcessTrusted() else {
-            lastError = "Grant Accessibility permission so the global hotkey can fire."
+            lastError = String(localized: "error.accessibility.hotkey")
             NSLog("Tippi: GlobalKeyMonitor — not trusted (Accessibility permission missing)")
             self.onTrigger = nil
             return
@@ -48,7 +48,7 @@ final class GlobalKeyMonitor: ObservableObject {
         }
 
         if globalMonitor == nil {
-            lastError = "Couldn't register global key monitor."
+            lastError = String(localized: "error.monitor.globalKey")
             NSLog("Tippi: GlobalKeyMonitor — addGlobalMonitorForEvents returned nil")
             // Don't leak the local monitor that DID register, and don't keep a
             // dangling handler that would fire only while Tippi is focused.

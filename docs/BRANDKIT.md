@@ -14,6 +14,25 @@ The Tippi wordmark uses the system font (SF Pro Display, bold) — no custom typ
 | **Soft White** | `#F7F2EA` | Secondary light surface — settings panels, general backgrounds (light mode) |
 | **Mist Blue** | `#EAF3FF` | Suggestion column tint, preview accent surfaces (light mode) |
 
+### Web Contrast Variant (intentional, not drift)
+
+Signal Blue `#3B8CFF` reaches 3.29:1 against white — enough for large text (AA-large,
+≥3:1) but **below WCAG AA** (4.5:1) for white body text on a filled button. The website
+therefore uses a darkened variant **only** where white sits on the accent; everything
+else stays on Signal Blue.
+
+| Name | Hex | Role | Contrast on white |
+|------|-----|------|-------------------|
+| **Signal Blue** | `#3B8CFF` | reference — accent, borders, icon tints | 3.29:1 (AA-large only) |
+| **Signal Blue CTA** | `#1565C0` | `--accent-cta` in `docs/index.html` — filled buttons carrying white text | 5.75:1 (AA) |
+| **Signal Blue CTA Hover** | `#0D4FA0` | `--accent-cta-hover` — hover state of the above | 7.95:1 (AAA) |
+
+Values computed with the WCAG 2.1 relative-luminance formula, 2026-09-14.
+
+This is a deliberate accessibility variant, **not** a second brand colour. App and print
+assets use Signal Blue unchanged. Any other deviation from the palette above is drift and
+should be corrected against this file.
+
 ### Adaptive Color Mapping
 
 | Asset Name | Light Mode | Dark Mode |

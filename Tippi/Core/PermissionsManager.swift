@@ -13,6 +13,22 @@ final class PermissionsManager: ObservableObject {
     init() {
         refresh()
         beginStartupPoll()
+        observeActivation()
+    }
+
+    /// The startup poll stops after 15 s. Granting Accessibility in System
+    /// Settings takes longer than that, and nothing re-checked afterwards — so
+    /// the permission was live while Tippi still believed it was missing, and
+    /// the only way out was restarting the app. Re-checking whenever Tippi
+    /// comes back to the front covers exactly that trip to System Settings.
+    private func observeActivation() {
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.refresh() }
+        }
     }
 
     /// Polls permissions every 1.5 s for up to 15 s after launch.

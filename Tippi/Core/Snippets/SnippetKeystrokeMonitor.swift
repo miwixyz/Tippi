@@ -52,7 +52,7 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         lastError = nil
 
         guard AXIsProcessTrusted() else {
-            lastError = "Grant Accessibility permission so snippet expansion can watch typed text."
+            lastError = String(localized: "error.accessibility.snippets")
             monitorLog.notice("SnippetKeystrokeMonitor — not trusted (Accessibility permission missing)")
             return
         }
@@ -77,7 +77,7 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         }
 
         guard globalMonitor != nil else {
-            lastError = "Couldn't register snippet keystroke monitor."
+            lastError = String(localized: "error.monitor.snippets")
             if let m = localMonitor { NSEvent.removeMonitor(m); localMonitor = nil }
             return
         }

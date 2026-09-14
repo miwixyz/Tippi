@@ -83,7 +83,7 @@ private struct GeneralSettingsTab: View {
             Section {
                 Toggle(String(localized: "settings.general.selectionPopup"), isOn: $selectionPopupEnabled)
                     .onChange(of: selectionPopupEnabled) { _, _ in
-                        (NSApp.delegate as? AppDelegate)?.restartSelectionPopupEngine()
+                        AppDelegate.shared?.restartSelectionPopupEngine()
                     }
                 Text(String(localized: "settings.general.selectionPopup.hint"))
                     .font(.caption)
@@ -134,6 +134,30 @@ private struct GeneralSettingsTab: View {
 
 private struct HotkeysTab: View {
     @EnvironmentObject var keyMonitor: GlobalKeyMonitor
+    /// Observed, not `AXIsProcessTrusted()` directly: a bare function call
+    /// never re-renders the view, so the warning stayed on screen after the
+    /// permission had already been granted.
+    @EnvironmentObject var permissions: PermissionsManager
+
+    /// The three secondary hot keys live on the AppDelegate. They are all the
+    /// same type, so they cannot be injected via `@EnvironmentObject` (one value
+    /// per type) — observed directly instead. The managers are `let` properties
+    /// on the delegate and outlive this view, so the references stay valid.
+    @ObservedObject private var translateHotkey: HotkeyManager
+    @ObservedObject private var emojiHotkey: HotkeyManager
+    @ObservedObject private var notesHotkey: HotkeyManager
+
+    init() {
+        // A missing delegate cannot happen while Settings is on screen, but a
+        // detached fallback keeps this non-crashing (and visibly inactive).
+        let delegate = AppDelegate.shared
+        _translateHotkey = ObservedObject(
+            wrappedValue: delegate?.translateHotkeyManager ?? HotkeyManager(id: 903))
+        _emojiHotkey = ObservedObject(
+            wrappedValue: delegate?.emojiHotkeyManager ?? HotkeyManager(id: 904))
+        _notesHotkey = ObservedObject(
+            wrappedValue: delegate?.notesHotkeyManager ?? HotkeyManager(id: 905))
+    }
 
     @State private var combo: KeyCombo = KeyComboStore.load()
     @State private var savedFlash = false
@@ -176,7 +200,7 @@ private struct HotkeysTab: View {
                             }
                             .buttonStyle(.bordered)
                             Button(String(localized: "settings.hotkeys.testTrigger")) {
-                                (NSApp.delegate as? AppDelegate)?.triggerManually()
+                                AppDelegate.shared?.triggerManually()
                             }
                             .buttonStyle(.borderedProminent)
                             Spacer()
@@ -219,7 +243,7 @@ private struct HotkeysTab: View {
                         }
                         .onChange(of: translateEnabled) { _, new in
                             TranslateSettings.isEnabled = new
-                            (NSApp.delegate as? AppDelegate)?.restartTranslateHotkey()
+                            AppDelegate.shared?.restartTranslateHotkey()
                         }
 
                         Text(String(localized: "settings.hotkeys.translate.intro"))
@@ -231,8 +255,14 @@ private struct HotkeysTab: View {
                             HotkeyRecorderField(combo: $translateCombo)
                                 .onChange(of: translateCombo) { _, new in
                                     TranslateSettings.combo = new
-                                    (NSApp.delegate as? AppDelegate)?.restartTranslateHotkey()
+                                    AppDelegate.shared?.restartTranslateHotkey()
                                 }
+                            hotkeyControls(
+                                manager: translateHotkey,
+                                combo: translateCombo,
+                                reset: { translateCombo = .translateDefault },
+                                test: { AppDelegate.shared?.triggerTranslatePanel() }
+                            )
                         }
                     }
                     .padding(6)
@@ -246,7 +276,7 @@ private struct HotkeysTab: View {
                         }
                         .onChange(of: emojiPickerEnabled) { _, new in
                             EmojiSettings.isPickerEnabled = new
-                            (NSApp.delegate as? AppDelegate)?.restartEmojiHotkey()
+                            AppDelegate.shared?.restartEmojiHotkey()
                         }
 
                         Text(String(localized: "settings.hotkeys.emoji.intro"))
@@ -258,8 +288,14 @@ private struct HotkeysTab: View {
                             HotkeyRecorderField(combo: $emojiCombo)
                                 .onChange(of: emojiCombo) { _, new in
                                     EmojiSettings.combo = new
-                                    (NSApp.delegate as? AppDelegate)?.restartEmojiHotkey()
+                                    AppDelegate.shared?.restartEmojiHotkey()
                                 }
+                            hotkeyControls(
+                                manager: emojiHotkey,
+                                combo: emojiCombo,
+                                reset: { emojiCombo = .emojiDefault },
+                                test: { AppDelegate.shared?.triggerEmojiPicker() }
+                            )
                         }
                     }
                     .padding(6)
@@ -273,7 +309,7 @@ private struct HotkeysTab: View {
                         }
                         .onChange(of: notesEnabled) { _, new in
                             NotesSettings.isEnabled = new
-                            (NSApp.delegate as? AppDelegate)?.restartNotesHotkey()
+                            AppDelegate.shared?.restartNotesHotkey()
                         }
 
                         Text(String(localized: "settings.hotkeys.notes.intro"))
@@ -285,8 +321,14 @@ private struct HotkeysTab: View {
                             HotkeyRecorderField(combo: $notesCombo)
                                 .onChange(of: notesCombo) { _, new in
                                     NotesSettings.combo = new
-                                    (NSApp.delegate as? AppDelegate)?.restartNotesHotkey()
+                                    AppDelegate.shared?.restartNotesHotkey()
                                 }
+                            hotkeyControls(
+                                manager: notesHotkey,
+                                combo: notesCombo,
+                                reset: { notesCombo = .notesDefault },
+                                test: { AppDelegate.shared?.showNotesWindow() }
+                            )
                         }
                     }
                     .padding(6)
@@ -313,24 +355,95 @@ private struct HotkeysTab: View {
 
     @ViewBuilder
     private var statusLine: some View {
-        if let err = keyMonitor.lastError {
-            Label(err, systemImage: "exclamationmark.triangle.fill")
-                .font(.caption)
-                .foregroundStyle(.orange)
-        } else if keyMonitor.isActive {
+        statusLine(error: keyMonitor.lastError,
+                   isActive: keyMonitor.isActive,
+                   combo: keyMonitor.combo.displayString)
+    }
+
+    /// Shared status line for every hot key. Deliberately takes plain values
+    /// instead of a manager: the main trigger is a `GlobalKeyMonitor`, the three
+    /// secondary ones are `HotkeyManager` — different types, same three facts.
+    ///
+    /// Showing `lastError` here is the whole point: `RegisterEventHotKey`
+    /// failures were recorded and then thrown away, so a hot key that never
+    /// registered looked identical to one that worked.
+    @ViewBuilder
+    private func statusLine(
+        error: String?,
+        isActive: Bool,
+        combo: String,
+        inactiveText: String = String(localized: "settings.hotkeys.inactive")
+    ) -> some View {
+        if let error {
+            VStack(alignment: .leading, spacing: 6) {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .textSelection(.enabled)
+                // A message telling the user to go grant a permission is not
+                // enough — it has to be one click away. Only shown when the
+                // permission is actually missing, so it cannot become noise.
+                if !permissions.accessibilityGranted {
+                    Button(String(localized: "settings.permissions.grant")) {
+                        // No `NSApp.delegate as? AppDelegate` detour: a failing
+                        // cast made this button do nothing at all, silently.
+                        let url = URL(string: "x-apple.systempreferences:"
+                            + "com.apple.preference.security?Privacy_Accessibility")!
+                        NSWorkspace.shared.open(url)
+                        // System Settings opens BEHIND Tippi (and does not move
+                        // at all when already open), which reads as "the button
+                        // is broken". Pull it to the front explicitly.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            NSWorkspace.shared.runningApplications
+                                .first { $0.bundleIdentifier == "com.apple.systempreferences" }?
+                                .activate(options: [.activateAllWindows])
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+            }
+        } else if isActive {
             Label(
-                String(format: String(localized: "settings.hotkeys.active"),
-                       keyMonitor.combo.displayString),
+                String(format: String(localized: "settings.hotkeys.active"), combo),
                 systemImage: "checkmark.circle.fill"
             )
             .font(.caption)
             .foregroundStyle(.green)
         } else {
-            Label(String(localized: "settings.hotkeys.inactive"),
-                  systemImage: "pause.circle")
+            Label(inactiveText, systemImage: "pause.circle")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    /// Reset + test + status, identical for all three secondary hot keys.
+    @ViewBuilder
+    private func hotkeyControls(
+        manager: HotkeyManager,
+        combo: KeyCombo,
+        reset: @escaping () -> Void,
+        test: @escaping () -> Void
+    ) -> some View {
+        // Same layout and button styles as the main hot key above — bordered
+        // reset, prominent test, default control size. Anything else reads as
+        // a different kind of control.
+        HStack {
+            // NOT `settings.hotkeys.reset` — that label has the main trigger's
+            // combo (⌥⌘T) baked in and would be wrong on every other hot key.
+            Button(String(localized: "settings.hotkeys.reset.generic"), action: reset)
+                .buttonStyle(.bordered)
+            Button(String(localized: "settings.hotkeys.testTrigger"), action: test)
+                .buttonStyle(.borderedProminent)
+            Spacer()
+        }
+        // These three are Carbon hot keys and need no Input Monitoring, so the
+        // main trigger's "grant Input Monitoring" text would send users chasing
+        // a permission that is irrelevant here.
+        statusLine(error: manager.lastError,
+                   isActive: manager.isActive,
+                   combo: combo.displayString,
+                   inactiveText: String(localized: "settings.hotkeys.inactive.combo"))
     }
 }
 
@@ -1703,7 +1816,7 @@ private struct VoiceTab: View {
                         parakeetStatus.refreshFromDisk()
                         // Switching to Parakeet can make dictation available
                         // without a Whisper model — re-register the hot key.
-                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                        AppDelegate.shared?.restartDictationHotkey()
                     }
                 }
 
@@ -1783,7 +1896,7 @@ private struct VoiceTab: View {
                 Toggle(String(localized: "settings.voice.dictation.enable"), isOn: $dictationEnabled)
                     .onChange(of: dictationEnabled) { _, new in
                         DictationSettings.isEnabled = new
-                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                        AppDelegate.shared?.restartDictationHotkey()
                     }
 
                 if dictationEnabled {
@@ -1804,14 +1917,14 @@ private struct VoiceTab: View {
                     .onChange(of: dictationMode) { _, new in
                         DictationSettings.mode = new
                         inputMonitoringGranted = HotkeyManager.hasInputMonitoringPermission
-                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                        AppDelegate.shared?.restartDictationHotkey()
                     }
 
                     if dictationMode == .combo {
                         HotkeyRecorderField(combo: $dictationCombo)
                             .onChange(of: dictationCombo) { _, new in
                                 DictationSettings.combo = new
-                                (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                                AppDelegate.shared?.restartDictationHotkey()
                             }
                     } else {
                         HStack(alignment: .firstTextBaseline) {
@@ -1820,7 +1933,7 @@ private struct VoiceTab: View {
                         }
                         .onChange(of: dictationTapOrHoldModifier) { _, new in
                             DictationSettings.tapOrHoldModifier = new
-                            (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                            AppDelegate.shared?.restartDictationHotkey()
                         }
 
                         Text(String(localized: "settings.voice.dictation.mode.tapOrHold.body"))
@@ -1845,7 +1958,7 @@ private struct VoiceTab: View {
                                     }
                                     Button(String(localized: "settings.voice.dictation.mode.recheckPermission")) {
                                         inputMonitoringGranted = HotkeyManager.hasInputMonitoringPermission
-                                        (NSApp.delegate as? AppDelegate)?.restartDictationHotkey()
+                                        AppDelegate.shared?.restartDictationHotkey()
                                     }
                                 }
                                 .controlSize(.small)

@@ -63,7 +63,7 @@ final class SelectionPopupMonitor: ObservableObject {
         guard !isActive else { return }
         lastError = nil
         guard AXIsProcessTrusted() else {
-            lastError = "Grant Accessibility permission so the selection bar can find your selection."
+            lastError = String(localized: "error.accessibility.selection")
             selectionPopupLog.notice("SelectionPopupMonitor — not trusted (Accessibility permission missing)")
             return
         }
@@ -77,7 +77,7 @@ final class SelectionPopupMonitor: ObservableObject {
         }
 
         guard globalMonitor != nil else {
-            lastError = "Couldn't register selection monitor."
+            lastError = String(localized: "error.monitor.selection")
             if let m = localMonitor { NSEvent.removeMonitor(m); localMonitor = nil }
             return
         }
