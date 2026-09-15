@@ -22,7 +22,7 @@ Ab v1.1.0 kommt Voice Input dazu: Push-to-Talk-Mikrofon-Button im Popup für Dik
 ## 2. Repository
 
 - **GitHub:** https://github.com/miwixyz/Tippi (public, Open-Source)
-- **Lokal:** `~/-Coding/Tippi/`
+- **Lokal:** `~/Coding/Tippi/`
 - **Branch:** `main`
 - **Lizenz:** MIT
 
@@ -370,6 +370,30 @@ git add appcast.xml && git commit -m "release: v<version>" && git push
 3. `make release` — Build-Nummer (`CFBundleVersion`) wird automatisch per `git rev-list --count HEAD` berechnet, kein manuelles Tracking
 
 **Wichtig:** Sparkle vergleicht `CFBundleVersion` (Build-Nummer), nicht `CFBundleShortVersionString`. Solange die Build-Nummer monoton steigt, werden Updates korrekt ausgeliefert.
+
+### 7.5 Wenn Tippi einmal verkauft werden soll — die Reihenfolge ist nicht beliebig
+
+Der naheliegende erste Schritt — das Repository auf privat schalten — ist der **falsche erste Schritt**, und der Fehler fällt erst Wochen später auf.
+
+Grund: Sparkle lädt die Updates nicht aus dem Appcast, sondern aus den GitHub-**Releases dieses Repositories**:
+
+```
+SUFeedURL (Info.plist)  →  Gist mit appcast.xml
+   └── <enclosure url>  →  github.com/miwixyz/Tippi/releases/download/vX.Y.Z/Tippi-X.Y.Z.dmg
+```
+
+Der Appcast liegt in einem Gist und bliebe erreichbar. Die DMG-Dateien liegen im Repo. Wird es privat, verlangen die Release-Assets eine Authentifizierung, die Sparkle nicht mitschickt — **jede installierte Kopie kann sich ab diesem Moment nicht mehr aktualisieren**, und der Nutzer sieht nur einen Download-Fehler.
+
+Richtige Reihenfolge:
+
+1. **Öffentliches Release-Repository anlegen** (z. B. `miwixyz/Tippi-releases`) — nur Binaries, kein Quellcode
+2. `scripts/release.sh` und den Appcast-Gist auf die neuen URLs umstellen
+3. Ein Release dorthin schieben und **einen echten Update-Durchlauf testen**, nicht nur die URL prüfen
+4. **Erst danach** das Quellcode-Repository privat schalten
+
+Alte Assets müssen nicht mitwandern: Wer auf einer älteren Version sitzt, bekommt aus dem Appcast ohnehin die neueste, und die liegt dann bereits am neuen Ort.
+
+**Zweiter Punkt, unabhängig davon:** Jede bereits veröffentlichte Version bleibt MIT-lizenziert — das lässt sich nicht rückwirkend ändern. Eine Umlizenzierung wirkt ab der nächsten Version. Praktisch entschärft dadurch, dass es aktuell null Forks gibt und der Autor alleiniger Urheber ist; rechtlich bleibt es trotzdem eine Entscheidung, die vor dem ersten Verkauf getroffen sein muss, nicht danach.
 
 ---
 

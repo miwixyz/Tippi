@@ -55,6 +55,12 @@
   eine bis drei Modellgenerationen alt; ausgerechnet der als „Premium"
   empfohlene war der schlechteste Kompromiss der Liste.
 
+- **Importierte Kürzel zeigen ihre Herkunftsdatei**, und ein Kürzel, das von
+  einem gleichnamigen aus einer anderen Datei verdrängt wird, ist als
+  „Überschrieben" gekennzeichnet. Zwei Dateien dürfen dasselbe Kürzel
+  definieren — bisher war weder erkennbar, dass es eine Überschneidung gab,
+  noch welcher der beiden fast identischen Einträge tatsächlich wirkt.
+
 - **Einstellungen als Seitenleiste, und größenveränderbar.** Neun Tabs in einem
   auf 640×580 festgenagelten Fenster waren unübersichtlich geworden, und lange
   Bereiche scrollten in einem Kasten, der nicht wachsen konnte — das Fenster
@@ -77,6 +83,46 @@
   kryptografisch an den konkreten Befehl gebunden.
 
 ### Fixed
+
+- **Kürzel aus älteren Tippi-Versionen werden beim Update mitgenommen.**
+  Versionen bis 2.3.0 schrieben Wochentags-Kürzel ohne Angabe der Sprachumgebung.
+  Die neue Prüfung, die nur noch selbst erzeugte Befehle ausführt, hätte genau
+  diese Kürzel wortlos stillgelegt: Der Trigger hätte nichts mehr getan, das
+  Kürzel aber unverändert in den Einstellungen gestanden. Sie werden jetzt beim
+  Laden auf die aktuelle Schreibweise gebracht, was nebenbei einen englischen
+  Monatsnamen in deutschen Datumsangaben behebt.
+
+- **Ein lokal gewähltes Modell schickt keinen Text mehr in die Cloud.**
+  War MLX oder Ollama als Anbieter eingestellt und der lokale Server lief nicht,
+  wich Tippi auf den nächsten Anbieter mit hinterlegtem Schlüssel aus — und das
+  war ein Cloud-Dienst. Ohne Rückfrage und ohne Hinweis. Wer lokal wählt, wählt
+  damit, dass der Text das Gerät nicht verlässt; das gilt jetzt auch, wenn der
+  lokale Server ausfällt. Der Wechsel zwischen zwei lokalen Anbietern bleibt
+  erlaubt.
+
+- **Shell-Befehle in Kürzeln laufen mit festgelegtem Suchpfad.** Bisher erbten
+  sie die Umgebung des Systems. Wer diese Umgebung verändern konnte, konnte
+  damit bestimmen, welches Programm bei einem harmlosen Datums-Kürzel
+  tatsächlich startet — die Freigabe bezog sich auf den Befehlstext, nicht auf
+  das ausgeführte Programm. Im Audit an einer eigens gebauten App nachgewiesen.
+
+- **Der Pfad zum Spracherkennungs-Programm ist nicht mehr von außen setzbar.**
+  Er ließ sich über die Systemeinstellungen-Datenbank überschreiben, ohne dass
+  es in Tippi eine Oberfläche dafür gab. Damit konnte fremde Software bestimmen,
+  welches Programm beim nächsten Diktat startet — innerhalb einer App mit
+  Mikrofon-, Bedienungshilfen- und Eingabeüberwachungsrecht.
+
+- **Eine beschädigte Kürzel-Datei löscht nicht mehr alle Kürzel.** „Datei fehlt"
+  und „Datei unlesbar" wurden gleich behandelt: Die Liste kam leer hoch, das
+  nächste Speichern überschrieb den unlesbaren Inhalt endgültig. Beide Dateien —
+  eigene und importierte Kürzel — melden den Fehler jetzt sichtbar, verweigern
+  das Speichern und legen eine Kopie des Originals daneben. Ein Knopf lädt neu,
+  sobald die Datei repariert ist.
+
+- **Tippen ist spürbar flüssiger, wenn freigegebene Shell-Kürzel vorhanden sind.**
+  Bei jedem Tastendruck wurde deren Signatur gegen den Schlüsselbund geprüft.
+  Gemessen: 1,21 ms pro Kürzel und Anschlag, bei zehn Kürzeln also rund zwölf
+  Millisekunden — mitten im Eingabepfad. Jetzt 0,008 ms.
 
 - **Die Testsuite lief seit vier Monaten nicht mehr durch.** Zwei eigene
   Signierungsfehler: Debug-Builds erbten `get-task-allow=false` aus der für die
