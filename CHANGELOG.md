@@ -61,6 +61,21 @@
   ließ sich nie vergrößern. Jetzt dasselbe Layout, das macOS für die
   Systemeinstellungen verwendet. Inhaltlich wurde nichts entfernt.
 
+### Removed
+
+- **Espanso-Dateien werden nicht mehr direkt ausgeführt.** Bisher konnte Tippi
+  eine Match-Datei im Ordner live mitlesen, sobald du sie einmal freigegeben
+  hattest. Diese Freigabe war fälschbar: Sie beruhte auf einem Fingerabdruck
+  der Datei, den jedes Programm unter deinem Benutzer selbst berechnen und in
+  die Einstellungsdatei schreiben konnte — die Rückfrage erschien dann nie und
+  die hinterlegten Befehle liefen. Im Pre-Release-Audit an zwei echten
+  Freigaben nachgestellt.
+
+  **Was das für dich bedeutet:** Deine Dateien werden weiterhin angezeigt, aber
+  du musst sie einmal über „Importieren" übernehmen, damit ihre Kürzel wieder
+  funktionieren. Danach gilt der stärkere Schutz: Zustimmung pro Kürzel,
+  kryptografisch an den konkreten Befehl gebunden.
+
 ### Fixed
 
 - **Die Testsuite lief seit vier Monaten nicht mehr durch.** Zwei eigene

@@ -61,13 +61,6 @@ struct SnippetsTab: View {
                 store.addSnippet(shortcut: trigger, replacement: replacement, vars: vars)
             }
         }
-        .sheet(item: $store.pendingFileApproval) { file in
-            FileApprovalSheet(
-                file: file,
-                onApprove: { store.approveFile(file) },
-                onDecline: { store.declineFile(file) }
-            )
-        }
         .sheet(item: $store.pendingShellApproval) { snippet in
             ShellSnippetApprovalSheet(
                 snippet: snippet,
@@ -213,16 +206,6 @@ struct SnippetsTab: View {
                             }
                             .font(.caption)
                             Spacer()
-                            if !file.isApproved {
-                                Label(String(localized: "settings.snippets.shellPending"), systemImage: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
-                                    .font(.caption)
-                                    .onTapGesture { store.pendingFileApproval = file }
-                            } else {
-                                Label(String(localized: "settings.snippets.shellApproved"), systemImage: "checkmark.shield.fill")
-                                    .foregroundStyle(.green)
-                                    .font(.caption)
-                            }
                             // Import replaces reference for this file — it
                             // works regardless of the file's current
                             // reference-approval state, and moves the file
@@ -609,86 +592,6 @@ private struct VariablePickerSheet: View {
         }
         .padding(20)
         .frame(width: 380)
-    }
-}
-
-/// Shown for every newly-appeared or changed match file before its triggers
-/// go live — not only ones with shell commands. Anything with write access
-/// to the watched directory could otherwise silently redefine an existing
-/// trigger with zero visible consent; the wording just adapts to what's
-/// actually being approved (explicit shell commands vs. plain trigger text).
-private struct FileApprovalSheet: View {
-    let file: LoadedEspansoFile
-    let onApprove: () -> Void
-    let onDecline: () -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    private var shellCommands: [String] {
-        file.matchFile.matches
-            .flatMap(\.vars)
-            .filter { $0.type == "shell" }
-            .compactMap(\.params.cmd)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label(
-                String(localized: file.containsShellVars ? "settings.snippets.shellApproval.title" : "settings.snippets.fileApproval.title"),
-                systemImage: "exclamationmark.triangle.fill"
-            )
-            .font(.headline)
-            .foregroundStyle(.orange)
-
-            if file.containsShellVars {
-                Text(String(format: String(localized: "settings.snippets.shellApproval.body"), file.url.lastPathComponent))
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(shellCommands, id: \.self) { cmd in
-                            Text(cmd).font(.system(.caption, design: .monospaced))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(maxHeight: 150)
-                .padding(8)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(6)
-            } else {
-                Text(String(format: String(localized: "settings.snippets.fileApproval.body"), file.url.lastPathComponent))
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(file.matchFile.matches.flatMap(\.triggers), id: \.self) { trigger in
-                            Text(trigger).font(.system(.caption, design: .monospaced))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(maxHeight: 150)
-                .padding(8)
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(6)
-            }
-
-            HStack {
-                Spacer()
-                // No `dismiss()` here on purpose. The store owns the binding
-                // that presents this sheet: approving sets the *next* pending
-                // item, declining clears it. `dismiss()` writes nil into that
-                // same binding synchronously and wins over the assignment that
-                // just happened — so with two shell snippets, or two files
-                // awaiting approval, only the first was ever shown and the rest
-                // stayed silently unapproved. Reproduced 2026-09-15.
-                Button(String(localized: "settings.snippets.shellApproval.decline")) {
-                    onDecline()
-                }
-                Button(String(localized: "settings.snippets.shellApproval.approve")) {
-                    onApprove()
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(20)
-        .frame(width: 420)
     }
 }
 

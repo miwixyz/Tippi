@@ -50,82 +50,6 @@ final class SnippetStoreTests: XCTestCase {
         return url
     }
 
-    func testFileWithShellVarsStartsUnapprovedAndInactive() throws {
-        _ = try writeMatchFile(named: "a.yml", shellCmd: "echo hi")
-        let store = makeStore()
-        store.isEnabled = true
-        store.matchDirectory = tempDir
-
-        XCTAssertEqual(store.espansoFiles.count, 1)
-        XCTAssertFalse(store.espansoFiles[0].isApproved)
-        XCTAssertNotNil(store.pendingFileApproval)
-        // Inactive until approved — must not be reachable by the keystroke
-        // monitor before the user has seen the consent prompt.
-        XCTAssertFalse(store.activeTriggers().contains(":t"))
-        XCTAssertNil(store.action(forTrigger: ":t"))
-    }
-
-    func testApprovalPersistsAcrossReload() throws {
-        _ = try writeMatchFile(named: "a.yml", shellCmd: "echo hi")
-        let store = makeStore()
-        store.isEnabled = true
-        store.matchDirectory = tempDir
-
-        guard let file = store.espansoFiles.first else { return XCTFail("expected one loaded file") }
-        store.approveFile(file)
-
-        XCTAssertTrue(store.espansoFiles[0].isApproved)
-        XCTAssertTrue(store.activeTriggers().contains(":t"))
-
-        // Simulate a fresh app launch reading the same UserDefaults-backed
-        // approval — this is exactly the case a randomized-per-process hash
-        // (Swift's `String.hashValue`) would have broken.
-        store.reloadEspansoFiles()
-        XCTAssertTrue(store.espansoFiles[0].isApproved, "approval must survive a reload, not just the in-memory session")
-    }
-
-    func testChangingApprovedCommandRevokesApproval() throws {
-        _ = try writeMatchFile(named: "a.yml", shellCmd: "echo hi")
-        let store = makeStore()
-        store.isEnabled = true
-        store.matchDirectory = tempDir
-        store.approveFile(store.espansoFiles[0])
-        XCTAssertTrue(store.espansoFiles[0].isApproved)
-
-        // Overwrite the same file with a different shell command — approval
-        // was for the old command set, not for "this file path forever".
-        _ = try writeMatchFile(named: "a.yml", shellCmd: "echo something-else")
-        store.reloadEspansoFiles()
-
-        XCTAssertFalse(store.espansoFiles[0].isApproved, "a changed shell command must re-trigger the consent gate")
-        XCTAssertNotNil(store.pendingFileApproval)
-    }
-
-    /// A plain text-only match file is NOT exempt from the consent gate —
-    /// only the *wording* of the prompt differs (no scary shell-commands
-    /// list). Gating only `type: shell` would leave a real hole: anything
-    /// with write access to the watched directory could silently redefine
-    /// an existing trigger (e.g. hijack ":mw") with zero visible consent.
-    func testFileWithoutShellVarsStillNeedsApprovalWithPlainWording() throws {
-        let yaml = """
-        matches:
-          - trigger: ":plain"
-            replace: "just text"
-        """
-        try yaml.write(to: tempDir.appendingPathComponent("plain.yml"), atomically: true, encoding: .utf8)
-        let store = makeStore()
-        store.isEnabled = true
-        store.matchDirectory = tempDir
-
-        XCTAssertFalse(store.espansoFiles[0].isApproved, "text-only files must still gate on first sight")
-        XCTAssertFalse(store.espansoFiles[0].containsShellVars, "flag distinguishes prompt wording only, not whether approval is required")
-        XCTAssertNotNil(store.pendingFileApproval)
-        XCTAssertFalse(store.activeTriggers().contains(":plain"))
-
-        store.approveFile(store.espansoFiles[0])
-        XCTAssertTrue(store.activeTriggers().contains(":plain"))
-    }
-
     func testDisabledStoreHasNoActiveTriggers() throws {
         let yaml = """
         matches:
@@ -178,7 +102,7 @@ final class SnippetStoreTests: XCTestCase {
         store.matchDirectory = symlinkDir
 
         XCTAssertEqual(store.espansoFiles.count, 1, "must list the file through the symlink, not silently return empty")
-        store.approveFile(store.espansoFiles[0])
+        store.importFile(store.espansoFiles[0])
         XCTAssertTrue(store.activeTriggers().contains(":viaSymlink"))
     }
 
@@ -229,7 +153,7 @@ final class SnippetStoreTests: XCTestCase {
         store.matchDirectory = tempDir
 
         XCTAssertEqual(store.espansoFiles.count, 1, "the broken file must be skipped, not crash the whole load")
-        store.approveFile(store.espansoFiles[0])
+        store.importFile(store.espansoFiles[0])
         XCTAssertTrue(store.activeTriggers().contains(":ok"))
     }
 
@@ -252,7 +176,7 @@ final class SnippetStoreTests: XCTestCase {
 
         XCTAssertTrue(store.activeTriggers().contains(":plain"), "no shell vars — must not need consent")
         XCTAssertNil(store.pendingShellApproval)
-        XCTAssertTrue(store.espansoFiles.isEmpty, "import replaces reference — the file must not still ask for reference approval")
+        XCTAssertTrue(store.espansoFiles.isEmpty, "an imported file leaves the candidate list")
         XCTAssertEqual(store.importedSnippets.count, 1)
     }
 
@@ -319,8 +243,7 @@ final class SnippetStoreTests: XCTestCase {
                     params:
                       cmd: "echo something-else"
             """),
-            containsShellVars: true,
-            isApproved: false
+            containsShellVars: true
         )
         store.importFile(secondFile)
 
@@ -343,7 +266,7 @@ final class SnippetStoreTests: XCTestCase {
         let sameFile = LoadedEspansoFile(
             id: sourceID, url: file,
             matchFile: try EspansoYAMLParser.parseFile(at: file),
-            containsShellVars: true, isApproved: false
+            containsShellVars: true
         )
         store.importFile(sameFile)
 
@@ -366,7 +289,7 @@ final class SnippetStoreTests: XCTestCase {
         store.declineShellSnippet(snippet)
 
         XCTAssertNil(store.pendingShellApproval, "declining must clear the prompt, not re-surface the same snippet")
-        XCTAssertFalse(store.activeTriggers().contains(":t"), "declined snippet stays inactive, same convention as declineFile")
+        XCTAssertFalse(store.activeTriggers().contains(":t"), "a declined snippet stays inactive")
     }
 
     // MARK: - Regressions found in the 2026-09-15 pre-release audit
@@ -411,10 +334,10 @@ final class SnippetStoreTests: XCTestCase {
         XCTAssertEqual(store.espansoFiles.count, 1, "with nothing imported from it left, the file must be referenceable again")
     }
 
-    /// Same trigger twice in one file resolved differently before and after
-    /// importing — the meaning of a snippet changed through an action sold as
-    /// a change of storage location. Reference path is first-wins, so import is.
-    func testDuplicateTriggerInOneFileKeepsTheFirstJustLikeTheReferencePath() throws {
+    /// A trigger duplicated inside one file must collapse to one entry, and
+    /// keep the first — the same way the file would have been read top-down.
+    /// It used to keep the last, so importing changed what a snippet meant.
+    func testDuplicateTriggerInOneFileKeepsTheFirst() throws {
         let yaml = """
         matches:
           - trigger: ":mw"
@@ -427,15 +350,9 @@ final class SnippetStoreTests: XCTestCase {
         store.isEnabled = true
         store.matchDirectory = tempDir
 
-        store.approveFile(store.espansoFiles[0])
-        guard case .espansoMatch(let referenced)? = store.action(forTrigger: ":mw") else {
-            return XCTFail("expected a match while referenced")
-        }
-        XCTAssertEqual(referenced.replace, "erste")
-
         store.importFile(store.espansoFiles[0])
         XCTAssertEqual(store.importedSnippets.count, 1, "the duplicate must not become a second entry")
-        XCTAssertEqual(store.importedSnippets[0].replace, "erste", "import must resolve the duplicate the same way the reference path does")
+        XCTAssertEqual(store.importedSnippets[0].replace, "erste")
     }
 
     /// Two files may legitimately define the same trigger (Espanso resolves by

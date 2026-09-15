@@ -13,36 +13,34 @@ enum SnippetAction {
     case espansoMatch(SnippetMatch)
 }
 
-/// One loaded Espanso match file, plus the bookkeeping the per-file consent
-/// gate needs. `containsShellVars` only changes what the approval prompt
-/// says (explicit command listing vs. a plain trigger listing) — every file
-/// needs approval, not just ones that shell out.
+/// One Espanso match file found in the watched directory — an import
+/// candidate, nothing more. Its triggers are never live until imported.
+/// `containsShellVars` only drives what the list shows.
 struct LoadedEspansoFile: Identifiable, Equatable {
     let id: String // file path — stable across reloads
     let url: URL
     var matchFile: EspansoMatchFile
     var containsShellVars: Bool
-    var isApproved: Bool
 }
 
-/// Owns three snippet sources and merges them into the single
-/// trigger→action lookup the keystroke monitor needs:
+/// Owns two snippet sources and merges them into the single trigger→action
+/// lookup the keystroke monitor needs:
 /// - app-managed (JSON, full CRUD in Settings)
-/// - referenced Espanso files (read-only, file stays the source of truth,
-///   gated by a whole-file content-hash approval)
 /// - imported Espanso snippets (copied into Tippi's own store, gated
 ///   per-snippet — see `importFile` and docs/SECURE-DESIGN-espanso-import.md)
 ///
-/// Importing a file removes it from the referenced set entirely — the two
-/// are alternatives for a given file, not layered.
+/// Espanso files found in the watched directory are listed as import
+/// candidates only. They are never executed in place.
 ///
-/// Also owns the per-file consent gate for referenced files: ANY file in the
-/// watched directory is inactive until its exact current content has been
-/// approved once — not just files with `type: shell` vars. A plain
-/// static-text file could otherwise silently redefine an existing trigger
-/// (e.g. hijack ":mw" to a different address) the moment anything else with
-/// write access to that directory drops it there, with zero visible
-/// consent — gating only shell execution would have missed that.
+/// Reading them live used to be a third source, gated by a SHA256 of the file
+/// contents kept in UserDefaults. Removed 2026-09-15: that anchor held no
+/// secret and lived in a file any process running as the user can write, so an
+/// attacker could compute the hash of their own match file and store it — the
+/// approval prompt never appeared and the commands ran. Reproduced during the
+/// pre-release audit against two real approvals. Import already replaces
+/// reference (Michael's call the same morning) and protects consent with a
+/// Keychain-held MAC instead, so the weaker path had a successor and simply
+/// went away rather than being hardened.
 @MainActor
 final class SnippetStore: ObservableObject {
     @Published private(set) var appSnippets: [AppSnippet] = []
@@ -70,14 +68,9 @@ final class SnippetStore: ObservableObject {
         }
     }
 
-    /// File awaiting a shell-command consent decision — drives the warning
-    /// sheet in Settings. One at a time, so the prompt always names one
-    /// concrete file and its exact commands, never a vague blanket warning.
-    @Published var pendingFileApproval: LoadedEspansoFile?
     /// One imported snippet at a time awaiting its per-snippet shell-command
-    /// consent decision — same one-at-a-time rationale as
-    /// `pendingFileApproval`: the prompt always names one concrete command,
-    /// never a batch.
+    /// consent decision. One at a time on purpose: the prompt then always
+    /// names one concrete command, never a batch.
     @Published var pendingShellApproval: ImportedSnippet?
 
     private enum Keys {
@@ -87,9 +80,9 @@ final class SnippetStore: ObservableObject {
         static let appSnippetsFile = "AppSnippets.json"
         static let importedSnippetsFile = "ImportedSnippets.json"
         static let importedFilePaths = "tippi.snippets.importedFilePaths.v1"
-        static func approvedHashKey(path: String) -> String {
-            "tippi.snippets.approvedShellHash.\(path)"
-        }
+        /// Legacy prefix from the removed reference-approval path. Only used
+        /// to clean stale entries out of UserDefaults on launch.
+        static let legacyApprovedHashPrefix = "tippi.snippets.approvedShellHash."
     }
 
     private let fileManager = FileManager.default
@@ -127,6 +120,7 @@ final class SnippetStore: ObservableObject {
         }
         loadAppSnippets()
         loadImportedSnippets()
+        removeLegacyApprovalHashes()
         reloadEspansoFiles()
     }
 
@@ -256,7 +250,7 @@ final class SnippetStore: ObservableObject {
                 let path = url.path
                 loaded.append(LoadedEspansoFile(
                     id: path, url: url, matchFile: matchFile,
-                    containsShellVars: hasShell, isApproved: isFileApproved(path: path, matchFile: matchFile)
+                    containsShellVars: hasShell
                 ))
             } catch {
                 // One malformed file (hand-edited YAML typo) must not disable
@@ -265,59 +259,18 @@ final class SnippetStore: ObservableObject {
             }
         }
         espansoFiles = loaded
-
-        // Every file needs one-time review — not just ones with shell vars.
-        // A plain static-text match file dropped into the watched directory
-        // by anything else with write access there could otherwise silently
-        // redefine an existing trigger (e.g. hijack ":mw" to a different
-        // email address) with zero visible consent, since only shell
-        // execution was originally gated. Text-only files still get a
-        // (lighter-worded) one-time prompt; shell files keep the explicit
-        // command listing.
-        if let firstUnapproved = loaded.first(where: { !$0.isApproved }) {
-            pendingFileApproval = firstUnapproved
-        }
     }
 
-    /// Stable (cross-launch) hash of the file's full match content —
-    /// triggers, replacement text, and vars together, not just shell
-    /// commands. Deliberately SHA256, not Swift's `String.hashValue` — that
-    /// hash is randomized per process for hash-flooding protection, so it
-    /// would silently re-prompt (or worse, never match) on every single app
-    /// restart. Approval is tied to *this exact content*: if the file
-    /// changes later (edited, or overwritten by a sync), the hash changes
-    /// and the review prompt reappears — a file can't be silently altered
-    /// after being approved once, whether that alteration adds a shell
-    /// command or just changes what a plain trigger expands to.
-    private func fileContentHash(_ matchFile: EspansoMatchFile) -> String {
-        let description = matchFile.matches
-            .map { match -> String in
-                let varsDescription = match.vars
-                    .map { "\($0.name)|\($0.type)|\($0.params.cmd ?? "")|\($0.params.format ?? "")" }
-                    .joined(separator: ";")
-                return "\(match.triggers.joined(separator: ","))|\(match.replace)|\(varsDescription)"
-            }
-            .sorted()
-            .joined(separator: "\n")
-        let digest = SHA256.hash(data: Data(description.utf8))
-        return digest.map { String(format: "%02x", $0) }.joined()
-    }
-
-    private func isFileApproved(path: String, matchFile: EspansoMatchFile) -> Bool {
-        defaults.string(forKey: Keys.approvedHashKey(path: path)) == fileContentHash(matchFile)
-    }
-
-    func approveFile(_ file: LoadedEspansoFile) {
-        defaults.set(fileContentHash(file.matchFile), forKey: Keys.approvedHashKey(path: file.id))
-        if pendingFileApproval?.id == file.id { pendingFileApproval = nil }
-        reloadEspansoFiles()
-    }
-
-    /// Declining doesn't delete anything — that one file's matches simply
-    /// stay inactive (see `activeTriggers()`/`action(forTrigger:)`) until
-    /// approved from Settings later.
-    func declineFile(_ file: LoadedEspansoFile) {
-        if pendingFileApproval?.id == file.id { pendingFileApproval = nil }
+    /// Drops the UserDefaults entries left behind by the removed
+    /// reference-approval path. They no longer mean anything, and leaving
+    /// forged-approval material lying around in a file an attacker can write
+    /// would be an odd way to retire a mechanism because it was forgeable.
+    private func removeLegacyApprovalHashes() {
+        let stale = defaults.dictionaryRepresentation().keys
+            .filter { $0.hasPrefix(Keys.legacyApprovedHashPrefix) }
+        guard !stale.isEmpty else { return }
+        stale.forEach { defaults.removeObject(forKey: $0) }
+        storeLog.notice("removed \(stale.count, privacy: .public) obsolete reference-approval entries")
     }
 
     // MARK: - Espanso import (replaces the reference for that file)
@@ -394,8 +347,6 @@ final class SnippetStore: ObservableObject {
         importedFilePaths.insert(file.id)
         saveImportedSnippets()
         saveImportedFilePaths()
-        defaults.removeObject(forKey: Keys.approvedHashKey(path: file.id))
-        if pendingFileApproval?.id == file.id { pendingFileApproval = nil }
         reloadEspansoFiles()
         refreshPendingShellApproval()
     }
@@ -425,7 +376,7 @@ final class SnippetStore: ObservableObject {
 
     /// Declining doesn't delete the snippet — it just stays inactive (not
     /// matched, not expandable) until approved later from Settings, same
-    /// convention as `declineFile`. Deliberately does *not* call
+    /// Deliberately does *not* call
     /// `refreshPendingShellApproval()`: that method's criterion (has shell
     /// vars, not yet approved) is still true for the just-declined snippet,
     /// so an auto-advance here would immediately re-select and re-show the
@@ -506,11 +457,6 @@ final class SnippetStore: ObservableObject {
         for snippet in importedSnippets where isSnippetActive(snippet) {
             triggers.append(contentsOf: snippet.triggers)
         }
-        for file in espansoFiles where file.isApproved {
-            for match in file.matchFile.matches {
-                triggers.append(contentsOf: match.triggers)
-            }
-        }
         return triggers
     }
 
@@ -543,11 +489,6 @@ final class SnippetStore: ObservableObject {
         // `activeTriggers()` and the trigger completing must not expand.
         if let snippet = importedSnippets.first(where: { isSnippetActive($0) && $0.triggers.contains(trigger) }) {
             return .espansoMatch(SnippetMatch(triggers: snippet.triggers, replace: snippet.replace, vars: snippet.vars))
-        }
-        for file in espansoFiles where file.isApproved {
-            if let match = file.matchFile.matches.first(where: { $0.triggers.contains(trigger) }) {
-                return .espansoMatch(match)
-            }
         }
         return nil
     }
