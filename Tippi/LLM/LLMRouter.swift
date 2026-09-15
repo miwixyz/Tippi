@@ -88,7 +88,15 @@ struct LLMRouter {
         defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
         let preferred = await MainActor.run { effectivePreferredProviderID() }
         let fallbackOn = Self.allowProviderFallback
-        let ordered = candidates(preferred: preferred, fallbackOn: fallbackOn)
+        let ordered = candidates(preferred: preferred)
+        // A restricted list means the user chose a local provider, so the only
+        // error worth surfacing is that provider's. Reporting `lastError` here
+        // named whichever local provider happened to be tried last: pick MLX,
+        // MLX fails to launch, the loop moves on to an Ollama that was never
+        // installed, and the message reads "could not connect to the server"
+        // without MLX appearing anywhere in it.
+        let restrictedToLocal = ordered.count != providers.count
+        var firstError: Error?
 
         var lastError: Error?
         for provider in ordered {
@@ -115,6 +123,7 @@ struct LLMRouter {
                 continue
             } catch {
                 lastError = error
+                if firstError == nil { firstError = error }
                 // Unavailable local provider (server not running) → always try
                 // the next one.
                 if isUnavailableLocalProvider(provider, error: error) {
@@ -131,7 +140,7 @@ struct LLMRouter {
             }
         }
 
-        throw lastError ?? LLMError.noProviderConfigured
+        throw (restrictedToLocal ? firstError : lastError) ?? lastError ?? LLMError.noProviderConfigured
     }
 
     /// Streaming variant of `complete`. Picks the first eligible provider (same
@@ -265,10 +274,17 @@ struct LLMRouter {
     /// The providers `complete` may actually use, in order.
     ///
     /// When the chosen provider is a local one (MLX, Ollama — no API key, text
-    /// never leaves the machine) and provider fallback is off, the candidate
-    /// list is restricted to local providers. Without this, a local server that
-    /// simply is not running sends the user's text to the first cloud provider
-    /// that happens to have a key stored.
+    /// never leaves the machine) the candidate list is restricted to local
+    /// providers. Without this, a local server that simply is not running sends
+    /// the user's text to the first cloud provider that happens to have a key
+    /// stored.
+    ///
+    /// The fallback setting does **not** lift this. It is described to the user
+    /// purely in terms of cloud failure modes ("rate limit, server or network
+    /// error") and says nothing about overriding a local-only choice, so having
+    /// it tick that box too meant the privacy guarantee silently depended on an
+    /// unrelated checkbox. Local stays local either way; fallback still governs
+    /// cloud→cloud retries below.
     ///
     /// That was reachable and silent: `isUnavailableLocalProvider` treats
     /// "server not found / failed to launch / startup timed out" as "try the
@@ -280,11 +296,17 @@ struct LLMRouter {
     ///
     /// Falling through from one local provider to another stays allowed: both
     /// keep the text on the machine, which is the property the user chose.
-    private func candidates(preferred: String, fallbackOn: Bool) -> [LLMProvider] {
+    /// Checks the provider the user actually picked, not `ordered.first`. When
+    /// `preferred` names nothing in the registry, `orderedProviders` returns the
+    /// list untouched and `first` is simply whatever sits at index 0 — so the
+    /// decision would hang on the unrelated invariant that the registry happens
+    /// to start with a cloud provider. Reordering it to put MLX first (a
+    /// plausible "local-first" change) would flip every unconfigured install
+    /// into local-only mode with no setting to explain it.
+    private func candidates(preferred: String) -> [LLMProvider] {
         let ordered = orderedProviders(preferred: preferred)
-        guard !fallbackOn,
-              let first = ordered.first,
-              !first.requiresAPIKey
+        guard let pick = providers.first(where: { $0.id == preferred }),
+              !pick.requiresAPIKey
         else { return ordered }
         return ordered.filter { !$0.requiresAPIKey }
     }

@@ -60,11 +60,27 @@ struct SettingsView: View {
                         .padding(.horizontal, 4)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         .opacity(tab == selection ? 1 : 0)
-                        .allowsHitTesting(tab == selection)
+                        // `.disabled` rather than `.allowsHitTesting`: the
+                        // latter only blocks the mouse. Every hidden pane still
+                        // holds real text fields (eleven API keys, the Help
+                        // search, the MLX port), and nothing else takes them out
+                        // of the key-view loop — Tab could move focus into a
+                        // field nobody can see, with keystrokes vanishing into
+                        // it. Disabling leaves @StateObject work and unsaved
+                        // @State edits untouched, which is the whole point of
+                        // keeping the panes mounted.
+                        .disabled(tab != selection)
                         .accessibilityHidden(tab != selection)
                 }
             }
             .navigationTitle(selection.title)
+            // A hotkey recorder arms a local NSEvent monitor and only tears it
+            // down in `.onDisappear`. No pane disappears any more, so an armed
+            // recorder used to survive the switch and keep swallowing keyDowns:
+            // pressing ⌘V in an API key field silently rebound the global
+            // hotkey to ⌘V instead of pasting, with no visible recording state
+            // because the pane was hidden.
+            .onChange(of: selection) { _, _ in RecorderMonitorStore.release() }
         }
         .frame(minWidth: 780, idealWidth: 860, minHeight: 520, idealHeight: 640)
         // The Settings window is created once and just reordered front on
