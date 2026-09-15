@@ -114,4 +114,54 @@ enum DynamicVariableBuilder {
             return SnippetVar(name: name, type: "shell", params: SnippetVarParams(cmd: "date -v +thu +\"%V\"", format: nil))
         }
     }
+
+    /// Offsets the picker's stepper allows. Declared here rather than at the
+    /// call site so `generatableCommands` below cannot silently drift out of
+    /// sync with the UI: widen the stepper without widening this, and the
+    /// resulting snippet would be refused at expansion time as un-generatable.
+    static let extraDaysRange = -30...30
+
+    /// Every command this builder is capable of emitting — the complete set,
+    /// not a pattern. 4 formats × (1 `today` + 7 weekdays × 61 offsets) + 1
+    /// calendar week = 1713 strings, cheap to hold and exact to test against.
+    ///
+    /// This exists to answer one question at expansion time: *could Tippi have
+    /// written this command?* `AppSnippets.json` is an unsigned file that any
+    /// process running as the user can edit, and a `type: shell` var found
+    /// there is executed with the user's full privileges the moment its trigger
+    /// is typed. Membership in this set is what separates a command the app
+    /// generated from one somebody injected.
+    ///
+    /// Why a set and not a data-model change: storing the *kind* and rebuilding
+    /// the command at expansion (so the file holds nothing executable at all)
+    /// is structurally cleaner, and was the original plan. It also requires
+    /// migrating persisted user snippets, where a mistake loses data. This
+    /// gives the identical guarantee — only builder-generated commands run —
+    /// with no migration and nothing to lose. The set is derived from the
+    /// builder itself, so it cannot fall out of step with what the builder
+    /// emits the way a hand-written regex would.
+    ///
+    /// Note the deliberate consequence: changing a template below invalidates
+    /// snippets created by the previous version. They stop expanding and say so
+    /// in the log, rather than failing open.
+    static let generatableCommands: Set<String> = {
+        var commands = Set<String>()
+        let probeName = "x"  // name never appears in the command itself
+        for format in DateFormatPreset.allCases {
+            commands.insert(makeVar(name: probeName, kind: .today(format: format)).params.cmd ?? "")
+            for weekday in Weekday.allCases {
+                for extraDays in extraDaysRange {
+                    let kind = DynamicVariableKind.weekday(weekday, extraDays: extraDays, format: format)
+                    commands.insert(makeVar(name: probeName, kind: kind).params.cmd ?? "")
+                }
+            }
+        }
+        commands.insert(makeVar(name: probeName, kind: .calendarWeek).params.cmd ?? "")
+        return commands
+    }()
+
+    /// True only for a command this builder could have produced itself.
+    static func canGenerate(_ command: String) -> Bool {
+        generatableCommands.contains(command)
+    }
 }

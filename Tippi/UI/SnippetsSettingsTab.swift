@@ -421,7 +421,11 @@ private struct VariablePickerSheet: View {
                 Picker(String(localized: "settings.snippets.variable.weekday.label"), selection: $weekday) {
                     ForEach(Weekday.allCases, id: \.self) { w in Text(w.displayName).tag(w) }
                 }
-                Stepper(value: $extraDays, in: -30...30) {
+                // Range comes from the builder, not a literal: it also defines
+                // which commands are considered generatable at expansion time
+                // (DynamicVariableBuilder.generatableCommands). A wider stepper
+                // here than there would produce snippets the store then refuses.
+                Stepper(value: $extraDays, in: DynamicVariableBuilder.extraDaysRange) {
                     Text(String(format: String(localized: "settings.snippets.variable.extraDays"), extraDays))
                 }
                 Picker(String(localized: "settings.snippets.variable.format"), selection: $format) {

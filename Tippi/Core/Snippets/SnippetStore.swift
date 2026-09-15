@@ -389,6 +389,24 @@ final class SnippetStore: ObservableObject {
         if pendingShellApproval?.id == snippet.id { pendingShellApproval = nil }
     }
 
+    /// Whether an app-managed snippet may expand at all.
+    ///
+    /// Only shell vars are gated, and only on whether `DynamicVariableBuilder`
+    /// could have emitted that exact command. Anything else in the file is
+    /// inert text. A non-match means the JSON was written outside Tippi's own
+    /// code path, so it fails closed and says so — a snippet that silently
+    /// stops working is a far better outcome than one that silently runs
+    /// somebody else's command.
+    private func isAppSnippetSafeToExpand(_ snippet: AppSnippet) -> Bool {
+        for variable in snippet.vars where variable.type == "shell" {
+            guard DynamicVariableBuilder.canGenerate(variable.params.cmd ?? "") else {
+                storeLog.error("refusing app snippet '\(snippet.trigger, privacy: .public)': shell command is not one Tippi generates — AppSnippets.json was modified outside the app")
+                return false
+            }
+        }
+        return true
+    }
+
     /// True for plain/date-only imported snippets (no consent needed at
     /// all), and for shell-bearing ones only once `verify` — not just the
     /// presence of a stored MAC — succeeds against the *current* trigger and
@@ -414,7 +432,7 @@ final class SnippetStore: ObservableObject {
 
     func activeTriggers() -> [String] {
         guard isEnabled else { return [] }
-        var triggers = appSnippets.map(\.trigger)
+        var triggers = appSnippets.filter(isAppSnippetSafeToExpand).map(\.trigger)
         for snippet in importedSnippets where isSnippetActive(snippet) {
             triggers.append(contentsOf: snippet.triggers)
         }
@@ -428,17 +446,19 @@ final class SnippetStore: ObservableObject {
 
     func action(forTrigger trigger: String) -> SnippetAction? {
         if let snippet = appSnippets.first(where: { $0.trigger == trigger }) {
-            // NOTE: AppSnippets.json is a plain, unsigned file, so a shell var
-            // written into it directly does execute here unchecked — the same
-            // asset docs/SECURE-DESIGN-espanso-import.md protects for imported
-            // snippets. A guard that simply refused every `type: shell` var was
-            // tried on 2026-09-15 and reverted: the "Insert Variable" picker
-            // does produce shell vars (`DynamicVariableBuilder` needs a shell
-            // for `LC_TIME=de_DE.UTF-8 date …`), so that guard disabled every
-            // date and weekday snippet. Closing this properly means
-            // distinguishing a Tippi-generated command from an injected one —
-            // see the task note in the vault; it is a data-model change, not a
-            // one-line check.
+            // AppSnippets.json is unsigned and writable by any process running
+            // as the user, so a `type: shell` var found here would otherwise
+            // execute with full privileges the moment its trigger is typed —
+            // the same threat docs/SECURE-DESIGN-espanso-import.md closes for
+            // imported snippets.
+            //
+            // The question is NOT "does this have a shell var" — the Insert
+            // Variable picker legitimately produces them, because date and
+            // weekday variables need a shell for the `LC_TIME=…` locale
+            // override. A blanket refusal was tried on 2026-09-15 and broke
+            // every date snippet. The question is whether Tippi itself could
+            // have written this exact command.
+            guard isAppSnippetSafeToExpand(snippet) else { return nil }
             guard !snippet.vars.isEmpty else { return .staticText(snippet.replacement) }
             // Dynamic app-created snippet (built via "Insert Variable", not
             // hand-typed shell) — same resolver as Espanso imports, since
