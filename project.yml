@@ -54,7 +54,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.tippi.app
         PRODUCT_NAME: Tippi
         MARKETING_VERSION: "2.11.0"
-        CURRENT_PROJECT_VERSION: "325"
+        CURRENT_PROJECT_VERSION: "326"
         INFOPLIST_FILE: Tippi/Resources/Info.plist
         ENABLE_HARDENED_RUNTIME: YES
         DEAD_CODE_STRIPPING: YES
