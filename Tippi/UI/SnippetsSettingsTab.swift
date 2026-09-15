@@ -7,6 +7,25 @@ import SwiftUI
 struct SnippetsTab: View {
     @EnvironmentObject var store: SnippetStore
 
+    /// Two distinct jobs share this pane: words the transcription should spell
+    /// a certain way, and shortcuts that expand into text. Related enough to
+    /// live together, different enough that showing both at once was the main
+    /// reason this pane had become a wall.
+    private enum Section: String, CaseIterable, Identifiable {
+        case words, snippets
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .words:    return String(localized: "settings.snippets.section.words")
+            case .snippets: return String(localized: "settings.snippets.section.snippets")
+            }
+        }
+    }
+
+    @State private var section: Section = .words
+    @State private var dictationCustomWords: [String] = DictationSettings.customWords
+    @State private var newCustomWord: String = ""
+
     @State private var editingSnippet: AppSnippet?
     @State private var isAddingNew = false
     @State private var emojiInlineEnabled: Bool = EmojiSettings.isInlineEnabled
@@ -14,8 +33,67 @@ struct SnippetsTab: View {
     @State private var emojiSuggestionsEnabled: Bool = EmojiSettings.isSuggestionsEnabled
 
     var body: some View {
+        VStack(spacing: 12) {
+            Picker("", selection: $section) {
+                ForEach(Section.allCases) { Text($0.title).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal)
+            .padding(.top, 8)
+
+            switch section {
+            case .words:    customWordsPane
+            case .snippets: snippetsPane
+            }
+        }
+        .sheet(item: $editingSnippet) { snippet in
+            SnippetEditorSheet(trigger: snippet.trigger, replacement: snippet.replacement, vars: snippet.vars) { newTrigger, newReplacement, newVars in
+                var updated = snippet
+                updated.trigger = newTrigger
+                updated.replacement = newReplacement
+                updated.vars = newVars
+                store.updateSnippet(updated)
+            }
+        }
+        .sheet(isPresented: $isAddingNew) {
+            SnippetEditorSheet(trigger: store.defaultPrefix, replacement: "", vars: []) { trigger, replacement, vars in
+                store.addSnippet(shortcut: trigger, replacement: replacement, vars: vars)
+            }
+        }
+        .sheet(item: $store.pendingFileApproval) { file in
+            FileApprovalSheet(
+                file: file,
+                onApprove: { store.approveFile(file) },
+                onDecline: { store.declineFile(file) }
+            )
+        }
+        .sheet(item: $store.pendingShellApproval) { snippet in
+            ShellSnippetApprovalSheet(
+                snippet: snippet,
+                onApprove: { store.approveShellSnippet(snippet) },
+                onDecline: { store.declineShellSnippet(snippet) }
+            )
+        }
+    }
+
+    /// Words the user wants spelled a specific way. Lives here rather than in
+    /// the dictation pane because this is where a user looks for "the app
+    /// keeps writing my brand wrong" — it takes effect during the polish step,
+    /// but that is an implementation detail, not where it belongs in the UI.
+    @ViewBuilder
+    private var customWordsPane: some View {
         Form {
-            Section {
+            customWordsSection
+        }
+        .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
+    }
+
+    @ViewBuilder
+    private var snippetsPane: some View {
+        Form {
+            SwiftUI.Section {
                 Toggle(String(localized: "settings.snippets.enabled"), isOn: $store.isEnabled)
                 if store.isEnabled {
                     Text(String(localized: "settings.snippets.enabledHint"))
@@ -35,7 +113,7 @@ struct SnippetsTab: View {
             // Lives here rather than in its own tab because it rides the exact
             // same keystroke watcher as snippet expansion — turning either on
             // starts it, turning both off stops it.
-            Section(String(localized: "settings.snippets.emoji.section")) {
+            SwiftUI.Section(String(localized: "settings.snippets.emoji.section")) {
                 Toggle(String(localized: "settings.snippets.emoji.enabled"), isOn: $emojiInlineEnabled)
                     .onChange(of: emojiInlineEnabled) { _, new in
                         EmojiSettings.isInlineEnabled = new
@@ -68,7 +146,7 @@ struct SnippetsTab: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Section(String(localized: "settings.snippets.appManaged")) {
+            SwiftUI.Section(String(localized: "settings.snippets.appManaged")) {
                 if store.appSnippets.isEmpty {
                     Text(String(localized: "settings.snippets.empty"))
                         .foregroundStyle(.secondary)
@@ -102,7 +180,7 @@ struct SnippetsTab: View {
                 }
             }
 
-            Section(String(localized: "settings.snippets.reference")) {
+            SwiftUI.Section(String(localized: "settings.snippets.reference")) {
                 if store.espansoFiles.isEmpty {
                     Text(String(localized: "settings.snippets.importedEmpty"))
                         .foregroundStyle(.secondary)
@@ -152,7 +230,7 @@ struct SnippetsTab: View {
                 }
             }
 
-            Section(String(localized: "settings.snippets.importedSnippets")) {
+            SwiftUI.Section(String(localized: "settings.snippets.importedSnippets")) {
                 if store.importedSnippets.isEmpty {
                     Text(String(localized: "settings.snippets.importedSnippetsEmpty"))
                         .foregroundStyle(.secondary)
@@ -190,34 +268,76 @@ struct SnippetsTab: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-        .sheet(item: $editingSnippet) { snippet in
-            SnippetEditorSheet(trigger: snippet.trigger, replacement: snippet.replacement, vars: snippet.vars) { newTrigger, newReplacement, newVars in
-                var updated = snippet
-                updated.trigger = newTrigger
-                updated.replacement = newReplacement
-                updated.vars = newVars
-                store.updateSnippet(updated)
+        }
+
+    /// Terms the user wants spelled a specific way. Sits inside the polish
+    /// section because that is where it takes effect: the list is appended to
+    /// the system prompt as a spelling constraint at call time.
+    ///
+    /// Why this is needed at all, measured 2026-09-15: every polish model
+    /// tested returned "CineWeb" for "CINEWEB", and the 4B one also flattened
+    /// "CineSocial" to "Cinesocial". The word was heard correctly; the model
+    /// simply normalised the capitalisation to what looks like an ordinary
+    /// compound. No model in the list gets this right, because none of them can
+    /// know a house spelling — it has to be supplied.
+    @ViewBuilder
+    private var customWordsSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(String(localized: "settings.voice.dictation.customWords.label"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(String(localized: "settings.voice.dictation.customWords.hint"))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if dictationCustomWords.isEmpty {
+                Text(String(localized: "settings.voice.dictation.customWords.empty"))
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            } else {
+                // Same row-with-trash shape the snippet list uses, rather than
+                // a bespoke chip layout — one less custom layout to maintain
+                // and it already matches what the rest of Settings looks like.
+                ForEach(dictationCustomWords, id: \.self) { word in
+                    HStack {
+                        Text(word)
+                            .font(.system(.caption, design: .monospaced))
+                        Spacer()
+                        Button(role: .destructive) {
+                            dictationCustomWords.removeAll { $0 == word }
+                            DictationSettings.customWords = dictationCustomWords
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+
+            HStack {
+                TextField(String(localized: "settings.voice.dictation.customWords.placeholder"),
+                          text: $newCustomWord)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(addCustomWord)
+                Button(String(localized: "settings.voice.dictation.customWords.add"), action: addCustomWord)
+                    .controlSize(.small)
+                    .disabled(newCustomWord.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
-        .sheet(isPresented: $isAddingNew) {
-            SnippetEditorSheet(trigger: store.defaultPrefix, replacement: "", vars: []) { trigger, replacement, vars in
-                store.addSnippet(shortcut: trigger, replacement: replacement, vars: vars)
-            }
-        }
-        .sheet(item: $store.pendingFileApproval) { file in
-            FileApprovalSheet(
-                file: file,
-                onApprove: { store.approveFile(file) },
-                onDecline: { store.declineFile(file) }
-            )
-        }
-        .sheet(item: $store.pendingShellApproval) { snippet in
-            ShellSnippetApprovalSheet(
-                snippet: snippet,
-                onApprove: { store.approveShellSnippet(snippet) },
-                onDecline: { store.declineShellSnippet(snippet) }
-            )
-        }
+    }
+
+    private func addCustomWord() {
+        let word = newCustomWord.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !word.isEmpty else { return }
+        // Case-sensitive duplicate check on purpose: the whole point of an
+        // entry is its exact capitalisation, so "CINEWEB" and "Cineweb" are
+        // different entries and adding both is a user error worth showing
+        // rather than silently merging.
+        guard !dictationCustomWords.contains(word) else { newCustomWord = ""; return }
+        dictationCustomWords.append(word)
+        DictationSettings.customWords = dictationCustomWords
+        newCustomWord = ""
     }
 
     /// Shows whether the keystroke watcher is actually running. Without this,

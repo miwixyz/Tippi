@@ -10,6 +10,7 @@ enum DictationSettings {
     private static let comboKey                 = "dictation.hotkeyCombo.v1"
     private static let postProcessEnabledKey    = "dictation.postProcess.enabled"
     private static let postProcessPromptKey     = "dictation.postProcess.prompt"
+    private static let customWordsKey           = "dictation.customWords.v1"
     private static let postProcessProviderKey   = "dictation.postProcess.providerOverride"
     private static let postProcessModelKey      = "dictation.postProcess.modelOverride"
     private static let modeKey                   = "dictation.inputMode.v1"
@@ -154,6 +155,50 @@ enum DictationSettings {
     static var postProcessEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: postProcessEnabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: postProcessEnabledKey) }
+    }
+
+    /// User-supplied terms that transcription reliably gets wrong: brand names,
+    /// product names, people, jargon. Stored as plain strings in the exact
+    /// spelling the user wants to see.
+    ///
+    /// Measured need, not a guess: on 2026-09-15 every polish model tested
+    /// returned "CineWeb" for "CINEWEB" and one also flattened "CineSocial" to
+    /// "Cinesocial". Both had heard the word correctly — they normalised the
+    /// capitalisation to what looks like a normal compound word. No model
+    /// choice fixes that, because the model has no way to know the house
+    /// spelling. It has to be told.
+    static var customWords: [String] {
+        get { UserDefaults.standard.stringArray(forKey: customWordsKey) ?? [] }
+        set {
+            let cleaned = newValue
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            UserDefaults.standard.set(cleaned, forKey: customWordsKey)
+        }
+    }
+
+    /// The system prompt actually sent for a polish run: the configured prompt
+    /// plus a glossary of `customWords`, if any.
+    ///
+    /// Appended at call time rather than baked into the stored prompt, for two
+    /// reasons. A user who edits the prompt (or resets it) keeps the glossary
+    /// either way, and the word list stays a list — editable as data in
+    /// Settings instead of as prose somebody has to hand-maintain inside a
+    /// prompt.
+    ///
+    /// Deliberately phrased as a spelling constraint, not as a correction
+    /// instruction: telling a small model to "fix similar-sounding words"
+    /// invites it to rewrite words that were already right. The rule here only
+    /// bites when the term is actually present.
+    static var effectivePostProcessPrompt: String {
+        let words = customWords
+        guard !words.isEmpty else { return postProcessPrompt }
+        let list = words.joined(separator: ", ")
+        return postProcessPrompt + """
+
+
+        Spelling: these terms have a fixed spelling and must appear exactly as written here whenever they occur — \(list). Correct only the spelling or capitalisation of these specific terms; never insert them, and never alter any other word to resemble them.
+        """
     }
 
     static var postProcessPrompt: String {
@@ -429,7 +474,7 @@ final class DictationController: ObservableObject {
             // A local provider cold-starting its server (MLX model load can
             // take minutes) would otherwise leave the user staring at
             // "Transcribing…" — past the cap the raw transcript is inserted.
-            let prompt = DictationSettings.postProcessPrompt
+            let prompt = DictationSettings.effectivePostProcessPrompt
             let result: CompletionResult = try await withThrowingTaskGroup(of: CompletionResult.self) { group in
                 group.addTask {
                     if !providerOverride.isEmpty {

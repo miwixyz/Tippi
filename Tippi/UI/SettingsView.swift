@@ -6,37 +6,48 @@ struct SettingsView: View {
     @State private var selection: SettingsTab = .general
     @ObservedObject private var navigation = SettingsNavigation.shared
 
+    /// Sidebar navigation rather than a row of tabs.
+    ///
+    /// Nine top tabs in a window fixed at 640×580 had become unreadable — the
+    /// labels truncate, and a long pane (Voice, Providers) scrolls inside a box
+    /// that cannot grow. This is the layout macOS itself uses for System
+    /// Settings: a grouped list on the left, one pane on the right, and a
+    /// window the user can size. Same panes, same content, nothing removed.
+    ///
+    /// Groups mirror how the panes are actually used: everyday configuration,
+    /// then the text/AI machinery, then things looked at occasionally.
+    private static let sidebarGroups: [[SettingsTab]] = [
+        [.general, .hotkeys, .voice],
+        [.providers, .prompts, .snippets],
+        [.history, .help, .about],
+    ]
+
     var body: some View {
-        TabView(selection: $selection) {
-            GeneralSettingsTab()
-                .tag(SettingsTab.general)
-                .tabItem { Label(String(localized: "settings.tab.general"), systemImage: "gear") }
-            HotkeysTab()
-                .tag(SettingsTab.hotkeys)
-                .tabItem { Label(String(localized: "settings.tab.hotkeys"), systemImage: "command") }
-            ProvidersTab()
-                .tag(SettingsTab.providers)
-                .tabItem { Label(String(localized: "settings.tab.providers"), systemImage: "key") }
-            PromptsTab()
-                .tag(SettingsTab.prompts)
-                .tabItem { Label(String(localized: "settings.tab.prompts"), systemImage: "text.bubble") }
-            SnippetsTab()
-                .tag(SettingsTab.snippets)
-                .tabItem { Label(String(localized: "settings.tab.snippets"), systemImage: "text.badge.checkmark") }
-            VoiceTab()
-                .tag(SettingsTab.voice)
-                .tabItem { Label(String(localized: "settings.tab.voice"), systemImage: "mic") }
-            HistoryTab()
-                .tag(SettingsTab.history)
-                .tabItem { Label(String(localized: "settings.tab.history"), systemImage: "clock.arrow.circlepath") }
-            HelpTab()
-                .tag(SettingsTab.help)
-                .tabItem { Label(String(localized: "settings.tab.help"), systemImage: "questionmark.circle") }
-            AboutTab()
-                .tag(SettingsTab.about)
-                .tabItem { Label(String(localized: "settings.tab.about"), systemImage: "info.circle") }
+        NavigationSplitView {
+            List(selection: $selection) {
+                ForEach(Array(Self.sidebarGroups.enumerated()), id: \.offset) { index, group in
+                    Section {
+                        ForEach(group, id: \.self) { tab in
+                            Label(tab.title, systemImage: tab.symbol).tag(tab)
+                        }
+                    } header: {
+                        // Dividing lines, not headings: the groups exist to
+                        // break up a list of nine, and inventing category names
+                        // for them would add words without adding meaning.
+                        if index > 0 { Divider() }
+                    }
+                }
+            }
+            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 240)
+        } detail: {
+            ScrollView {
+                pane(for: selection)
+                    .padding(.horizontal, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .navigationTitle(selection.title)
         }
-        .frame(width: 640, height: 580)
+        .frame(minWidth: 780, idealWidth: 860, minHeight: 520, idealHeight: 640)
         // The Settings window is created once and just reordered front on
         // repeat opens (AppDelegate.showSettingsWindow), so `.onAppear`
         // alone would miss a second "jump to Help" request — this fires on
@@ -44,6 +55,21 @@ struct SettingsView: View {
         .onReceive(navigation.$pendingTab.compactMap { $0 }) { tab in
             selection = tab
             navigation.pendingTab = nil
+        }
+    }
+
+    @ViewBuilder
+    private func pane(for tab: SettingsTab) -> some View {
+        switch tab {
+        case .general:   GeneralSettingsTab()
+        case .hotkeys:   HotkeysTab()
+        case .providers: ProvidersTab()
+        case .prompts:   PromptsTab()
+        case .snippets:  SnippetsTab()
+        case .voice:     VoiceTab()
+        case .history:   HistoryTab()
+        case .help:      HelpTab()
+        case .about:     AboutTab()
         }
     }
 }
@@ -624,47 +650,46 @@ private struct ProviderRow: View {
     ///
     /// ⭐ marks the recommended default for speed.
     static let mlxPresets: [MLXPreset] = [
-        // ── 8 GB Mac and up (fastest, 2B-class, 4-bit) ──────────────────────
-        // Measured ~0.6 s warm polish, most faithful German of all presets
-        // tested (no meaning drift — a 3B model distorted meaning where this
-        // one did not, which is why size alone is a bad selection criterion).
-        MLXPreset(
-            id: "qwen35-2b-4bit",
-            label: "Qwen 3.5 2B — Fastest, faithful German ⭐ default",
-            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit",
-            downloadSize: "1.7 GB"
-        ),
-
-        // ── 16 GB Mac (more headroom, still quick) ──────────────────────────
-        MLXPreset(
-            id: "qwen35-4b-4bit",
-            label: "Qwen 3.5 4B — More quality, still small",
-            repoID: "mlx-community/Qwen3.5-4B-MLX-4bit",
-            downloadSize: "3.1 GB"
-        ),
-        // The non-Qwen option, for language breadth and vendor diversity.
-        // Note the name: the E-series uses selective activation, so "E2B"
-        // describes effective active parameters, NOT download size — this is
-        // 3.6 GB, larger than the 4B Qwen above it. Anyone sizing by the label
-        // gets it backwards.
+        // Measured 2026-09-15 on 10 real German dictation transcripts run
+        // through Tippi's own polish prompt via mlx_lm.server — same path
+        // production uses, temperature 0, warm. Scored on filler removal,
+        // German noun capitalisation, commas, self-correction, brand spelling
+        // via the custom-word list, and whether the model answered the text
+        // instead of cleaning it. Latency is the per-transcript average.
+        //
+        // ⭐ default. Gemma 4 E2B won on both axes at once — zero findings and
+        // the fastest — which is why it displaced the 2B despite being the
+        // larger download.
         MLXPreset(
             id: "gemma4-e2b",
-            label: "Gemma 4 E2B — Widest language coverage (Google)",
+            label: "Gemma 4 E2B — 0 Fehler, 0,52 s ⭐ empfohlen",
             repoID: "mlx-community/gemma-4-e2b-it-4bit",
             downloadSize: "3.6 GB"
         ),
-
-        // ── 32 GB Mac (best quality of the verified set) ────────────────────
-        // Replaces the old "⭐ premium" Qwen 2.5 14B: newer generation, and
-        // 6 GB instead of ~8 GB.
+        MLXPreset(
+            id: "qwen35-4b-4bit",
+            label: "Qwen 3.5 4B — 0 Fehler, 0,89 s",
+            repoID: "mlx-community/Qwen3.5-4B-MLX-4bit",
+            downloadSize: "3.1 GB"
+        ),
+        // Kept for 8 GB Macs and anyone who wants the smallest download, with
+        // the trade-off stated rather than hidden: it left "äh"/"halt" in,
+        // kept an abandoned clause, dropped sentence-final punctuation twice,
+        // and ignored the custom-word list where both larger models honoured
+        // it. Fine for rough notes, wrong for anything that gets sent.
+        MLXPreset(
+            id: "qwen35-2b-4bit",
+            label: "Qwen 3.5 2B — kleinster Download, 6 Fehler",
+            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit",
+            downloadSize: "1.7 GB"
+        ),
         MLXPreset(
             id: "qwen35-9b-4bit",
-            label: "Qwen 3.5 9B — Best quality ⭐ premium",
+            label: "Qwen 3.5 9B — größtes Modell, ungemessen",
             repoID: "mlx-community/Qwen3.5-9B-MLX-4bit",
             downloadSize: "6.0 GB"
         ),
     ]
-
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
@@ -1613,8 +1638,14 @@ private struct HelpTab: View {
         HelpEntry(id: "commandPalette", icon: "magnifyingglass", category: .automation,
                   title: String(localized: "settings.help.commandPaletteTitle"), body: String(localized: "settings.help.commandPaletteBody")),
 
+        HelpEntry(id: "customWords", icon: "character.book.closed", category: .snippets,
+                  title: String(localized: "settings.help.customWordsTitle"), body: String(localized: "settings.help.customWordsBody")),
+        HelpEntry(id: "espansoImport", icon: "square.and.arrow.down", category: .snippets,
+                  title: String(localized: "settings.help.espansoImportTitle"), body: String(localized: "settings.help.espansoImportBody")),
         HelpEntry(id: "snippets", icon: "text.badge.checkmark", category: .snippets,
                   title: String(localized: "settings.help.snippetsTitle"), body: String(localized: "settings.help.snippetsBody")),
+        HelpEntry(id: "localModels", icon: "cpu", category: .providers,
+                  title: String(localized: "settings.help.localModelsTitle"), body: String(localized: "settings.help.localModelsBody")),
         HelpEntry(id: "emoji", icon: "face.smiling", category: .snippets,
                   title: String(localized: "settings.help.emojiTitle"), body: String(localized: "settings.help.emojiBody")),
 
@@ -2085,6 +2116,7 @@ private struct VoiceTab: View {
                             DictationSettings.postProcessPrompt = DictationSettings.defaultPostProcessPrompt
                         }
                         .controlSize(.small)
+
                     }
                 }
             }

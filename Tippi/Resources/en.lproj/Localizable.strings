@@ -154,10 +154,12 @@
 "settings.tab.hotkeys" = "Hotkeys";
 "settings.tab.providers" = "Providers";
 "settings.tab.prompts" = "Prompts";
-"settings.tab.snippets" = "Snippets";
+"settings.tab.snippets" = "Words & Snippets";
 "settings.tab.about" = "About";
 
 "settings.snippets.enabled" = "Enable text snippets";
+"settings.snippets.section.words" = "Custom words";
+"settings.snippets.section.snippets" = "Snippets";
 "settings.snippets.enabledHint" = "Type a shortcut anywhere on your Mac — it expands instantly into the stored text.";
 "settings.snippets.prefix" = "Default prefix";
 "settings.snippets.emoji.section" = "Emoji";
@@ -400,6 +402,12 @@
 "settings.help.noResults" = "No results.";
 "settings.help.selectionPopupTitle" = "Auto-Popup on Text Selection";
 "settings.help.selectionPopupBody" = "Like PopClip: select text anywhere and a small bar with the local quick actions appears right next to it automatically — no hotkey needed.\n\nEnable: Settings → General → \"Auto-popup on text selection\". Off by default, since otherwise it would appear for every text selection system-wide.\n\nPosition is configurable: below, above, right, or left of the selection — if another app (Safari's \"Look Up\", Pages' formatting bar, …) already shows its own popup in the same spot, just move Tippi's out of the way.\n\nClicking an icon applies the action immediately and replaces the selection — the exact same actions as the hotkey popup (uppercase/lowercase, underscore, convert umlauts, brackets, character/word count, …).\n\nSeparated by a divider at the end: the translate icon — opens the Translate Quick Panel with the selection pre-filled instead of replacing it directly.\n\nThe bar dismisses itself when you click elsewhere, press Escape, or run an action.";
+"settings.help.customWordsTitle" = "Custom words";
+"settings.help.customWordsBody" = "Under “Words & Snippets → Custom words” you add terms transcription keeps getting wrong — brands, product and proper names, jargon. Tippi enforces your spelling wherever the term appears.\n\nImportant: the list never inserts words that were not spoken, and never alters other words to resemble your entries. It only corrects the spelling and capitalisation of the terms you listed.\n\nWhy it is needed: models hear the name correctly but normalise its spelling to whatever looks like an ordinary word — CINEWEB becomes CineWeb. No model can guess a house spelling, it has to be told.\n\nThe list takes effect during AI cleanup of a dictation. Weaker models do not always obey it: measured on 2026-09-15, Gemma 4 E2B and Qwen 3.5 4B honoured it reliably, Qwen 3.5 2B did not.";
+"settings.help.espansoImportTitle" = "Importing Espanso snippets";
+"settings.help.espansoImportBody" = "Tippi can either just read Espanso match files or take them over for good. “Import” copies the snippets into Tippi's own store, so they survive path changes and no longer depend on Espanso.\n\nAfter importing, Tippi stops reading that file: import replaces the reference, deliberately never both at once.\n\nSnippets without shell commands are active immediately. Snippets with a shell command ask once — per snippet, showing the exact command. That approval is cryptographically bound to that command and re-checked before every expansion. Change the command and the approval is void, so Tippi asks again. An earlier approval of the whole file is not carried over.";
+"settings.help.localModelsTitle" = "Which local model for dictation?";
+"settings.help.localModelsBody" = "The MLX models offered in Settings were measured on 2026-09-15 against real German dictations, using Tippi's own cleanup prompt and the same path the app uses in production.\n\n• Gemma 4 E2B (3.6 GB) — 0 findings, 0.52 s. Recommended, and the default.\n• Qwen 3.5 4B (3.1 GB) — 0 findings, 0.89 s.\n• Qwen 3.5 2B (1.7 GB) — smallest download, but 6 findings: left filler words in, kept abandoned clauses, dropped sentence punctuation and ignored the custom-word list. Fine for notes, wrong for anything you send.\n• Qwen 3.5 9B (6.0 GB) — largest model, not measured.\n\nScoring covered filler removal, German noun capitalisation, commas, self-corrections, brand spelling, and whether the model cleaned the text instead of replying to it.\n\nTippi does not download these models itself — the local MLX server fetches them from HuggingFace on first use. Progress is shown in Settings, the download happens once and is cached afterwards.";
 "settings.help.snippetsTitle" = "Text Snippets";
 "settings.help.snippetsBody" = "Type a shortcut anywhere — Tippi replaces it instantly with the stored text. Like Espanso, but built in.\n\nEnable: Snippets tab → \"Enable text snippets\". Needs Accessibility permission (System Settings → Privacy & Security, then enable Tippi in the accessibility list (renamed on macOS 26+)).\n\nCreate your own snippet — click \"New snippet\", enter a trigger and replacement text, done. Example: \":mlg\" → \"Best regards\\nMichael\".\n\nDynamic snippet (with the current date) — in the editor, click \"Insert Variable\", pick e.g. \"Weekday this week\" → Thursday → format \"DD. Month\". Tippi inserts a placeholder automatically and recalculates the date live every single time — never a frozen date.\n\nExample – the \":nl\" cinema-week snippet: combines three variables into one text — this week's Thursday, Thursday + 6 days, current year. Result: \"Cinema week from Sep 10 to Sep 16, 2026\", automatically current every week, without you ever touching it again.\n\nImporting Espanso files — existing Espanso match files (~/Library/Application Support/espanso/match/) are detected and shown automatically (read-only, the file stays the source of truth). The first time a file loads, Tippi asks for one-time approval, showing exactly what the file contains before anything goes live.\n\n⚠️ If an already-approved file's content changes later, Tippi asks again — a silently altered file can never hijack an existing trigger unnoticed.";
 "settings.help.emojiTitle" = "Inserting emoji";
@@ -534,6 +542,11 @@
 "settings.voice.dictation.postProcess.body" = "After Whisper transcribes your dictation, Tippi sends the raw text through your active LLM provider to remove language-aware filler words (German/English/Spanish/French/Japanese, without confusing them with real words like English \"also\"), remove hesitation repeats, add punctuation and correct capitalization (including German nouns), and fix obvious self-corrections. Only runs on inputs ≥ 50 characters (shorter texts do not benefit). If the AI responds conversationally instead of cleaning, the raw transcript is inserted. Adds 1–3 s of latency — dictation never breaks.";
 "settings.voice.dictation.postProcess.promptLabel" = "Polishing prompt (used as system prompt):";
 "settings.voice.dictation.postProcess.reset" = "Reset to default";
+"settings.voice.dictation.customWords.label" = "Custom words";
+"settings.voice.dictation.customWords.hint" = "Terms transcription keeps spelling wrong — brands, product and proper names, jargon. Tippi enforces exactly this spelling wherever the term appears. It never inserts new words and never changes other words to match.";
+"settings.voice.dictation.customWords.empty" = "No custom words";
+"settings.voice.dictation.customWords.placeholder" = "Word, spelled the way you want it";
+"settings.voice.dictation.customWords.add" = "Add";
 "settings.voice.dictation.postProcess.providerLabel" = "Polish via:";
 "settings.voice.dictation.postProcess.providerActive" = "Use active provider";
 "settings.providers.customModel" = "Custom…";

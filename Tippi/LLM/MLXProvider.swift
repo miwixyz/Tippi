@@ -3,7 +3,7 @@ import Foundation
 struct MLXProvider: LLMProvider {
     let id           = "mlx"
     let displayName  = "MLX (local)"
-    let defaultModel = "mlx-community/Qwen3.5-2B-MLX-4bit"
+    let defaultModel = "mlx-community/gemma-4-e2b-it-4bit"
     let requiresAPIKey = false
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {

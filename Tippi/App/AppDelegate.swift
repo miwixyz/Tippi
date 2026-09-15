@@ -766,8 +766,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             let window = NSWindow(contentViewController: hostingController)
             window.title = String(localized: "settings.window.title")
-            window.setContentSize(NSSize(width: 640, height: 580))
-            window.styleMask = [.titled, .closable]
+            window.setContentSize(NSSize(width: 860, height: 640))
+            // .resizable was missing, which is why a pane that outgrew 640×580
+            // simply scrolled inside a box the user could not enlarge. The
+            // sidebar layout assumes a growable window; the minimum comes from
+            // SettingsView's own frame, so it cannot be shrunk into illegibility.
+            window.styleMask = [.titled, .closable, .resizable]
+            window.setFrameAutosaveName("TippiSettingsWindow")
             window.isReleasedWhenClosed = false
             // Default (solid) window background on purpose — see
             // NotesWindowController for the measurement: a clear window plus a
