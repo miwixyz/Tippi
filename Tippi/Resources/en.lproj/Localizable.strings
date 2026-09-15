@@ -362,15 +362,15 @@
 "settings.providers.hint.nebius" = "Get a key at studio.nebius.ai. 100% EU data residency (Amsterdam) — GDPR-compliant. Very competitive pricing (~$0.10–0.30 / 1M tokens). Hosts Llama 3.x, Qwen, DeepSeek. Default: Llama 3.3 70B fast.";
 "settings.providers.hint.openrouter" = "Get a key at openrouter.ai. One account for 300+ models across every major vendor (OpenAI, Anthropic, Google, Meta, xAI, DeepSeek, …) — enter the model as \"vendor/model\", e.g. \"openai/gpt-4o-mini\". Pass-through pricing (no markup up to 1M requests/month, 5% beyond). Doesn't automatically solve the \"model id went stale\" problem — OpenRouter inherits whatever renames the underlying vendor makes.";
 "settings.providers.hint.ollama" = "Install Ollama from ollama.com. Pull a model first: `ollama pull llama3.3`. Runs locally, no key, no cloud.";
-"settings.providers.hint.mlx" = "Tippi starts mlx_lm.server automatically. Default: Llama 3.2 3B Fast/Balanced for lower latency; pick 8B/14B presets when quality matters more than speed. No cloud, no key.";
+"settings.providers.hint.mlx" = "Tippi starts mlx_lm.server automatically. The default is Gemma 4 E2B — in testing it was both the most accurate and the fastest. Qwen 3.5 2B downloads the least but makes more mistakes. What exactly was measured is in Help under \"Which local model for dictation?\". No cloud, no key.";
 "settings.providers.mlx.port" = "Port";
 "settings.providers.mlx.custom" = "Custom…";
 "settings.providers.mlx.start" = "Start server";
 "settings.providers.mlx.downloading" = "Downloading model (one time, then cached)";
-"settings.providers.mlx.preset.gemma4-e2b" = "Gemma 4 E2B — 0 findings, 0.52 s ⭐ recommended";
-"settings.providers.mlx.preset.qwen35-4b-4bit" = "Qwen 3.5 4B — 0 findings, 0.89 s";
-"settings.providers.mlx.preset.qwen35-2b-4bit" = "Qwen 3.5 2B — smallest download, 6 findings";
-"settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — largest model, unmeasured";
+"settings.providers.mlx.preset.gemma4-e2b" = "Gemma 4 E2B — clean across 10 test dictations, 0.52 s ⭐ recommended";
+"settings.providers.mlx.preset.qwen35-4b-4bit" = "Qwen 3.5 4B — clean, slightly slower (0.89 s)";
+"settings.providers.mlx.preset.qwen35-2b-4bit" = "Qwen 3.5 2B — smallest download, 6 mistakes across 10 test dictations";
+"settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — largest model, not tested";
 "settings.providers.mlx.stop" = "Stop server";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
 "settings.about.acknowledgements" = "Speech-to-text by whisper.cpp (MIT). Optional Parakeet engine by FluidAudio (Apache 2.0) and the NVIDIA Parakeet TDT model (CC-BY-4.0). Auto-updates by Sparkle. See NOTICES.md.";
@@ -455,7 +455,13 @@ Two files may define the same trigger. Only one of them takes effect; the other 
 "settings.help.pickModelTitle" = "Which model for what? — recommendations";
 "settings.help.pickModelBody" = "There is no best model, only fitting ones. Three rules of thumb:\n\n1) Short tasks local, long text in the cloud.\nA small local model (MLX Qwen 3.5 2B, the default) polishes dictation in ~0.6 s and is perfectly adequate for spelling, shortening and bullet points. On a long, fact-dense text — a multi-paragraph business email with names, prices and links — a 2B model hits its ceiling and may hand the text back unchanged. That's exactly what the per-prompt provider override (Settings → Prompts) and the \"Switch provider\" button on the result are for.\n\n2) Not all German is equal.\nMistral (Paris) and Claude are noticeably more accurate on German prose than comparably priced alternatives — Mistral was trained with European languages as a first-class target, not as translation garnish. For German correspondence those are the first two addresses. Nebius and Scaleway also host in the EU (Amsterdam/Paris) and are the pick when data residency matters more than the last nuance.\n\n3) Reasoning models are usually the wrong choice here.\nModels with an internal thinking phase (the gpt-5 family, Qwen3.x \"thinking\") produce a long chain of thought before any text appears. For \"fix this sentence\" that costs seconds with no quality gain. The model picker marks the fastest non-reasoning option with ⭐ — when in doubt, take that one.\n\nA concrete starting point: dictation polish on Groq (Llama 3.1 8B Instant, sub-second) or locally on MLX. Text rewriting and email replies on Claude Haiku 4.5 or Mistral Small. Anything confidential on MLX or Ollama — then not a single character leaves your Mac.";
 "settings.help.mlxTitle" = "MLX — local AI on Apple Silicon";
-"settings.help.mlxBody" = "MLX runs AI models directly on your Mac — no cloud, no API key, no data leaves your device. It's roughly 1.5–2× faster than Ollama on Apple Silicon.\n\nOne-time setup: pick MLX in Settings → Providers and click \"Install MLX…\". Tippi handles the rest — no Terminal needed.\n\nThe default is Qwen 3.5 2B (4-bit) — the fastest preset and also the most faithful for German polish (no meaning drift). Choose Llama 3.2 3B, Qwen 7B, or Qwen 14B only if you prefer a different model. Tippi caps local response length to avoid slow runaway generations and shows the actual generation time in the preview badge.\n\nWhen MLX is your default provider, Tippi pre-warms the server on app launch so your first transformation is faster.";
+"settings.help.mlxBody" = "MLX runs AI models directly on your Mac — no cloud, no API key, no data leaves your device. It's roughly 1.5–2× faster than Ollama on Apple Silicon.
+
+One-time setup: pick MLX in Settings → Providers and click \"Install MLX…\". Tippi handles the rest — no Terminal needed.
+
+The default is Gemma 4 E2B. Measured against real German dictations it was both the most accurate and the fastest; which four models are offered and what they were judged on is under \"Which local model for dictation?\". Tippi caps local response length to avoid slow runaway generations and shows the actual generation time in the preview badge.
+
+When MLX is your default provider, Tippi pre-warms the server on app launch so your first transformation is faster.";
 "settings.help.troubleTitle" = "Troubleshooting";
 
 /* Voice Input */

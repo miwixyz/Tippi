@@ -363,15 +363,15 @@
 "settings.providers.hint.nebius" = "Key bei studio.nebius.ai. 100 % EU-Datenhaltung (Amsterdam) — DSGVO-konform. Sehr günstig (~$0,10–0,30 / 1M Token). Hostet Llama 3.x, Qwen, DeepSeek. Standard: Llama 3.3 70B fast.";
 "settings.providers.hint.openrouter" = "Key bei openrouter.ai. Ein Zugang für 300+ Modelle aller großen Anbieter (OpenAI, Anthropic, Google, Meta, xAI, DeepSeek, …) — Modellname im Format „anbieter/modell“ eintragen, z. B. „openai/gpt-4o-mini“. Kosten = Anbieter-Originalpreis ohne Aufschlag bis 1 Mio. Anfragen/Monat, danach 5 %. Löst nicht automatisch das „Modell-ID veraltet“-Problem — OpenRouter erbt Namensänderungen der Original-Anbieter.";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
-"settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Standard: Llama 3.2 3B Fast/Balanced für niedrigere Latenz; 8B/14B-Presets wählen, wenn Qualität wichtiger ist als Tempo. Keine Cloud, kein Key.";
+"settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Voreingestellt ist Gemma 4 E2B — es war im Test sowohl das genaueste als auch das schnellste Modell. Qwen 3.5 2B lädt am wenigsten herunter, macht dafür mehr Fehler. Was genau gemessen wurde, steht in der Hilfe unter „Welches lokale Modell fürs Diktat?“. Keine Cloud, kein Schlüssel.";
 "settings.providers.mlx.port" = "Port";
 "settings.providers.mlx.custom" = "Eigenes Modell…";
 "settings.providers.mlx.start" = "Server starten";
 "settings.providers.mlx.downloading" = "Modell wird geladen (einmalig, wird zwischengespeichert)";
-"settings.providers.mlx.preset.gemma4-e2b" = "Gemma 4 E2B — 0 Fehler, 0,52 s ⭐ empfohlen";
-"settings.providers.mlx.preset.qwen35-4b-4bit" = "Qwen 3.5 4B — 0 Fehler, 0,89 s";
-"settings.providers.mlx.preset.qwen35-2b-4bit" = "Qwen 3.5 2B — kleinster Download, 6 Fehler";
-"settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — größtes Modell, ungemessen";
+"settings.providers.mlx.preset.gemma4-e2b" = "Gemma 4 E2B — fehlerfrei bei 10 Testdiktaten, 0,52 s ⭐ empfohlen";
+"settings.providers.mlx.preset.qwen35-4b-4bit" = "Qwen 3.5 4B — fehlerfrei, etwas langsamer (0,89 s)";
+"settings.providers.mlx.preset.qwen35-2b-4bit" = "Qwen 3.5 2B — kleinster Download, 6 Fehler bei 10 Testdiktaten";
+"settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — größtes Modell, nicht getestet";
 "settings.providers.mlx.stop" = "Server stoppen";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT-Lizenz";
 "settings.about.acknowledgements" = "Spracherkennung via whisper.cpp (MIT). Optionale Parakeet-Engine via FluidAudio (Apache 2.0) und dem NVIDIA-Parakeet-TDT-Modell (CC-BY-4.0). Auto-Updates via Sparkle. Siehe NOTICES.md.";
@@ -456,7 +456,13 @@ Zwei Dateien dürfen dasselbe Kürzel definieren. Wirksam ist dann nur eines; da
 "settings.help.pickModelTitle" = "Welches Modell wofür? — Empfehlungen";
 "settings.help.pickModelBody" = "Es gibt kein bestes Modell, nur passende. Drei Faustregeln:\n\n1) Kurze Aufgaben lokal, lange Texte in der Cloud.\nEin kleines lokales Modell (MLX Qwen 3.5 2B, Standard) glättet Diktate in ~0,6 s und ist für Rechtschreibung, Kürzen und Stichpunkte völlig ausreichend. Bei einem langen, faktendichten Text — mehrseitige Geschäfts-E-Mail mit Namen, Preisen, Links — stößt ein 2B-Modell an seine Grenze und gibt den Text im Zweifel unverändert zurück. Genau dafür gibt es den Anbieter-Override pro Prompt (Einstellungen → Prompts) und den „Anbieter wechseln\"-Knopf direkt am Ergebnis.\n\n2) Deutsch ist nicht gleich Deutsch.\nMistral (Paris) und Claude sind bei deutscher Prosa spürbar treffsicherer als vergleichbar teure Alternativen — Mistral wurde mit europäischen Sprachen als Erstklasse-Ziel trainiert, nicht als Übersetzungs-Beiwerk. Für rein deutsche Korrespondenz sind das die beiden ersten Adressen. Nebius und Scaleway hosten ebenfalls in der EU (Amsterdam/Paris) und sind die Wahl, wenn Datenhaltung wichtiger ist als die letzte Nuance.\n\n3) Reasoning-Modelle sind hier meist die falsche Wahl.\nModelle mit interner Denkphase (gpt-5-Familie, Qwen3.x „thinking\") produzieren erst einen längeren Gedankengang, bevor Text kommt. Für „korrigiere diesen Satz\" kostet das Sekunden ohne Qualitätsgewinn. Die Modell-Auswahl markiert die jeweils schnellste, nicht-denkende Option mit ⭐ — im Zweifel die nehmen.\n\nKonkreter Startpunkt: Diktat-Glättung auf Groq (Llama 3.1 8B Instant, unter 1 s) oder lokal auf MLX. Textumbau und E-Mail-Antworten auf Claude Haiku 4.5 oder Mistral Small. Alles Vertrauliche auf MLX oder Ollama — dann verlässt kein Zeichen deinen Mac.";
 "settings.help.mlxTitle" = "MLX — lokale KI auf Apple Silicon";
-"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Key, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.\n\nEinmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.\n\nStandard ist Qwen 3.5 2B (4-bit) — das schnellste Preset und zugleich das treueste bei deutscher Nachbearbeitung (keine Sinn-Verfälschung). Wähle Llama 3.2 3B, Qwen 7B oder Qwen 14B nur, wenn du bewusst ein anderes Modell möchtest. Tippi begrenzt lokale Antwortlängen gegen langsame Ausreißer und zeigt die echte Generierungszeit im Vorschau-Badge.\n\nWenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.";
+"settings.help.mlxBody" = "MLX führt KI-Modelle direkt auf deinem Mac aus — keine Cloud, kein API-Schlüssel, keine Daten verlassen dein Gerät. Auf Apple Silicon ungefähr 1,5–2× schneller als Ollama.
+
+Einmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren…“ klicken. Tippi erledigt den Rest — kein Terminal nötig.
+
+Voreingestellt ist Gemma 4 E2B. Es war im Vergleich an echten deutschen Diktaten sowohl das genaueste als auch das schnellste Modell; welche vier Modelle zur Wahl stehen und woran sie gemessen wurden, steht unter „Welches lokale Modell fürs Diktat?“. Tippi begrenzt lokale Antwortlängen gegen langsame Ausreißer und zeigt die echte Generierungszeit im Vorschau-Badge.
+
+Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 
 /* Voice Input */

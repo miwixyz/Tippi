@@ -222,6 +222,44 @@ if [ -f docs/index.html ]; then
 fi
 ok "$marker_checked marketing surface(s) checked"
 
+# ── MLX model names in user-facing strings ────────────────────────────────────
+# Twice on 2026-09-15 the MLX preset list was replaced and the surrounding prose
+# was not: the provider hint still named "Llama 3.2 3B" as the default and
+# recommended "8B/14B presets" that had been removed hours earlier. Every other
+# check here passed — the version and all counts were correct, only the
+# sentences were false.
+#
+# Scope is deliberately narrow: only strings that describe MLX itself. Cloud
+# provider hints legitimately name Llama (Scaleway and Nebius host it), and the
+# general "which model" help discusses models Tippi does not bundle. A first
+# draft of this check flagged all six of those and would have had someone
+# "correct" accurate text — the failure mode CLAUDE.md warns about.
+printf '\n▶ MLX model names in user-facing strings\n'
+preset_repos=$(grep -oE 'mlx-community/[A-Za-z0-9._-]+' Tippi/UI/SettingsView.swift | sort -u || true)
+if [ -z "$preset_repos" ]; then
+  bad "found no mlx-community preset IDs in SettingsView.swift — has the preset list moved?"
+else
+  preset_lc=$(printf '%s' "$preset_repos" | tr '[:upper:]' '[:lower:]')
+  mlx_checked=0
+  for strings_file in Tippi/Resources/*.lproj/Localizable.strings; do
+    lang=$(basename "$(dirname "$strings_file")")
+    mlx_lines=$(grep -E '^"(settings\.providers\.(mlx\.|hint\.mlx)|settings\.help\.(mlx|localModels))' "$strings_file" || true)
+    [ -z "$mlx_lines" ] && continue
+    while IFS= read -r mention; do
+      [ -z "$mention" ] && continue
+      mlx_checked=$((mlx_checked + 1))
+      squashed=$(printf '%s' "$mention" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
+      dashed=$(printf '%s' "$mention" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+      if ! printf '%s' "$preset_lc" | grep -qE "${squashed}|${dashed}"; then
+        bad "$lang describes MLX with \"$mention\", which is not in the SettingsView preset list"
+      fi
+    done <<EOF
+$(printf '%s' "$mlx_lines" | grep -ohE '(Llama|Qwen|Gemma|Phi|Ministral|Mistral)[ -][0-9]+(\.[0-9]+)?' | sort -u || true)
+EOF
+  done
+  ok "$mlx_checked MLX model mention(s) checked against the preset list"
+fi
+
 # ── Result ────────────────────────────────────────────────────────────────────
 printf '\n'
 if [ "$FAILURES" -eq 0 ]; then
