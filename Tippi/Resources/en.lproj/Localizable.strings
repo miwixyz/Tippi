@@ -154,7 +154,7 @@
 "settings.tab.hotkeys" = "Hotkeys";
 "settings.tab.providers" = "Providers";
 "settings.tab.prompts" = "Prompts";
-"settings.tab.snippets" = "Words & Snippets";
+"settings.tab.snippets" = "Dictionary & Snippets";
 "settings.tab.about" = "About";
 
 "settings.snippets.enabled" = "Enable text snippets";
@@ -171,6 +171,7 @@
 "settings.snippets.emoticon.hint" = "Turns common text emoticons like :-) ;-) :( or <3 into emoji as you type. When disabled, the : picker and search remain exactly as they are.\n\nOnly fires when the emoticon follows a space or the start of a line — so code like a[:(b)] or http:// is left alone.";
 "settings.snippets.appManaged" = "Your snippets";
 "settings.snippets.empty" = "No snippets yet.";
+"settings.snippets.loadError" = "The snippet file could not be read. Saving is disabled so the existing contents are not overwritten. A copy was kept alongside it with a “.unreadable-…” suffix.";
 "settings.snippets.new" = "New snippet";
 "settings.snippets.reference" = "Espanso files (source)";
 "settings.snippets.importedEmpty" = "No Espanso match files found.";
@@ -181,6 +182,7 @@
 "settings.snippets.importedSnippetsEmpty" = "Nothing imported yet — import a file above to copy its snippets into Tippi's own store.";
 "settings.snippets.shellPending" = "Needs approval";
 "settings.snippets.shellApproved" = "Approved";
+"settings.snippets.shellUnverifiable" = "Approval no longer verifiable — approve again";
 "settings.snippets.editor.title" = "Snippet";
 "settings.snippets.editor.trigger" = "Trigger (e.g. :nl)";
 "settings.snippets.editor.replacement" = "Replacement text";
@@ -214,6 +216,7 @@
 "settings.snippets.variable.insert" = "Insert";
 "settings.snippets.shellApproval.decline" = "Decline";
 "settings.snippets.shellApproval.approve" = "Approve";
+"settings.snippets.approvalFailed" = "Approval failed: the key could not be stored in the Keychain. The snippet stays inactive.";
 "settings.snippets.shellSnippetApproval.title" = "Snippet runs a shell command";
 "settings.snippets.shellSnippetApproval.body" = "Trigger %@ will run the following command when typed:";
 
@@ -364,6 +367,10 @@
 "settings.providers.mlx.custom" = "Custom…";
 "settings.providers.mlx.start" = "Start server";
 "settings.providers.mlx.downloading" = "Downloading model (one time, then cached)";
+"settings.providers.mlx.preset.gemma4-e2b" = "Gemma 4 E2B — 0 findings, 0.52 s ⭐ recommended";
+"settings.providers.mlx.preset.qwen35-4b-4bit" = "Qwen 3.5 4B — 0 findings, 0.89 s";
+"settings.providers.mlx.preset.qwen35-2b-4bit" = "Qwen 3.5 2B — smallest download, 6 findings";
+"settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — largest model, unmeasured";
 "settings.providers.mlx.stop" = "Stop server";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
 "settings.about.acknowledgements" = "Speech-to-text by whisper.cpp (MIT). Optional Parakeet engine by FluidAudio (Apache 2.0) and the NVIDIA Parakeet TDT model (CC-BY-4.0). Auto-updates by Sparkle. See NOTICES.md.";
@@ -403,7 +410,7 @@
 "settings.help.selectionPopupTitle" = "Auto-Popup on Text Selection";
 "settings.help.selectionPopupBody" = "Like PopClip: select text anywhere and a small bar with the local quick actions appears right next to it automatically — no hotkey needed.\n\nEnable: Settings → General → \"Auto-popup on text selection\". Off by default, since otherwise it would appear for every text selection system-wide.\n\nPosition is configurable: below, above, right, or left of the selection — if another app (Safari's \"Look Up\", Pages' formatting bar, …) already shows its own popup in the same spot, just move Tippi's out of the way.\n\nClicking an icon applies the action immediately and replaces the selection — the exact same actions as the hotkey popup (uppercase/lowercase, underscore, convert umlauts, brackets, character/word count, …).\n\nSeparated by a divider at the end: the translate icon — opens the Translate Quick Panel with the selection pre-filled instead of replacing it directly.\n\nThe bar dismisses itself when you click elsewhere, press Escape, or run an action.";
 "settings.help.customWordsTitle" = "Custom words";
-"settings.help.customWordsBody" = "Under “Words & Snippets → Custom words” you add terms transcription keeps getting wrong — brands, product and proper names, jargon. Tippi enforces your spelling wherever the term appears.\n\nImportant: the list never inserts words that were not spoken, and never alters other words to resemble your entries. It only corrects the spelling and capitalisation of the terms you listed.\n\nWhy it is needed: models hear the name correctly but normalise its spelling to whatever looks like an ordinary word — CINEWEB becomes CineWeb. No model can guess a house spelling, it has to be told.\n\nThe list takes effect during AI cleanup of a dictation. Weaker models do not always obey it: measured on 2026-09-15, Gemma 4 E2B and Qwen 3.5 4B honoured it reliably, Qwen 3.5 2B did not.";
+"settings.help.customWordsBody" = "Under “Dictionary & Snippets → Custom words” you add terms transcription keeps getting wrong — brands, product and proper names, jargon. Tippi enforces your spelling wherever the term appears.\n\nImportant: the list never inserts words that were not spoken, and never alters other words to resemble your entries. It only corrects the spelling and capitalisation of the terms you listed.\n\nWhy it is needed: models hear the name correctly but normalise its spelling to whatever looks like an ordinary word — CINEWEB becomes CineWeb. No model can guess a house spelling, it has to be told.\n\nThe list takes effect during AI cleanup of a dictation. Weaker models do not always obey it: measured on 2026-09-15, Gemma 4 E2B and Qwen 3.5 4B honoured it reliably, Qwen 3.5 2B did not.";
 "settings.help.espansoImportTitle" = "Importing Espanso snippets";
 "settings.help.espansoImportBody" = "Tippi can either just read Espanso match files or take them over for good. “Import” copies the snippets into Tippi's own store, so they survive path changes and no longer depend on Espanso.\n\nAfter importing, Tippi stops reading that file: import replaces the reference, deliberately never both at once.\n\nSnippets without shell commands are active immediately. Snippets with a shell command ask once — per snippet, showing the exact command. That approval is cryptographically bound to that command and re-checked before every expansion. Change the command and the approval is void, so Tippi asks again. An earlier approval of the whole file is not carried over.";
 "settings.help.localModelsTitle" = "Which local model for dictation?";

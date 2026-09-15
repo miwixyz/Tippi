@@ -40,10 +40,29 @@ struct SettingsView: View {
             }
             .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 240)
         } detail: {
-            ScrollView {
-                pane(for: selection)
-                    .padding(.horizontal, 4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            // Every pane stays alive; only visibility changes.
+            //
+            // A `switch` here reads better but destroys the unselected panes,
+            // and that broke two things the old TabView had guaranteed. A
+            // Whisper model download (hundreds of MB) is owned by VoiceTab's
+            // @StateObject — leaving the pane deallocated it, the transfer ran
+            // to completion anyway and the finished file was deleted in the
+            // completion handler because `self` was gone: no progress, no
+            // error, just "not downloaded". And ProviderRow deliberately keeps
+            // unsaved edits in @State, so an API key pasted but not yet saved
+            // was silently reverted by navigating away and back.
+            //
+            // Panes are cheap; the panes with real work in them are not
+            // reconstructible. Keeping them mounted restores the old contract.
+            ZStack {
+                ForEach(SettingsTab.allCases, id: \.self) { tab in
+                    pane(for: tab)
+                        .padding(.horizontal, 4)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .opacity(tab == selection ? 1 : 0)
+                        .allowsHitTesting(tab == selection)
+                        .accessibilityHidden(tab != selection)
+                }
             }
             .navigationTitle(selection.title)
         }
@@ -662,13 +681,13 @@ private struct ProviderRow: View {
         // larger download.
         MLXPreset(
             id: "gemma4-e2b",
-            label: "Gemma 4 E2B — 0 Fehler, 0,52 s ⭐ empfohlen",
+            label: String(localized: "settings.providers.mlx.preset.gemma4-e2b"),
             repoID: "mlx-community/gemma-4-e2b-it-4bit",
             downloadSize: "3.6 GB"
         ),
         MLXPreset(
             id: "qwen35-4b-4bit",
-            label: "Qwen 3.5 4B — 0 Fehler, 0,89 s",
+            label: String(localized: "settings.providers.mlx.preset.qwen35-4b-4bit"),
             repoID: "mlx-community/Qwen3.5-4B-MLX-4bit",
             downloadSize: "3.1 GB"
         ),
@@ -679,13 +698,13 @@ private struct ProviderRow: View {
         // it. Fine for rough notes, wrong for anything that gets sent.
         MLXPreset(
             id: "qwen35-2b-4bit",
-            label: "Qwen 3.5 2B — kleinster Download, 6 Fehler",
+            label: String(localized: "settings.providers.mlx.preset.qwen35-2b-4bit"),
             repoID: "mlx-community/Qwen3.5-2B-MLX-4bit",
             downloadSize: "1.7 GB"
         ),
         MLXPreset(
             id: "qwen35-9b-4bit",
-            label: "Qwen 3.5 9B — größtes Modell, ungemessen",
+            label: String(localized: "settings.providers.mlx.preset.qwen35-9b-4bit"),
             repoID: "mlx-community/Qwen3.5-9B-MLX-4bit",
             downloadSize: "6.0 GB"
         ),

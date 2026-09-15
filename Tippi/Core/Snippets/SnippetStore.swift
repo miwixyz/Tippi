@@ -153,16 +153,43 @@ final class SnippetStore: ObservableObject {
         tippiSupportDirectory.appendingPathComponent(Keys.appSnippetsFile)
     }
 
+    /// Set when the snippet file exists but could not be read or decoded.
+    /// Blocks saving, because an empty in-memory list must never be written
+    /// over a file whose contents we simply failed to parse.
+    @Published private(set) var appSnippetsLoadError: String?
+
     private func loadAppSnippets() {
-        guard let data = try? Data(contentsOf: appSnippetsURL),
-              let decoded = try? JSONDecoder().decode([AppSnippet].self, from: data) else {
+        // "File is absent" and "file is unreadable" are different situations
+        // and used to collapse into the same empty list. That turned a parse
+        // failure into permanent data loss: the list came up empty with no
+        // message, the user re-created a snippet, and the next save wrote the
+        // empty array over everything that was still on disk.
+        guard FileManager.default.fileExists(atPath: appSnippetsURL.path) else {
             appSnippets = []
+            appSnippetsLoadError = nil
             return
         }
-        appSnippets = decoded
+        do {
+            let data = try Data(contentsOf: appSnippetsURL)
+            appSnippets = try JSONDecoder().decode([AppSnippet].self, from: data)
+            appSnippetsLoadError = nil
+        } catch {
+            // Keep the file, keep the list empty, and refuse to save until the
+            // user has dealt with it. A copy is put aside so the contents stay
+            // recoverable by hand even if something later overwrites the file.
+            appSnippets = []
+            appSnippetsLoadError = error.localizedDescription
+            storeLog.error("could not read \(Keys.appSnippetsFile, privacy: .public): \(error.localizedDescription, privacy: .public) — saving is disabled until this is resolved")
+            let backup = appSnippetsURL.appendingPathExtension("unreadable-\(Int(Date().timeIntervalSince1970))")
+            try? FileManager.default.copyItem(at: appSnippetsURL, to: backup)
+        }
     }
 
     private func saveAppSnippets() {
+        guard appSnippetsLoadError == nil else {
+            storeLog.error("refusing to save app snippets: the existing file could not be read, writing now would destroy it")
+            return
+        }
         guard let data = try? JSONEncoder().encode(appSnippets) else { return }
         try? data.write(to: appSnippetsURL, options: .atomic)
     }
@@ -336,9 +363,26 @@ final class SnippetStore: ObservableObject {
     ///   is the one rule this whole feature exists to enforce; re-import is
     ///   the exact laundering path the design doc calls out.
     func importFile(_ file: LoadedEspansoFile) {
+        // First-wins inside one file, matching how the reference path resolves
+        // it (`matches.first(where:)` in `action(forTrigger:)`). The previous
+        // last-wins behaviour meant a file containing the same trigger twice
+        // expanded to one thing while referenced and to the other after being
+        // imported — the meaning of a snippet changed through an action sold as
+        // a change of storage location.
+        var seenInThisFile = Set<String>()
         for match in file.matchFile.matches {
-            let candidate = ImportedSnippet(triggers: match.triggers, replace: match.replace, vars: match.vars)
-            if let idx = importedSnippets.firstIndex(where: { $0.trigger == candidate.trigger }) {
+            let candidate = ImportedSnippet(
+                triggers: match.triggers, replace: match.replace,
+                vars: match.vars, sourcePath: file.id
+            )
+            guard seenInThisFile.insert(candidate.trigger).inserted else {
+                storeLog.error("\(file.url.lastPathComponent, privacy: .public) defines '\(candidate.trigger, privacy: .public)' more than once — keeping the first, as the referenced path does")
+                continue
+            }
+            // Matched per source file, not globally: Espanso allows two files
+            // to define the same trigger, and silently overwriting one with the
+            // other loses a snippet the user never asked to remove.
+            if let idx = importedSnippets.firstIndex(where: { $0.trigger == candidate.trigger && $0.sourcePath == file.id }) {
                 let existing = importedSnippets[idx]
                 if existing.replace != candidate.replace || existing.vars != candidate.vars || existing.triggers != candidate.triggers {
                     importedSnippets[idx] = candidate
@@ -359,12 +403,20 @@ final class SnippetStore: ObservableObject {
     /// Signs the snippet's current (trigger, shell-command) pair and stores
     /// the resulting MAC. Fails closed and visibly: no Keychain key means no
     /// approval is recorded, not a silent no-op that looks like success.
+    /// Set when signing an approval failed. Surfaced in the consent sheet —
+    /// the previous version only wrote to the log while the sheet closed as if
+    /// the approval had been granted, so the user saw the badge stay orange
+    /// with no explanation and clicking again did nothing visible either.
+    @Published var approvalError: String?
+
     func approveShellSnippet(_ snippet: ImportedSnippet) {
         guard let idx = importedSnippets.firstIndex(where: { $0.id == snippet.id }) else { return }
         guard let approval = SnippetApprovalSigner.sign(trigger: snippet.trigger, command: snippet.shellCommandDigest, service: keychainService) else {
             storeLog.error("could not sign shell snippet approval — Keychain key unavailable")
+            approvalError = String(localized: "settings.snippets.approvalFailed")
             return
         }
+        approvalError = nil
         importedSnippets[idx].shellApproval = approval
         saveImportedSnippets()
         if pendingShellApproval?.id == snippet.id { pendingShellApproval = nil }
@@ -387,6 +439,18 @@ final class SnippetStore: ObservableObject {
         importedSnippets.removeAll { $0.id == snippet.id }
         saveImportedSnippets()
         if pendingShellApproval?.id == snippet.id { pendingShellApproval = nil }
+
+        // Release the source file once nothing from it remains, so it shows up
+        // as a referenced file again. Without this, import was a one-way door:
+        // deleting the snippets left the file skipped forever by
+        // `reloadEspansoFiles`, present in neither list, recoverable only by
+        // editing UserDefaults or renaming the file on disk.
+        guard let source = snippet.sourcePath,
+              !importedSnippets.contains(where: { $0.sourcePath == source })
+        else { return }
+        importedFilePaths.remove(source)
+        saveImportedFilePaths()
+        reloadEspansoFiles()
     }
 
     /// Whether an app-managed snippet may expand at all.
@@ -415,6 +479,12 @@ final class SnippetStore: ObservableObject {
     /// this the "verified immediately before execution" property the design
     /// doc requires, matching how `espansoFiles`' file-hash check already
     /// works today.
+    /// Exposed so the Settings badge can ask the same question expansion asks,
+    /// instead of approximating it with "a MAC is stored".
+    func isImportedSnippetActive(_ snippet: ImportedSnippet) -> Bool {
+        isSnippetActive(snippet)
+    }
+
     private func isSnippetActive(_ snippet: ImportedSnippet) -> Bool {
         guard snippet.hasShellVars else { return true }
         return SnippetApprovalSigner.verify(snippet.shellApproval, trigger: snippet.trigger, command: snippet.shellCommandDigest, service: keychainService)

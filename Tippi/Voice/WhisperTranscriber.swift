@@ -26,7 +26,6 @@ enum WhisperError: LocalizedError {
 
 /// Persisted via UserDefaults. `isConfigured` is the single gate for enabling the feature.
 enum WhisperConfig {
-    private static let binaryKey = "voice.whisperBinaryPath"
     private static let modelKey  = "voice.whisperModelPath"
     private static let langKey   = "voice.language"
 
@@ -53,13 +52,22 @@ enum WhisperConfig {
             ?? brewBinaryPaths.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    /// Resolved binary: user override → bundled → Homebrew → empty.
+    /// Resolved binary: bundled → Homebrew → empty.
+    ///
+    /// Deliberately NOT overridable through UserDefaults any more. The old
+    /// `voice.whisperBinaryPath` override had no setter anywhere in the app —
+    /// no Settings field, no menu item, nothing — which made it writable only
+    /// from outside the app. `defaults write com.tippi.app
+    /// voice.whisperBinaryPath /tmp/x` was enough to have Tippi launch an
+    /// arbitrary binary on the next dictation, inside the process context of a
+    /// notarised app holding Accessibility, Input Monitoring and Microphone
+    /// grants (child processes are attributed to the responsible process).
+    ///
+    /// A preference nobody can set through the UI is not a feature, it is an
+    /// unguarded entry point. Resolution now comes only from the app bundle or
+    /// the known Homebrew locations.
     static var binaryPath: String {
-        get {
-            let stored = UserDefaults.standard.string(forKey: binaryKey) ?? ""
-            return stored.isEmpty ? (autoDetectedBinaryPath ?? "") : stored
-        }
-        set { UserDefaults.standard.set(newValue, forKey: binaryKey) }
+        autoDetectedBinaryPath ?? ""
     }
 
     // MARK: Model resolution

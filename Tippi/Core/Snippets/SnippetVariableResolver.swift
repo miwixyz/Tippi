@@ -55,6 +55,25 @@ enum SnippetVariableResolver {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/sh")
         process.arguments = ["-c", cmd]
+        // Fixed environment instead of inheriting the app's.
+        //
+        // Every gate upstream — the generated-command allow-list in
+        // `DynamicVariableBuilder`, the per-snippet HMAC in
+        // `SnippetApprovalSigner`, the file-content hash for referenced files —
+        // authorises a *command string*. None of them authorises a *binary*.
+        // With an inherited PATH, `date` is whatever PATH resolves it to, so a
+        // writable directory placed ahead of /usr/bin turns an approved,
+        // unchanged snippet into arbitrary code execution. Measured in the
+        // 2026-09-15 audit: `launchctl setenv PATH …` needs no admin rights and
+        // no TCC prompt, and a GUI app launched afterwards inherits it.
+        //
+        // Pinning PATH to the system directories makes the allow-list mean what
+        // it appears to mean. HOME stays because `date` and friends read it;
+        // nothing else is passed through.
+        process.environment = [
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+            "HOME": NSHomeDirectory(),
+        ]
         let outPipe = Pipe()
         process.standardOutput = outPipe
         process.standardError = Pipe() // discard stderr — must never leak into the expanded text

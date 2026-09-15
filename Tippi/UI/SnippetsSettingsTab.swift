@@ -147,6 +147,25 @@ struct SnippetsTab: View {
             }
 
             SwiftUI.Section(String(localized: "settings.snippets.appManaged")) {
+                // The list being empty because the file could not be read looks
+                // exactly like the list being empty because nothing was ever
+                // created. Saying which one it is, is the whole point — the
+                // silent version of this cost the file's contents.
+                if let loadError = store.appSnippetsLoadError {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(localized: "settings.snippets.loadError"))
+                                .font(.caption)
+                            Text(loadError)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        }
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                }
                 if store.appSnippets.isEmpty {
                     Text(String(localized: "settings.snippets.empty"))
                         .foregroundStyle(.secondary)
@@ -243,16 +262,31 @@ struct SnippetsTab: View {
                                 .lineLimit(1)
                                 .foregroundStyle(.secondary)
                             Spacer()
+                            // Three states, not two. The badge used to read
+                            // `shellApproval != nil` while activation asks
+                            // `SnippetApprovalSigner.verify` — so a stored
+                            // approval whose key is gone (Keychain reset,
+                            // store restored from a backup onto another
+                            // machine) showed a green "approved" over a
+                            // snippet that silently never expands, with no way
+                            // to fix it because only the orange badge was
+                            // tappable. Now the badge asks the same question
+                            // the expansion does.
                             if snippet.hasShellVars {
                                 if snippet.shellApproval == nil {
                                     Label(String(localized: "settings.snippets.shellPending"), systemImage: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
                                         .font(.caption)
                                         .onTapGesture { store.pendingShellApproval = snippet }
-                                } else {
+                                } else if store.isImportedSnippetActive(snippet) {
                                     Label(String(localized: "settings.snippets.shellApproved"), systemImage: "checkmark.shield.fill")
                                         .foregroundStyle(.green)
                                         .font(.caption)
+                                } else {
+                                    Label(String(localized: "settings.snippets.shellUnverifiable"), systemImage: "exclamationmark.shield.fill")
+                                        .foregroundStyle(.orange)
+                                        .font(.caption)
+                                        .onTapGesture { store.pendingShellApproval = snippet }
                                 }
                             }
                             Button(role: .destructive) {
@@ -637,13 +671,18 @@ private struct FileApprovalSheet: View {
 
             HStack {
                 Spacer()
+                // No `dismiss()` here on purpose. The store owns the binding
+                // that presents this sheet: approving sets the *next* pending
+                // item, declining clears it. `dismiss()` writes nil into that
+                // same binding synchronously and wins over the assignment that
+                // just happened — so with two shell snippets, or two files
+                // awaiting approval, only the first was ever shown and the rest
+                // stayed silently unapproved. Reproduced 2026-09-15.
                 Button(String(localized: "settings.snippets.shellApproval.decline")) {
                     onDecline()
-                    dismiss()
                 }
                 Button(String(localized: "settings.snippets.shellApproval.approve")) {
                     onApprove()
-                    dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
             }
@@ -660,6 +699,7 @@ private struct FileApprovalSheet: View {
 /// once per file: a harmless edit to an unrelated snippet in the same
 /// original file no longer revokes this one's approval.
 private struct ShellSnippetApprovalSheet: View {
+    @EnvironmentObject var store: SnippetStore
     let snippet: ImportedSnippet
     let onApprove: () -> Void
     let onDecline: () -> Void
@@ -687,15 +727,27 @@ private struct ShellSnippetApprovalSheet: View {
             .background(Color.gray.opacity(0.1))
             .cornerRadius(6)
 
+            if let error = store.approvalError {
+                Label(error, systemImage: "xmark.octagon.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             HStack {
                 Spacer()
+                // No `dismiss()` here on purpose. The store owns the binding
+                // that presents this sheet: approving sets the *next* pending
+                // item, declining clears it. `dismiss()` writes nil into that
+                // same binding synchronously and wins over the assignment that
+                // just happened — so with two shell snippets, or two files
+                // awaiting approval, only the first was ever shown and the rest
+                // stayed silently unapproved. Reproduced 2026-09-15.
                 Button(String(localized: "settings.snippets.shellApproval.decline")) {
                     onDecline()
-                    dismiss()
                 }
                 Button(String(localized: "settings.snippets.shellApproval.approve")) {
                     onApprove()
-                    dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
             }

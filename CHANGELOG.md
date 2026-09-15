@@ -1,5 +1,79 @@
 # Changelog
 
+## [2.10.0] — 2026-09-15
+
+### Added
+
+- **Eigene Wörter.** Eine Liste von Begriffen, die genau so geschrieben werden
+  sollen, wie du sie einträgst — Marken, Produkt- und Eigennamen, Fachbegriffe.
+  Zu finden unter Einstellungen → Wörterbuch & Snippets → Eigene Wörter.
+
+  Die Liste fügt nie Wörter ein, die nicht gesagt wurden, und ändert keine
+  anderen Wörter, damit sie den Einträgen ähneln. Sie korrigiert ausschließlich
+  Schreibweise und Groß-/Kleinschreibung der eingetragenen Begriffe.
+
+  Hintergrund: Sprachmodelle hören einen Namen korrekt, normalisieren aber
+  dessen Schreibweise auf das, was wie ein gewöhnliches Wort aussieht — aus
+  CINEWEB wird CineWeb. Eine Hausschreibweise lässt sich nicht erraten, sie
+  muss hinterlegt werden.
+
+- **Espanso-Kürzel importieren statt nur referenzieren.** Kürzel wandern in
+  Tippis eigenen Speicher und überleben damit Pfadänderungen. Kürzel ohne
+  Shell-Befehle sind sofort aktiv; Kürzel mit Shell-Befehl fragen einmal nach —
+  pro Kürzel, mit dem Befehl im Klartext. Die Freigabe wird kryptografisch an
+  genau diesen Befehl gebunden und vor jeder Ausführung erneut geprüft. Ändert
+  sich der Befehl, fragt Tippi erneut.
+
+- **Fortschrittsanzeige beim Laden lokaler Modelle.** Bisher lud der erste
+  Start eines MLX-Modells mehrere Gigabyte, ohne dass die App etwas anzeigte,
+  und meldete anschließend fälschlich einen Serverfehler.
+
+### Changed
+
+- **Standard-Modell für die lokale Diktat-Bereinigung ist jetzt Gemma 4 E2B.**
+  Gemessen an zehn echten deutschen Diktaten, mit Tippis eigenem Prompt und auf
+  demselben Weg, den die App produktiv nutzt:
+
+  | Modell | Beanstandungen | ⌀ Zeit | Download |
+  |---|---|---|---|
+  | Gemma 4 E2B | 0 | 0,52 s | 3,6 GB |
+  | Qwen 3.5 4B | 0 | 0,89 s | 3,1 GB |
+  | Qwen 3.5 2B (bisher Standard) | 6 | 0,68 s | 1,7 GB |
+
+  Bewertet wurde Füllwort-Entfernung, Substantiv-Großschreibung, Kommasetzung,
+  Selbstkorrekturen, Markenschreibweise und ob das Modell den Text bereinigt
+  statt darauf zu antworten. Eine bereits getroffene Modellwahl bleibt
+  unangetastet — nur die Voreinstellung für Neuinstallationen ändert sich.
+
+  Qwen 3.5 2B bleibt für 8-GB-Macs wählbar, mit benanntem Kompromiss: Es ließ
+  Füllwörter stehen, behielt verworfene Satzteile, vergaß zweimal das
+  Satzendezeichen und ignorierte die eigene Wortliste, welche die beiden
+  größeren Modelle zuverlässig umsetzten.
+
+- **Die Modell-Liste nennt jetzt Messwerte statt Adjektive** und zeigt die
+  echte Downloadgröße direkt bei der Auswahl. Sechs von sieben Einträgen waren
+  eine bis drei Modellgenerationen alt; ausgerechnet der als „Premium"
+  empfohlene war der schlechteste Kompromiss der Liste.
+
+- **Einstellungen als Seitenleiste, und größenveränderbar.** Neun Tabs in einem
+  auf 640×580 festgenagelten Fenster waren unübersichtlich geworden, und lange
+  Bereiche scrollten in einem Kasten, der nicht wachsen konnte — das Fenster
+  ließ sich nie vergrößern. Jetzt dasselbe Layout, das macOS für die
+  Systemeinstellungen verwendet. Inhaltlich wurde nichts entfernt.
+
+### Fixed
+
+- **Die Testsuite lief seit vier Monaten nicht mehr durch.** Zwei eigene
+  Signierungsfehler: Debug-Builds erbten `get-task-allow=false` aus der für die
+  Notarisierung gedachten Entitlements-Datei, woraufhin der Test-Host nicht
+  gesteuert werden konnte und der Lauf ohne Zeitlimit hing; zusätzlich war das
+  Test-Bundle ad-hoc ohne Team-ID signiert und ließ sich deshalb nicht laden.
+  Ausgelieferte Builds waren nie betroffen.
+
+- **Sicherheitslücke geschlossen:** Ein Shell-Befehl, der von außen in Tippis
+  Kürzel-Datei geschrieben wurde, lief bisher ungeprüft. Es laufen jetzt nur
+  noch Befehle, die Tippi selbst erzeugt haben kann.
+
 ## [2.9.1] — 2026-09-14
 
 > **2.9.0 was never published.** It was built and installed locally on 2026-09-14

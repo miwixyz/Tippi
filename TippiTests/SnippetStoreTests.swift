@@ -297,14 +297,17 @@ final class SnippetStoreTests: XCTestCase {
         let store = makeStore()
         store.isEnabled = true
         store.matchDirectory = tempDir
+        let sourceID = store.espansoFiles[0].id
         store.importFile(store.espansoFiles[0])
         store.approveShellSnippet(try XCTUnwrap(store.pendingShellApproval))
         XCTAssertTrue(store.activeTriggers().contains(":t"))
 
-        // Re-import the same trigger with a different command, as if the
-        // original Espanso file had been edited and re-imported.
+        // Re-import the SAME file with a different command, as if the original
+        // Espanso file had been edited on disk. Must use the store's own file
+        // id: it resolves symlinks (/var → /private/var on macOS), and a
+        // different path is a different source file, not a re-import.
         let secondFile = LoadedEspansoFile(
-            id: "different-path",
+            id: sourceID,
             url: tempDir.appendingPathComponent("a.yml"),
             matchFile: try EspansoYAMLParser.parse("""
             matches:
@@ -333,11 +336,12 @@ final class SnippetStoreTests: XCTestCase {
         let store = makeStore()
         store.isEnabled = true
         store.matchDirectory = tempDir
+        let sourceID = store.espansoFiles[0].id
         store.importFile(store.espansoFiles[0])
         store.approveShellSnippet(try XCTUnwrap(store.pendingShellApproval))
 
         let sameFile = LoadedEspansoFile(
-            id: file.path, url: file,
+            id: sourceID, url: file,
             matchFile: try EspansoYAMLParser.parseFile(at: file),
             containsShellVars: true, isApproved: false
         )
@@ -363,5 +367,93 @@ final class SnippetStoreTests: XCTestCase {
 
         XCTAssertNil(store.pendingShellApproval, "declining must clear the prompt, not re-surface the same snippet")
         XCTAssertFalse(store.activeTriggers().contains(":t"), "declined snippet stays inactive, same convention as declineFile")
+    }
+
+    // MARK: - Regressions found in the 2026-09-15 pre-release audit
+
+    /// An unreadable file must not look like an empty one, and must never be
+    /// overwritten. The silent version of this destroyed the file's contents:
+    /// list came up empty, user re-created a snippet, save wrote `[]` over it.
+    func testCorruptSnippetFileBlocksSavingInsteadOfOverwritingIt() throws {
+        let supportDir = tempDir.appendingPathComponent("Tippi", isDirectory: true)
+        try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
+        let file = supportDir.appendingPathComponent("AppSnippets.json")
+        try "{ this is not valid json".write(to: file, atomically: true, encoding: .utf8)
+
+        let store = makeStore()
+        store.matchDirectory = tempDir
+        XCTAssertTrue(store.appSnippets.isEmpty)
+        XCTAssertNotNil(store.appSnippetsLoadError, "a parse failure must be reported, not silently shown as 'no snippets'")
+
+        store.addSnippet(shortcut: ":neu", replacement: "x")
+        let onDisk = try String(contentsOf: file, encoding: .utf8)
+        XCTAssertEqual(onDisk, "{ this is not valid json", "the unreadable file must be left untouched")
+    }
+
+    /// Import used to be a one-way door: deleting the snippets left the source
+    /// file skipped forever, visible in neither list.
+    func testRemovingAllImportedSnippetsReleasesTheSourceFile() throws {
+        let yaml = """
+        matches:
+          - trigger: ":a"
+            replace: "A"
+        """
+        try yaml.write(to: tempDir.appendingPathComponent("a.yml"), atomically: true, encoding: .utf8)
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+
+        store.importFile(store.espansoFiles[0])
+        XCTAssertTrue(store.espansoFiles.isEmpty, "imported file leaves the reference list")
+        XCTAssertEqual(store.importedSnippets.count, 1)
+
+        store.removeImportedSnippet(store.importedSnippets[0])
+        XCTAssertEqual(store.espansoFiles.count, 1, "with nothing imported from it left, the file must be referenceable again")
+    }
+
+    /// Same trigger twice in one file resolved differently before and after
+    /// importing — the meaning of a snippet changed through an action sold as
+    /// a change of storage location. Reference path is first-wins, so import is.
+    func testDuplicateTriggerInOneFileKeepsTheFirstJustLikeTheReferencePath() throws {
+        let yaml = """
+        matches:
+          - trigger: ":mw"
+            replace: "erste"
+          - trigger: ":mw"
+            replace: "zweite"
+        """
+        try yaml.write(to: tempDir.appendingPathComponent("dup.yml"), atomically: true, encoding: .utf8)
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+
+        store.approveFile(store.espansoFiles[0])
+        guard case .espansoMatch(let referenced)? = store.action(forTrigger: ":mw") else {
+            return XCTFail("expected a match while referenced")
+        }
+        XCTAssertEqual(referenced.replace, "erste")
+
+        store.importFile(store.espansoFiles[0])
+        XCTAssertEqual(store.importedSnippets.count, 1, "the duplicate must not become a second entry")
+        XCTAssertEqual(store.importedSnippets[0].replace, "erste", "import must resolve the duplicate the same way the reference path does")
+    }
+
+    /// Two files may legitimately define the same trigger (Espanso resolves by
+    /// file precedence). Importing the second must not silently delete the first.
+    func testSameTriggerInTwoFilesKeepsBothEntries() throws {
+        for (name, text) in [("base.yml", "geschaeftlich"), ("local.yml", "privat")] {
+            let yaml = """
+            matches:
+              - trigger: ":mw"
+                replace: "\(text)"
+            """
+            try yaml.write(to: tempDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+
+        while let file = store.espansoFiles.first { store.importFile(file) }
+        XCTAssertEqual(store.importedSnippets.count, 2, "one file's snippet must not overwrite the other's")
     }
 }

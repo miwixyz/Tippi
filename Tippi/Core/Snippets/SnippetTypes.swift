@@ -85,14 +85,24 @@ struct ImportedSnippet: Codable, Equatable, Identifiable {
     var replace: String
     var vars: [SnippetVar]
     var shellApproval: SnippetApproval?
+    /// Path of the Espanso file this came from. Optional because entries
+    /// written before this field existed do not carry it.
+    ///
+    /// Without it, two things were impossible: telling which import a snippet
+    /// belongs to (so a file could never be released again once imported —
+    /// deleting its snippets left the file invisible in both lists), and
+    /// letting two files legitimately define the same trigger, which Espanso
+    /// allows and resolves by file precedence.
+    var sourcePath: String?
 
-    init(id: UUID = UUID(), triggers: [String], replace: String, vars: [SnippetVar], shellApproval: SnippetApproval? = nil) {
+    init(id: UUID = UUID(), triggers: [String], replace: String, vars: [SnippetVar], shellApproval: SnippetApproval? = nil, sourcePath: String? = nil) {
         self.id = id
         self.trigger = triggers.first ?? ""
         self.triggers = triggers
         self.replace = replace
         self.vars = vars
         self.shellApproval = shellApproval
+        self.sourcePath = sourcePath
     }
 
     var hasShellVars: Bool { vars.contains { $0.type == "shell" } }

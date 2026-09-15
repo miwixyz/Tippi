@@ -154,7 +154,7 @@
 "settings.tab.hotkeys" = "Hotkeys";
 "settings.tab.providers" = "Provider";
 "settings.tab.prompts" = "Prompts";
-"settings.tab.snippets" = "Wörter & Snippets";
+"settings.tab.snippets" = "Wörterbuch & Snippets";
 "settings.tab.about" = "Über";
 
 "settings.snippets.enabled" = "Text-Snippets aktivieren";
@@ -171,6 +171,7 @@
 "settings.snippets.emoticon.hint" = "Wandelt gängige Text-Emoticons wie :-) ;-) :( oder <3 beim Tippen in Emojis um. Im ausgeschalteten Zustand bleiben der :-Auswähler und die Suche unverändert erhalten.\n\nLöst nur aus, wenn vor dem Emoticon ein Leerzeichen oder ein Zeilenanfang steht — so bleiben Code-Stellen wie a[:(b)] oder http:// unangetastet.";
 "settings.snippets.appManaged" = "Eigene Kürzel";
 "settings.snippets.empty" = "Noch keine eigenen Kürzel angelegt.";
+"settings.snippets.loadError" = "Die Kürzel-Datei konnte nicht gelesen werden. Speichern ist gesperrt, damit der vorhandene Inhalt nicht überschrieben wird. Eine Kopie liegt daneben mit der Endung „.unreadable-…“.";
 "settings.snippets.new" = "Neues Kürzel";
 "settings.snippets.reference" = "Espanso-Dateien (Quelle)";
 "settings.snippets.importedEmpty" = "Keine Espanso-Match-Dateien gefunden.";
@@ -181,6 +182,7 @@
 "settings.snippets.importedSnippetsEmpty" = "Noch nichts importiert — importiere oben eine Datei, um ihre Kürzel in Tippis eigenen Speicher zu kopieren.";
 "settings.snippets.shellPending" = "Freigabe nötig";
 "settings.snippets.shellApproved" = "Freigegeben";
+"settings.snippets.shellUnverifiable" = "Freigabe nicht mehr prüfbar — erneut freigeben";
 "settings.snippets.editor.title" = "Kürzel";
 "settings.snippets.editor.trigger" = "Kürzel (z. B. :nl)";
 "settings.snippets.editor.replacement" = "Ersetzungstext";
@@ -214,6 +216,7 @@
 "settings.snippets.variable.insert" = "Einfügen";
 "settings.snippets.shellApproval.decline" = "Ablehnen";
 "settings.snippets.shellApproval.approve" = "Freigeben";
+"settings.snippets.approvalFailed" = "Freigabe fehlgeschlagen: Der Schlüssel konnte nicht im Schlüsselbund gespeichert werden. Das Kürzel bleibt inaktiv.";
 "settings.snippets.shellSnippetApproval.title" = "Kürzel führt einen Shell-Befehl aus";
 "settings.snippets.shellSnippetApproval.body" = "Kürzel %@ führt beim Tippen folgenden Befehl aus:";
 
@@ -365,6 +368,10 @@
 "settings.providers.mlx.custom" = "Eigenes Modell…";
 "settings.providers.mlx.start" = "Server starten";
 "settings.providers.mlx.downloading" = "Modell wird geladen (einmalig, wird zwischengespeichert)";
+"settings.providers.mlx.preset.gemma4-e2b" = "Gemma 4 E2B — 0 Fehler, 0,52 s ⭐ empfohlen";
+"settings.providers.mlx.preset.qwen35-4b-4bit" = "Qwen 3.5 4B — 0 Fehler, 0,89 s";
+"settings.providers.mlx.preset.qwen35-2b-4bit" = "Qwen 3.5 2B — kleinster Download, 6 Fehler";
+"settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — größtes Modell, ungemessen";
 "settings.providers.mlx.stop" = "Server stoppen";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT-Lizenz";
 "settings.about.acknowledgements" = "Spracherkennung via whisper.cpp (MIT). Optionale Parakeet-Engine via FluidAudio (Apache 2.0) und dem NVIDIA-Parakeet-TDT-Modell (CC-BY-4.0). Auto-Updates via Sparkle. Siehe NOTICES.md.";
@@ -404,7 +411,7 @@
 "settings.help.selectionPopupTitle" = "Auto-Popup bei Textauswahl";
 "settings.help.selectionPopupBody" = "Wie PopClip: markierst du irgendwo Text, erscheint automatisch eine kleine Leiste mit den lokalen Schnellaktionen daneben — kein Hotkey nötig.\n\nAktivieren: Einstellungen → Allgemein → \"Auto-Popup bei Textauswahl\". Standardmäßig aus, weil es sonst bei jeder Textmarkierung im ganzen System erscheinen würde.\n\nPosition wählbar: unterhalb, oberhalb, rechts oder links der Auswahl — falls eine andere App (z.B. Safaris \"Nachschlagen\" oder Pages' Formatierungsleiste) an derselben Stelle schon ein eigenes Popup zeigt, einfach ausweichen.\n\nKlick auf ein Symbol wendet die Aktion sofort an und ersetzt die Auswahl — genau dieselben Aktionen wie im Hotkey-Popup (Groß-/Kleinschreibung, Underscore, Umlaute umwandeln, Klammern, Zeichen-/Wortzahl, …).\n\nGetrennt durch eine Trennlinie am Ende: das Übersetzen-Symbol — öffnet das Übersetzungsfenster mit der Auswahl vorausgefüllt, statt sie direkt zu ersetzen.\n\nDas Popup verschwindet automatisch, wenn du woanders klickst, Escape drückst oder eine Aktion ausführst.";
 "settings.help.customWordsTitle" = "Eigene Wörter";
-"settings.help.customWordsBody" = "Unter „Wörter & Snippets → Eigene Wörter“ trägst du Begriffe ein, die bei der Erkennung regelmäßig falsch geschrieben werden — Marken, Produkt- und Eigennamen, Fachbegriffe. Tippi setzt genau deine Schreibweise durch, wenn der Begriff im Text vorkommt.\n\nWichtig: Die Liste fügt nie Wörter ein, die nicht gesagt wurden, und ändert keine anderen Wörter, damit sie den Einträgen ähneln. Sie korrigiert ausschließlich Schreibweise und Groß-/Kleinschreibung der eingetragenen Begriffe.\n\nWarum das nötig ist: Modelle hören den Namen korrekt, normalisieren aber die Schreibweise auf das, was wie ein normales Wort aussieht — aus CINEWEB wird CineWeb. Kein Modell kann eine Hausschreibweise erraten, sie muss hinterlegt werden.\n\nDie Liste wirkt beim KI-Nachbearbeiten des Diktats. Schwächere Modelle halten sich nicht immer daran: In Messungen vom 15.09.2026 setzten Gemma 4 E2B und Qwen 3.5 4B die Vorgabe zuverlässig um, Qwen 3.5 2B nicht.";
+"settings.help.customWordsBody" = "Unter „Wörterbuch & Snippets → Eigene Wörter“ trägst du Begriffe ein, die bei der Erkennung regelmäßig falsch geschrieben werden — Marken, Produkt- und Eigennamen, Fachbegriffe. Tippi setzt genau deine Schreibweise durch, wenn der Begriff im Text vorkommt.\n\nWichtig: Die Liste fügt nie Wörter ein, die nicht gesagt wurden, und ändert keine anderen Wörter, damit sie den Einträgen ähneln. Sie korrigiert ausschließlich Schreibweise und Groß-/Kleinschreibung der eingetragenen Begriffe.\n\nWarum das nötig ist: Modelle hören den Namen korrekt, normalisieren aber die Schreibweise auf das, was wie ein normales Wort aussieht — aus CINEWEB wird CineWeb. Kein Modell kann eine Hausschreibweise erraten, sie muss hinterlegt werden.\n\nDie Liste wirkt beim KI-Nachbearbeiten des Diktats. Schwächere Modelle halten sich nicht immer daran: In Messungen vom 15.09.2026 setzten Gemma 4 E2B und Qwen 3.5 4B die Vorgabe zuverlässig um, Qwen 3.5 2B nicht.";
 "settings.help.espansoImportTitle" = "Espanso-Kürzel importieren";
 "settings.help.espansoImportBody" = "Tippi kann Espanso-Match-Dateien entweder nur mitlesen oder dauerhaft übernehmen. Mit „Importieren“ wandern die Kürzel in Tippis eigenen Speicher — sie überleben damit Pfadänderungen und brauchen Espanso nicht mehr.\n\nNach dem Import liest Tippi diese Datei nicht mehr mit: Import ersetzt die Referenz, beides gleichzeitig gibt es bewusst nicht.\n\nKürzel ohne Shell-Befehle sind sofort aktiv. Kürzel mit Shell-Befehl fragen einmal nach — pro Kürzel, mit dem genauen Befehl im Klartext. Diese Freigabe wird kryptografisch an genau diesen Befehl gebunden und vor jeder Ausführung erneut geprüft. Ändert sich der Befehl, ist die Freigabe ungültig und Tippi fragt erneut. Eine frühere Freigabe der ganzen Datei wird nicht übernommen.";
 "settings.help.localModelsTitle" = "Welches lokale Modell fürs Diktat?";

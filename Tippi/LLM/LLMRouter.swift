@@ -87,8 +87,8 @@ struct LLMRouter {
         await MainActor.run { AIActivityMonitor.shared.begin() }
         defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
         let preferred = await MainActor.run { effectivePreferredProviderID() }
-        let ordered = orderedProviders(preferred: preferred)
         let fallbackOn = Self.allowProviderFallback
+        let ordered = candidates(preferred: preferred, fallbackOn: fallbackOn)
 
         var lastError: Error?
         for provider in ordered {
@@ -260,6 +260,33 @@ struct LLMRouter {
             if hasAPIKey(for: provider.id) { return true }
         }
         return false
+    }
+
+    /// The providers `complete` may actually use, in order.
+    ///
+    /// When the chosen provider is a local one (MLX, Ollama — no API key, text
+    /// never leaves the machine) and provider fallback is off, the candidate
+    /// list is restricted to local providers. Without this, a local server that
+    /// simply is not running sends the user's text to the first cloud provider
+    /// that happens to have a key stored.
+    ///
+    /// That was reachable and silent: `isUnavailableLocalProvider` treats
+    /// "server not found / failed to launch / startup timed out" as "try the
+    /// next one", and the next one is whatever the registry order yields. The
+    /// user opted into local processing and got a cloud call instead, with no
+    /// prompt and no way to notice afterwards. `MLXServerManager` already
+    /// refuses to reuse a foreign server on its port for exactly this reason —
+    /// that refusal then arrived here and was converted into a cloud request.
+    ///
+    /// Falling through from one local provider to another stays allowed: both
+    /// keep the text on the machine, which is the property the user chose.
+    private func candidates(preferred: String, fallbackOn: Bool) -> [LLMProvider] {
+        let ordered = orderedProviders(preferred: preferred)
+        guard !fallbackOn,
+              let first = ordered.first,
+              !first.requiresAPIKey
+        else { return ordered }
+        return ordered.filter { !$0.requiresAPIKey }
     }
 
     private func orderedProviders(preferred: String = LLMRouter.preferredProviderID) -> [LLMProvider] {

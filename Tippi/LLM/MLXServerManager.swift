@@ -136,7 +136,17 @@ final class MLXServerManager: ObservableObject {
         proc.standardError = stderrPipe
         stderrPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
-            guard !data.isEmpty,
+            // Empty data means EOF. Returning without clearing the handler
+            // leaves the dispatch source armed and it re-fires immediately,
+            // forever — measured at ~500k calls/second, i.e. a permanently
+            // burned CPU core in a background app. Two independent audit runs
+            // disagreed on whether this path is reachable in practice; the
+            // clear is correct either way, so it is not worth the argument.
+            guard !data.isEmpty else {
+                handle.readabilityHandler = nil
+                return
+            }
+            guard
                   let chunk = String(data: data, encoding: .utf8),
                   let status = Self.parseDownloadProgress(chunk)
             else { return }
@@ -164,6 +174,10 @@ final class MLXServerManager: ObservableObject {
         do {
             try proc.run()
         } catch {
+            // `terminationHandler` never fires for a process that never
+            // started, so the cleanup it normally performs has to happen here.
+            // Without it every failed launch leaks the pipe's file descriptors.
+            stderrPipe.fileHandleForReading.readabilityHandler = nil
             state = .failed(error.localizedDescription)
             throw MLXError.launchFailed(error.localizedDescription)
         }
@@ -411,11 +425,24 @@ final class MLXServerManager: ObservableObject {
         return decoded
     }
 
+    /// Waits for a start already in flight.
+    ///
+    /// Uses the same idle semantics as `waitForHealth`: the limit is 60 s of
+    /// silence, not 60 s in total. A flat deadline here meant the two wait
+    /// paths answered the same question differently — the first caller waited
+    /// patiently through a multi-gigabyte first-run download while every
+    /// subsequent one (a polish request, dictation, the auto-start) gave up
+    /// after a minute with "MLX server did not start in time", blaming the
+    /// server for a download that was progressing normally. That is the exact
+    /// message the idle timeout was introduced to get rid of.
     private func waitUntilRunning() async throws -> Int {
-        let deadline = Date().addingTimeInterval(60)
+        var deadline = Date().addingTimeInterval(60)
         while Date() < deadline {
             if case .running(let p) = state { return p }
             if case .failed = state { throw MLXError.startupTimeout }
+            if let last = lastProgressAt {
+                deadline = max(deadline, last.addingTimeInterval(60))
+            }
             try await Task.sleep(nanoseconds: 500_000_000)
         }
         throw MLXError.startupTimeout
