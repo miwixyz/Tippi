@@ -558,61 +558,110 @@ private struct ProviderRow: View {
         let id: String
         let label: String
         let repoID: String
+        /// Actual download size, measured against the HuggingFace API, not
+        /// estimated. A field rather than prose in `label` because this is the
+        /// number the user needs *before* committing to a multi-GB first run —
+        /// the previous list only hinted at RAM tiers ("16 GB Mac"), which
+        /// several people read as the download size.
+        let downloadSize: String
     }
 
     /// Presets curated for Tippi's use case: fast text transformation, return
-    /// only the result. Chain-of-thought / reasoning models (Qwen3.5 family,
-    /// DeepSeek-R1) are deliberately excluded — they produce long internal
-    /// monologues before usable output, which is wrong for a "fix this text"
-    /// interaction.
+    /// only the result.
     ///
-    /// Each preset is labelled by the RAM tier of the target Mac, not the
-    /// model's on-disk size. ⭐ marks the recommended default for speed.
+    /// **Admission rule — check this before adding anything here.** By 2026
+    /// almost every current small model is a thinking model, so "no reasoning
+    /// models" is no longer a list one can pick from; what matters is whether
+    /// the monologue can be switched *off*. `MLXProvider` sends
+    /// `chat_template_kwargs: {enable_thinking: false}`, so a model qualifies
+    /// only if its `chat_template.jinja` either ignores that kwarg or gates
+    /// thinking on it. Read the template — the model card does not reliably say.
+    /// A model that gates on something else (a `/no_think` marker in the prompt,
+    /// a differently named flag) will return an empty `content` with the whole
+    /// answer in `reasoning`: the exact failure v1.18.0 hit with Qwen 3.x, and
+    /// it fails silently, as an empty polish rather than an error.
+    ///
+    /// Verified this way on 2026-09-15: Qwen 3.5 (2B/4B/9B) ✓, Gemma 4 E2B ✓
+    /// (a thinking model as of Gemma 4, unlike Gemma 3, but correctly gated).
+    ///
+    /// Reviewed 2026-09-15: every repo ID below was verified to exist against
+    /// `huggingface.co/api/models`, and the sizes were read from the same API.
+    /// Note that HuggingFace answers **401, not 404**, for a repo that does not
+    /// exist — so "no error" is not a check; only an explicit 200 is.
+    ///
+    /// These are curated for *availability, provenance and size*, which is all a
+    /// catalogue can establish. They are explicitly NOT a measured quality
+    /// ranking for Tippi's task, and the difference matters: the one datapoint
+    /// actually measured here found a 2B model more faithful on German than a
+    /// 3B one, which had distorted meaning. Recency and parameter count do not
+    /// predict quality for "clean up this dictation". Ranking them honestly
+    /// needs the same treatment Parakeet-vs-Whisper got — real audio, both
+    /// metrics, written down.
+    ///
+    /// Two traps worth recording, both hit during this review:
+    /// - The first pass excluded Gemma 4 after probing a *guessed* repo ID
+    ///   (`gemma-4-4b-it-4bit`, which does not exist). The real builds are the
+    ///   E-series (`gemma-4-e2b-it-4bit`). Probing a guess tests the guess, not
+    ///   the catalogue — list the author's models instead.
+    /// - Qwen3.6 and Qwen3.8 exist but only from 27B upward, so the newest Qwen
+    ///   generation is irrelevant at this latency budget. "Newer family exists"
+    ///   does not imply "newer family exists in the size you need".
+    ///
+    /// The list before that review had aged badly: six of seven entries were
+    /// one to three model generations old (Llama 3.1/3.2, Qwen 2.5, Phi-4-mini,
+    /// Gemma 3), and the one marked "⭐ premium" for 32 GB Macs was Qwen 2.5
+    /// 14B — an ~8 GB download from late 2024, beaten by Qwen 3.5 9B at 6 GB.
+    /// This is drift the v1.23.0 model-catalogue audit could not catch: that
+    /// pass covered cloud providers, and none of its three defence layers
+    /// (aliases, `retiredModels`, `ModelAvailabilityChecker`) apply locally —
+    /// the checker is deliberately empty for Ollama/MLX. Local presets have no
+    /// automatic drift protection at all, so they need a dated manual review.
+    ///
+    /// Deliberately NOT migrating anyone off the removed entries: unlike the
+    /// cloud case, those repos still resolve (verified 200), so a saved choice
+    /// keeps working. Rewriting a functioning user setting to satisfy a curated
+    /// list would be the false-positive failure v1.22.1 argued against.
+    ///
+    /// ⭐ marks the recommended default for speed.
     static let mlxPresets: [MLXPreset] = [
-        // ── < 8 GB Mac (fastest, 2B-class, 4-bit) ───────────────────────────
+        // ── 8 GB Mac and up (fastest, 2B-class, 4-bit) ──────────────────────
         // Measured ~0.6 s warm polish, most faithful German of all presets
-        // (no meaning-drift). Qwen3.5 is a thinking family — served with
-        // thinking disabled so it returns only the cleaned text.
+        // tested (no meaning drift — a 3B model distorted meaning where this
+        // one did not, which is why size alone is a bad selection criterion).
         MLXPreset(
             id: "qwen35-2b-4bit",
-            label: "Qwen 3.5 2B — Fastest, faithful German (4-bit) ⭐ default",
-            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit"
+            label: "Qwen 3.5 2B — Fastest, faithful German ⭐ default",
+            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit",
+            downloadSize: "1.7 GB"
         ),
 
-        // ── 8 GB Mac (small, fast, 3B-class) ────────────────────────────────
+        // ── 16 GB Mac (more headroom, still quick) ──────────────────────────
         MLXPreset(
-            id: "llama32-3b",
-            label: "Llama 3.2 3B — Fast/Balanced",
-            repoID: "mlx-community/Llama-3.2-3B-Instruct-4bit"
+            id: "qwen35-4b-4bit",
+            label: "Qwen 3.5 4B — More quality, still small",
+            repoID: "mlx-community/Qwen3.5-4B-MLX-4bit",
+            downloadSize: "3.1 GB"
         ),
+        // The non-Qwen option, for language breadth and vendor diversity.
+        // Note the name: the E-series uses selective activation, so "E2B"
+        // describes effective active parameters, NOT download size — this is
+        // 3.6 GB, larger than the 4B Qwen above it. Anyone sizing by the label
+        // gets it backwards.
         MLXPreset(
-            id: "phi4-mini",
-            label: "Phi-4-mini 3.8B — 8 GB Mac (Microsoft, 23 languages)",
-            repoID: "mlx-community/Phi-4-mini-instruct-4bit"
-        ),
-
-        // ── 16 GB Mac (mid-class, 4-8B) ─────────────────────────────────────
-        MLXPreset(
-            id: "gemma3-4b",
-            label: "Gemma 3 4B — 16 GB Mac (Google, 140+ languages)",
-            repoID: "mlx-community/gemma-3-4b-it-4bit"
-        ),
-        MLXPreset(
-            id: "llama31-8b-4b",
-            label: "Llama 3.1 8B — Quality (slower)",
-            repoID: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
-        ),
-        MLXPreset(
-            id: "qwen25-7b",
-            label: "Qwen 2.5 7B — 16 GB Mac (multilingual, strong German)",
-            repoID: "mlx-community/Qwen2.5-7B-Instruct-4bit"
+            id: "gemma4-e2b",
+            label: "Gemma 4 E2B — Widest language coverage (Google)",
+            repoID: "mlx-community/gemma-4-e2b-it-4bit",
+            downloadSize: "3.6 GB"
         ),
 
-        // ── 32 GB Mac (premium quality, 14B-class) ──────────────────────────
+        // ── 32 GB Mac (best quality of the verified set) ────────────────────
+        // Replaces the old "⭐ premium" Qwen 2.5 14B: newer generation, and
+        // 6 GB instead of ~8 GB.
         MLXPreset(
-            id: "qwen25-14b",
-            label: "Qwen 2.5 14B — 32 GB Mac ⭐ premium",
-            repoID: "mlx-community/Qwen2.5-14B-Instruct-4bit"
+            id: "qwen35-9b-4bit",
+            label: "Qwen 3.5 9B — Best quality ⭐ premium",
+            repoID: "mlx-community/Qwen3.5-9B-MLX-4bit",
+            downloadSize: "6.0 GB"
         ),
     ]
 
@@ -693,6 +742,26 @@ private struct ProviderRow: View {
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
                                 .disabled(mlxManager.state == .starting)
+                            }
+                        }
+
+                        // First run pulls the weights from HuggingFace through
+                        // mlx_lm.server. Without this row that is several GB of
+                        // silence behind a "Starting…" label.
+                        if let download = mlxManager.downloadStatus {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(String(localized: "settings.providers.mlx.downloading"))
+                                        .font(.caption)
+                                    Text(download)
+                                        .font(.system(.caption2, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                }
+                                Spacer()
                             }
                         }
                     } else {
@@ -827,7 +896,10 @@ private struct ProviderRow: View {
                     .frame(width: 60, alignment: .leading)
                 Picker("", selection: $mlxPreset) {
                     ForEach(Self.mlxPresets) { preset in
-                        Text(preset.label).tag(preset.id)
+                        // Size in the picker itself, not in a hint below it:
+                        // the choice commits the user to that download, so the
+                        // number belongs at the moment of choosing.
+                        Text("\(preset.label) · \(preset.downloadSize)").tag(preset.id)
                     }
                     Divider()
                     Text(String(localized: "settings.providers.mlx.custom")).tag("custom")

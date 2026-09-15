@@ -18,10 +18,26 @@ struct MLXProvider: LLMProvider {
 
         struct Message: Encodable { let role: String; let content: String }
         // enable_thinking=false suppresses the chain-of-thought preamble of
-        // thinking models (Qwen3.x) so they return usable text in `content`
-        // instead of a "Thinking Process:…" monologue in `reasoning`. Verified
-        // harmless for non-thinking models (Llama/Gemma/Phi): their Jinja chat
-        // template simply ignores the unreferenced kwarg.
+        // thinking models so they return usable text in `content` instead of a
+        // "Thinking Process:…" monologue in `reasoning`.
+        //
+        // This kwarg is the single thing standing between a curated preset and
+        // a broken polish, so it constrains which models may be offered at all
+        // (see `mlxPresets`): a model is only usable here if its Jinja chat
+        // template either ignores the kwarg or gates thinking on it. Checked
+        // 2026-09-15 by reading the actual `chat_template.jinja` of each
+        // preset, not by assuming:
+        //   - Qwen 3.5 (2B/4B/9B): gate on `enable_thinking`, suppressed. ✓
+        //   - Gemma 4 E2B: also a thinking model now — unlike Gemma 3 — but
+        //     gates the `<|think|>` token on `enable_thinking` being *defined
+        //     and truthy*, so `false` suppresses it. Note its template opens the
+        //     system turn for `tools` or a system-role first message too; that
+        //     branch only renders the system prompt and does not re-enable
+        //     thinking. ✓
+        // An earlier version of this comment claimed Gemma simply ignores the
+        // kwarg. That was true of Gemma 3 and is no longer true — right
+        // behaviour, stale reason, which is the kind of note that gets trusted
+        // later without rechecking.
         struct ChatTemplateKwargs: Encodable { let enable_thinking: Bool }
         struct Body: Encodable {
             let model: String

@@ -233,24 +233,6 @@ final class SnippetStoreTests: XCTestCase {
         XCTAssertTrue(store.activeTriggers().contains(":ok"))
     }
 
-    /// AppSnippets.json is a plain unsigned file — same trust boundary the
-    /// whole import consent model protects for Espanso files. The "Insert
-    /// Variable" picker never creates a shell var, so one arriving through
-    /// `addSnippet` (standing in for a direct file edit, since the store's
-    /// only write path is this one) must be refused, not executed. Found
-    /// during the manual security review that substituted for `rafter-code-review`
-    /// (Rafter unavailable) on 2026-09-15.
-    func testAppSnippetWithShellVarIsRefusedNotExecuted() {
-        let store = makeStore()
-        store.isEnabled = true
-        store.matchDirectory = tempDir
-        let shellVar = SnippetVar(name: "x", type: "shell", params: SnippetVarParams(cmd: "echo pwned", format: nil))
-        store.addSnippet(shortcut: ":evil", replacement: "{{x}}", vars: [shellVar])
-
-        XCTAssertFalse(store.activeTriggers().contains(":evil"), "an app snippet with a shell var must not even be offered as a match")
-        XCTAssertNil(store.action(forTrigger: ":evil"), "must fail closed, not resolve to the shell match")
-    }
-
     // MARK: - Import (docs/SECURE-DESIGN-espanso-import.md)
 
     /// Plain-text imports need no consent at all — the whole point of

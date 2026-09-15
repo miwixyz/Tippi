@@ -105,3 +105,11 @@ targets:
         SWIFT_VERSION: "5.10"
         ARCHS: arm64
         GENERATE_INFOPLIST_FILE: YES
+        # Must match the host app's team. Without these the bundle is signed
+        # "Sign to Run Locally" (ad-hoc, no Team ID) while Tippi.app carries
+        # LTKJ6Z2VYB, and macOS then refuses to dlopen the tests into the host:
+        # "mapping process and mapped file (non-platform) have different Team
+        # IDs". Nobody had seen that before 2026-09-15 because the get-task-allow
+        # hang (see Tippi.debug.entitlements) always struck first.
+        DEVELOPMENT_TEAM: LTKJ6Z2VYB
+        CODE_SIGN_STYLE: Automatic

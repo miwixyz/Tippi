@@ -16,6 +16,25 @@ final class MLXServerManager: ObservableObject {
     /// the weights are loaded, so a `.running` server can still be cold.
     @Published private(set) var isWarm = false
 
+    /// Human-readable progress while `mlx_lm.server` fetches model weights from
+    /// HuggingFace on first use, e.g. "model-00001-of-00002.safetensors 45%
+    /// (1.80G/4.00G)". `nil` when nothing is downloading.
+    ///
+    /// Tippi never downloads a model itself — it passes a repo ID to
+    /// `mlx_lm.server`, which fetches it through `huggingface_hub` into
+    /// `~/.cache/huggingface/hub/`. That download reports only on the server's
+    /// stderr, which this class used to send to `/dev/null`. The result was a
+    /// first run where several GB were quietly downloading behind a UI that
+    /// said nothing, and then a flat 60 s timeout that reported "Server did not
+    /// become ready in time" — blaming the server for a download that was
+    /// working. Surfacing this is what makes the local provider usable on a
+    /// slow connection.
+    @Published private(set) var downloadStatus: String?
+
+    /// When the last download progress was seen. Drives the idle-based startup
+    /// timeout in `waitForHealth`.
+    private var lastProgressAt: Date?
+
     enum ServerState: Equatable {
         case stopped
         case starting
@@ -109,10 +128,27 @@ final class MLXServerManager: ObservableObject {
             "--model", model,
             "--port",  "\(port)"
         ]
-        // Suppress server logs from appearing in Tippi console
+        // stdout stays discarded (request logging, not interesting). stderr is
+        // read: that is where huggingface_hub reports the first-run model
+        // download, the single slowest thing that can happen here.
         proc.standardOutput = FileHandle.nullDevice
-        proc.standardError  = FileHandle.nullDevice
+        let stderrPipe = Pipe()
+        proc.standardError = stderrPipe
+        stderrPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            guard !data.isEmpty,
+                  let chunk = String(data: data, encoding: .utf8),
+                  let status = Self.parseDownloadProgress(chunk)
+            else { return }
+            Task { @MainActor in
+                // Only meaningful while this start attempt is still in flight.
+                guard MLXServerManager.shared.state == .starting else { return }
+                MLXServerManager.shared.downloadStatus = status
+                MLXServerManager.shared.lastProgressAt = Date()
+            }
+        }
         proc.terminationHandler = { [weak self] _ in
+            stderrPipe.fileHandleForReading.readabilityHandler = nil
             Task { @MainActor [weak self] in
                 // Exit while we still believed the server was running = an
                 // unexpected crash/kill (an explicit stop() sets .stopped BEFORE
@@ -134,9 +170,12 @@ final class MLXServerManager: ObservableObject {
 
         process = proc
 
-        // Poll until the server is ready (up to 60 s — first load takes time)
+        // Poll until the server is ready. The limit is 60 s of *silence*, not
+        // 60 s total — a first-run download legitimately takes minutes.
         do {
-            let p = try await waitForHealth(port: port, timeout: 60)
+            let p = try await waitForHealth(port: port, idleTimeout: 60)
+            downloadStatus = nil
+            lastProgressAt = nil
             activeModelID = await fetchActiveModelID(port: p)
             state = .running(port: p)
             // /v1/models answers before the model is actually loaded — the first
@@ -147,7 +186,15 @@ final class MLXServerManager: ObservableObject {
         } catch {
             proc.terminate()
             process = nil
-            let msg = "Server did not become ready in time."
+            // Name the real cause. A stalled download and a server that failed
+            // to boot need different reactions from the user, and the old
+            // single message ("did not become ready") sent everyone looking at
+            // the server.
+            let msg = downloadStatus.map {
+                "Model download stalled at \($0). Check the connection and start again — finished parts are cached and will not be re-downloaded."
+            } ?? "Server did not become ready in time."
+            downloadStatus = nil
+            lastProgressAt = nil
             state = .failed(msg)
             throw MLXError.startupTimeout
         }
@@ -169,6 +216,8 @@ final class MLXServerManager: ObservableObject {
         state = .stopped
         activeModelID = nil
         isWarm = false
+        downloadStatus = nil
+        lastProgressAt = nil
     }
 
     // MARK: - Warm-up
@@ -284,16 +333,70 @@ final class MLXServerManager: ObservableObject {
         return response.data.first?.id
     }
 
-    private func waitForHealth(port: Int, timeout: TimeInterval) async throws -> Int {
-        let deadline = Date().addingTimeInterval(timeout)
+    /// Waits for the server to answer `/v1/models`.
+    ///
+    /// `idleTimeout` is a limit on *silence*, not on total duration: every
+    /// reported download byte pushes the deadline out. A flat timeout cannot
+    /// work here, because the legitimate first-run case (fetch several GB of
+    /// weights over whatever link the user has) and the failure case (server
+    /// never boots) differ by orders of magnitude in duration but look
+    /// identical from the outside — unless you watch for progress, which is
+    /// exactly what `downloadStatus` now provides.
+    private func waitForHealth(port: Int, idleTimeout: TimeInterval) async throws -> Int {
+        var deadline = Date().addingTimeInterval(idleTimeout)
         while Date() < deadline {
             if process?.isRunning == false {
                 throw MLXError.startupTimeout
             }
             if await fetchModels(port: port) != nil { return port }
+            if let last = lastProgressAt {
+                deadline = max(deadline, last.addingTimeInterval(idleTimeout))
+            }
             try await Task.sleep(nanoseconds: 1_000_000_000) // 1 s
         }
         throw MLXError.startupTimeout
+    }
+
+    /// Extracts a readable line from one chunk of `mlx_lm.server` stderr.
+    ///
+    /// `huggingface_hub` draws tqdm bars that redraw in place with `\r`, so the
+    /// stream is split on `\r` *and* `\n` — splitting on newlines alone yields
+    /// nothing at all for the entire duration of a download, which is precisely
+    /// the case this exists to report. The newest segment wins, since earlier
+    /// ones in the same chunk are already stale redraws.
+    ///
+    /// Input looks like:
+    ///   `model-00001-of-00002.safetensors:  45%|████▌ | 1.80G/4.00G [01:23<01:41, 21.7MB/s]`
+    /// `nonisolated` because the stderr `readabilityHandler` fires on a
+    /// background queue: this class is `@MainActor`, so an isolated static
+    /// would be unreachable from exactly the one caller that needs it. Safe —
+    /// the function touches no instance state, only its argument.
+    nonisolated static func parseDownloadProgress(_ chunk: String) -> String? {
+        for segment in chunk.split(whereSeparator: { $0 == "\r" || $0 == "\n" }).reversed() {
+            let line = segment.trimmingCharacters(in: .whitespaces)
+            // Require the bar glyph as well as a percentage. A percentage alone
+            // appears in ordinary server chatter ("cache hit rate 95%"), and
+            // treating that as progress would hold the startup timeout open on
+            // a server that is in fact stuck — the failure mode this timeout
+            // exists to catch.
+            guard line.contains("|"),
+                  let percentRange = line.range(of: #"\d+%"#, options: .regularExpression)
+            else { continue }
+            let percent = String(line[percentRange])
+
+            // The transferred/total fragment sits between the end of the bar
+            // ("| ") and the timing bracket (" ["). Both are optional — a bar
+            // without them still yields a usable percentage.
+            var detail = ""
+            if let barEnd = line.range(of: "| ", options: .backwards)?.upperBound,
+               let bracket = line.range(of: " [", range: barEnd..<line.endIndex)?.lowerBound {
+                detail = line[barEnd..<bracket].trimmingCharacters(in: .whitespaces)
+            }
+
+            let label = line.split(separator: ":").first.map(String.init) ?? "Model"
+            return detail.isEmpty ? "\(label) \(percent)" : "\(label) \(percent) (\(detail))"
+        }
+        return nil
     }
 
     private func fetchModels(port: Int) async -> ModelsResponse? {
