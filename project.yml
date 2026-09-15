@@ -47,6 +47,7 @@ targets:
         excludes:
           - "Resources/Info.plist"
           - "Resources/Tippi.entitlements"
+          - "Resources/Tippi.debug.entitlements"
           - "Helpers/**"
     settings:
       base:
@@ -55,7 +56,6 @@ targets:
         MARKETING_VERSION: "2.9.1"
         CURRENT_PROJECT_VERSION: "312"
         INFOPLIST_FILE: Tippi/Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Tippi/Resources/Tippi.entitlements
         ENABLE_HARDENED_RUNTIME: YES
         DEAD_CODE_STRIPPING: YES
         CODE_SIGN_STYLE: Automatic
@@ -76,6 +76,17 @@ targets:
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      configs:
+        # Split by configuration, not one shared entitlements file — see
+        # Tippi.debug.entitlements' own header comment (/diagnose,
+        # 2026-09-15) for why. Release MUST keep pointing at Tippi.entitlements
+        # unchanged: scripts/release.sh reads the *effective* entitlements back
+        # out of the exportArchive output and re-signs with exactly that, so
+        # whatever this config setting embeds is what ships and gets notarized.
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: Tippi/Resources/Tippi.debug.entitlements
+        Release:
+          CODE_SIGN_ENTITLEMENTS: Tippi/Resources/Tippi.entitlements
     scheme:
       testTargets:
         - TippiTests
