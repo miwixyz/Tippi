@@ -90,7 +90,7 @@ enum DynamicVariableBuilder {
             // bug this project already found and fixed once for `.weekday`
             // (see the comment there). Found in a second-pass code review,
             // 2026-09-13: `.today` had the identical bug the whole time.
-            let cmd = "LC_TIME=de_DE.UTF-8 date +\"\(format.strftimeFormat)\""
+            let cmd = "\(localePrefix)date +\"\(format.strftimeFormat)\""
             return SnippetVar(name: name, type: "shell", params: SnippetVarParams(cmd: cmd, format: nil))
 
         case .weekday(let weekday, let extraDays, let format):
@@ -102,7 +102,7 @@ enum DynamicVariableBuilder {
             // avoids relying on the runtime environment being German by
             // chance. Matches the LC_TIME Michael's own kinowoche.yml already
             // used for the exact same reason.
-            var cmd = "LC_TIME=de_DE.UTF-8 date -v +\(weekday.dateFlag)"
+            var cmd = "\(localePrefix)date -v +\(weekday.dateFlag)"
             if extraDays != 0 {
                 let sign = extraDays > 0 ? "+" : "-"
                 cmd += " -v \(sign)\(abs(extraDays))d"
@@ -144,6 +144,12 @@ enum DynamicVariableBuilder {
     /// Note the deliberate consequence: changing a template below invalidates
     /// snippets created by the previous version. They stop expanding and say so
     /// in the log, rather than failing open.
+    ///
+    /// That consequence already came due once, which is what `migratedCommand`
+    /// below exists for: releases up to v2.3.0 emitted `.weekday` commands
+    /// without the `LC_TIME` prefix. "Says so in the log" is not a user-visible
+    /// message — the trigger simply stops doing anything — so a template change
+    /// needs a migration entry here, not just a log line.
     static let generatableCommands: Set<String> = {
         var commands = Set<String>()
         let probeName = "x"  // name never appears in the command itself
@@ -164,4 +170,27 @@ enum DynamicVariableBuilder {
     static func canGenerate(_ command: String) -> Bool {
         generatableCommands.contains(command)
     }
+
+    /// The current spelling of a command an older Tippi wrote, or `nil` if the
+    /// command needs no upgrade (or is not one of ours at all).
+    ///
+    /// Only ever returns a string that is already in `generatableCommands`, so
+    /// migrating cannot widen what is allowed to run — it maps an old spelling
+    /// onto a command the current builder would emit anyway, or it refuses.
+    /// That property is what makes it safe to apply automatically to a file the
+    /// app does not control.
+    ///
+    /// `.calendarWeek` deliberately has no locale prefix (`%V` is a number), so
+    /// it is already current and falls out via the first guard rather than
+    /// being mangled into a command that exists nowhere.
+    static func migratedCommand(_ command: String) -> String? {
+        guard !generatableCommands.contains(command) else { return nil }
+        let upgraded = localePrefix + command
+        return generatableCommands.contains(upgraded) ? upgraded : nil
+    }
+
+    /// Single source for the locale override, so `makeVar` and `migratedCommand`
+    /// cannot drift apart — a migration that prepends a prefix the builder no
+    /// longer emits would silently stop migrating anything.
+    static let localePrefix = "LC_TIME=de_DE.UTF-8 "
 }

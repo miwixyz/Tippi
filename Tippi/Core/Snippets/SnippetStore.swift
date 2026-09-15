@@ -71,7 +71,17 @@ final class SnippetStore: ObservableObject {
     /// One imported snippet at a time awaiting its per-snippet shell-command
     /// consent decision. One at a time on purpose: the prompt then always
     /// names one concrete command, never a batch.
-    @Published var pendingShellApproval: ImportedSnippet?
+    ///
+    /// Clearing `approvalError` here rather than at each call site covers every
+    /// way the sheet can change hands. A failed signature left the message set
+    /// forever: declining closed the sheet but kept it, and tapping a *different*
+    /// snippet's badge later re-opened the sheet already showing a red error
+    /// that belonged to another snippet and predated any click.
+    @Published var pendingShellApproval: ImportedSnippet? {
+        didSet {
+            if pendingShellApproval?.id != oldValue?.id { approvalError = nil }
+        }
+    }
 
     private enum Keys {
         static let enabled = "tippi.snippets.enabled.v1"
@@ -165,8 +175,21 @@ final class SnippetStore: ObservableObject {
         }
         do {
             let data = try Data(contentsOf: appSnippetsURL)
-            appSnippets = try JSONDecoder().decode([AppSnippet].self, from: data)
+            let decoded = try JSONDecoder().decode([AppSnippet].self, from: data)
+            // Snippets written by Tippi 2.3.0 and earlier spell their weekday
+            // commands without the locale prefix. The expansion guard only
+            // accepts commands the current builder could emit, so without this
+            // they would go quiet on update: the trigger stops expanding, the
+            // snippet still looks fine in Settings, and the only trace is a log
+            // line accusing the user of editing the file by hand — which Tippi
+            // itself wrote that way.
+            let (migrated, didMigrate) = Self.migratingLegacyCommands(decoded)
+            appSnippets = migrated
             appSnippetsLoadError = nil
+            if didMigrate {
+                storeLog.info("migrated legacy dynamic-variable commands to the current spelling")
+                saveAppSnippets()
+            }
         } catch {
             // Keep the file, keep the list empty, and refuse to save until the
             // user has dealt with it. A copy is put aside so the contents stay
@@ -179,7 +202,54 @@ final class SnippetStore: ObservableObject {
         }
     }
 
+    /// Rewrites only those shell commands an older Tippi generated and the
+    /// current builder spells differently. Anything the builder would not emit
+    /// either way is left exactly as found — migration can never turn a command
+    /// that was refused into one that runs unless the current builder produces
+    /// that identical command itself.
+    private static func migratingLegacyCommands(_ snippets: [AppSnippet]) -> ([AppSnippet], Bool) {
+        var didMigrate = false
+        let migrated = snippets.map { snippet -> AppSnippet in
+            guard snippet.vars.contains(where: { $0.type == "shell" }) else { return snippet }
+            var copy = snippet
+            copy.vars = snippet.vars.map { variable in
+                guard variable.type == "shell",
+                      let cmd = variable.params.cmd,
+                      let upgraded = DynamicVariableBuilder.migratedCommand(cmd)
+                else { return variable }
+                didMigrate = true
+                return SnippetVar(
+                    name: variable.name,
+                    type: variable.type,
+                    params: SnippetVarParams(cmd: upgraded, format: variable.params.format)
+                )
+            }
+            return copy
+        }
+        return (migrated, didMigrate)
+    }
+
+    /// Re-reads the snippet file, clearing the save block if the problem was
+    /// fixed outside the app.
+    ///
+    /// The block has to be escapable. Without this the only exit was relaunching
+    /// Tippi, and the intervening session was quietly lossy: the list happily
+    /// accepted new snippets, none of them reached disk, and they were gone
+    /// after the restart. The remedy for the corrupt file itself lives outside
+    /// the app (repair or delete it), so the app needs a way to notice.
+    func reloadAppSnippets() {
+        loadAppSnippets()
+    }
+
     private func saveAppSnippets() {
+        // Re-check rather than trusting the flag from launch: if the unreadable
+        // file has since been deleted there is nothing left to protect, and
+        // refusing forever would strand every snippet created after that.
+        if appSnippetsLoadError != nil,
+           !FileManager.default.fileExists(atPath: appSnippetsURL.path) {
+            storeLog.info("the unreadable snippet file is gone — lifting the save block")
+            appSnippetsLoadError = nil
+        }
         guard appSnippetsLoadError == nil else {
             storeLog.error("refusing to save app snippets: the existing file could not be read, writing now would destroy it")
             return
@@ -188,12 +258,23 @@ final class SnippetStore: ObservableObject {
         try? data.write(to: appSnippetsURL, options: .atomic)
     }
 
+    /// True while the snippet file could not be read. Mutating the list is
+    /// refused in that state rather than accepted and dropped — the UI showed
+    /// success for writes that never happened.
+    private var appSnippetEditsAreBlocked: Bool {
+        guard appSnippetsLoadError != nil else { return false }
+        // A deleted file clears the block; `saveAppSnippets` does the same check
+        // and would accept the write, so refusing here would contradict it.
+        return FileManager.default.fileExists(atPath: appSnippetsURL.path)
+    }
+
     /// Prepends `defaultPrefix` only for a bare word (e.g. "mlg" → ":mlg").
     /// A shortcut that already starts with punctuation — any punctuation,
     /// not just the configured prefix — is treated as a deliberately
     /// complete trigger and left untouched, so a one-off different prefix
     /// (";foo", "##bar") still works by just typing it in full.
     func addSnippet(shortcut: String, replacement: String, vars: [SnippetVar] = []) {
+        guard !appSnippetEditsAreBlocked else { return }
         let trimmed = shortcut.trimmingCharacters(in: .whitespaces)
         let looksLikeACompleteTrigger = trimmed.first.map { !$0.isLetter && !$0.isNumber } ?? true
         let trigger = looksLikeACompleteTrigger ? trimmed : defaultPrefix + trimmed
@@ -202,17 +283,19 @@ final class SnippetStore: ObservableObject {
     }
 
     func updateSnippet(_ snippet: AppSnippet) {
+        guard !appSnippetEditsAreBlocked else { return }
         guard let idx = appSnippets.firstIndex(where: { $0.id == snippet.id }) else { return }
         appSnippets[idx] = snippet
         saveAppSnippets()
     }
 
     func removeSnippet(_ snippet: AppSnippet) {
+        guard !appSnippetEditsAreBlocked else { return }
         appSnippets.removeAll { $0.id == snippet.id }
         saveAppSnippets()
     }
 
-    // MARK: - Espanso file reference (read-only, whole-file consent gate)
+    // MARK: - Espanso files in the watched directory (import candidates only)
 
     func reloadEspansoFiles() {
         // `contentsOfDirectory(at:)` (the URL-based overload) throws ENOTDIR
@@ -279,16 +362,52 @@ final class SnippetStore: ObservableObject {
         tippiSupportDirectory.appendingPathComponent(Keys.importedSnippetsFile)
     }
 
+    /// Set when the imported-snippet file exists but could not be read.
+    /// Same contract as `appSnippetsLoadError`, and for the same reason: this
+    /// file carries the shell approvals, so overwriting an unparsed one costs
+    /// the user every consent decision they have made.
+    @Published private(set) var importedSnippetsLoadError: String?
+
     private func loadImportedSnippets() {
-        guard let data = try? Data(contentsOf: importedSnippetsURL),
-              let decoded = try? JSONDecoder().decode([ImportedSnippet].self, from: data) else {
+        // The `try?`-collapse this replaces treated "file absent" and "file
+        // unreadable" alike. A half-written file (crash mid-save, a sync
+        // conflict) came up as an empty list with no message, and the next
+        // import wrote that single entry over everything else — approvals
+        // included.
+        guard FileManager.default.fileExists(atPath: importedSnippetsURL.path) else {
             importedSnippets = []
+            importedSnippetsLoadError = nil
             return
         }
-        importedSnippets = decoded
+        do {
+            let data = try Data(contentsOf: importedSnippetsURL)
+            importedSnippets = try JSONDecoder().decode([ImportedSnippet].self, from: data)
+            importedSnippetsLoadError = nil
+        } catch {
+            importedSnippets = []
+            importedSnippetsLoadError = error.localizedDescription
+            storeLog.error("could not read \(Keys.importedSnippetsFile, privacy: .public): \(error.localizedDescription, privacy: .public) — saving is disabled until this is resolved")
+            let backup = importedSnippetsURL.appendingPathExtension("unreadable-\(Int(Date().timeIntervalSince1970))")
+            try? FileManager.default.copyItem(at: importedSnippetsURL, to: backup)
+        }
+    }
+
+    /// Re-reads the imported-snippet file, lifting the save block if the file
+    /// was repaired outside the app.
+    func reloadImportedSnippets() {
+        loadImportedSnippets()
     }
 
     private func saveImportedSnippets() {
+        if importedSnippetsLoadError != nil,
+           !FileManager.default.fileExists(atPath: importedSnippetsURL.path) {
+            storeLog.info("the unreadable imported-snippet file is gone — lifting the save block")
+            importedSnippetsLoadError = nil
+        }
+        guard importedSnippetsLoadError == nil else {
+            storeLog.error("refusing to save imported snippets: the existing file could not be read, writing now would destroy it")
+            return
+        }
         guard let data = try? JSONEncoder().encode(importedSnippets) else { return }
         try? data.write(to: importedSnippetsURL, options: .atomic)
     }
@@ -375,7 +494,8 @@ final class SnippetStore: ObservableObject {
     }
 
     /// Declining doesn't delete the snippet — it just stays inactive (not
-    /// matched, not expandable) until approved later from Settings, same
+    /// matched, not expandable) until approved later from Settings.
+    ///
     /// Deliberately does *not* call
     /// `refreshPendingShellApproval()`: that method's criterion (has shell
     /// vars, not yet approved) is still true for the just-declined snippet,
@@ -491,6 +611,34 @@ final class SnippetStore: ObservableObject {
             return .espansoMatch(SnippetMatch(triggers: snippet.triggers, replace: snippet.replace, vars: snippet.vars))
         }
         return nil
+    }
+
+    /// The triggers of `snippet` that a different imported snippet actually
+    /// wins, i.e. typing them expands the other one.
+    ///
+    /// Two imported files may legitimately define the same trigger — Espanso
+    /// allows it and resolves by file precedence. Tippi has no such rule: the
+    /// winner is whichever entry comes first in `importedSnippets`, which is
+    /// the order they were imported in. That is stable once written, but it is
+    /// arbitrary, and nothing in the UI used to reveal that a second definition
+    /// was being ignored — two near-identical rows, no indication which one was
+    /// live, and deleting "the wrong one" was guesswork.
+    ///
+    /// Mirrors `action(forTrigger:)` exactly, including that only *active*
+    /// snippets can win: an unapproved shell snippet sitting earlier in the
+    /// list does not shadow an approved one behind it.
+    func shadowedTriggers(of snippet: ImportedSnippet) -> [String] {
+        // An inactive snippet is not shadowed, it is simply not approved yet —
+        // a different cause, with its own badge, and one that reverses on
+        // approval: once approved it sits earlier in the list and wins. Marking
+        // it "overridden" would state the opposite of what happens next.
+        guard isSnippetActive(snippet) else { return [] }
+        return snippet.triggers.filter { trigger in
+            guard let winner = importedSnippets.first(where: {
+                isSnippetActive($0) && $0.triggers.contains(trigger)
+            }) else { return false }
+            return winner.id != snippet.id
+        }
     }
 
     /// Shell-var resolution shells out and blocks on process exit — run off

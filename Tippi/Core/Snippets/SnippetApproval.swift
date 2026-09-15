@@ -83,6 +83,9 @@ enum SnippetApprovalSigner {
             kSecAttrAccount as String: keychainAccount,
         ]
         let status = SecItemDelete(query as CFDictionary)
+        // Before evaluating the result: a cached copy would keep verifying
+        // approvals the user just revoked, for the rest of the session.
+        invalidateKeyCache(service: service)
         return status == errSecSuccess || status == errSecItemNotFound
     }
 
@@ -111,7 +114,37 @@ enum SnippetApprovalSigner {
 
     // MARK: - Keychain
 
+    /// Process-lifetime cache of the HMAC key, keyed by service.
+    ///
+    /// `verify` runs inside `activeTriggers()`, which the keystroke monitor
+    /// calls on **every keypress**. Each uncached call is a real
+    /// `SecItemCopyMatching` — measured at 1.09 ms on this machine, so ten
+    /// approved shell snippets cost ~11 ms of the event tap per character
+    /// typed. That is latency the user feels as the whole system lagging.
+    ///
+    /// The security property this protects is "another process cannot read the
+    /// key", and that is enforced by the Keychain ACL, not by how often we ask.
+    /// The key is already resident in process memory for the duration of any
+    /// verify; caching extends that window, it does not create it. Stored per
+    /// service so the throwaway services the tests use can never collide with
+    /// the production one.
+    private static let keyCacheLock = NSLock()
+    nonisolated(unsafe) private static var keyCache: [String: SymmetricKey] = [:]
+
+    /// Drops cached keys. Must be called whenever the stored key changes,
+    /// otherwise a revoked key keeps verifying for the rest of the session.
+    private static func invalidateKeyCache(service: String) {
+        keyCacheLock.lock()
+        keyCache[service] = nil
+        keyCacheLock.unlock()
+    }
+
     private static func loadKey(service: String) -> SymmetricKey? {
+        keyCacheLock.lock()
+        let cached = keyCache[service]
+        keyCacheLock.unlock()
+        if let cached { return cached }
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -127,7 +160,14 @@ enum SnippetApprovalSigner {
             }
             return nil
         }
-        return SymmetricKey(data: data)
+        // Only successes are cached. A failed read (locked Keychain, missing
+        // item) must stay retryable — caching `nil` would turn a transient
+        // condition into a permanent one for the rest of the session.
+        let key = SymmetricKey(data: data)
+        keyCacheLock.lock()
+        keyCache[service] = key
+        keyCacheLock.unlock()
+        return key
     }
 
     private static func loadOrCreateKey(service: String) -> SymmetricKey? {

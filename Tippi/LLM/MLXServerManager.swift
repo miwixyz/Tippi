@@ -35,6 +35,10 @@ final class MLXServerManager: ObservableObject {
     /// timeout in `waitForHealth`.
     private var lastProgressAt: Date?
 
+    /// Incremented per start attempt so stderr chunks queued by an earlier
+    /// attempt can be told apart from this one's and dropped.
+    fileprivate var startGeneration = 0
+
     enum ServerState: Equatable {
         case stopped
         case starting
@@ -94,6 +98,16 @@ final class MLXServerManager: ObservableObject {
         let port  = Self.port
         state = .starting
         isWarm = false
+        // A stderr chunk from the *previous* attempt can still be sitting in the
+        // MainActor queue when this one flips to `.starting`. Landing then, it
+        // would push this attempt's idle deadline out by up to a minute and
+        // stamp it with the old process's progress text — which then also ends
+        // up in the "download stalled at X" message. Clearing the timestamp and
+        // bumping the generation makes those late arrivals identifiable.
+        lastProgressAt = nil
+        downloadStatus = nil
+        startGeneration &+= 1
+        let generation = startGeneration
 
         let binary = Self.resolvedBinary()
         guard let binary else {
@@ -151,8 +165,11 @@ final class MLXServerManager: ObservableObject {
                   let status = Self.parseDownloadProgress(chunk)
             else { return }
             Task { @MainActor in
-                // Only meaningful while this start attempt is still in flight.
-                guard MLXServerManager.shared.state == .starting else { return }
+                // Only meaningful while *this* start attempt is still in flight.
+                // The generation check is what distinguishes it from a later
+                // attempt that also happens to be `.starting`.
+                guard MLXServerManager.shared.startGeneration == generation,
+                      MLXServerManager.shared.state == .starting else { return }
                 MLXServerManager.shared.downloadStatus = status
                 MLXServerManager.shared.lastProgressAt = Date()
             }
@@ -437,16 +454,28 @@ final class MLXServerManager: ObservableObject {
     /// message the idle timeout was introduced to get rid of.
     private func waitUntilRunning() async throws -> Int {
         var deadline = Date().addingTimeInterval(60)
-        while Date() < deadline {
+        // The idle rule alone has no upper bound: as long as bytes keep
+        // arriving, the deadline keeps moving and this never returns. A
+        // multi-gigabyte first-run download would hold a polish request for its
+        // entire duration with the activity indicator spinning and no way to
+        // cancel. Waiting through a download is right; waiting indefinitely is
+        // not, so the idle rule gets a ceiling.
+        let hardDeadline = Date().addingTimeInterval(Self.maximumStartupWait)
+        while Date() < deadline, Date() < hardDeadline {
             if case .running(let p) = state { return p }
             if case .failed = state { throw MLXError.startupTimeout }
             if let last = lastProgressAt {
-                deadline = max(deadline, last.addingTimeInterval(60))
+                deadline = min(max(deadline, last.addingTimeInterval(60)), hardDeadline)
             }
             try await Task.sleep(nanoseconds: 500_000_000)
         }
         throw MLXError.startupTimeout
     }
+
+    /// Upper bound for waiting on a start already in flight, regardless of
+    /// progress. Generous enough for a large first-run download on a slow line,
+    /// short enough that a wedged start eventually reports instead of hanging.
+    private static let maximumStartupWait: TimeInterval = 30 * 60
 }
 
 private struct ModelsResponse: Decodable {

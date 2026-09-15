@@ -7,9 +7,11 @@ import Foundation
 /// not implemented; add fields here only when a real file actually needs
 /// them (Simplicity First) rather than pre-building the whole spec.
 /// Decodable only — these are parsed from Espanso YAML for reading, never
-/// written back out (the file itself stays the source of truth), and the
-/// custom `init(from:)` below (needed for the trigger/triggers union) would
-/// otherwise force a hand-written `encode(to:)` that has no real caller.
+/// written back out. Tippi never edits the YAML: importing copies the matches
+/// into `ImportedSnippet` and that copy becomes what actually runs, so the file
+/// is a one-way input rather than a live source. The custom `init(from:)` below
+/// (needed for the trigger/triggers union) would otherwise force a hand-written
+/// `encode(to:)` that has no real caller.
 struct SnippetMatch: Decodable, Equatable {
     /// Espanso supports both `trigger: "..."` and `triggers: ["...", "..."]`.
     /// Decoded into a single array internally so callers don't care which

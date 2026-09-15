@@ -153,6 +153,14 @@ struct SnippetsTab: View {
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .textSelection(.enabled)
+                            // Without this the only way out was relaunching,
+                            // and the session in between silently dropped every
+                            // new snippet: the list accepted them, nothing
+                            // reached disk, all gone after the restart.
+                            Button(String(localized: "settings.snippets.reloadFile")) {
+                                store.reloadAppSnippets()
+                            }
+                            .controlSize(.small)
                         }
                     } icon: {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -218,6 +226,14 @@ struct SnippetsTab: View {
                             .controlSize(.small)
                         }
                     }
+                    // Files in this directory are no longer read live. Anyone
+                    // upgrading from 2.9 finds their shortcuts dead while the
+                    // file still sits here looking unchanged, with nothing to
+                    // suggest that importing is now the step that makes it work.
+                    Text(String(localized: "settings.snippets.importRequiredHint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
                     Text(store.matchDirectory.path)
@@ -238,13 +254,29 @@ struct SnippetsTab: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(store.importedSnippets) { snippet in
+                        let shadowed = store.shadowedTriggers(of: snippet)
                         HStack {
                             Text(snippet.trigger).fontWeight(.medium)
                             Text("→").foregroundStyle(.secondary)
                             Text(snippet.replace)
                                 .lineLimit(1)
                                 .foregroundStyle(.secondary)
+                            // Without the source file, two entries that share a
+                            // trigger are indistinguishable in this list, and
+                            // deleting the one that is actually inert becomes
+                            // guesswork.
+                            if let source = snippet.sourcePath {
+                                Text(URL(fileURLWithPath: source).lastPathComponent)
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
                             Spacer()
+                            if !shadowed.isEmpty {
+                                Label(String(localized: "settings.snippets.triggerShadowed"), systemImage: "arrow.uturn.forward")
+                                    .foregroundStyle(.orange)
+                                    .font(.caption)
+                                    .help(String(localized: "settings.snippets.triggerShadowedHelp"))
+                            }
                             // Three states, not two. The badge used to read
                             // `shellApproval != nil` while activation asks
                             // `SnippetApprovalSigner.verify` — so a stored
@@ -606,7 +638,6 @@ private struct ShellSnippetApprovalSheet: View {
     let snippet: ImportedSnippet
     let onApprove: () -> Void
     let onDecline: () -> Void
-    @Environment(\.dismiss) private var dismiss
 
     private var shellCommands: [String] {
         snippet.vars.filter { $0.type == "shell" }.compactMap(\.params.cmd)
@@ -646,9 +677,13 @@ private struct ShellSnippetApprovalSheet: View {
                 // just happened — so with two shell snippets, or two files
                 // awaiting approval, only the first was ever shown and the rest
                 // stayed silently unapproved. Reproduced 2026-09-15.
-                Button(String(localized: "settings.snippets.shellApproval.decline")) {
+                // Escape has to reach a button, and it must be this one: a
+                // consent prompt that can only be answered by approving is not
+                // consent. Without a cancel role, Escape did nothing at all.
+                Button(String(localized: "settings.snippets.shellApproval.decline"), role: .cancel) {
                     onDecline()
                 }
+                .keyboardShortcut(.cancelAction)
                 Button(String(localized: "settings.snippets.shellApproval.approve")) {
                     onApprove()
                 }

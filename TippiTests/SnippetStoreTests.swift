@@ -1,10 +1,10 @@
 import XCTest
 @testable import Tippi
 
-/// Exercises the per-file consent gate end-to-end against real files in a
-/// temp directory — the part of `SnippetStore` most likely to regress
-/// silently (see `SnippetStore.fileContentHash`'s comment on why
-/// `String.hashValue` would have been a cross-launch-breaking bug).
+/// Exercises import and the per-snippet shell consent end-to-end against real
+/// files in a temp directory — the part of `SnippetStore` most likely to
+/// regress silently, because every failure mode here is a shortcut that simply
+/// stops working rather than anything that announces itself.
 @MainActor
 final class SnippetStoreTests: XCTestCase {
     private var tempDir: URL!
@@ -311,6 +311,62 @@ final class SnippetStoreTests: XCTestCase {
         store.addSnippet(shortcut: ":neu", replacement: "x")
         let onDisk = try String(contentsOf: file, encoding: .utf8)
         XCTAssertEqual(onDisk, "{ this is not valid json", "the unreadable file must be left untouched")
+        XCTAssertTrue(store.appSnippets.isEmpty,
+                      "an edit that cannot be saved must be refused, not shown as if it worked")
+    }
+
+    /// The block has to be escapable. While it was only clearable by relaunching,
+    /// the session in between silently swallowed every new snippet: the list
+    /// accepted them, nothing reached disk, all gone after the restart.
+    func testRepairingTheFileLiftsTheSaveBlock() throws {
+        let supportDir = tempDir.appendingPathComponent("Tippi", isDirectory: true)
+        try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
+        let file = supportDir.appendingPathComponent("AppSnippets.json")
+        try "{ broken".write(to: file, atomically: true, encoding: .utf8)
+
+        let store = makeStore()
+        store.matchDirectory = tempDir
+        XCTAssertNotNil(store.appSnippetsLoadError)
+
+        try "[]".write(to: file, atomically: true, encoding: .utf8)
+        store.reloadAppSnippets()
+        XCTAssertNil(store.appSnippetsLoadError, "a repaired file must clear the block")
+
+        store.addSnippet(shortcut: ":neu", replacement: "x")
+        XCTAssertEqual(store.appSnippets.count, 1)
+        let onDisk = try Data(contentsOf: file)
+        XCTAssertFalse(try XCTUnwrap(String(data: onDisk, encoding: .utf8)).isEmpty)
+        XCTAssertNotNil(try? JSONDecoder().decode([AppSnippet].self, from: onDisk),
+                        "the snippet must actually reach disk once the block is lifted")
+    }
+
+    /// `ImportedSnippets.json` carries the shell approvals, so the same
+    /// "unreadable looks empty" collapse costs every consent decision: the list
+    /// came up empty and the next import wrote one entry over all of them.
+    func testCorruptImportedSnippetFileBlocksSavingInsteadOfOverwritingIt() throws {
+        let supportDir = tempDir.appendingPathComponent("Tippi", isDirectory: true)
+        try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
+        let file = supportDir.appendingPathComponent("ImportedSnippets.json")
+        try "{ half written".write(to: file, atomically: true, encoding: .utf8)
+
+        let yaml = """
+        matches:
+          - trigger: ":a"
+            replace: "A"
+        """
+        let source = tempDir.appendingPathComponent("base.yml")
+        try yaml.write(to: source, atomically: true, encoding: .utf8)
+
+        let store = makeStore()
+        store.matchDirectory = tempDir
+        XCTAssertTrue(store.importedSnippets.isEmpty)
+        XCTAssertNotNil(store.importedSnippetsLoadError,
+                        "a parse failure must be reported, not silently shown as 'nothing imported'")
+
+        XCTAssertEqual(store.espansoFiles.count, 1)
+        store.importFile(store.espansoFiles[0])
+        let onDisk = try String(contentsOf: file, encoding: .utf8)
+        XCTAssertEqual(onDisk, "{ half written", "the unreadable file must be left untouched")
     }
 
     /// Import used to be a one-way door: deleting the snippets left the source
@@ -372,5 +428,63 @@ final class SnippetStoreTests: XCTestCase {
 
         while let file = store.espansoFiles.first { store.importFile(file) }
         XCTAssertEqual(store.importedSnippets.count, 2, "one file's snippet must not overwrite the other's")
+
+        // Keeping both is only half an answer: exactly one of them expands, and
+        // the user has to be able to see which. Asserting the count alone left
+        // the meaning untested — the list showed two near-identical rows with
+        // no hint that the second was inert.
+        let winner = try XCTUnwrap(store.importedSnippets.first)
+        let loser = store.importedSnippets[1]
+        XCTAssertTrue(store.shadowedTriggers(of: loser).contains(":mw"),
+                      "the entry that does not expand must be marked as overridden")
+        XCTAssertTrue(store.shadowedTriggers(of: winner).isEmpty,
+                      "the entry that does expand must not be marked")
+
+        guard case .espansoMatch(let match)? = store.action(forTrigger: ":mw") else {
+            return XCTFail("the trigger must still resolve")
+        }
+        XCTAssertEqual(match.replace, winner.replace,
+                       "the badge must agree with what typing the trigger actually produces")
+    }
+
+    /// An unapproved shell snippet sitting earlier in the list must not be
+    /// reported as the winner — `action(forTrigger:)` skips it, so marking the
+    /// approved entry behind it as "overridden" would be exactly backwards.
+    func testUnapprovedSnippetDoesNotShadowAnApprovedOne() throws {
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+
+        // Imported through the real path rather than assigned, so the ordering
+        // under test is the one production actually produces.
+        try """
+        matches:
+          - trigger: ":x"
+            replace: "{{v}}"
+            vars:
+              - name: v
+                type: shell
+                params:
+                  cmd: echo hi
+        """.write(to: tempDir.appendingPathComponent("a-shell.yml"), atomically: true, encoding: .utf8)
+        try """
+        matches:
+          - trigger: ":x"
+            replace: "klartext"
+        """.write(to: tempDir.appendingPathComponent("b-plain.yml"), atomically: true, encoding: .utf8)
+        store.reloadEspansoFiles()
+
+        store.importFile(try XCTUnwrap(store.espansoFiles.first { $0.id.hasSuffix("a-shell.yml") }))
+        store.importFile(try XCTUnwrap(store.espansoFiles.first { $0.id.hasSuffix("b-plain.yml") }))
+
+        let shell = try XCTUnwrap(store.importedSnippets.first { $0.hasShellVars })
+        let plain = try XCTUnwrap(store.importedSnippets.first { !$0.hasShellVars })
+        XCTAssertEqual(store.importedSnippets.first?.id, shell.id, "precondition: the shell entry is first")
+
+        XCTAssertFalse(store.isImportedSnippetActive(shell), "precondition: unapproved shell snippet is inert")
+        XCTAssertTrue(store.shadowedTriggers(of: shell).isEmpty,
+                      "an inert entry is not shadowed — it simply does not participate")
+        XCTAssertTrue(store.shadowedTriggers(of: plain).isEmpty,
+                      "nothing ahead of it actually wins, so it must not be marked")
     }
 }

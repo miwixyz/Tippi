@@ -36,9 +36,14 @@ enum SnippetVariableResolver {
     /// matching Espanso's own semantics (inline env assignments like
     /// `LC_TIME=de_DE.UTF-8 date ...` only work that way). This is exactly
     /// the arbitrary-shell-execution surface flagged in the feature's
-    /// secure-design pass: it only ever runs for matches belonging to a file
-    /// the user has explicitly approved (gated upstream in `SnippetStore`),
-    /// never for an unreviewed file.
+    /// secure-design pass. Two separate gates upstream in `SnippetStore` decide
+    /// whether a command ever reaches here, and which one applies depends on
+    /// where the snippet came from: an imported snippet needs a per-snippet
+    /// approval signed with the Keychain key (`SnippetApprovalSigner.verify`),
+    /// an app-created one has to be a command the builder itself could have
+    /// emitted (`DynamicVariableBuilder.canGenerate`). The whole-file approval
+    /// this comment used to describe no longer exists — files in the watched
+    /// directory are not executed in place at all, they have to be imported.
     /// Hard ceiling on how long a snippet's shell var may run. Real bug
     /// found in the 2026-09-09 pre-release audit: `waitUntilExit()` used to
     /// have no timeout at all — a command that hangs (blocked on stdin, an

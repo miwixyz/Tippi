@@ -36,9 +36,11 @@ final class AppSnippetShellGuardTests: XCTestCase {
 
     // MARK: - Every kind the picker can produce must survive the gate
 
-    /// Exhaustive rather than sampled: this is the set the gate is derived
-    /// from, so a template change that breaks a user's existing snippet shows
-    /// up here rather than in the field as "my date shortcut stopped working".
+    /// Catches a blanket refusal (the 2026-09-15 regression, where the gate
+    /// rejected everything). It deliberately does **not** catch template drift:
+    /// both sides of the comparison come from `makeVar`, so they move together
+    /// and a changed template stays green here. `testStoredCommandSpellingsAreStable`
+    /// below is the test that pins the actual strings.
     func testEveryGeneratableKindIsAccepted() {
         for format in DateFormatPreset.allCases {
             let today = DynamicVariableBuilder.makeVar(name: "x", kind: .today(format: format))
@@ -57,6 +59,47 @@ final class AppSnippetShellGuardTests: XCTestCase {
         }
         let week = DynamicVariableBuilder.makeVar(name: "x", kind: .calendarWeek)
         XCTAssertTrue(DynamicVariableBuilder.canGenerate(week.params.cmd ?? ""))
+    }
+
+    /// Hard-coded on purpose. Every other test here derives its expectation
+    /// from `makeVar`, which means a changed template rewrites the expectation
+    /// along with the code and nothing fails. These literals are what actually
+    /// sits in users' `AppSnippets.json`, so changing a template has to break
+    /// this test — and whoever changes it has to add a `migratedCommand` entry.
+    func testStoredCommandSpellingsAreStable() {
+        XCTAssertTrue(DynamicVariableBuilder.canGenerate("LC_TIME=de_DE.UTF-8 date -v +thu -v +6d +\"%d. %B\""))
+        XCTAssertTrue(DynamicVariableBuilder.canGenerate("LC_TIME=de_DE.UTF-8 date -v +mon +\"%d.\""))
+        XCTAssertTrue(DynamicVariableBuilder.canGenerate("date -v +thu +\"%V\""),
+                      "calendar week carries no locale prefix and must stay that way")
+    }
+
+    /// Releases up to v2.3.0 wrote weekday commands without the locale prefix.
+    /// Without migration those snippets pass through the gate as "not something
+    /// Tippi could have produced" and go silently inert on update.
+    func testLegacyCommandFromOlderReleaseIsMigratedAndStillExpands() throws {
+        let legacy = "date -v +thu -v +6d +\"%d. %B\""
+        XCTAssertFalse(DynamicVariableBuilder.canGenerate(legacy),
+                       "precondition: the old spelling is not directly acceptable")
+
+        let file = tempDir.appendingPathComponent("Tippi/AppSnippets.json")
+        try FileManager.default.createDirectory(at: file.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        let json = """
+        [{"id":"\(UUID().uuidString)","trigger":":nl-mi","replacement":"{{d}}",
+          "vars":[{"name":"d","type":"shell","params":{"cmd":"\(legacy.replacingOccurrences(of: "\"", with: "\\\""))"}}]}]
+        """
+        try Data(json.utf8).write(to: file)
+
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+
+        XCTAssertTrue(store.activeTriggers().contains(":nl-mi"),
+                      "a snippet created by an older Tippi must keep expanding")
+        XCTAssertNotNil(store.action(forTrigger: ":nl-mi"))
+        XCTAssertEqual(store.appSnippets.first?.vars.first?.params.cmd,
+                       DynamicVariableBuilder.localePrefix + legacy,
+                       "the upgrade must be written back, not redone on every launch")
     }
 
     func testPickerCreatedSnippetStillExpands() {
