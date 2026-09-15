@@ -170,10 +170,13 @@
 "settings.snippets.appManaged" = "Your snippets";
 "settings.snippets.empty" = "No snippets yet.";
 "settings.snippets.new" = "New snippet";
-"settings.snippets.imported" = "Imported Espanso files";
+"settings.snippets.reference" = "Espanso files (source)";
 "settings.snippets.importedEmpty" = "No Espanso match files found.";
 "settings.snippets.matchCount" = "snippets";
 "settings.snippets.rescan" = "Rescan";
+"settings.snippets.import" = "Import";
+"settings.snippets.importedSnippets" = "Imported snippets";
+"settings.snippets.importedSnippetsEmpty" = "Nothing imported yet — import a file above to copy its snippets into Tippi's own store.";
 "settings.snippets.shellPending" = "Needs approval";
 "settings.snippets.shellApproved" = "Approved";
 "settings.snippets.editor.title" = "Snippet";
@@ -209,6 +212,8 @@
 "settings.snippets.variable.insert" = "Insert";
 "settings.snippets.shellApproval.decline" = "Decline";
 "settings.snippets.shellApproval.approve" = "Approve";
+"settings.snippets.shellSnippetApproval.title" = "Snippet runs a shell command";
+"settings.snippets.shellSnippetApproval.body" = "Trigger %@ will run the following command when typed:";
 
 "settings.general.autostart.enabled" = "Tippi will now start at login.";
 "settings.general.autostart.disabled" = "Tippi will no longer start at login.";

@@ -102,7 +102,7 @@ struct SnippetsTab: View {
                 }
             }
 
-            Section(String(localized: "settings.snippets.imported")) {
+            Section(String(localized: "settings.snippets.reference")) {
                 if store.espansoFiles.isEmpty {
                     Text(String(localized: "settings.snippets.importedEmpty"))
                         .foregroundStyle(.secondary)
@@ -126,6 +126,16 @@ struct SnippetsTab: View {
                                     .foregroundStyle(.green)
                                     .font(.caption)
                             }
+                            // Import replaces reference for this file — it
+                            // works regardless of the file's current
+                            // reference-approval state, and moves the file
+                            // out of this list into "Importierte Kürzel"
+                            // below (see SnippetStore.importFile).
+                            Button(String(localized: "settings.snippets.import")) {
+                                store.importFile(file)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
                         }
                     }
                 }
@@ -138,6 +148,42 @@ struct SnippetsTab: View {
                     Spacer()
                     Button(String(localized: "settings.snippets.rescan")) {
                         store.reloadEspansoFiles()
+                    }
+                }
+            }
+
+            Section(String(localized: "settings.snippets.importedSnippets")) {
+                if store.importedSnippets.isEmpty {
+                    Text(String(localized: "settings.snippets.importedSnippetsEmpty"))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(store.importedSnippets) { snippet in
+                        HStack {
+                            Text(snippet.trigger).fontWeight(.medium)
+                            Text("→").foregroundStyle(.secondary)
+                            Text(snippet.replace)
+                                .lineLimit(1)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            if snippet.hasShellVars {
+                                if snippet.shellApproval == nil {
+                                    Label(String(localized: "settings.snippets.shellPending"), systemImage: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                        .font(.caption)
+                                        .onTapGesture { store.pendingShellApproval = snippet }
+                                } else {
+                                    Label(String(localized: "settings.snippets.shellApproved"), systemImage: "checkmark.shield.fill")
+                                        .foregroundStyle(.green)
+                                        .font(.caption)
+                                }
+                            }
+                            Button(role: .destructive) {
+                                store.removeImportedSnippet(snippet)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
             }
@@ -163,6 +209,13 @@ struct SnippetsTab: View {
                 file: file,
                 onApprove: { store.approveFile(file) },
                 onDecline: { store.declineFile(file) }
+            )
+        }
+        .sheet(item: $store.pendingShellApproval) { snippet in
+            ShellSnippetApprovalSheet(
+                snippet: snippet,
+                onApprove: { store.approveShellSnippet(snippet) },
+                onDecline: { store.declineShellSnippet(snippet) }
             )
         }
     }
@@ -457,6 +510,58 @@ private struct FileApprovalSheet: View {
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(6)
             }
+
+            HStack {
+                Spacer()
+                Button(String(localized: "settings.snippets.shellApproval.decline")) {
+                    onDecline()
+                    dismiss()
+                }
+                Button(String(localized: "settings.snippets.shellApproval.approve")) {
+                    onApprove()
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 420)
+    }
+}
+
+/// Per-snippet consent for one imported shell command — the finer-grained
+/// successor to `FileApprovalSheet` for anything that has actually been
+/// imported into Tippi's own store (see docs/SECURE-DESIGN-espanso-import.md
+/// § "per-snippet consent, integrity-protected"). Shown once per snippet, not
+/// once per file: a harmless edit to an unrelated snippet in the same
+/// original file no longer revokes this one's approval.
+private struct ShellSnippetApprovalSheet: View {
+    let snippet: ImportedSnippet
+    let onApprove: () -> Void
+    let onDecline: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    private var shellCommands: [String] {
+        snippet.vars.filter { $0.type == "shell" }.compactMap(\.params.cmd)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(String(localized: "settings.snippets.shellSnippetApproval.title"), systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundStyle(.orange)
+
+            Text(String(format: String(localized: "settings.snippets.shellSnippetApproval.body"), snippet.trigger))
+
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(shellCommands, id: \.self) { cmd in
+                    Text(cmd).font(.system(.caption, design: .monospaced))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(6)
 
             HStack {
                 Spacer()

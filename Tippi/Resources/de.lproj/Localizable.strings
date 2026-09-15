@@ -170,10 +170,13 @@
 "settings.snippets.appManaged" = "Eigene Kürzel";
 "settings.snippets.empty" = "Noch keine eigenen Kürzel angelegt.";
 "settings.snippets.new" = "Neues Kürzel";
-"settings.snippets.imported" = "Importierte Espanso-Dateien";
+"settings.snippets.reference" = "Espanso-Dateien (Quelle)";
 "settings.snippets.importedEmpty" = "Keine Espanso-Match-Dateien gefunden.";
 "settings.snippets.matchCount" = "Kürzel";
 "settings.snippets.rescan" = "Neu einlesen";
+"settings.snippets.import" = "Importieren";
+"settings.snippets.importedSnippets" = "Importierte Kürzel";
+"settings.snippets.importedSnippetsEmpty" = "Noch nichts importiert — importiere oben eine Datei, um ihre Kürzel in Tippis eigenen Speicher zu kopieren.";
 "settings.snippets.shellPending" = "Freigabe nötig";
 "settings.snippets.shellApproved" = "Freigegeben";
 "settings.snippets.editor.title" = "Kürzel";
@@ -209,6 +212,8 @@
 "settings.snippets.variable.insert" = "Einfügen";
 "settings.snippets.shellApproval.decline" = "Ablehnen";
 "settings.snippets.shellApproval.approve" = "Freigeben";
+"settings.snippets.shellSnippetApproval.title" = "Kürzel führt einen Shell-Befehl aus";
+"settings.snippets.shellSnippetApproval.body" = "Kürzel %@ führt beim Tippen folgenden Befehl aus:";
 
 "settings.general.autostart.enabled" = "Tippi startet ab jetzt beim Anmelden.";
 "settings.general.autostart.disabled" = "Tippi startet nicht mehr beim Anmelden.";

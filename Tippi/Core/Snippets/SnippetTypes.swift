@@ -64,6 +64,63 @@ struct EspansoMatchFile: Decodable, Equatable {
     let matches: [SnippetMatch]
 }
 
+/// One snippet copied out of an Espanso match file into Tippi's own store —
+/// the "import" half of docs/SECURE-DESIGN-espanso-import.md. Unlike
+/// `AppSnippet`, `vars` here can legitimately contain a `shell` type, because
+/// these came from a file Michael authored outside Tippi, not from the
+/// "Insert Variable" picker.
+///
+/// `shellApproval` is the whole security model in one field: `nil` means "not
+/// consented, do not run" and is the only state a shell-bearing snippet can
+/// start in, migration or fresh import alike (see the doc's "ask once"
+/// section). A non-nil value still has to pass `SnippetApprovalSigner.verify`
+/// against the *current* trigger/command before every expansion — storing it
+/// here does not itself grant trust, only carries the signed claim.
+struct ImportedSnippet: Codable, Equatable, Identifiable {
+    let id: UUID
+    /// Espanso allows multiple triggers per match; `trigger` (first one) is
+    /// what gets signed/verified, `triggers` is what actually gets matched.
+    var trigger: String
+    var triggers: [String]
+    var replace: String
+    var vars: [SnippetVar]
+    var shellApproval: SnippetApproval?
+
+    init(id: UUID = UUID(), triggers: [String], replace: String, vars: [SnippetVar], shellApproval: SnippetApproval? = nil) {
+        self.id = id
+        self.trigger = triggers.first ?? ""
+        self.triggers = triggers
+        self.replace = replace
+        self.vars = vars
+        self.shellApproval = shellApproval
+    }
+
+    var hasShellVars: Bool { vars.contains { $0.type == "shell" } }
+
+    /// Canonical text of everything that would actually execute, in a form
+    /// stable across re-imports of byte-identical content. Fed into
+    /// `SnippetApprovalSigner` as the "command" half of the (trigger,
+    /// command) pair it signs.
+    ///
+    /// Each field is length-prefixed, same reasoning as `SnippetApprovalSigner.mac`'s
+    /// own length-prefixing of (trigger, command): a plain `"\(name)=\(cmd)"`
+    /// join is not collision-resistant when `cmd` may itself contain `=` or
+    /// `\n` — two different (name, cmd) pairs could join to the identical
+    /// string, letting a store-file edit that changes the actual command
+    /// still verify against an old approval's MAC. Sorted by name (not by the
+    /// joined string) so sort order can't itself be manipulated by crafting a
+    /// name that reorders entries around a collision.
+    var shellCommandDigest: String {
+        vars.filter { $0.type == "shell" }
+            .sorted { $0.name < $1.name }
+            .map { shellVar -> String in
+                let cmd = shellVar.params.cmd ?? ""
+                return "\(shellVar.name.utf8.count):\(shellVar.name)=\(cmd.utf8.count):\(cmd)"
+            }
+            .joined(separator: "\n")
+    }
+}
+
 /// A snippet created directly in Tippi's UI — trigger → text, optionally with
 /// dynamic `vars` (date/weekday variables inserted via the "Insert Variable"
 /// picker in the editor, never hand-typed shell). `vars` empty = the plain
