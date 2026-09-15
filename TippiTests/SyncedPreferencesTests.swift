@@ -1,0 +1,154 @@
+import XCTest
+@testable import Tippi
+
+/// Covers the settings sync across Macs. The interesting behaviour is not
+/// "does a value travel" but "what happens when both sides changed" — that is
+/// where a naive implementation loses an edit without saying so.
+@MainActor
+final class SyncedPreferencesTests: XCTestCase {
+    private var defaults: UserDefaults!
+    private var suiteName: String!
+    private let wordsKey = "dictation.customWords.v1"
+    private let stampKey = "dictation.customWords.v1.syncedAt"
+
+    override func setUp() {
+        super.setUp()
+        suiteName = "TippiTests.sync.\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suiteName)!
+        // The real store is a process-wide singleton shared with iCloud; tests
+        // drive a stand-in that behaves the same for the parts under test.
+        FakeKeyValueStore.shared.reset()
+    }
+
+    override func tearDown() {
+        defaults.removePersistentDomain(forName: suiteName)
+        super.tearDown()
+    }
+
+    private func makeSync() -> SyncedPreferences {
+        SyncedPreferences(store: FakeKeyValueStore.shared.asUbiquitousStore(), defaults: defaults)
+    }
+
+    // MARK: - The basic direction
+
+    func testLocalValueIsOfferedToICloud() {
+        defaults.set(["CINEWEB", "CineSocial"], forKey: wordsKey)
+        let sync = makeSync()
+        sync.syncNowForTesting()
+
+        XCTAssertEqual(FakeKeyValueStore.shared.array(forKey: wordsKey) as? [String],
+                       ["CINEWEB", "CineSocial"],
+                       "a locally edited word list must reach the store")
+        XCTAssertGreaterThan(FakeKeyValueStore.shared.double(forKey: stampKey), 0,
+                             "a pushed value must carry a timestamp, or the other Mac cannot tell it is newer")
+    }
+
+    // MARK: - Conflict handling, the point of the exercise
+
+    func testNewerRemoteValueWins() {
+        defaults.set(["alt"], forKey: wordsKey)
+        defaults.set(Date().timeIntervalSince1970 - 100, forKey: stampKey)
+        FakeKeyValueStore.shared.set(["neu"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(Date().timeIntervalSince1970, forKey: stampKey)
+
+        makeSync().pullNowForTesting()
+
+        XCTAssertEqual(defaults.stringArray(forKey: wordsKey), ["neu"],
+                       "the newer side must win")
+    }
+
+    func testOlderRemoteValueIsIgnored() {
+        let now = Date().timeIntervalSince1970
+        defaults.set(["hier-gerade-bearbeitet"], forKey: wordsKey)
+        defaults.set(now, forKey: stampKey)
+        FakeKeyValueStore.shared.set(["vorgestern"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(now - 3600, forKey: stampKey)
+
+        makeSync().pullNowForTesting()
+
+        XCTAssertEqual(defaults.stringArray(forKey: wordsKey), ["hier-gerade-bearbeitet"],
+                       "a stale value from the other Mac must not overwrite a fresher local edit — "
+                       + "this is exactly the silent data loss last-write-wins would cause")
+    }
+
+    // MARK: - What must never travel
+
+    func testOnlyAllowListedKeysAreSynced() {
+        // Hardware-bound and path-bearing settings: pushing these would put a
+        // 6 GB model on an 8 GB Mac, or a path from one filesystem on another.
+        for forbidden in ["defaultModel.mlx", "defaultProvider", "mlx.port",
+                          "tippi.snippets.importedFilePaths.v1"] {
+            defaults.set("etwas", forKey: forbidden)
+        }
+        makeSync().syncNowForTesting()
+
+        for forbidden in ["defaultModel.mlx", "defaultProvider", "mlx.port",
+                          "tippi.snippets.importedFilePaths.v1"] {
+            XCTAssertNil(FakeKeyValueStore.shared.object(forKey: forbidden),
+                         "\(forbidden) must never reach iCloud")
+        }
+    }
+
+    // MARK: - Oversized values
+
+    func testOversizedValueIsNotSilentlyDropped() {
+        // The real store fails writes over its limit without telling anyone.
+        // Refusing loudly beats a value that never appears on the other Mac.
+        let huge = (0..<20_000).map { "wort-\($0)-mit-etwas-laenge-damit-es-zaehlt" }
+        defaults.set(huge, forKey: wordsKey)
+
+        makeSync().syncNowForTesting()
+
+        XCTAssertNil(FakeKeyValueStore.shared.object(forKey: wordsKey),
+                     "an oversized value must be refused rather than half-written")
+        XCTAssertEqual(defaults.stringArray(forKey: wordsKey)?.count, huge.count,
+                       "refusing to sync must not touch the local value")
+    }
+
+    // MARK: - No echo
+
+    func testApplyingRemoteValueDoesNotPushItBack() {
+        let remoteStamp = Date().timeIntervalSince1970
+        FakeKeyValueStore.shared.set(["von-drueben"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(remoteStamp, forKey: stampKey)
+
+        let sync = makeSync()
+        sync.pullNowForTesting()
+        let stampAfterPull = FakeKeyValueStore.shared.double(forKey: stampKey)
+
+        XCTAssertEqual(stampAfterPull, remoteStamp, accuracy: 0.0001,
+                       "applying a remote value must not re-stamp it as a local edit — "
+                       + "that would make the two Macs push to each other forever")
+    }
+}
+
+/// Minimal stand-in for `NSUbiquitousKeyValueStore`.
+///
+/// `NSUbiquitousKeyValueStore` has no injectable variant, and its `.default`
+/// talks to the real iCloud container. This subclass keeps the storage in
+/// memory so the conflict rules can be exercised deterministically.
+final class FakeKeyValueStore {
+    static let shared = FakeKeyValueStore()
+    private var storage: [String: Any] = [:]
+    private let backing = InMemoryUbiquitousStore()
+
+    func reset() {
+        storage.removeAll()
+        backing.storage.removeAll()
+    }
+    func set(_ value: Any, forKey key: String) { backing.storage[key] = value }
+    func object(forKey key: String) -> Any? { backing.storage[key] }
+    func array(forKey key: String) -> [Any]? { backing.storage[key] as? [Any] }
+    func double(forKey key: String) -> Double { backing.storage[key] as? Double ?? 0 }
+    func asUbiquitousStore() -> NSUbiquitousKeyValueStore { backing }
+}
+
+final class InMemoryUbiquitousStore: NSUbiquitousKeyValueStore {
+    var storage: [String: Any] = [:]
+    override func object(forKey aKey: String) -> Any? { storage[aKey] }
+    override func set(_ anObject: Any?, forKey aKey: String) { storage[aKey] = anObject }
+    override func set(_ aDouble: Double, forKey aKey: String) { storage[aKey] = aDouble }
+    override func double(forKey aKey: String) -> Double { storage[aKey] as? Double ?? 0 }
+    override func removeObject(forKey aKey: String) { storage.removeValue(forKey: aKey) }
+    override func synchronize() -> Bool { true }
+}

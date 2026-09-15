@@ -1,5 +1,51 @@
 # Changelog
 
+## [2.11.0] — 2026-09-15
+
+### Added
+
+- **Eigene Wörter und eigene Prompts wandern über iCloud auf deine anderen
+  Macs.** Eine Hausschreibweise ist eine Eigenschaft deines Schreibens, kein
+  Merkmal eines Geräts — sie zweimal einzutippen war schlicht überflüssige
+  Arbeit. Nichts einzurichten: Bist du auf beiden Macs mit derselben Apple-ID
+  angemeldet, passiert es von selbst.
+
+  **Was bewusst nicht mitwandert**, jeweils aus einem konkreten Grund:
+
+  - **API-Schlüssel.** Sie liegen im Schlüsselbund und bleiben dort. Apple
+    synchronisiert den Schlüsselbund über iCloud — das ist der Kanal, der für
+    Geheimnisse gebaut wurde. Der Einstellungsspeicher ist es nicht.
+  - **Die Freigabe von Shell-Kürzeln.** Der Schlüssel, mit dem sie signiert
+    wird, ist an das jeweilige Gerät gebunden. Wanderte er mit, würde eine
+    Freigabe auf einem Mac überall gelten — auch von einem Rechner aus, der
+    kompromittiert ist. Ein synchronisiertes Shell-Kürzel fragt auf dem zweiten
+    Mac deshalb erneut nach. Das ist beabsichtigt.
+  - **Die Wahl des lokalen Modells und der MLX-Port.** Beide hängen an der
+    Hardware. Ein Modell, das auf einem Mac mit viel Speicher die richtige Wahl
+    ist, ist auf einem kleineren nicht dieselbe Wahl, sondern die falsche.
+  - **Alles, was einen Pfad enthält** — der überwachte Kürzel-Ordner, die Liste
+    importierter Dateien. Ein Pfad ist eine Aussage über genau ein Dateisystem.
+
+  Bei gleichzeitigen Änderungen auf zwei Macs gewinnt die neuere. Der
+  iCloud-Speicher würde von sich aus stumpf den zuletzt geschriebenen Wert
+  nehmen und die andere Seite verwerfen; jeder Wert trägt deshalb einen
+  Zeitstempel, und ein ankommender Wert wird nur übernommen, wenn er wirklich
+  neuer ist als das, was dieser Mac zuletzt gesehen hat.
+
+### Fixed
+
+- **Die Modell-Liste sagt jetzt, worauf sich „6 Fehler" bezieht.** Die Zahl kam
+  aus zehn echten deutschen Diktaten, stand aber ohne Bezugsgröße da. Jetzt
+  „fehlerfrei bei 10 Testdiktaten" beziehungsweise „6 Fehler bei 10
+  Testdiktaten".
+
+- **Der Beschreibungstext über der Modell-Auswahl nannte Modelle, die es nicht
+  mehr gibt.** Dort stand weiterhin „Standard: Llama 3.2 3B" mit dem Hinweis auf
+  „8B/14B-Presets" — keines dieser drei Modelle steht seit 2.10.0 noch zur
+  Wahl, und voreingestellt ist Gemma 4 E2B. Der MLX-Hilfetext war ebenso
+  veraltet. Beide beschrieben damit eine App, die es nicht gibt, gegenüber
+  genau dem Publikum, das es am wenigsten nachprüfen kann.
+
 ## [2.10.0] — 2026-09-15
 
 ### Added

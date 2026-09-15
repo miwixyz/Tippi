@@ -145,6 +145,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSLog("Tippi: unit-test host — skipping app startup (no monitors, no network)")
             return
         }
+        // Carry the settings that mean the same on every Mac (custom words,
+        // custom prompts) across machines. Started before anything reads those
+        // values, so a newer version from iCloud is already in place. The
+        // allow-list and the reasons for every exclusion live in the type.
+        SyncedPreferences.shared.start()
         // Remap persisted Nebius model ids that the provider removed (they 404).
         ProviderModelPresets.migrateRetiredModels()
         // Best-effort, non-blocking: catch a provider retiring the configured

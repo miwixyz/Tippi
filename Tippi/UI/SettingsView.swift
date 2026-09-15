@@ -1681,6 +1681,8 @@ private struct HelpTab: View {
                   title: String(localized: "settings.help.snippetsTitle"), body: String(localized: "settings.help.snippetsBody")),
         HelpEntry(id: "localModels", icon: "cpu", category: .providers,
                   title: String(localized: "settings.help.localModelsTitle"), body: String(localized: "settings.help.localModelsBody")),
+        HelpEntry(id: "icloudSync", icon: "icloud", category: .misc,
+                  title: String(localized: "settings.help.syncTitle"), body: String(localized: "settings.help.syncBody")),
         HelpEntry(id: "emoji", icon: "face.smiling", category: .snippets,
                   title: String(localized: "settings.help.emojiTitle"), body: String(localized: "settings.help.emojiBody")),
 

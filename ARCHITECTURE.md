@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.10.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.11.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -41,6 +41,7 @@ Tippi/
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
 │   ├── KeychainStore.swift         # API-Keys
+│   ├── SyncedPreferences.swift     # v2.11 — Allow-List, die per iCloud über Macs wandert
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
 │   ├── Snippets/                   # v2.0 — systemweite Tipp-Expansion
