@@ -2,7 +2,37 @@
 
 ## [2.11.1] — 2026-09-19
 
-- _Add release notes here._
+### Fixed
+
+- **Eigene Wörter, die es schon vor 2.11.0 gab, wandern jetzt wirklich mit.**
+  Der Abgleich sprang bisher nur an, wenn sich etwas *änderte*. Wer seine
+  Wörter längst eingetragen hatte und dann auf 2.11.0 aktualisierte, änderte
+  aber nichts mehr — die Liste wurde nie hochgeladen. Auf dem anderen Mac kam
+  entsprechend nie etwas an. Beide Rechner waren in Ordnung, iCloud war in
+  Ordnung, und genau deshalb war der Fehler so schwer zu sehen: Es sah aus,
+  als wäre alles synchronisiert. Ab sofort lädt Tippi den vorhandenen Bestand
+  beim Start hoch, ohne dass du etwas anfassen musst.
+
+- **Beim allerersten Abgleich gehen keine Wörter mehr verloren.** Hatten beide
+  Macs eigene Listen, gewann bisher der, der zuerst dran war — der andere fand
+  seine Wörter ersetzt vor. Jetzt werden die Listen zusammengeführt. Eine
+  Schreibweise, die du hier ergänzt hast, entwertet keine, die du dort ergänzt
+  hast. Ab dem zweiten Abgleich gilt wie bisher: die jüngere Änderung zählt.
+
+- **Ein unerwarteter Wert aus iCloud löscht die Wörter nicht mehr.** Stand dort
+  etwas, das keine Wortliste ist, wurde es übernommen — und die Liste war
+  danach leer, ohne Hinweis. Tippi lehnt solche Werte jetzt ab und behält, was
+  auf diesem Mac liegt.
+
+### Added
+
+- **Tippi schaut nach einem Update noch einmal nach, ob schon das nächste
+  bereitsteht.** Sparkle bietet immer den Stand an, den es im Moment der
+  Abfrage vorfindet. Erscheinen zwei Versionen kurz hintereinander — 2.10.0
+  und 2.11.0 lagen 42 Minuten auseinander —, landet man auf der älteren und
+  merkt es nicht: Der Neustart sagt nichts dazu, und die nächste planmäßige
+  Prüfung kann einen Tag entfernt sein. Die Nachprüfung läuft im Hintergrund
+  und meldet sich nur, wenn es tatsächlich etwas gibt.
 
 ## [2.11.0] — 2026-09-15
 
