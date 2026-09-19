@@ -1,0 +1,21 @@
+# Shows a "Sponsor" button on the repo page.
+#
+# Nothing is active yet on purpose. Each line below needs an account that
+# actually exists first - a button pointing at an empty page is worse than no
+# button. Uncomment exactly the one you have set up.
+#
+# github: needs GitHub Sponsors onboarding (identity check, bank details, tax
+# form). Takes days, not minutes, but keeps everything on the repo page and
+# GitHub takes no cut.
+#
+# ko_fi / buy_me_a_coffee: account in minutes, small fee per payment. The
+# pragmatic option for finding out whether anyone pays at all, before
+# committing to the longer route.
+#
+# This is deliberately not a paywall. Tippi is MIT and stays usable without
+# paying anything - the point is to measure whether willingness to pay exists,
+# not to gate the app.
+
+# github: miwixyz
+# ko_fi: <username>
+# buy_me_a_coffee: <username>
