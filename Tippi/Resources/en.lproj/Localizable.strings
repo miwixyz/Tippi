@@ -382,7 +382,7 @@
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
 "settings.help.whatsNewTitle" = "What's New";
-"settings.help.whatsNewBody" = "v2.11.2 — A full audit of the code before the next major version: eleven findings, all fixed. Custom prompts sync to your other Mac again — a check added in 2.11.1 to protect your custom words blocked them by mistake. Tippi no longer hands the AI an old clipboard when an app claims to copy but does not, so a password you copied earlier cannot leave by accident. Holding right Shift while typing no longer opens the microphone. Notes can no longer be lost when two saves overlap. Translating inside Notes now writes back into Notes. And capturing text in large apps no longer freezes the menu bar.";
+"settings.help.whatsNewBody" = "v2.11.3 — Tippi no longer crashes when you delete text in the Notes window while the AI is working. Tippi remembers which passage to replace when you trigger it; shorten the text while the answer is still coming in and that position pointed past the end. The replacement is now skipped instead of ending the app. The emoji suggestion list looks like the rest of the app again rather than a flat light slab — the fix for that already existed, it had just landed in only one of two identical copies. And the menu-bar activity indicator lights up again while an answer is being written.";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.instructTitle" = "Give an instruction — type or speak";
