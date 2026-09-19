@@ -124,9 +124,27 @@ final class NotesStore: ObservableObject {
 
     // MARK: - Persistence (off-main-actor helpers)
 
+    /// Serialises every write so two saves of the same note cannot interleave.
+    ///
+    /// `writeNoteFile` writes `<title> — <uuid>.txt` and then deletes every
+    /// other file carrying the same UUID. Two unsynchronised `Task.detached`
+    /// blocks could therefore run W1 → W2 → S1 → S2: S1 deletes the file W2
+    /// just wrote, S2 deletes the one W1 wrote, and the note is gone from disk
+    /// entirely — it survives only in memory until the next save, which after
+    /// a window close may never come. Renaming (editing the first line) is
+    /// exactly when two saves land close together, so this is not a rare
+    /// interleaving. Found by audit 2026-09-19.
+    ///
+    /// Chaining onto the previous task keeps writes in submission order at the
+    /// cost of nothing measurable — these are single small text files, and the
+    /// work still runs off the main actor.
+    private var pendingWrite: Task<Void, Never>?
+
     private func persist(_ note: Note) {
         let directory = currentDirectory
-        Task.detached(priority: .userInitiated) { [weak self] in
+        let previous = pendingWrite
+        pendingWrite = Task.detached(priority: .userInitiated) { [weak self] in
+            await previous?.value
             do {
                 try Self.writeNoteFile(note, to: directory)
             } catch {

@@ -140,7 +140,14 @@ final class MLXServerManager: ObservableObject {
         proc.executableURL = URL(fileURLWithPath: binary.path)
         proc.arguments     = binary.arguments + [
             "--model", model,
-            "--port",  "\(port)"
+            "--port",  "\(port)",
+            // Pin the bind address instead of inheriting whatever the
+            // installed mlx-lm defaults to. Today that default is 127.0.0.1
+            // (verified in the installed package), but this server receives
+            // the user's selected text — its reachability must not depend on
+            // an upstream default that a `uv tool upgrade` could change
+            // without anyone noticing. Hardening, added 2026-09-19.
+            "--host",  "127.0.0.1"
         ]
         // stdout stays discarded (request logging, not interesting). stderr is
         // read: that is where huggingface_hub reports the first-run model
@@ -339,7 +346,26 @@ final class MLXServerManager: ObservableObject {
     /// Settings save flows where the user changed model/port and expects the
     /// server to come back up automatically.
     func restart() async throws -> Int {
-        if state.isRunning { stop() }
+        if state.isRunning {
+            let old = process
+            stop()
+            // `terminate()` sends SIGTERM and returns immediately. `start()`
+            // then asks the port who is serving — and `mlx_lm.server` lists
+            // every model in the local HF cache, so the newly chosen one is
+            // usually among them. The old, still-dying process therefore looks
+            // like a valid server for the new configuration: Tippi adopts it,
+            // sets `isWarm = true`, and the model switch silently does not
+            // happen. Waiting for the exit removes the ambiguity.
+            // Found by audit 2026-09-19.
+            if let old, old.isRunning {
+                await withCheckedContinuation { continuation in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        old.waitUntilExit()
+                        continuation.resume()
+                    }
+                }
+            }
+        }
         return try await start()
     }
 

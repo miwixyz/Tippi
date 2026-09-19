@@ -123,6 +123,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// AX-selection capture and popup-open. User-visible symptom was a 2–5 s
     /// freeze on every hotkey press. Mutated on `@MainActor` only.
     private var isHandlingTrigger = false
+    /// In-flight guard for the translate panel. Needed for the same reason as
+    /// `isHandlingTrigger`: the capture before the panel appears suspends long
+    /// enough for a second hotkey press to arrive and close what the first one
+    /// opened.
+    private var isOpeningTranslatePanel = false
 
 
     /// True while the app is only serving as the unit-test host.
@@ -1077,6 +1082,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             translateQuickPanel.close()
             return
         }
+        // `isOpen` only becomes true at the very end of `show()`, but the
+        // capture below suspends for several hundred milliseconds. Without an
+        // in-flight flag a second hotkey press in that window passes the guard
+        // above too, and its `toggle()` closes the panel the first press just
+        // opened — the panel flashes up and vanishes. Since nothing visible
+        // happens during the capture, an impatient second press is the normal
+        // case, not an edge case. `handleTriggered` has guarded this since
+        // forever with `isHandlingTrigger`; this path was missed.
+        // Found by audit 2026-09-19.
+        guard !isOpeningTranslatePanel else { return }
+        isOpeningTranslatePanel = true
+        defer { isOpeningTranslatePanel = false }
+
         let sourceApp = resolvedSourceAppForCapture()
         let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
 
