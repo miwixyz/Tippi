@@ -382,7 +382,7 @@
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
 "settings.help.whatsNewTitle" = "What's New";
-"settings.help.whatsNewBody" = "v2.11.1 — Custom words you had before the sync existed now actually travel to your other Mac. Uploading only ever fired when something changed, so a list that was already there was never sent: it looked synced and arrived nowhere. The first sync now merges both Macs' lists instead of letting one replace the other, and an unexpected value from iCloud no longer clears the words this Mac holds. Tippi also checks once more right after an update installs, so a second release put out minutes after the first does not go unnoticed.";
+"settings.help.whatsNewBody" = "v2.11.2 — A full audit of the code before the next major version: eleven findings, all fixed. Custom prompts sync to your other Mac again — a check added in 2.11.1 to protect your custom words blocked them by mistake. Tippi no longer hands the AI an old clipboard when an app claims to copy but does not, so a password you copied earlier cannot leave by accident. Holding right Shift while typing no longer opens the microphone. Notes can no longer be lost when two saves overlap. Translating inside Notes now writes back into Notes. And capturing text in large apps no longer freezes the menu bar.";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.instructTitle" = "Give an instruction — type or speak";

@@ -2,7 +2,63 @@
 
 ## [2.11.2] — 2026-09-19
 
-- _Add release notes here._
+Ein Audit über den gesamten Code vor der nächsten großen Version. Elf Befunde,
+alle behoben. Zwei davon hätten dich echtes Vertrauen kosten können.
+
+### Fixed
+
+- **Eigene Prompts wandern wieder auf deinen anderen Mac.** In 2.11.1 hatte
+  eine Sicherheitsprüfung, die eigentlich die Wörter schützen sollte, die
+  Prompts versehentlich komplett blockiert — die beiden werden intern
+  unterschiedlich gespeichert, die Prüfung kannte nur die eine Form. Wörter
+  kamen an, Prompts nie. Beide Macs schoben sich dabei endlos Daten zu, die
+  keiner annahm.
+
+- **Tippi schickt keine alten Zwischenablage-Inhalte mehr an die KI.** In
+  Apps, die ein Kopieren zwar bestätigen, aber nichts schreiben, konnte statt
+  deiner Auswahl der **vorherige** Inhalt deiner Zwischenablage verarbeitet
+  und eingefügt werden — im ungünstigsten Fall ein kurz zuvor kopiertes
+  Passwort. Tippi verlangt jetzt einen Beweis, dass wirklich kopiert wurde,
+  und gibt lieber gar nichts zurück.
+
+- **Tippen öffnet nicht mehr das Mikrofon.** Im Modus „Tippen oder Halten"
+  reichte es, die rechte Umschalttaste beim Schreiben länger gedrückt zu
+  halten — beim Markieren mit Umschalt+Pfeil oder in Großbuchstaben-Passagen —,
+  um unbemerkt eine Aufnahme zu starten, die beim Loslassen in den Text
+  geschrieben wurde.
+
+- **Notizen können nicht mehr verschwinden.** Zwei Speichervorgänge, die sich
+  überlappten, konnten sich gegenseitig die Datei löschen. Am wahrscheinlichsten
+  genau dann, wenn du die erste Zeile änderst — also den Titel.
+
+- **Übersetzen im Notizfenster schreibt dorthin, wo du bist.** Bisher landete
+  die Übersetzung in der App, die vorher im Vordergrund war, und wurde auch
+  von dort gelesen.
+
+- **Das Übersetzen-Fenster bleibt offen.** Ein zweiter Tastendruck, während es
+  noch lud, schloss es sofort wieder.
+
+- **Der Modellwechsel bei lokalen Modellen findet wirklich statt.** Bisher
+  konnte Tippi den alten, gerade beendeten Server für den neuen halten und
+  weiterbenutzen — gemeldet wurde Erfolg, gewechselt wurde nichts.
+
+- **Tippi bremst große Apps nicht mehr aus.** Beim Erfassen von Text in sehr
+  verschachtelten Fenstern (Electron-Apps, große Projekte) konnte die
+  Menüleiste samt aller Fenster für die Dauer der Suche einfrieren. Die Suche
+  hat jetzt ein Zeitlimit.
+
+- **Kein Mitschreiben deiner Klicks mehr.** Die Auswahl-Leiste hat bei
+  aktivem Feature jeden Mausklick dauerhaft ins Systemprotokoll geschrieben,
+  inklusive der App, in der er stattfand.
+
+### Internal
+
+- Beide verbliebenen Compiler-Warnungen behoben, darunter eine, die unter der
+  nächsten Swift-Version den Build gebrochen hätte.
+- Die Adresse des lokalen Modell-Servers ist jetzt fest auf `127.0.0.1`
+  gesetzt, statt sie vom Standardwert einer Fremdkomponente zu erben.
+- 227 Tests (von 221), alle grün. Sicherheitsprüfung über Abhängigkeiten und
+  Code: ohne Befund.
 
 ## [2.11.1] — 2026-09-19
 
