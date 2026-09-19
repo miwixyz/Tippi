@@ -164,6 +164,41 @@ final class SyncedPreferencesTests: XCTestCase {
                        "the merged list must also be uploaded, or the other Mac never sees it")
     }
 
+    // MARK: - The second synced key
+    //
+    // Regression 2026-09-19: a blanket `value is [String]` type guard was added
+    // to protect the words, and silently blocked every custom prompt —
+    // `CustomPromptStore.save()` stores them as JSON `Data`. It shipped in
+    // 2.11.1 because every test here only covered the words key. These two
+    // cover the other one.
+
+    private let promptsKey = "tippi.customPrompts.v1"
+    private let promptsStampKey = "tippi.customPrompts.v1.syncedAt"
+
+    func testCustomPromptsArriveFromICloud() {
+        let blob = Data("[{\"title\":\"Kino-Ton\"}]".utf8)
+        FakeKeyValueStore.shared.set(blob, forKey: promptsKey)
+        FakeKeyValueStore.shared.set(Date().timeIntervalSince1970, forKey: promptsStampKey)
+
+        let sync = makeSync()
+        sync.pullNowForTesting()
+
+        XCTAssertEqual(defaults.data(forKey: promptsKey), blob,
+                       "custom prompts are stored as JSON Data, not [String] — a type "
+                       + "guard written for the words must not drop them")
+    }
+
+    func testCustomPromptsAreUploaded() {
+        let blob = Data("[{\"title\":\"Kino-Ton\"}]".utf8)
+        defaults.set(blob, forKey: promptsKey)
+
+        let sync = makeSync()
+        sync.startSequenceForTesting()
+
+        XCTAssertEqual(FakeKeyValueStore.shared.data(forKey: promptsKey), blob,
+                       "prompts present before the first launch must be uploaded too")
+    }
+
     func testWrongTypeFromICloudDoesNotWipeTheLocalWords() {
         // A corrupt or future-version store could hold something that is not a
         // string array. Writing it through would make `stringArray(forKey:)`
@@ -215,6 +250,9 @@ final class FakeKeyValueStore {
     func set(_ value: Any, forKey key: String) { backing.storage[key] = value }
     func object(forKey key: String) -> Any? { backing.storage[key] }
     func array(forKey key: String) -> [Any]? { backing.storage[key] as? [Any] }
+    /// Custom prompts travel as JSON `Data`, not as a string array — the tests
+    /// for that key need to read the value back in its own type.
+    func data(forKey key: String) -> Data? { backing.storage[key] as? Data }
     func double(forKey key: String) -> Double { backing.storage[key] as? Double ?? 0 }
     func asUbiquitousStore() -> NSUbiquitousKeyValueStore { backing }
 }

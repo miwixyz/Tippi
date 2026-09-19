@@ -159,14 +159,21 @@ final class SyncedPreferences {
             guard remoteStamp > localStamp else { continue }
             guard let value = store.object(forKey: key) else { continue }
 
-            // Both synced keys are string arrays. Writing anything else into
-            // UserDefaults would make `stringArray(forKey:)` return nil on the
-            // next read — the words would be gone locally with nothing logged
-            // and no way to tell it apart from "never had any". A wrong type
-            // means a corrupt or future-version store, so refuse and say so
-            // rather than destroy what this Mac still holds.
-            guard value is [String] else {
-                syncLog.error("iCloud holds a \(type(of: value), privacy: .public) for \(key, privacy: .public), expected [String] — keeping the local value")
+            // Refuse a value whose type does not match what this key stores.
+            // Writing the wrong type through would make the typed accessor
+            // (`stringArray(forKey:)`, `data(forKey:)`) return nil on the next
+            // read — the value gone locally, nothing logged, indistinguishable
+            // from "never had any".
+            //
+            // The expected type is per key, NOT "everything is [String]".
+            // Getting that wrong once already cost the custom-prompt sync: a
+            // blanket `value is [String]` check silently blocked
+            // `tippi.customPrompts.v1`, which `CustomPromptStore.save()` stores
+            // as JSON `Data`. The words synced, the prompts never arrived, and
+            // both Macs kept pushing at each other because neither ever
+            // accepted the other's value.
+            guard Self.hasExpectedType(value, for: key) else {
+                syncLog.error("iCloud holds a \(type(of: value), privacy: .public) for \(key, privacy: .public), which is not the type this key stores — keeping the local value")
                 continue
             }
 
@@ -211,6 +218,25 @@ final class SyncedPreferences {
     }
 
     // MARK: - Helpers
+
+    /// Whether a value from iCloud has the type this key actually stores.
+    ///
+    /// Deliberately per key rather than one blanket rule. The two synced keys
+    /// do NOT share a type: custom words are a `[String]`, custom prompts are
+    /// JSON `Data` (`CustomPromptStore.save()` encodes the array). A single
+    /// `value is [String]` check therefore looks correct, passes every test
+    /// that only covers words, and silently drops every prompt.
+    ///
+    /// Adding a key to `syncedKeys` without adding it here makes it un-syncable
+    /// — that is intentional. An unknown key returning `false` fails closed:
+    /// nothing is written, and the refusal is logged.
+    private static func hasExpectedType(_ value: Any, for key: String) -> Bool {
+        switch key {
+        case "dictation.customWords.v1": return value is [String]
+        case "tippi.customPrompts.v1":   return value is Data
+        default:                          return false
+        }
+    }
 
     /// Property-list values compare correctly through `NSObject.isEqual`;
     /// `as? AnyHashable` would fail for arrays and dictionaries.
