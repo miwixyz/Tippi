@@ -40,6 +40,10 @@ Tippi/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
+│   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
+│   │                               #   Ergebnis geschrieben wird (Notizfenster /
+│   │                               #   Accessibility / blind) + ReplacementWriter.
+│   │                               #   Vorher 3 Kopien in AppDelegate → 2× derselbe Bug
 │   ├── KeychainStore.swift         # API-Keys
 │   ├── SyncedPreferences.swift     # v2.11 — Allow-List, die per iCloud über Macs wandert
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring
@@ -70,6 +74,8 @@ Tippi/
 │   ├── ModelAvailabilityChecker.swift  # Live-Katalog-Abgleich beim Start
 │   └── {OpenAI,Anthropic,Gemini,Mistral,Groq,Scaleway,Kimi,Nebius,OpenRouter,Ollama,MLX}Provider.swift
 ├── UI/
+│   ├── NonKeyPanelChrome.swift     # NonKeyPanel + ClickableHostingView, geteilt von
+│   │                               #   Aktionsleiste und Emoji-Vorschlagsliste
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model

@@ -4,23 +4,19 @@ import SwiftUI
 /// Passive suggestion list shown next to the caret while the user types
 /// `:something`, Slack/Rocket style.
 ///
-/// `canBecomeKey` is `false`, and that is the whole design constraint. The user
-/// is typing into *another* app — this panel must never take keyboard focus, or
-/// their keystrokes would stop reaching the app they're writing in (exactly the
-/// v2.0.1 showstopper). It therefore has no keyboard navigation at all:
-/// selection happens by continuing to type, by Tab/Space (handled upstream in
-/// the keystroke monitor, which can retract the character afterwards), or by
-/// clicking. Arrow keys and Return belong to the target app and stay there.
-private final class NonKeyPanel: NSPanel {
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
-}
-
-/// Hosting view that accepts the very first click without the window needing
-/// key status — same trick as `SelectionActionBarPanel`.
-private final class ClickableHostingView<Content: View>: NSHostingView<Content> {
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-}
+/// Uses the shared `NonKeyPanel`/`ClickableHostingView` from
+/// `NonKeyPanelChrome.swift`. `canBecomeKey` is `false`, and that is the whole
+/// design constraint. The user is typing into *another* app — this panel must
+/// never take keyboard focus, or their keystrokes would stop reaching the app
+/// they're writing in (exactly the v2.0.1 showstopper). It therefore has no
+/// keyboard navigation at all: selection happens by continuing to type, by
+/// Tab/Space (handled upstream in the keystroke monitor, which can retract the
+/// character afterwards), or by clicking. Arrow keys and Return belong to the
+/// target app and stay there.
+///
+/// Until this panel switched to the shared hosting view it carried its own
+/// copy without the transparency override, so its `.tippiGlass(…)` background
+/// had an opaque layer behind it and rendered as a flat slab.
 
 @MainActor
 final class EmojiSuggestionPanel {

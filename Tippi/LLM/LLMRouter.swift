@@ -159,11 +159,11 @@ struct LLMRouter {
             }
             let modelName = model(for: provider.id, fallback: provider.defaultModel)
             return StreamingCompletion(
-                stream: provider.completeStream(
+                stream: Self.monitored(provider.completeStream(
                     systemPrompt: systemPrompt,
                     userText: userText,
                     model: modelName
-                ),
+                )),
                 providerDisplay: "\(provider.displayName) / \(modelName)",
                 providerID: provider.id,
                 model: modelName
@@ -171,6 +171,43 @@ struct LLMRouter {
         }
 
         throw LLMError.noProviderConfigured
+    }
+
+    /// Lights the menubar activity indicator for exactly as long as a streamed
+    /// response is in flight.
+    ///
+    /// `complete` can do this with a plain `defer` because it returns only when
+    /// the request is done. `completeStream` returns immediately and the work
+    /// happens while the caller reads the stream, so the begin/end pair has to
+    /// travel *with* the stream — without this, the indicator stayed dark for
+    /// every streamed request, which is the default path (found by audit
+    /// 2026-09-19).
+    ///
+    /// `onTermination` covers the caller abandoning the stream mid-flight
+    /// (`PreviewView` breaks out of its loop on `Task.isCancelled`): the
+    /// forwarding task is cancelled, the `defer` runs, the counter is
+    /// balanced. Leaving it unbalanced would pin the indicator to "busy"
+    /// forever.
+    /// Not `private` so `LLMActivityStreamTests` can check the counter stays
+    /// balanced across normal completion, an error, and an abandoned stream.
+    static func monitored(
+        _ upstream: AsyncThrowingStream<String, Error>
+    ) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                await MainActor.run { AIActivityMonitor.shared.begin() }
+                defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
+                do {
+                    for try await delta in upstream {
+                        continuation.yield(delta)
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
     }
 
     /// Whether a failed cloud provider may fall through to the next configured
@@ -250,12 +287,15 @@ struct LLMRouter {
             }
         }
         let modelName = forceModel.isEmpty ? provider.defaultModel : forceModel
+        // The two early returns above delegate to the other `completeStream`,
+        // which wraps the stream itself — so this is the only spot here that
+        // still needs it. Wrapping in both places would double-count.
         return StreamingCompletion(
-            stream: provider.completeStream(
+            stream: Self.monitored(provider.completeStream(
                 systemPrompt: systemPrompt,
                 userText: userText,
                 model: modelName
-            ),
+            )),
             providerDisplay: "\(provider.displayName) / \(modelName)",
             providerID: provider.id,
             model: modelName

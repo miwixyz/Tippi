@@ -334,11 +334,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Applies a selection-bar action to the snapshot captured at the moment
-    /// the bar was shown, then writes the result back via AX (falling back
-    /// to clipboard paste exactly like `runLocalAction` does for the
-    /// hotkey-triggered popup — same three-way `replaceViaElement` outcome
-    /// handling, just against a snapshot instead of `lastSelectionElement`/
-    /// `lastSelectionRange`).
+    /// the bar was shown, then writes the result back through
+    /// `ReplacementWriter` — the same ladder `runLocalAction` uses for the
+    /// hotkey-triggered popup, just against a snapshot instead of
+    /// `lastSelectionElement`/`lastSelectionRange`.
     private func performSelectionAction(_ action: LocalTextAction, snapshot: SelectionSnapshot) {
         switch action.perform(on: snapshot.text) {
         case .plainReplacement(let text):
@@ -368,36 +367,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Same "native vs. AX" branch as `applyCapturedResult`, keyed off a
-    /// `SelectionSnapshot`'s own fields instead of the hotkey flow's
-    /// `last*` instance state — this is the auto-popup-on-selection path
-    /// (`SelectionActionBarPanel`), which captures everything up front in
-    /// the snapshot rather than storing it on `self`.
+    /// Auto-popup-on-selection path (`SelectionActionBarPanel`), which captures
+    /// everything up front in a `SelectionSnapshot` rather than storing it on
+    /// `self`. The ladder itself lives in `ReplacementWriter` — see
+    /// `ReplacementTarget` for why all three replace paths share one.
     private func applySnapshotResult(_ plainText: String, attributed: NSAttributedString?, snapshot: SelectionSnapshot) async {
-        if let textView = snapshot.nativeTextView, let range = snapshot.nativeRange {
-            applyNativeReplacement(plainText, in: textView, range: range)
-            return
-        }
-        guard let element = snapshot.element, let range = snapshot.range else {
-            if let attributed {
-                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: snapshot.sourceApp)
-            } else {
-                await TextInsertion.replace(with: plainText, in: snapshot.sourceApp)
-            }
-            return
-        }
-        switch TextInsertion.replaceViaElement(element, range: range, with: plainText, expecting: snapshot.text) {
-        case .replaced:
-            return
-        case .ignored:
-            await TextInsertion.insertViaClipboard(plainText, into: snapshot.sourceApp)
-        case .unavailable:
-            if let attributed {
-                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: snapshot.sourceApp)
-            } else {
-                await TextInsertion.replace(with: plainText, in: snapshot.sourceApp)
-            }
-        }
+        await ReplacementWriter.write(
+            plainText,
+            attributed: attributed,
+            expecting: snapshot.text,
+            to: ReplacementTarget(snapshot: snapshot)
+        )
     }
 
     /// Always-on Carbon hotkey ⌃⌥⌘T. Carbon does not need Input Monitoring permission,
@@ -1157,11 +1137,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    /// Writes a translation back over the text it came from, using the same
-    /// three-way AX/clipboard ladder as the popup's local quick actions —
-    /// `replaceViaElement` first (works cross-app without activating), then a
-    /// clipboard paste when an Electron/Chromium app silently ignores the AX
-    /// write, then a plain selection replace when AX isn't usable at all.
+    /// Writes a translation back over the text it came from. Unlike the other
+    /// two replace paths this one gets everything as parameters — the translate
+    /// panel owns its own capture. The ladder is `ReplacementWriter`'s; this
+    /// copy of it is what silently wrote translations into the wrong app until
+    /// the audit of 2026-09-19.
     private func replaceTranslationSource(
         _ text: String,
         original: String,
@@ -1171,31 +1151,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         nativeTextView: NSTextView? = nil,
         nativeRange: NSRange? = nil
     ) async {
-        // Tippi's own Notes editor is written to directly through AppKit — the
-        // Accessibility/clipboard ladder below targets *another* app by
-        // definition, since `resolvedSourceAppForCapture()` deliberately
-        // returns the last non-Tippi app. Without this branch, translating a
-        // selection inside Notes wrote the result into whatever app was in
-        // front beforehand. v2.8.3 fixed exactly this for the main trigger and
-        // the preview path; this third copy of the ladder never got it.
-        // Found by audit 2026-09-19.
-        if let nativeTextView, let nativeRange {
-            applyNativeReplacement(text, in: nativeTextView, range: nativeRange)
-            ToastWindowController.shared.show(message: String(localized: "translate.panel.replaced"))
-            return
-        }
-        if let element, let range {
-            switch TextInsertion.replaceViaElement(element, range: range, with: text, expecting: original) {
-            case .replaced:
-                break
-            case .ignored:
-                await TextInsertion.insertViaClipboard(text, into: app)
-            case .unavailable:
-                await TextInsertion.replace(with: text, in: app)
-            }
-        } else {
-            await TextInsertion.replace(with: text, in: app)
-        }
+        await ReplacementWriter.write(
+            text,
+            expecting: original,
+            to: ReplacementTarget(
+                nativeTextView: nativeTextView,
+                nativeRange: nativeRange,
+                element: element,
+                range: range,
+                app: app
+            )
+        )
         ToastWindowController.shared.show(message: String(localized: "translate.panel.replaced"))
     }
 
@@ -1485,58 +1451,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Writes a result back over whatever was captured at trigger time —
-    /// either directly into Tippi's own Notes editor (`lastNativeTextView`/
-    /// `lastNativeRange`, no Accessibility involved) or into another app's
-    /// text field via the original three-way Accessibility/clipboard ladder.
-    /// Shared by local quick actions (`runLocalAction`) and full AI prompt
-    /// replace/append (`replaceCapturedSelection`) — both need exactly this
-    /// same "native vs. AX" branch, so it lives in one place instead of two.
+    /// Writes a result back over whatever the hotkey flow captured at trigger
+    /// time — the `last*` instance state, filled by `captureSelection`. Shared
+    /// by local quick actions (`runLocalAction`) and full AI prompt
+    /// replace/append (`replaceCapturedSelection`).
     private func applyCapturedResult(
         plainText: String,
         attributed: NSAttributedString?,
         expecting originalText: String?,
         sourceApp: NSRunningApplication?
     ) async {
-        if let textView = lastNativeTextView, let range = lastNativeRange {
-            applyNativeReplacement(plainText, in: textView, range: range)
-            return
-        }
-        guard let el = lastSelectionElement, let range = lastSelectionRange else {
-            if let attributed {
-                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: sourceApp)
-            } else {
-                await TextInsertion.replace(with: plainText, in: sourceApp)
-            }
-            return
-        }
-        switch TextInsertion.replaceViaElement(el, range: range, with: plainText, expecting: originalText) {
-        case .replaced:
-            return
-        case .ignored:
-            // AX write was silently discarded (Electron/Chromium). The selection
-            // has collapsed, so we can't replace it — insert at current cursor
-            // position via clipboard + ⌘V as best effort.
-            await TextInsertion.insertViaClipboard(plainText, into: sourceApp)
-        case .unavailable:
-            if let attributed {
-                await TextInsertion.replace(with: attributed, fallbackPlainText: plainText, in: sourceApp)
-            } else {
-                await TextInsertion.replace(with: plainText, in: sourceApp)
-            }
-        }
+        await ReplacementWriter.write(
+            plainText,
+            attributed: attributed,
+            expecting: originalText,
+            to: capturedReplacementTarget(sourceApp: sourceApp)
+        )
     }
 
-    /// Replaces `range` in `textView` directly via AppKit — used for Tippi's
-    /// own Notes editor instead of the Accessibility/clipboard machinery
-    /// built for other apps' text fields. Bracketed with
-    /// `shouldChangeText`/`didChangeText` (the correct way to make a
-    /// programmatic edit look identical to a user-typed one) so undo and the
-    /// SwiftUI text binding both update correctly.
-    private func applyNativeReplacement(_ text: String, in textView: NSTextView, range: NSRange) {
-        guard textView.shouldChangeText(in: range, replacementString: text) else { return }
-        textView.replaceCharacters(in: range, with: text)
-        textView.didChangeText()
+    /// The destination the hotkey flow writes to, derived from the state
+    /// captured before the popup stole focus.
+    ///
+    /// Split out from `applyCapturedResult` so the `last*`-state-to-target
+    /// mapping is one named, greppable thing. It still needs a live
+    /// `AppDelegate`, so the priority rule it relies on is covered in
+    /// `ReplacementTargetTests` against `ReplacementTarget.init` directly —
+    /// standing up an `AppDelegate` in a unit test would start Carbon hot
+    /// keys, the audio recorder and every panel.
+    private func capturedReplacementTarget(sourceApp: NSRunningApplication?) -> ReplacementTarget {
+        ReplacementTarget(
+            nativeTextView: lastNativeTextView,
+            nativeRange: lastNativeRange,
+            element: lastSelectionElement,
+            range: lastSelectionRange,
+            app: sourceApp
+        )
     }
 
     private func showPreview(prompt: DemoPrompt, captured: CapturedText) {

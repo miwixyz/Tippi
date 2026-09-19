@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.11.3] — 2026-09-19
+
+Drei Stellen, die dasselbe taten, sind jetzt eine. Dabei kam ein Absturz zum
+Vorschein, den vorher niemand gesehen hatte.
+
+### Fixed
+
+- **Tippi stürzt nicht mehr ab, wenn du im Notizfenster löschst, während die
+  KI arbeitet.** Tippi merkt sich beim Auslösen, welche Stelle ersetzt werden
+  soll. Verkürzt du den Text, während die Antwort noch läuft, zeigt diese
+  Stelle ins Leere — und das beendete die App auf der Stelle. Tippi lässt die
+  Ersetzung jetzt aus, statt abzustürzen.
+
+- **Die Emoji-Vorschlagsliste sieht wieder aus wie der Rest.** Sie rendert als
+  Glas statt als flache helle Fläche. Der Fix dafür gab es seit 2.9.1 schon —
+  er war nur in einer von zwei baugleichen Kopien gelandet.
+
+- **Die Aktivitätsanzeige in der Menüleiste leuchtet wieder.** Bei laufender
+  KI-Antwort blieb sie dunkel, weil der normale Weg (Antwort wächst live mit)
+  die Anzeige nie eingeschaltet hat. Nur der seltenere Weg tat es.
+
+### Internal
+
+- Die drei Kopien der Ersetzungs-Kette (eigenes Notizfenster → Bedienungshilfen
+  → Zwischenablage) sind zu einer zusammengeführt: `ReplacementTarget` und
+  `ReplacementWriter`. Dieselbe Verdopplung hatte denselben Fehler zweimal
+  erzeugt — zuletzt in 2.11.2, als Übersetzungen im Notizfenster in einer
+  fremden App landeten. Wohin ein Ergebnis geschrieben wird, entscheidet jetzt
+  genau eine Stelle. 11 neue Tests.
+- `NonKeyPanel` und `ClickableHostingView` existierten zweimal und waren
+  auseinandergelaufen; jetzt geteilt in `NonKeyPanelChrome.swift`.
+
 ## [2.11.2] — 2026-09-19
 
 Ein Audit über den gesamten Code vor der nächsten großen Version. Elf Befunde,
