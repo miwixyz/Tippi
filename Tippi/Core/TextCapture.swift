@@ -155,11 +155,15 @@ enum TextCapture {
             return text
         }
 
+        // One deadline for the whole sweep, not one per window — otherwise a
+        // ten-window app gets ten separate budgets and the cap means nothing.
+        let deadline = CFAbsoluteTimeGetCurrent() + axWalkBudget
+
         var windowsRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef) == .success,
            let windows = windowsRef as? [AXUIElement] {
             for window in windows {
-                if let text = findSelectedText(in: window, depth: 0), !text.isEmpty {
+                if let text = findSelectedText(in: window, depth: 0, deadline: deadline), !text.isEmpty {
                     return text
                 }
             }
@@ -168,7 +172,7 @@ enum TextCapture {
         var windowRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &windowRef) == .success,
            let windowRaw = windowRef, CFGetTypeID(windowRaw) == AXUIElementGetTypeID() {
-            return findSelectedText(in: windowRaw as! AXUIElement, depth: 0)
+            return findSelectedText(in: windowRaw as! AXUIElement, depth: 0, deadline: deadline)
         }
 
         return nil
@@ -179,14 +183,29 @@ enum TextCapture {
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         guard let focused = focusedElement(in: appElement) else { return nil }
 
+        let pb = NSPasteboard.general
         let snapshot = PasteboardSnapshot.capture()
+        // `AXCopy` returning `.success` only means the app accepted the action,
+        // not that it wrote anything. Some apps acknowledge it and copy
+        // nothing — then the clipboard still holds whatever the user copied
+        // earlier, and handing that back would send unrelated content (the
+        // password or TAN they copied a minute ago) to the LLM provider and
+        // paste the result over their selection. `changeCount` is the only
+        // proof that a copy actually happened; `readViaPasteboard` below has
+        // always taken it, this path never did. Found by audit 2026-09-19.
+        let beforeCount = pb.changeCount
         let status = AXUIElementPerformAction(focused, "AXCopy" as CFString)
         guard status == .success else {
             snapshot.restore()
             return nil
         }
         try? await Task.sleep(nanoseconds: 80_000_000)
-        let text = NSPasteboard.general.string(forType: .string)
+        guard pb.changeCount != beforeCount else {
+            captureLog.debug("AXCopy reported success but the pasteboard did not change — refusing stale clipboard content")
+            snapshot.restore()
+            return nil
+        }
+        let text = pb.string(forType: .string)
         snapshot.restore()
         guard let text, !text.isEmpty else { return nil }
         return text
@@ -205,8 +224,36 @@ enum TextCapture {
         return (focusedRaw as! AXUIElement)
     }
 
+    /// How long the whole accessibility walk may take before it gives up.
+    ///
+    /// The depth cap alone does not bound the work: the walk visits *every*
+    /// window and every child down to depth 14, and each step is a synchronous
+    /// AX IPC call on the main actor. `AXUIElementSetMessagingTimeout` caps a
+    /// single call at 2 s, not their sum — so a wide tree (Electron, a large
+    /// Xcode project) freezes Tippi's menu bar and every panel for as long as
+    /// the walk runs, and on the failure path the walk happens twice per
+    /// hotkey press. Confirmed as the most severe finding of the 2026-09-19
+    /// audit.
+    ///
+    /// 400 ms is chosen against the alternative, which is not "a complete
+    /// answer" but "an unbounded freeze": this path is already the fallback
+    /// that runs only after the pasteboard route found nothing, and giving up
+    /// leaves the field empty — the same outcome as no selection, which the
+    /// callers already handle.
+    private static let axWalkBudget: CFTimeInterval = 0.4
+
     static func findSelectedText(in element: AXUIElement, depth: Int) -> String? {
+        findSelectedText(in: element, depth: depth, deadline: CFAbsoluteTimeGetCurrent() + axWalkBudget)
+    }
+
+    private static func findSelectedText(in element: AXUIElement, depth: Int, deadline: CFAbsoluteTime) -> String? {
         guard depth <= 14 else { return nil }
+        guard CFAbsoluteTimeGetCurrent() < deadline else {
+            // Never give up silently — without this line a truncated walk is
+            // indistinguishable from "nothing was selected".
+            captureLog.debug("accessibility walk hit its \(axWalkBudget, privacy: .public)s budget at depth \(depth, privacy: .public) — giving up rather than blocking the main actor")
+            return nil
+        }
 
         if let text = selectedText(from: element), !text.isEmpty {
             return text
@@ -219,7 +266,7 @@ enum TextCapture {
         }
 
         for child in children {
-            if let text = findSelectedText(in: child, depth: depth + 1) {
+            if let text = findSelectedText(in: child, depth: depth + 1, deadline: deadline) {
                 return text
             }
         }

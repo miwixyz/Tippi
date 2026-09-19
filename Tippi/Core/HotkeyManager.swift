@@ -286,6 +286,15 @@ final class HotkeyManager: ObservableObject {
                         guard let self, self.isActive else { return }
                         guard case .tapOrHold = self.currentTrigger else { return }
                         self.holdTimer = nil
+                        // Another key went down while the modifier was held, so
+                        // this is someone typing — Shift+arrow to select, or a
+                        // run of capitals — not a deliberate hold gesture. The
+                        // release path has always checked this
+                        // (`wasCombination` below); the hold path never did, so
+                        // holding right Shift past the threshold while writing
+                        // opened the microphone unasked and inserted whatever it
+                        // heard on release. Found by audit 2026-09-19.
+                        guard !self.otherKeyWhileHeld else { return }
                         self.holdInProgress = true
                         self.onEvent?(.holdBegan)
                     }
