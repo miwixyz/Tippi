@@ -43,7 +43,7 @@ final class EmojiPickerPanel {
 
         targetApp = NSWorkspace.shared.frontmostApplication
 
-        let model = EmojiPickerModel()
+        let model = EmojiPickerModel(database: .shared)
         self.model = model
 
         let view = EmojiPickerView(

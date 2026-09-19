@@ -64,7 +64,7 @@ final class SelectionPopupMonitor: ObservableObject {
         lastError = nil
         guard AXIsProcessTrusted() else {
             lastError = String(localized: "error.accessibility.selection")
-            selectionPopupLog.notice("SelectionPopupMonitor — not trusted (Accessibility permission missing)")
+            selectionPopupLog.debug("SelectionPopupMonitor — not trusted (Accessibility permission missing)")
             return
         }
 
@@ -83,7 +83,7 @@ final class SelectionPopupMonitor: ObservableObject {
         }
 
         isActive = true
-        selectionPopupLog.notice("SelectionPopupMonitor active")
+        selectionPopupLog.debug("SelectionPopupMonitor active")
     }
 
     func stop() {
@@ -100,7 +100,7 @@ final class SelectionPopupMonitor: ObservableObject {
         // snippet editor, this bar itself) — same guard the snippet
         // keystroke engine uses for the same reason.
         guard !NSApp.isActive else {
-            selectionPopupLog.notice("scheduleCheck: skipped, Tippi itself is active")
+            selectionPopupLog.debug("scheduleCheck: skipped, Tippi itself is active")
             return
         }
 
@@ -114,6 +114,14 @@ final class SelectionPopupMonitor: ObservableObject {
             self?.checkSelection()
         }
     }
+
+    // Every log call in this file is `.debug`, never `.notice`. This runs once
+    // per left-click while the feature is on, and `os.Logger` persists
+    // `.notice` to disk but not `.debug` — at `.notice` it writes a lasting
+    // record of which app was clicked and when, which is both write load and a
+    // usage profile nobody asked for. The same fix was applied to the keystroke
+    // monitor in 887c86d (v2.9.1); that commit touched this file too but left
+    // these six calls behind, and the audit on 2026-09-19 found them.
 
     private func checkSelection() {
         // Tippi's own Notes editor bypasses the "never trigger while Tippi
@@ -133,28 +141,28 @@ final class SelectionPopupMonitor: ObservableObject {
         // keystroke engine uses for the same reason.
         guard let app = NSWorkspace.shared.frontmostApplication,
               app.bundleIdentifier != Bundle.main.bundleIdentifier else {
-            selectionPopupLog.notice("checkSelection: no eligible frontmost app")
+            selectionPopupLog.debug("checkSelection: no eligible frontmost app")
             onNoSelection()
             return
         }
         guard let (element, range) = TextCapture.captureFocusedSelectionRange(in: app) else {
-            selectionPopupLog.notice("checkSelection: no selection range in app=\(app.localizedName ?? "?", privacy: .public)")
+            selectionPopupLog.debug("checkSelection: no selection range in app=\(app.localizedName ?? "?", privacy: .public)")
             onNoSelection()
             return
         }
         guard range.length >= Self.minimumSelectionLength else {
-            selectionPopupLog.notice("checkSelection: range too short (\(range.length, privacy: .public) chars) in app=\(app.localizedName ?? "?", privacy: .public)")
+            selectionPopupLog.debug("checkSelection: range too short (\(range.length, privacy: .public) chars) in app=\(app.localizedName ?? "?", privacy: .public)")
             onNoSelection()
             return
         }
         guard let text = TextCapture.selectedText(from: element),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            selectionPopupLog.notice("checkSelection: range found but no text readable, app=\(app.localizedName ?? "?", privacy: .public)")
+            selectionPopupLog.debug("checkSelection: range found but no text readable, app=\(app.localizedName ?? "?", privacy: .public)")
             onNoSelection()
             return
         }
         let bounds = TextCapture.boundsForSelection(element: element, range: range)
-        selectionPopupLog.notice("checkSelection: match, \(text.count, privacy: .public) chars, bounds=\(bounds.map { "\($0)" } ?? "nil", privacy: .public), app=\(app.localizedName ?? "?", privacy: .public)")
+        selectionPopupLog.debug("checkSelection: match, \(text.count, privacy: .public) chars, bounds=\(bounds.map { "\($0)" } ?? "nil", privacy: .public), app=\(app.localizedName ?? "?", privacy: .public)")
         onSelection(SelectionSnapshot(
             text: text, element: element, range: range, bounds: bounds, sourceApp: app,
             nativeTextView: nil, nativeRange: nil
@@ -164,7 +172,7 @@ final class SelectionPopupMonitor: ObservableObject {
     private func checkNativeSelection(in textView: NSTextView) {
         let range = textView.selectedRange()
         guard range.length >= Self.minimumSelectionLength else {
-            selectionPopupLog.notice("checkNativeSelection: range too short (\(range.length, privacy: .public) chars)")
+            selectionPopupLog.debug("checkNativeSelection: range too short (\(range.length, privacy: .public) chars)")
             onNoSelection()
             return
         }
@@ -174,7 +182,7 @@ final class SelectionPopupMonitor: ObservableObject {
             return
         }
         let bounds = textView.firstRect(forCharacterRange: range, actualRange: nil)
-        selectionPopupLog.notice("checkNativeSelection: match, \(text.count, privacy: .public) chars in Notes editor")
+        selectionPopupLog.debug("checkNativeSelection: match, \(text.count, privacy: .public) chars in Notes editor")
         onSelection(SelectionSnapshot(
             text: text, element: nil, range: nil,
             bounds: bounds.isNull || bounds == .zero ? nil : bounds,

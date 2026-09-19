@@ -25,7 +25,16 @@ final class EmojiPickerModel: ObservableObject {
 
     private let database: EmojiDatabase
 
-    init(database: EmojiDatabase = .shared) {
+    /// No default argument for `database` on purpose.
+    ///
+    /// `EmojiDatabase.shared` is `@MainActor`-isolated, and a default argument
+    /// is evaluated at the *call site* — which the compiler cannot assume is on
+    /// the main actor. `= .shared` therefore warns today and is a hard error
+    /// under the Swift 6 language mode. The single caller
+    /// (`EmojiPickerPanel.swift`) is already `@MainActor`, so passing it
+    /// explicitly costs nothing and keeps the build working across the next
+    /// toolchain bump.
+    init(database: EmojiDatabase) {
         self.database = database
         refresh()
     }

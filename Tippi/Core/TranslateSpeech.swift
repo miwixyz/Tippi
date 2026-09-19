@@ -13,16 +13,29 @@ final class TranslateSpeech: ObservableObject {
     private let synthesizer = AVSpeechSynthesizer()
     @Published private(set) var isSpeaking = false
 
+    /// The callback is injected at construction and never reassigned, so it can
+    /// be a `let`. As a `var` it was a mutable stored property on a
+    /// `Sendable`-conforming class — a data race by the compiler's reckoning,
+    /// since `AVSpeechSynthesizer` may call back from a thread of its
+    /// choosing, and a standing build warning. Found by audit 2026-09-19.
     private final class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
-        var onFinish: (() -> Void)?
-        func speechSynthesizer(_ s: AVSpeechSynthesizer, didFinish u: AVSpeechUtterance) { onFinish?() }
-        func speechSynthesizer(_ s: AVSpeechSynthesizer, didCancel u: AVSpeechUtterance) { onFinish?() }
+        private let onFinish: @Sendable () -> Void
+
+        init(onFinish: @escaping @Sendable () -> Void) {
+            self.onFinish = onFinish
+            super.init()
+        }
+
+        func speechSynthesizer(_ s: AVSpeechSynthesizer, didFinish u: AVSpeechUtterance) { onFinish() }
+        func speechSynthesizer(_ s: AVSpeechSynthesizer, didCancel u: AVSpeechUtterance) { onFinish() }
     }
-    private let speechDelegate = SpeechDelegate()
+    private let speechDelegate: SpeechDelegate
 
     private init() {
-        speechDelegate.onFinish = { [weak self] in
-            Task { @MainActor in self?.isSpeaking = false }
+        // `isSpeaking` is MainActor state, the callback arrives on an
+        // unspecified thread — hence the hop rather than a direct assignment.
+        speechDelegate = SpeechDelegate {
+            Task { @MainActor in TranslateSpeech.shared.isSpeaking = false }
         }
         synthesizer.delegate = speechDelegate
     }
