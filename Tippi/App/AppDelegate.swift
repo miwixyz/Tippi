@@ -1095,6 +1095,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isOpeningTranslatePanel = true
         defer { isOpeningTranslatePanel = false }
 
+        // Check Tippi's own Notes editor first, and before the panel opens —
+        // `focusedNotesTextView()` reads `NSApp.keyWindow`, which the panel
+        // itself becomes. Everything below this point targets another app,
+        // because `resolvedSourceAppForCapture()` returns the last non-Tippi
+        // app on purpose; without this branch a translation started in Notes
+        // both read from and wrote to whatever app was in front beforehand.
+        // Mirrors `captureForTrigger()`, which has handled this since v2.8.3.
+        if let notesTextView = Self.focusedNotesTextView(),
+           case let notesRange = notesTextView.selectedRange(),
+           notesRange.length > 0 {
+            let selectedText = (notesTextView.string as NSString).substring(with: notesRange)
+            translateQuickPanel.toggle(
+                audioRecorder: audioRecorder,
+                initialText: selectedText,
+                onReplace: { [weak self] translated in
+                    Task { @MainActor in
+                        await self?.replaceTranslationSource(
+                            translated,
+                            original: selectedText,
+                            app: nil,
+                            element: nil,
+                            range: nil,
+                            nativeTextView: notesTextView,
+                            nativeRange: notesRange
+                        )
+                    }
+                }
+            )
+            return
+        }
+
         let sourceApp = resolvedSourceAppForCapture()
         let captured = await TextCapture.captureSelectedText(sourceApp: sourceApp)
 
@@ -1136,8 +1167,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         original: String,
         app: NSRunningApplication?,
         element: AXUIElement?,
-        range: CFRange?
+        range: CFRange?,
+        nativeTextView: NSTextView? = nil,
+        nativeRange: NSRange? = nil
     ) async {
+        // Tippi's own Notes editor is written to directly through AppKit — the
+        // Accessibility/clipboard ladder below targets *another* app by
+        // definition, since `resolvedSourceAppForCapture()` deliberately
+        // returns the last non-Tippi app. Without this branch, translating a
+        // selection inside Notes wrote the result into whatever app was in
+        // front beforehand. v2.8.3 fixed exactly this for the main trigger and
+        // the preview path; this third copy of the ladder never got it.
+        // Found by audit 2026-09-19.
+        if let nativeTextView, let nativeRange {
+            applyNativeReplacement(text, in: nativeTextView, range: nativeRange)
+            ToastWindowController.shared.show(message: String(localized: "translate.panel.replaced"))
+            return
+        }
         if let element, let range {
             switch TextInsertion.replaceViaElement(element, range: range, with: text, expecting: original) {
             case .replaced:
