@@ -94,8 +94,52 @@ final class SyncedPreferences {
         // download arrives via the notification above. Pulling explicitly here
         // covers the first launch on a new Mac, where no notification fires
         // because nothing changed while this process was running.
+        //
+        // The push side needs the same treatment, and for a long time it did
+        // not have it: a Mac that already held custom words before this type
+        // existed never uploaded them, because uploading was driven purely by
+        // `UserDefaults.didChangeNotification` and nothing was changing. The
+        // words sat there looking synced and reached no other Mac. Reported
+        // 2026-09-19 with exactly that symptom.
         store.synchronize()
+        reconcileFirstSync()
         applyRemoteChanges(nil)
+        pushLocalChanges()
+    }
+
+    /// Merges instead of letting one Mac silently win the first time a key syncs.
+    ///
+    /// Both Macs may hold words from before this type existed, and neither has
+    /// a local timestamp then. `applyRemoteChanges` compares `remoteStamp >
+    /// localStamp` and a missing local stamp reads as `0` — so whichever Mac
+    /// starts second would have its own list replaced by the other's, with no
+    /// warning and no way back. Custom words are additive by nature: a house
+    /// spelling added here does not invalidate one added there. So on the very
+    /// first sync of a key, the two lists are unioned and the result is stamped
+    /// `now`, which is newer than the remote stamp and therefore survives the
+    /// pull that follows.
+    ///
+    /// Only string arrays are merged. Anything else falls through to the normal
+    /// last-write-wins path, because merging is only obviously correct for a set.
+    private func reconcileFirstSync() {
+        for key in Self.syncedKeys {
+            // A stamp means this Mac has synced the key before; last-write-wins
+            // is then the right and expected behaviour.
+            guard defaults.double(forKey: Self.timestampKey(for: key)) == 0 else { continue }
+            guard let local = defaults.stringArray(forKey: key), !local.isEmpty else { continue }
+            guard let remote = store.object(forKey: key) as? [String], !remote.isEmpty else { continue }
+            guard local != remote else { continue }
+
+            var merged = local
+            for value in remote where !merged.contains(value) { merged.append(value) }
+
+            let now = Date().timeIntervalSince1970
+            isApplyingRemote = true
+            defaults.set(merged, forKey: key)
+            defaults.set(now, forKey: Self.timestampKey(for: key))
+            isApplyingRemote = false
+            syncLog.info("first sync for \(key, privacy: .public): merged \(local.count) local + \(remote.count) remote into \(merged.count)")
+        }
     }
 
     // MARK: - Directions
@@ -114,6 +158,17 @@ final class SyncedPreferences {
             let localStamp = defaults.double(forKey: Self.timestampKey(for: key))
             guard remoteStamp > localStamp else { continue }
             guard let value = store.object(forKey: key) else { continue }
+
+            // Both synced keys are string arrays. Writing anything else into
+            // UserDefaults would make `stringArray(forKey:)` return nil on the
+            // next read — the words would be gone locally with nothing logged
+            // and no way to tell it apart from "never had any". A wrong type
+            // means a corrupt or future-version store, so refuse and say so
+            // rather than destroy what this Mac still holds.
+            guard value is [String] else {
+                syncLog.error("iCloud holds a \(type(of: value), privacy: .public) for \(key, privacy: .public), expected [String] — keeping the local value")
+                continue
+            }
 
             isApplyingRemote = true
             defaults.set(value, forKey: key)
@@ -179,6 +234,15 @@ final class SyncedPreferences {
     func syncNowForTesting() {
         pushLocalChanges()
         applyRemoteChanges(nil)
+    }
+
+    /// Exposed for tests: the exact sequence `start()` runs, minus the observer
+    /// registration. Kept in lockstep with `start()` — the launch path is where
+    /// the 2026-09-19 data-marooning bug lived, so it needs its own coverage.
+    func startSequenceForTesting() {
+        reconcileFirstSync()
+        applyRemoteChanges(nil)
+        pushLocalChanges()
     }
 
     /// Exposed for tests: applies whatever iCloud holds, ignoring notifications.

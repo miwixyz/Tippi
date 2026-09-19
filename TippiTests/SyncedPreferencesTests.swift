@@ -120,6 +120,82 @@ final class SyncedPreferencesTests: XCTestCase {
                        "applying a remote value must not re-stamp it as a local edit — "
                        + "that would make the two Macs push to each other forever")
     }
+
+    // MARK: - Launch behaviour
+    //
+    // Reported 2026-09-19: custom words entered on the MacBook never reached the
+    // Mac mini. Both Macs were fine, iCloud was fine, the entitlement was fine.
+    // Uploading was driven solely by `UserDefaults.didChangeNotification`, so a
+    // Mac whose words predated this type simply never sent them — nothing was
+    // changing. The data was marooned and looked synced.
+
+    func testWordsThatPredateSyncAreUploadedOnLaunch() {
+        // No local timestamp: this Mac has never synced, exactly like one that
+        // carried its words across the update to 2.11.0.
+        defaults.set(["Dott.Beat", "CINEWEB"], forKey: wordsKey)
+
+        let sync = makeSync()
+        sync.startSequenceForTesting()
+
+        XCTAssertEqual(FakeKeyValueStore.shared.array(forKey: wordsKey) as? [String],
+                       ["Dott.Beat", "CINEWEB"],
+                       "words present before the first launch must be uploaded — "
+                       + "waiting for an edit strands them on one Mac")
+    }
+
+    func testFirstSyncUnionsBothListsInsteadOfPickingAWinner() {
+        // Both Macs hold words from before sync existed, so neither has a local
+        // stamp. Without merging, the Mac that starts second loses its list:
+        // remoteStamp > localStamp(0) makes the pull overwrite it.
+        defaults.set(["Dott.Beat", "CineSocial"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(["CINEWEB", "CineSocial"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(Date().timeIntervalSince1970, forKey: stampKey)
+
+        let sync = makeSync()
+        sync.startSequenceForTesting()
+
+        let result = defaults.stringArray(forKey: wordsKey) ?? []
+        XCTAssertEqual(Set(result), Set(["Dott.Beat", "CineSocial", "CINEWEB"]),
+                       "the first sync must keep both Macs' words — a house spelling "
+                       + "added here does not invalidate one added there")
+        XCTAssertEqual(result.count, 3, "merging must not duplicate the shared word")
+        XCTAssertEqual(FakeKeyValueStore.shared.array(forKey: wordsKey) as? [String] ?? [],
+                       result,
+                       "the merged list must also be uploaded, or the other Mac never sees it")
+    }
+
+    func testWrongTypeFromICloudDoesNotWipeTheLocalWords() {
+        // A corrupt or future-version store could hold something that is not a
+        // string array. Writing it through would make `stringArray(forKey:)`
+        // return nil afterwards — the words gone, silently.
+        defaults.set(["Dott.Beat"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(["unerwartet": true], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(Date().timeIntervalSince1970, forKey: stampKey)
+
+        let sync = makeSync()
+        sync.pullNowForTesting()
+
+        XCTAssertEqual(defaults.stringArray(forKey: wordsKey) ?? [], ["Dott.Beat"],
+                       "a value of the wrong type must be refused, not written over "
+                       + "the words this Mac still has")
+    }
+
+    func testLaunchDoesNotOverrideAnAlreadySyncedKey() {
+        // This Mac has synced before (it has a stamp) and iCloud holds something
+        // newer. Merging would be wrong here — last-write-wins is the contract.
+        let localStamp = Date().timeIntervalSince1970 - 100
+        let remoteStamp = Date().timeIntervalSince1970
+        defaults.set(["alt"], forKey: wordsKey)
+        defaults.set(localStamp, forKey: stampKey)
+        FakeKeyValueStore.shared.set(["neu"], forKey: wordsKey)
+        FakeKeyValueStore.shared.set(remoteStamp, forKey: stampKey)
+
+        let sync = makeSync()
+        sync.startSequenceForTesting()
+
+        XCTAssertEqual(defaults.stringArray(forKey: wordsKey) ?? [], ["neu"],
+                       "a key that has synced before must follow last-write-wins, not merge")
+    }
 }
 
 /// Minimal stand-in for `NSUbiquitousKeyValueStore`.
