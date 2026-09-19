@@ -175,6 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             updaterDelegate: nil,
             userDriverDelegate: self
         )
+        checkAgainIfJustUpdated()
         setupMenuBar()
         observeFrontmostApp()
         observePermissions()
@@ -683,6 +684,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func checkForUpdates(_ sender: Any?) {
         updaterController?.checkForUpdates(sender)
+    }
+
+    /// Checks once more right after an update installed itself.
+    ///
+    /// Sparkle offers whatever the appcast held at the moment it asked. Ship
+    /// two releases 42 minutes apart — 2.10.0 at 19:41 and 2.11.0 at 20:23 on
+    /// 2026-09-15 — and whoever updates in between lands on the older one with
+    /// no way to find out: the relaunch says nothing, and the next scheduled
+    /// check can be a day away. Reported 2026-09-19 after four days spent on
+    /// 2.10.0: "I did an update. But another one was available. You never know
+    /// whether one more is waiting."
+    ///
+    /// Comparing the running build against the one that launched last time is
+    /// enough to spot "we just updated" — Sparkle exposes no such signal. The
+    /// follow-up check runs in the background, so it stays silent when nothing
+    /// is available and only speaks up when there genuinely is another update.
+    /// That is what makes it safe to run on every post-update launch.
+    private func checkAgainIfJustUpdated() {
+        let key = "lastLaunchedBuild"
+        let defaults = UserDefaults.standard
+        let current = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        let previous = defaults.string(forKey: key)
+        defaults.set(current, forKey: key)
+
+        // No previous value means a fresh install, not an update — checking
+        // again there would just be noise on someone's first launch.
+        guard !current.isEmpty, let previous, previous != current else { return }
+
+        // One interpolated literal, no `+`: OSLogMessage is not a String and
+        // cannot be concatenated.
+        appDelegateLog.info(
+            "build changed \(previous, privacy: .public) → \(current, privacy: .public), checking for a further update")
+        updaterController?.updater.checkForUpdatesInBackground()
     }
 
     // MARK: - Dictation language quick switcher
