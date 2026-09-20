@@ -12,6 +12,12 @@ import SwiftUI
 /// `setFrameAutosaveName`.
 @MainActor
 final class NotesWindowController {
+    /// Declares this window a text surface where snippet expansion is wanted.
+    /// `SnippetKeystrokeMonitor` allow-lists Tippi's own windows by identifier
+    /// — see `expansionAllowedWindowIdentifiers` there. Keep the two in sync;
+    /// the raw value is the contract between them.
+    static let windowIdentifier = NSUserInterfaceItemIdentifier("TippiNotesWindow")
+
     private var windowController: NSWindowController?
     private let minSize = NSSize(width: 480, height: 320)
     private let defaultSize = NSSize(width: 680, height: 440)
@@ -65,6 +71,7 @@ final class NotesWindowController {
         // Finder, Mail and Notes.app do the opposite: solid window body,
         // translucent sidebar only. NotesListView keeps its
         // .scrollContentBackground(.hidden) for exactly that sidebar effect.
+        window.identifier = Self.windowIdentifier
         window.delegate = FrameSaveDelegate.shared
         applyPinnedState(to: window)
 

@@ -112,6 +112,22 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         matcher.reset()
     }
 
+    /// Identifiers of Tippi's own windows where snippet expansion is wanted.
+    /// Currently just Notes; Settings and Welcome stay suppressed because a
+    /// trigger typed there is being *defined*, not used.
+    static let expansionAllowedWindowIdentifiers: Set<String> = ["TippiNotesWindow"]
+
+    /// Pure decision so it is testable without building windows: given the
+    /// identifier of the key window while Tippi is frontmost, should the
+    /// keystroke be dropped?
+    ///
+    /// `nil` (an unidentified window, or no key window at all) discards — the
+    /// conservative direction. A window has to say what it is to get expansion.
+    static func shouldDiscardWhileFrontmost(keyWindowIdentifier: String?) -> Bool {
+        guard let id = keyWindowIdentifier else { return true }
+        return !expansionAllowedWindowIdentifiers.contains(id)
+    }
+
     private func handle(_ event: NSEvent) {
         // Recorded before every guard below: this is the only honest answer to
         // "do keystrokes reach the watcher at all?"
@@ -131,11 +147,23 @@ final class SnippetKeystrokeMonitor: ObservableObject {
             monitorLog.debug("  → discarded: isInjecting")
             return
         }
-        // Never expand while Tippi itself is the frontmost app — typing a
-        // trigger string into the "new snippet" editor in Settings must not
-        // expand itself.
-        if NSApp.isActive {
-            monitorLog.debug("  → discarded: Tippi is frontmost")
+        // Suppression is per *window*, not per app.
+        //
+        // The reason this guard exists is the snippet editor in Settings:
+        // typing a trigger there to *define* it must not expand it. The old
+        // condition was a bare `NSApp.isActive`, which is app-wide — so it
+        // also silenced the Notes window, an ordinary editing surface added
+        // later where a user reasonably expects `:trigger` to work. Reported
+        // 2026-09-20 ("in Tippi Notizen funktioniert Snippets nicht, :
+        // reagiert nicht"); the keystroke arrived and was discarded one line
+        // below, which is why nothing in the UI hinted at a cause.
+        //
+        // Allow-list, not deny-list: only windows that explicitly declare
+        // themselves a text surface opt in. A future Tippi window is
+        // suppressed by default rather than silently starting to expand.
+        if NSApp.isActive,
+           Self.shouldDiscardWhileFrontmost(keyWindowIdentifier: NSApp.keyWindow?.identifier?.rawValue) {
+            monitorLog.debug("  → discarded: Tippi frontmost and key window is not a snippet surface")
             return
         }
 
