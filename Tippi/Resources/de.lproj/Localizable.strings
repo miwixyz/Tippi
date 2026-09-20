@@ -393,7 +393,7 @@
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.whatsNewTitle" = "Was ist neu";
-"settings.help.whatsNewBody" = "v2.11.7 — „Server starten\" scheiterte bisher immer wieder, egal welches Modell gewählt war. Schuld war nicht das Modell, sondern ein Serverprozess aus einem früheren Absturz, der den Port besetzt hielt und nie antwortete. Tippi räumt so einen hängengebliebenen Server jetzt weg und prüft nach, ob der Port wirklich frei ist. Hält ein fremdes Programm den Port, wird nichts beendet — die Meldung nennt es beim Namen. Außerdem sind die MLX-Meldungen jetzt auf Deutsch.";
+"settings.help.whatsNewBody" = "v2.11.8 — Markierter Text im Notizfenster zeigt wieder die Aktionsleiste. Außerdem arbeitet die Diktat-Glättung jetzt deutlich zurückhaltender: Sie lief bisher mit derselben Einstellung wie das Umschreiben von Texten, obwohl ihre Aufgabe das Gegenteil ist — möglichst wenig verändern. Das Ergebnis bleibt näher an dem, was du gesagt hast. Alle anderen KI-Funktionen sind unverändert.";
 "settings.help.howTitle" = "So funktioniert Tippi";
 "settings.help.howBody" = "Text in einer beliebigen App markieren, dann Hotkey drücken (Standard: ⌥⌘T). Ein Popup erscheint am Cursor — Prompt wählen, Vorschau prüfen, ersetzen oder kopieren.";
 "settings.help.instructTitle" = "Anweisung geben — tippen oder sprechen";

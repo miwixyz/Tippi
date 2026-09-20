@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.11.8] — 2026-09-20
+
+### Fixed
+
+- **Markierter Text im Notizfenster zeigt wieder die Aktionsleiste.** Die
+  Ausnahme fürs Notizfenster existierte bereits — sie wurde nur eine Ebene
+  früher abgefangen und kam nie zum Zug.
+
+### Changed
+
+- **Die Diktat-Glättung arbeitet jetzt deutlich zurückhaltender.** Sie lief
+  bisher mit derselben Einstellung wie das Umschreiben von Texten, obwohl ihre
+  Aufgabe das Gegenteil ist: möglichst wenig verändern. Das Ergebnis bleibt
+  näher an dem, was du gesagt hast. Alle anderen KI-Funktionen sind unverändert.
+
 ## [2.11.7] — 2026-09-20
 
 ### Fixed
