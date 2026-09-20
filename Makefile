@@ -3,7 +3,24 @@
 TEAM_ID          := LTKJ6Z2VYB
 # Local builds only. scripts/release.sh signs with the Developer ID identity
 # for notarised distribution; the two must not be swapped.
-DEV_IDENTITY     := Apple Development: Michael Wildenauer (54PMA7GFAN)
+# Resolved from the keychain, NOT hardcoded by name.
+#
+# Apple issues the certificate's Common Name from how the account is registered
+# on that machine, so the same developer ID appears under different names:
+#   Mac mini : "Apple Development: Michael Wildenauer (54PMA7GFAN)"
+#   MacBook  : "Apple Development: miwimail@icloud.com  (54PMA7GFAN)"
+# The hardcoded name made `make build` fail on the MacBook with
+# "no identity found" *after* BUILD SUCCEEDED — the app was built, only the
+# helper signing step died, which reads like a build break but is not one
+# (2026-09-20).
+#
+# The user ID in parentheses is the stable part, so match on that and take the
+# SHA-1 hash. Signing by hash is also unambiguous when several certificates
+# share a name.
+DEV_IDENTITY_USER ?= 54PMA7GFAN
+DEV_IDENTITY := $(shell security find-identity -v -p codesigning \
+    | grep 'Apple Development' | grep '($(DEV_IDENTITY_USER))' \
+    | head -1 | awk '{print $$2}')
 DEV_ENTITLEMENTS := build/Tippi.dev.entitlements
 
 help:
@@ -29,6 +46,11 @@ open: generate
 	open Tippi.xcodeproj
 
 build: generate
+	@test -n "$(DEV_IDENTITY)" || { \
+	  echo "❌ Keine 'Apple Development'-Identität für ($(DEV_IDENTITY_USER)) im Schlüsselbund."; \
+	  echo "   Vorhanden:"; security find-identity -v -p codesigning | sed 's/^/   /'; \
+	  echo "   → In Xcode anmelden (Settings ▸ Accounts) oder DEV_IDENTITY_USER=<ID> setzen."; \
+	  exit 1; }
 	@if pgrep -x Tippi >/dev/null 2>&1; then echo "Stopping running Tippi before rebuild..."; pkill -x Tippi; sleep 1; fi
 	@test -f Tippi/Helpers/whisper-cli || { echo "Tippi/Helpers/whisper-cli missing — run 'make prepare-binary' first (dictation needs it)"; exit 1; }
 	rm -rf build/Build/Products/Release/Tippi.app
