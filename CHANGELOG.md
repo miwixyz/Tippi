@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.11.6] — 2026-09-20
+
+Notfall-Korrektur zu 2.11.5. Wer 2.11.5 installiert hat, sollte sofort
+aktualisieren.
+
+### Fixed
+
+- **Tippi startete nicht mehr.** Die in 2.11.5 neu hinzugekommene
+  Fehlermeldung ließ die App beim Start abstürzen — und zwar genau dann, wenn
+  tatsächlich ein Problem zu melden war. Lief alles normal, fiel nichts auf;
+  stand dagegen zum Beispiel der lokale Server nicht bereit, beendete sich
+  Tippi, bevor das Symbol in der Menüleiste erschien. Ursache war eine falsche
+  Annahme darüber, in welchem Ausführungskontext die Rückmeldung des
+  Mitteilungssystems eintrifft. Behoben und am laufenden Programm nachgeprüft.
+
 ## [2.11.5] — 2026-09-20
 
 Tippi sagt jetzt, was nicht geht und was du dagegen tun kannst — statt nur
