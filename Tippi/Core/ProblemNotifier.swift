@@ -66,13 +66,21 @@ final class ProblemNotifier {
         // silently, so the very first problem a user ever hits would announce
         // itself into nothing. That is the exact failure this class exists to
         // remove, reproduced one layer down.
-        authorize { [weak self] granted in
+        authorize { granted in
             guard granted else { return }   // menu still carries everything
-            MainActor.assumeIsolated { self?.deliver(problem) }
+            // `Task { @MainActor in }`, NOT `MainActor.assumeIsolated`.
+            //
+            // This closure runs on UNUserNotificationCenter's own dispatch
+            // queue (`UNUserNotificationServiceConnection.call-out`), never on
+            // the main actor. `assumeIsolated` does not check-and-adapt — it
+            // *asserts*, and a false assertion is a hard trap. Shipped in
+            // 2.11.5 and crashed Tippi on launch for anyone who had a problem
+            // to report, which is precisely the audience this class is for.
+            Task { @MainActor in ProblemNotifier.shared.deliver(problem) }
         }
     }
 
-    private func deliver(_ problem: TippiStatusMonitor.Problem) {
+    fileprivate func deliver(_ problem: TippiStatusMonitor.Problem) {
         let content = UNMutableNotificationContent()
         content.title = problem.headline
         content.body = problem.action
@@ -106,7 +114,7 @@ final class ProblemNotifier {
             } else if !granted {
                 notifyLog.notice("notifications not permitted — the menubar menu remains the full report")
             }
-            MainActor.assumeIsolated { ProblemNotifier.shared.authorizationGranted = granted }
+            Task { @MainActor in ProblemNotifier.shared.authorizationGranted = granted }
             completion(granted)
         }
     }
