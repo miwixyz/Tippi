@@ -202,6 +202,16 @@ echo ""
 # would build successfully, push the DMG to GitHub, and then fail git push
 # (non-fast-forward) — having silently overwritten a release from the other Mac.
 # We check BEFORE building so the failure is fast and nothing is uploaded.
+echo "▶ [Pre-flight] Concurrency lint..."
+if [ -f scripts/concurrency-lint.sh ]; then
+    if ! bash scripts/concurrency-lint.sh; then
+        echo "  ✗ Unproven MainActor.assumeIsolated — 2.11.5 shipped exactly this and crashed on launch."
+        exit 1
+    fi
+else
+    echo "  ⚠ scripts/concurrency-lint.sh missing — concurrency NOT checked."
+fi
+
 echo "▶ [Pre-flight] Git sync check..."
 git fetch origin --quiet 2>/dev/null || { echo "  ⚠ git fetch failed — check network. Continuing anyway."; }
 

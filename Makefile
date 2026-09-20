@@ -103,6 +103,10 @@ test: generate
 # Ohne das waren 671 Domains aufgelaufen und `defaults domains` als
 # Diagnosewerkzeug unbrauchbar (bei der Notizen-Fehlersuche am 20.09. kam die
 # echte App-Domain nach 600 Zeilen Testrauschen).
+# Lint zuerst: er kostet Millisekunden und faengt eine Klasse, die die Testsuite
+# strukturell nicht sieht — der Absturz in 2.11.5 lag in einem Pfad, der nur
+# bei einem echten Fehlerzustand laeuft.
+	@bash scripts/concurrency-lint.sh
 	xcodebuild test -project Tippi.xcodeproj -scheme Tippi -destination 'platform=macOS'
 	@$(MAKE) --no-print-directory purge-test-defaults
 

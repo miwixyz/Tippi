@@ -182,9 +182,15 @@ final class RecordingIndicatorWindowController {
             ctx.duration = 0.25
             win?.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
-            // Completion fires on the main thread; assumeIsolated lets us read the
-            // @MainActor `generation`. If a show() ran during the 0.25s fade it
-            // bumped `generation` — don't order out the window it just re-displayed.
+            // concurrency-lint: on-main NSAnimationContext.runAnimationGroup delivers
+            // its completion on the thread that started the group, and this one is
+            // started from a @MainActor method — so the assumption holds here.
+            // Unlike the UNUserNotificationCenter callback that shipped a crash in
+            // 2.11.5, which runs on the framework's own queue.
+            //
+            // assumeIsolated lets us read the @MainActor `generation`. If a show()
+            // ran during the 0.25s fade it bumped `generation` — don't order out
+            // the window it just re-displayed.
             MainActor.assumeIsolated {
                 guard let self, self.generation == generationAtHide else { return }
                 win?.orderOut(nil)
