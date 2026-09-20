@@ -14,6 +14,33 @@ Open a [GitHub issue](https://github.com/miwixyz/Tippi/issues). For bugs, includ
 - Keep changes focused — one fix or feature per PR
 - Match the existing Swift style (SwiftUI-first, no third-party UI dependencies)
 - Test with a signed build if your change touches text capture, hotkeys, or permissions
+- Run `make test` before opening a PR. It does three things in order: a concurrency
+  lint, the test suite, and a cleanup of the preference domains the tests leave behind
+  (verified to reach zero, not assumed)
+
+## Running the tests
+
+```bash
+make test
+```
+
+**Not** `xcodebuild test` directly — that skips both the lint before it and the
+cleanup after it.
+
+- **`scripts/concurrency-lint.sh`** flags `MainActor.assumeIsolated` that has no
+  evidence of running on the main queue. Accepted evidence is a `queue: .main`
+  registration in the ten lines above, or an explicit
+  `// concurrency-lint: on-main <reason>` waiver. It exists because 2.11.5 shipped
+  exactly that mistake and crashed on launch: `assumeIsolated` does not
+  check-and-adapt, it *asserts*, so a wrong assumption is a hard trap. The crash
+  path only ran when the app already had a problem to report, so neither the suite
+  nor the release pipeline's launch check ever reached it.
+- **The cleanup afterwards** removes the `TippiTests.*` preference domains a run
+  leaves behind. In-process teardown cannot win here: `cfprefsd` writes the domains
+  back from its cache after the test process exits, so the step belongs behind the
+  run. Without it they accumulate — 671 had piled up before this was noticed, which
+  makes `defaults domains` useless on the machine where you go looking when a
+  preference bug is being chased.
 
 ## Development setup
 

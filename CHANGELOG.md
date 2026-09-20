@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.11.9] — 2026-09-20
+
+Nur Dokumentation — die eingebaute Hilfe hinkte den letzten fünf Versionen
+hinterher.
+
+### Changed
+
+- **Die Hilfe in den Einstellungen kennt jetzt, was heute dazukam.** „Notizen"
+  erklärt den Sync zwischen Macs und warum die Notiz, an der du schreibst, nie
+  überschrieben wird. „Fehlersuche" erklärt die neue Anzeige in der Menüleiste
+  und die Mitteilung. „MLX" erklärt, was passiert, wenn ein alter Serverprozess
+  den Port blockiert. „Sprache" sagt, wie zurückhaltend die Diktat-Glättung
+  arbeitet und warum.
+
+- Website, README, Architektur-Übersicht und die Beitragsanleitung auf denselben
+  Stand gebracht.
+
 ## [2.11.8] — 2026-09-20
 
 ### Fixed

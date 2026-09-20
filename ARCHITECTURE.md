@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.11.8. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.11.9. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -46,6 +46,10 @@ Tippi/
 │   │                               #   Vorher 3 Kopien in AppDelegate → 2× derselbe Bug
 │   ├── KeychainStore.swift         # API-Keys
 │   ├── SyncedPreferences.swift     # v2.11 — Allow-List, die per iCloud über Macs wandert
+│   ├── TippiStatusMonitor.swift    # Ampel für die Menüleiste. `Status.error` traegt seit
+│   │                               #   v2.11.5 Ursache UND Handlungsanweisung, nicht nur „Fehler"
+│   ├── ProblemNotifier.swift       # v2.11.5 — meldet Ausfaelle ungefragt, einmal pro neuem
+│   │                               #   Problem (der Monitor rechnet alle 3 s neu)
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
 │   ├── Snippets/                   # v2.0 — systemweite Tipp-Expansion
@@ -66,6 +70,10 @@ Tippi/
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync
 │       ├── Note.swift                      # Model, nicht Codable (1 .txt-Datei/Notiz)
 │       ├── NotesStore.swift                # iCloud-Container + lokaler Fallback, NSFileCoordinator
+│       │                                   #   `merge` ist rein + getestet: aktualisiert, loescht NIE
+│       ├── NotesLiveSync.swift             # v2.11.6 — NSMetadataQuery auf den Notes-Ordner.
+│       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
+│       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
 │       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings)
 ├── LLM/                            # 11 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
