@@ -392,7 +392,7 @@
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
 "settings.help.whatsNewTitle" = "What's New";
-"settings.help.whatsNewBody" = "v2.11.6 — Emergency fix: 2.11.5 failed to launch whenever there was a problem to report — the new failure notification quit the app before the menubar icon appeared. Fixed and verified against the running app. Everything from 2.11.5 stays: the menubar names the cause, the next step sits right below it, and notes from your other Mac appear on their own.";
+"settings.help.whatsNewBody" = "v2.11.7 — “Start server” kept failing whatever model you picked. The model was never the problem: a server left behind by an earlier crash held the port and never answered. Tippi now clears a stale server off the port and checks afterwards that it is really free. If a foreign program holds it, nothing is terminated — the message names it instead. The MLX messages are also localized now.";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.instructTitle" = "Give an instruction — type or speak";

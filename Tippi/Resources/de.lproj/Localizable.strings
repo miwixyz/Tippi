@@ -393,7 +393,7 @@
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.whatsNewTitle" = "Was ist neu";
-"settings.help.whatsNewBody" = "v2.11.6 — Notfall-Korrektur: Tippi startete in 2.11.5 nicht mehr, wenn tatsächlich ein Problem zu melden war — die neue Fehlermeldung beendete die App, bevor das Symbol in der Menüleiste erschien. Behoben und am laufenden Programm nachgeprüft. Alles aus 2.11.5 bleibt: die Menüleiste nennt die Ursache, der nächste Schritt steht direkt darunter, und Notizen vom anderen Mac erscheinen von selbst.";
+"settings.help.whatsNewBody" = "v2.11.7 — „Server starten\" scheiterte bisher immer wieder, egal welches Modell gewählt war. Schuld war nicht das Modell, sondern ein Serverprozess aus einem früheren Absturz, der den Port besetzt hielt und nie antwortete. Tippi räumt so einen hängengebliebenen Server jetzt weg und prüft nach, ob der Port wirklich frei ist. Hält ein fremdes Programm den Port, wird nichts beendet — die Meldung nennt es beim Namen. Außerdem sind die MLX-Meldungen jetzt auf Deutsch.";
 "settings.help.howTitle" = "So funktioniert Tippi";
 "settings.help.howBody" = "Text in einer beliebigen App markieren, dann Hotkey drücken (Standard: ⌥⌘T). Ein Popup erscheint am Cursor — Prompt wählen, Vorschau prüfen, ersetzen oder kopieren.";
 "settings.help.instructTitle" = "Anweisung geben — tippen oder sprechen";

@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.11.7] — 2026-09-20
+
+### Fixed
+
+- **„Server starten" scheiterte immer wieder, egal welches Modell.** Ursache war
+  nicht das Modell, sondern der Port: Ein Serverprozess aus einem früheren
+  Tippi-Absturz hielt ihn besetzt. Er nahm Verbindungen an, antwortete aber nie —
+  und blockierte damit jeden neuen Start. Tippi räumt so einen hängengebliebenen
+  Server jetzt weg, bevor es einen neuen startet, und prüft danach nach, ob der
+  Port wirklich frei ist. Hält ein **fremdes** Programm den Port, wird nichts
+  beendet; die Meldung nennt stattdessen Programm und Prozessnummer.
+
+- **Die MLX-Meldungen sind jetzt auf Deutsch.** Sie waren englisch, mitten in
+  einer deutschen Oberfläche.
+
 ## [2.11.6] — 2026-09-20
 
 Notfall-Korrektur zu 2.11.5. Wer 2.11.5 installiert hat, sollte sofort
