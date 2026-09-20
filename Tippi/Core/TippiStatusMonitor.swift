@@ -21,16 +21,41 @@ import Combine
 final class TippiStatusMonitor: ObservableObject {
     static let shared = TippiStatusMonitor()
 
+    /// What is wrong and what to do about it.
+    ///
+    /// Added 2026-09-20 after Michael's report: the menubar said only "Fehler",
+    /// the actual cause sat in a settings pane nobody had open, and nothing
+    /// announced it. The information already existed — `ServerState.failed`
+    /// carries a message — it was simply dropped on the way up.
+    ///
+    /// Two fields on purpose, mirroring the vault rule for automated messages:
+    /// what is going on, and a concrete instruction. A headline without an
+    /// action is what produced this complaint in the first place.
+    struct Problem: Equatable {
+        /// Short enough for the menubar row: what is broken.
+        let headline: String
+        /// One sentence: the next thing to do. Shown as its own clickable menu
+        /// item and as the notification body.
+        let action: String
+        /// Whether the fix lives in Settings, so the menu item can go there.
+        var opensSettings: Bool = true
+    }
+
     enum Status: Equatable {
         case ready     // green
         case warming   // yellow
-        case error     // red
+        case error(Problem)   // red
+
+        var isError: Bool { if case .error = self { return true }; return false }
+
+        var problem: Problem? { if case .error(let p) = self { return p }; return nil }
 
         var label: String {
             switch self {
             case .ready:   return String(localized: "status.ready")
             case .warming: return String(localized: "status.warming")
-            case .error:   return String(localized: "status.error")
+            // "Fehler — MLX-Server läuft nicht" instead of a bare "Fehler".
+            case .error(let p): return "\(String(localized: "status.error")) — \(p.headline)"
             }
         }
     }
@@ -78,13 +103,29 @@ final class TippiStatusMonitor: ObservableObject {
         switch provider {
         case "mlx":
             if !MLXServerManager.isInstalled {
-                new = .error
+                new = .error(Problem(
+                    headline: String(localized: "status.error.mlxNotInstalled"),
+                    action: String(localized: "status.error.mlxNotInstalled.action")
+                ))
             } else {
                 switch MLXServerManager.shared.state {
                 // MLX is the active provider, so a server that isn't running —
                 // whether crashed (.failed) or deliberately stopped (.stopped) —
                 // means Tippi can't process right now: red, not "loading" yellow.
-                case .failed, .stopped: new = .error
+                case .failed(let message):
+                    // The manager's own message is the most specific thing
+                    // anyone has (e.g. "Model download stalled at Fetching 8
+                    // files 0% — check the connection and start again"). It used
+                    // to be visible only in Settings; it is the action now.
+                    new = .error(Problem(
+                        headline: String(localized: "status.error.mlxFailed"),
+                        action: message
+                    ))
+                case .stopped:
+                    new = .error(Problem(
+                        headline: String(localized: "status.error.mlxStopped"),
+                        action: String(localized: "status.error.mlxStopped.action")
+                    ))
                 case .starting:         new = .warming   // genuinely spinning up
                 case .running:          new = MLXServerManager.shared.isWarm ? .ready : .warming
                 }

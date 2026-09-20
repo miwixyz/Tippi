@@ -107,13 +107,26 @@ test: generate
 	@$(MAKE) --no-print-directory purge-test-defaults
 
 purge-test-defaults:
-	@before=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
-	find ~/Library/Preferences -maxdepth 1 -name 'TippiTests.*.plist' -delete 2>/dev/null || true; \
-	killall cfprefsd 2>/dev/null || true; \
-	sleep 1; \
-	after=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+# Wiederholt, nicht einmalig (korrigiert 2026-09-20, nachdem der erste Entwurf
+# "23 → 14" lieferte statt "→ 0"): `cfprefsd` schreibt seinen Cache asynchron
+# zurueck, teils noch nachdem der Testhost beendet ist. Ein einzelner Durchlauf
+# gewinnt das Rennen mal und mal nicht — und ein Check, der gelegentlich
+# durchwinkt, ist schlimmer als keiner, weil er das Wegsehen antrainiert.
+#
+# Zuerst auf das Ende des Testhosts warten, dann bis zu 5 Runden aus
+# Loeschen + Daemon-Neustart, bis zwei Messungen hintereinander null ergeben.
+	@for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -qf 'TippiTests.xctest' || break; sleep 0.5; done; \
+	before=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+	after=$$before; \
+	for attempt in 1 2 3 4 5; do \
+	  find ~/Library/Preferences -maxdepth 1 -name 'TippiTests.*.plist' -delete 2>/dev/null || true; \
+	  killall cfprefsd 2>/dev/null || true; \
+	  sleep 1; \
+	  after=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+	  [ "$$after" -eq 0 ] && break; \
+	done; \
 	echo "✓ Test-Preference-Domains: $$before → $$after"; \
-	test "$$after" -eq 0 || { echo "✗ $$after Domain(s) ueberleben den Daemon-Neustart — von Hand nachsehen"; exit 1; }
+	test "$$after" -eq 0 || { echo "✗ $$after Domain(s) ueberleben 5 Runden Daemon-Neustart — von Hand nachsehen"; exit 1; }
 
 clean:
 	rm -rf Tippi.xcodeproj build/ DerivedData/ dist/

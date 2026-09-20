@@ -86,6 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// silently defeat the entire point of a colored status row; a custom
     /// view draws exactly what it's told, disabled or not.
     private var statusRowView: StatusMenuRowView?
+    private var problemFixMenuItem: NSMenuItem?
     /// Colored dot sublayer on the menubar button signalling readiness.
     private var statusBadgeLayer: CALayer?
     private var welcomeWindowController: NSWindowController?
@@ -478,8 +479,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let rowView = StatusMenuRowView(frame: NSRect(x: 0, y: 0, width: 230, height: 22))
         statusMI.view = rowView
         menu.addItem(statusMI)
-        menu.addItem(.separator())
         statusRowView = rowView
+
+        // The instruction, as its own clickable row. Hidden while everything is
+        // fine. Reported 2026-09-20: the menubar said "Fehler" and nothing else,
+        // while the real cause sat in a settings pane — a symptom without a next
+        // step is what made the message useless.
+        let fixMI = NSMenuItem(title: "", action: #selector(openProblemLocation), keyEquivalent: "")
+        fixMI.target = self
+        fixMI.image = menuIcon("wrench.and.screwdriver")
+        fixMI.isHidden = true
+        menu.addItem(fixMI)
+        problemFixMenuItem = fixMI
+
+        menu.addItem(.separator())
 
         let triggerItem = NSMenuItem(
             title: String(localized: "menu.trigger"),
@@ -622,6 +635,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         statusRowView?.configure(symbol: symbol, color: color, text: status.label)
+
+        // The menu is the durable report: it is there whenever the user looks,
+        // with or without notification permission.
+        if let problem = status.problem {
+            problemFixMenuItem?.title = problem.action
+            problemFixMenuItem?.isHidden = false
+            problemFixMenuItem?.isEnabled = problem.opensSettings
+            problemFixMenuItem?.toolTip = problem.action
+        } else {
+            problemFixMenuItem?.isHidden = true
+        }
+
+        // The announcement. Only fires on entering a new problem — see
+        // ProblemNotifier; the monitor recomputes every 3 s.
+        ProblemNotifier.shared.statusChanged(to: status)
 
         guard let button = statusItem?.button, let dot = statusBadgeLayer else { return }
         let size: CGFloat = 6
@@ -774,6 +802,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// straight to the Help tab instead of whichever tab was last open.
     @objc func showHelpWindow() {
         SettingsNavigation.shared.pendingTab = .help
+        showSettingsWindow()
+    }
+
+    /// Opens where the problem is fixed. Settings for everything Tippi can
+    /// show; the title of the item already says what to do there.
+    @objc private func openProblemLocation() {
         showSettingsWindow()
     }
 

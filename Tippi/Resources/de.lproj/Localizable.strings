@@ -2,6 +2,11 @@
 "status.ready" = "Bereit";
 "status.warming" = "Modell lädt…";
 "status.error" = "Fehler";
+"status.error.mlxNotInstalled" = "Lokales Modell nicht installiert";
+"status.error.mlxNotInstalled.action" = "Einstellungen ▸ MLX (local) öffnen und die Einrichtung starten — oder oben einen Cloud-Anbieter wählen.";
+"status.error.mlxFailed" = "Lokaler Server fehlgeschlagen";
+"status.error.mlxStopped" = "Lokaler Server läuft nicht";
+"status.error.mlxStopped.action" = "Einstellungen ▸ MLX (local) öffnen und auf „Server starten“ klicken.";
 "menu.trigger" = "Tippi auslösen…";
 "menu.translate" = "Übersetzen…";
 "menu.notes" = "Notizen…";
