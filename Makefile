@@ -29,6 +29,7 @@ help:
 	@echo "  make generate         Generate Tippi.xcodeproj from project.yml (XcodeGen)"
 	@echo "  make open             Generate + open in Xcode"
 	@echo "  make build            Build Release configuration (Apple Development signed — matches the embedded dev profile)"
+	@echo "  make test             Run the test suite, then purge the preference domains it leaks"
 	@echo "  make clean            Remove generated project and build artifacts"
 	@echo "  make icons            Open icons/ folder"
 	@echo ""
@@ -87,6 +88,32 @@ build: generate
 	@build/Build/Products/Release/Tippi.app/Contents/MacOS/whisper-cli --help >/dev/null 2>&1; \
 		test $$? -ne 137 || { echo "✗ whisper-cli killed on launch (SIGKILL) — dictation would fail silently"; exit 1; }
 	@echo "✓ whisper-cli bundled, signed and able to start"
+
+test: generate
+# Warum hier aufgeraeumt wird und nicht im tearDown der Tests (gemessen 2026-09-20):
+#
+# `ThrowawayDefaults.removeAll()` entfernt die Suite nachweislich — ein eigener
+# Messpunkt (`ThrowawayDefaultsTests`) prueft im selben Prozess, dass die Plist
+# danach weg ist, und das besteht. Trotzdem lagen nach jedem vollen Lauf exakt so
+# viele Dateien in ~/Library/Preferences wie Suiten erzeugt wurden: `cfprefsd`
+# haelt die Domains im Cache und schreibt sie nach Prozessende zurueck. Gegen
+# einen Daemon, der nach dem Ende des Testprozesses handelt, kann im Testprozess
+# nichts gewinnen — der Schritt gehoert dahinter.
+#
+# Ohne das waren 671 Domains aufgelaufen und `defaults domains` als
+# Diagnosewerkzeug unbrauchbar (bei der Notizen-Fehlersuche am 20.09. kam die
+# echte App-Domain nach 600 Zeilen Testrauschen).
+	xcodebuild test -project Tippi.xcodeproj -scheme Tippi -destination 'platform=macOS'
+	@$(MAKE) --no-print-directory purge-test-defaults
+
+purge-test-defaults:
+	@before=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+	find ~/Library/Preferences -maxdepth 1 -name 'TippiTests.*.plist' -delete 2>/dev/null || true; \
+	killall cfprefsd 2>/dev/null || true; \
+	sleep 1; \
+	after=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+	echo "✓ Test-Preference-Domains: $$before → $$after"; \
+	test "$$after" -eq 0 || { echo "✗ $$after Domain(s) ueberleben den Daemon-Neustart — von Hand nachsehen"; exit 1; }
 
 clean:
 	rm -rf Tippi.xcodeproj build/ DerivedData/ dist/

@@ -7,21 +7,24 @@ import XCTest
 @MainActor
 final class SyncedPreferencesTests: XCTestCase {
     private var defaults: UserDefaults!
-    private var suiteName: String!
     private let wordsKey = "dictation.customWords.v1"
     private let stampKey = "dictation.customWords.v1.syncedAt"
 
+    private let suites = ThrowawayDefaults()
+
     override func setUp() {
         super.setUp()
-        suiteName = "TippiTests.sync.\(UUID().uuidString)"
-        defaults = UserDefaults(suiteName: suiteName)!
+        defaults = suites.make(prefix: "TippiTests.sync")
         // The real store is a process-wide singleton shared with iCloud; tests
         // drive a stand-in that behaves the same for the parts under test.
         FakeKeyValueStore.shared.reset()
     }
 
     override func tearDown() {
-        defaults.removePersistentDomain(forName: suiteName)
+        // `removePersistentDomain` alone clears the values but leaves the suite
+        // registered and its plist on disk — that is why this file leaked 12
+        // domains per run despite having a tearDown (measured 2026-09-20).
+        suites.removeAll()
         super.tearDown()
     }
 

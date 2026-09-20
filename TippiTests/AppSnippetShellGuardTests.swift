@@ -24,13 +24,16 @@ final class AppSnippetShellGuardTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
     }
 
+    private let suites = ThrowawayDefaults()
+
     override func tearDownWithError() throws {
         try? FileManager.default.removeItem(at: tempDir)
+        suites.removeAll()
     }
 
     private func makeStore() -> SnippetStore {
         SnippetStore(appSupportRoot: tempDir,
-                     userDefaults: UserDefaults(suiteName: "TippiTests.\(UUID().uuidString)")!,
+                     userDefaults: suites.make(),
                      keychainService: "com.tippi.app.test.snippet-approval.\(UUID().uuidString)")
     }
 

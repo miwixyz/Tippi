@@ -21,6 +21,7 @@ final class SnippetStoreTests: XCTestCase {
     override func tearDownWithError() throws {
         try? FileManager.default.removeItem(at: tempDir)
         SnippetApprovalSigner.revokeAllApprovals(service: keychainService)
+        suites.removeAll()
     }
 
     /// Every store in this file is fully isolated from Michael's real
@@ -28,10 +29,10 @@ final class SnippetStoreTests: XCTestCase {
     /// (AppSnippets.json) and a throwaway UserDefaults suite (never
     /// `.standard`) for settings/approval-hash storage, and a throwaway
     /// Keychain service for shell-snippet approval signing.
+    private let suites = ThrowawayDefaults()
+
     private func makeStore() -> SnippetStore {
-        let suiteName = "TippiTests.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        return SnippetStore(appSupportRoot: tempDir, userDefaults: defaults, keychainService: keychainService)
+        SnippetStore(appSupportRoot: tempDir, userDefaults: suites.make(), keychainService: keychainService)
     }
 
     private func writeMatchFile(named name: String, shellCmd: String) throws -> URL {
@@ -134,7 +135,7 @@ final class SnippetStoreTests: XCTestCase {
         try FileManager.default.createDirectory(at: appSupportDir, withIntermediateDirectories: true)
         try legacyJSON.write(to: appSupportDir.appendingPathComponent("AppSnippets.json"), atomically: true, encoding: .utf8)
 
-        let reloaded = SnippetStore(appSupportRoot: tempDir, userDefaults: UserDefaults(suiteName: "TippiTests.\(UUID().uuidString)")!)
+        let reloaded = SnippetStore(appSupportRoot: tempDir, userDefaults: suites.make())
         XCTAssertEqual(reloaded.appSnippets.first?.trigger, ":old")
         XCTAssertEqual(reloaded.appSnippets.first?.vars, [])
     }
