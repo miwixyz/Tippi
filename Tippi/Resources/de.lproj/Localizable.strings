@@ -388,7 +388,7 @@
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.whatsNewTitle" = "Was ist neu";
-"settings.help.whatsNewBody" = "v2.11.4 — Kürzel funktionieren wieder im Notizfenster. Tippst du dort ein Kürzel, wird es jetzt ersetzt wie in jeder anderen App; Tippi hatte das überall unterdrückt, solange ein eigenes Fenster vorne war — gemeint war nur das Eingabefeld in den Einstellungen, in dem man ein Kürzel gerade anlegt. Und Notizen vom anderen Mac erscheinen, sobald du das Notizfenster anklickst. Übertragen wurden sie die ganze Zeit, die Liste hat es nur nicht bemerkt — sie las bisher ausschließlich beim Öffnen des Fensters.";
+"settings.help.whatsNewBody" = "v2.11.5 — Die Menüleiste nennt jetzt die Ursache, wenn etwas nicht geht, statt nur „Fehler\" zu zeigen. Direkt darunter steht der konkrete nächste Schritt; ein Klick öffnet die passende Stelle in den Einstellungen. Fällt etwas aus, meldet Tippi sich außerdem von selbst — einmal pro neuem Problem und ohne Ton. Die MLX-Meldung rät nicht mehr zur Verbindungsprüfung, wenn das Modell längst vollständig auf der Platte liegt. Und Notizen vom anderen Mac erscheinen von selbst, während das Fenster offen steht, ohne die Notiz zu überschreiben, an der du gerade schreibst.";
 "settings.help.howTitle" = "So funktioniert Tippi";
 "settings.help.howBody" = "Text in einer beliebigen App markieren, dann Hotkey drücken (Standard: ⌥⌘T). Ein Popup erscheint am Cursor — Prompt wählen, Vorschau prüfen, ersetzen oder kopieren.";
 "settings.help.instructTitle" = "Anweisung geben — tippen oder sprechen";

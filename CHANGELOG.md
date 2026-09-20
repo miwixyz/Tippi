@@ -1,5 +1,42 @@
 # Changelog
 
+## [2.11.5] — 2026-09-20
+
+Tippi sagt jetzt, was nicht geht und was du dagegen tun kannst — statt nur
+„Fehler". Dazu Notizen, die zwischen deinen Macs ankommen, ohne dass du etwas
+anklicken musst.
+
+### Fixed
+
+- **Die Menüleiste nennt die Ursache.** Stand dort bisher nur „Fehler", steht
+  jetzt zum Beispiel „Fehler — Lokaler Server läuft nicht". Direkt darunter eine
+  zweite Zeile mit dem konkreten nächsten Schritt; ein Klick darauf öffnet die
+  Stelle in den Einstellungen, an der es behoben wird. Solange alles läuft, ist
+  die Zeile nicht da.
+
+- **Tippi meldet sich, wenn etwas ausfällt.** Vorher musstest du zufällig in die
+  Einstellungen schauen, um von einem Problem zu erfahren. Jetzt kommt eine
+  Mitteilung — einmal pro neuem Problem, nicht wiederholt, und ohne Ton. Wenn du
+  Mitteilungen nicht erlaubst, steht weiterhin alles im Menü.
+
+- **Die MLX-Meldung zeigt nicht mehr auf die falsche Ursache.** Ein bereits
+  vollständig heruntergeladenes Modell meldete „Model download stalled — prüfe
+  die Verbindung", obwohl alle Dateien auf der Platte lagen und der Server in
+  einer Sekunde startete. Ein fertig geladenes Modell gibt eine einzige Zeile aus
+  und schweigt danach, während mehrere Gigabyte in den Speicher wandern — genau
+  dieses Schweigen wurde als Abbruch gedeutet. Tippi unterscheidet jetzt, ob
+  tatsächlich Daten geflossen sind, und rät nur dann zur Verbindungsprüfung.
+
+### Added
+
+- **Notizen vom anderen Mac erscheinen von selbst.** Bisher las Tippi den Ordner
+  nur beim Öffnen des Fensters, seit 2.11.4 zusätzlich beim Hineinklicken. Jetzt
+  kommen Änderungen an, während das Fenster offen steht. Die Notiz, an der du
+  gerade schreibst, wird dabei nie überschrieben — die Änderung wartet, und die
+  Fußzeile sagt dir, dass eine wartet. Gelöscht wird über diesen Weg nichts: eine
+  Datei, die iCloud gerade noch nicht geladen hat, sieht aus wie eine gelöschte,
+  und Notizen haben keinen Papierkorb.
+
 ## [2.11.4] — 2026-09-20
 
 Zwei Dinge im Notizfenster, die aussahen wie kaputt und es nicht waren.
