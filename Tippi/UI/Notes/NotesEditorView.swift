@@ -29,10 +29,22 @@ struct NotesEditorView: View {
             .onChange(of: text) { _, newValue in
                 scheduleSave(newValue)
             }
+            .onAppear {
+                // Tells the store to hold back external changes for this note
+                // while it is being typed in — the text lives in this view's
+                // own @State and autosaves 600 ms after the last keystroke, so
+                // replacing the model underneath would discard work that exists
+                // nowhere else yet. See NotesStore.noteBeingEdited.
+                store.noteBeingEdited = note.id
+            }
             .onDisappear {
                 saveTask?.cancel()
                 titleTask?.cancel()
                 flush()
+                // Only release the claim if it is still ours: switching notes
+                // can run the new view's onAppear before this onDisappear, and
+                // clearing unconditionally would unguard the note just opened.
+                if store.noteBeingEdited == note.id { store.noteBeingEdited = nil }
             }
 
             Divider()
@@ -64,6 +76,17 @@ struct NotesEditorView: View {
                 .foregroundStyle(.secondary)
                 .help(String(localized: "notes.export"))
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                // Without this the held-back change is invisible: the list shows
+                // a version the other Mac has already moved past, and nothing
+                // says so. Silently keeping the stale one is the failure mode
+                // this whole feature exists to remove.
+                if store.heldBackExternalEdit {
+                    Label(String(localized: "notes.externalChangeHeld"), systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .help(String(localized: "notes.externalChangeHeld"))
+                }
 
                 Spacer()
 

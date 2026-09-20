@@ -36,6 +36,21 @@ final class NotesStore: ObservableObject {
 
     @Published private(set) var notes: [Note] = []
     @Published private(set) var isUsingiCloud: Bool = false
+
+    /// The note currently open in the editor, or `nil`. Set by `NotesEditorView`.
+    ///
+    /// External changes for this id are **not** written into the list: the
+    /// editor holds the text in its own `@State` and autosaves 600 ms after the
+    /// last keystroke. Replacing the model underneath a half-typed sentence is
+    /// the one way this feature could destroy work that was never anywhere else.
+    var noteBeingEdited: UUID?
+
+    /// Set when a change for `noteBeingEdited` arrived and was held back, so the
+    /// UI can say so instead of silently keeping a stale version. Cleared on the
+    /// next `refresh()`.
+    @Published private(set) var heldBackExternalEdit: Bool = false
+
+    private var liveSync: NotesLiveSync?
     @Published var loadError: String?
 
     /// Resolved during `refresh()` and reused by `save`/`delete` for the rest
@@ -70,6 +85,8 @@ final class NotesStore: ObservableObject {
                 self.isUsingiCloud = usingiCloud
                 self.notes = loaded.sorted { $0.modifiedAt > $1.modifiedAt }
                 self.loadError = nil
+                self.heldBackExternalEdit = false
+                self.startLiveSync(in: directory, enabled: usingiCloud)
             }
         }
     }
@@ -120,6 +137,77 @@ final class NotesStore: ObservableObject {
                 notesLog.error("delete failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
             }
         }
+    }
+
+    // MARK: - Live sync
+
+    /// Only meaningful inside the ubiquity container — the local fallback
+    /// directory has no second writer, so watching it would cost work and
+    /// report nothing.
+    private func startLiveSync(in directory: URL, enabled: Bool) {
+        guard enabled else { liveSync?.stop(); liveSync = nil; return }
+        if liveSync == nil {
+            liveSync = NotesLiveSync { [weak self] urls in
+                self?.applyExternalChanges(at: urls)
+            }
+        }
+        liveSync?.start(watching: directory)
+    }
+
+    /// Folds externally changed files into the list. **Upsert only — this never
+    /// removes a note**, see `NotesLiveSync` for why absence is not deletion.
+    ///
+    /// Three guards, each for a case that actually happens:
+    /// - the note open in the editor is skipped (see `noteBeingEdited`)
+    /// - an older version is ignored, so a late-arriving file cannot undo a
+    ///   newer local edit; this is the same `modifiedAt` comparison
+    ///   `loadAllNotes` already uses for duplicate files
+    /// - a file that no longer parses as a note is skipped rather than dropping
+    ///   the in-memory note
+    func applyExternalChanges(at urls: [URL]) {
+        let incoming = urls.compactMap { Self.readNoteFile(at: $0) }
+        guard !incoming.isEmpty else { return }
+        let result = Self.merge(incoming, into: notes, skipping: noteBeingEdited)
+        notes = result.notes
+        if result.heldBack {
+            heldBackExternalEdit = true
+            notesLog.notice("external change held back: note is open in the editor")
+        }
+    }
+
+    /// The merge decision, pulled out of `applyExternalChanges` so it can be
+    /// tested without a store, a directory or iCloud. `NotesStore` is a
+    /// singleton over the real container — a test that drove it would read
+    /// Michael's actual notes, which is the kind of measurement that changes
+    /// the machine it runs on.
+    ///
+    /// Returns the new list and whether anything was withheld because it is
+    /// open in the editor.
+    nonisolated static func merge(
+        _ incoming: [Note],
+        into existing: [Note],
+        skipping editedID: UUID?
+    ) -> (notes: [Note], heldBack: Bool) {
+        var result = existing
+        var heldBack = false
+
+        for note in incoming {
+            if note.id == editedID {
+                heldBack = true
+                continue
+            }
+            if let index = result.firstIndex(where: { $0.id == note.id }) {
+                // An older version must never undo a newer local edit — same
+                // `modifiedAt` comparison `loadAllNotes` uses for duplicates.
+                guard note.modifiedAt > result[index].modifiedAt else { continue }
+                result[index] = note
+            } else {
+                result.append(note)
+            }
+        }
+
+        result.sort { $0.modifiedAt > $1.modifiedAt }
+        return (result, heldBack)
     }
 
     // MARK: - Persistence (off-main-actor helpers)

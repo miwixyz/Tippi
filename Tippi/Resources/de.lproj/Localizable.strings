@@ -616,6 +616,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "notes.unfavorite" = "Aus Favoriten entfernen";
 "notes.section.favorites" = "Favoriten";
 "notes.section.all" = "Alle Notizen";
+"notes.externalChangeHeld" = "Auf dem anderen Mac geändert — wird übernommen, sobald du diese Notiz verlässt";
 
 /* Secondary hot keys (translate/emoji/notes): these use Carbon RegisterEventHotKey,
    which needs no Input Monitoring — so they must not reuse the main trigger's

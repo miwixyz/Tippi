@@ -614,6 +614,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "notes.unfavorite" = "Remove from Favorites";
 "notes.section.favorites" = "Favorites";
 "notes.section.all" = "All Notes";
+"notes.externalChangeHeld" = "Changed on your other Mac — applied once you leave this note";
 
 /* Secondary hot keys (translate/emoji/notes): these use Carbon RegisterEventHotKey,
    which needs no Input Monitoring — so they must not reuse the main trigger's
