@@ -95,12 +95,33 @@ final class SelectionPopupMonitor: ObservableObject {
         isActive = false
     }
 
+    /// Pure gate, so the rule is testable without a running app or a window.
+    ///
+    /// The bar is suppressed inside Tippi's own UI — Settings, the snippet
+    /// editor, the bar itself — but the Notes editor is an ordinary content
+    /// surface and is explicitly let through.
+    nonisolated static func shouldConsiderSelection(appIsActive: Bool, notesEditorHasFocus: Bool) -> Bool {
+        !appIsActive || notesEditorHasFocus
+    }
+
     private func scheduleCheck() {
         // Never trigger while interacting with Tippi's own UI (Settings, the
-        // snippet editor, this bar itself) — same guard the snippet
-        // keystroke engine uses for the same reason.
-        guard !NSApp.isActive else {
-            selectionPopupLog.debug("scheduleCheck: skipped, Tippi itself is active")
+        // snippet editor, this bar itself) — EXCEPT the Notes editor, which is
+        // an ordinary content surface where the bar is wanted.
+        //
+        // `checkSelection()` already knows that and bypasses the app-level
+        // guard for the focused Notes text view. It never got the chance: this
+        // earlier guard returned first, so the exception below it was dead code
+        // and selecting text in Notes produced nothing (reported 2026-09-20).
+        //
+        // Third instance of the same shape in one day — a guard on an earlier
+        // layer silently defeating the special case on a later one. The snippet
+        // engine had it (fixed in 2.11.4), and so did this. When a feature is
+        // excluded "because Tippi is frontmost", check whether the exclusion is
+        // really about the app or about one particular window.
+        guard Self.shouldConsiderSelection(appIsActive: NSApp.isActive,
+                                           notesEditorHasFocus: AppDelegate.focusedNotesTextView() != nil) else {
+            selectionPopupLog.debug("scheduleCheck: skipped, Tippi UI other than Notes is active")
             return
         }
 
