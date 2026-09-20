@@ -117,6 +117,40 @@ enum LLMError: LocalizedError {
     }
 }
 
+// MARK: - Per-task temperature
+
+/// A temperature hint for one call, layered on top of each provider's own
+/// per-model default.
+///
+/// Why this exists (2026-09-20): every Tippi call went out at 0.3, including
+/// the dictation cleanup. 0.3 is a creative-writing default for a task whose
+/// whole job is to change as little as possible — Michael had independently
+/// pinned 0.1 in an Ollama Modelfile for exactly this, and he was right.
+///
+/// Deliberately **additive**: the existing three-argument `complete` stays the
+/// protocol requirement, so no provider is forced to care. A provider that
+/// cannot honour the hint keeps working by ignoring it, which is the honest
+/// behaviour — better than pretending every backend exposes the knob.
+///
+/// The hint never overrides a `nil`. `temperature(for:)` returning nil means
+/// *this model rejects the field* (OpenAI's reasoning family), not "no opinion";
+/// forcing a value there would turn a tuned call into a failed one.
+enum TaskTemperature {
+    /// Dictation cleanup: reproduce the input with punctuation and fillers
+    /// fixed. Deviation is the failure mode, so sample as flatly as the
+    /// provider allows.
+    static let transcriptCleanup: Double = 0.1
+}
+
+extension LLMProvider {
+    /// Default: the hint is ignored. Providers that can pass a temperature
+    /// through override this.
+    func complete(systemPrompt: String, userText: String, model: String,
+                  temperature _: Double?) async throws -> String {
+        try await complete(systemPrompt: systemPrompt, userText: userText, model: model)
+    }
+}
+
 // MARK: - OpenAI-compatible provider protocol
 
 /// A provider that speaks the OpenAI `/chat/completions` schema. Conforming
@@ -171,6 +205,11 @@ extension OpenAICompatibleProvider {
     }
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
+        try await complete(systemPrompt: systemPrompt, userText: userText, model: model, temperature: nil)
+    }
+
+    func complete(systemPrompt: String, userText: String, model: String,
+                  temperature hint: Double?) async throws -> String {
         let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
         let modelName = model.isEmpty ? defaultModel : model
         return try await openAIChatComplete(
@@ -179,8 +218,15 @@ extension OpenAICompatibleProvider {
             model: modelName,
             systemPrompt: systemPrompt,
             userText: userText,
-            temperature: temperature(for: modelName)
+            temperature: Self.effectiveTemperature(providerDefault: temperature(for: modelName), hint: hint)
         )
+    }
+
+    /// A `nil` provider default means the model rejects the field entirely —
+    /// the hint must not resurrect it. Otherwise the hint wins.
+    static func effectiveTemperature(providerDefault: Double?, hint: Double?) -> Double? {
+        guard providerDefault != nil else { return nil }
+        return hint ?? providerDefault
     }
 
     func completeStream(systemPrompt: String, userText: String, model: String) -> AsyncThrowingStream<String, Error> {

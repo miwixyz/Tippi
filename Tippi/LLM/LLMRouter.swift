@@ -83,7 +83,8 @@ struct LLMRouter {
     /// Try the preferred provider first. If it needs an API key and none is set,
     /// fall through to the next configured provider. Throws `.noProviderConfigured`
     /// if nothing usable is available.
-    func complete(systemPrompt: String, userText: String) async throws -> CompletionResult {
+    func complete(systemPrompt: String, userText: String,
+                  temperature: Double? = nil) async throws -> CompletionResult {
         await MainActor.run { AIActivityMonitor.shared.begin() }
         defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
         let preferred = await MainActor.run { effectivePreferredProviderID() }
@@ -110,7 +111,8 @@ struct LLMRouter {
                 let text = try await provider.complete(
                     systemPrompt: systemPrompt,
                     userText: userText,
-                    model: modelName
+                    model: modelName,
+                    temperature: temperature
                 )
                 return CompletionResult(
                     text: text,
@@ -237,18 +239,19 @@ struct LLMRouter {
         systemPrompt: String,
         userText: String,
         forceProviderID: String,
-        forceModel: String
+        forceModel: String,
+        temperature: Double? = nil
     ) async throws -> CompletionResult {
         await MainActor.run { AIActivityMonitor.shared.begin() }
         defer { Task { await MainActor.run { AIActivityMonitor.shared.end() } } }
         guard !forceProviderID.isEmpty,
               let provider = Self.allProviders.first(where: { $0.id == forceProviderID }) else {
-            return try await complete(systemPrompt: systemPrompt, userText: userText)
+            return try await complete(systemPrompt: systemPrompt, userText: userText, temperature: temperature)
         }
         if provider.requiresAPIKey {
             let hasKey = await MainActor.run { hasAPIKey(for: provider.id) }
             guard hasKey else {
-                return try await complete(systemPrompt: systemPrompt, userText: userText)
+                return try await complete(systemPrompt: systemPrompt, userText: userText, temperature: temperature)
             }
         }
         let modelName = forceModel.isEmpty ? provider.defaultModel : forceModel
@@ -256,7 +259,8 @@ struct LLMRouter {
         let text = try await provider.complete(
             systemPrompt: systemPrompt,
             userText: userText,
-            model: modelName
+            model: modelName,
+            temperature: temperature
         )
         return CompletionResult(
             text: text,

@@ -9,6 +9,11 @@ struct OllamaProvider: LLMProvider {
     private let endpoint = URL(string: "http://localhost:11434/api/chat")!
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
+        try await complete(systemPrompt: systemPrompt, userText: userText, model: model, temperature: nil)
+    }
+
+    func complete(systemPrompt: String, userText: String, model: String,
+                  temperature hint: Double?) async throws -> String {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         // Non-streaming request: no bytes arrive until the full response is
@@ -18,10 +23,16 @@ struct OllamaProvider: LLMProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         struct Message: Encodable { let role: String; let content: String }
+        // Ollama takes sampling parameters under `options`, not at the top
+        // level like the OpenAI schema. Omitted entirely when there is no hint,
+        // so the model's own Modelfile default keeps applying — overriding it
+        // with a guess would silently undo a user's tuning.
+        struct Options: Encodable { let temperature: Double }
         struct Body: Encodable {
             let model: String
             let messages: [Message]
             let stream: Bool
+            let options: Options?
         }
         let body = Body(
             model: model.isEmpty ? defaultModel : model,
@@ -29,7 +40,8 @@ struct OllamaProvider: LLMProvider {
                 Message(role: "system", content: systemPrompt),
                 Message(role: "user", content: userText)
             ],
-            stream: false
+            stream: false,
+            options: hint.map(Options.init(temperature:))
         )
         request.httpBody = try JSONEncoder().encode(body)
 

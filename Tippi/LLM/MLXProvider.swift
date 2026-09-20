@@ -7,6 +7,11 @@ struct MLXProvider: LLMProvider {
     let requiresAPIKey = false
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
+        try await complete(systemPrompt: systemPrompt, userText: userText, model: model, temperature: nil)
+    }
+
+    func complete(systemPrompt: String, userText: String, model: String,
+                  temperature hint: Double?) async throws -> String {
         // Ensure server is running (starts it if needed)
         let port = try await MLXServerManager.shared.start()
         let url  = URL(string: "http://localhost:\(port)/v1/chat/completions")!
@@ -68,7 +73,7 @@ struct MLXProvider: LLMProvider {
             ],
             stream: false,
             max_tokens: maxTokens(for: userText),
-            temperature: 0.3,
+            temperature: hint ?? 0.3,
             chat_template_kwargs: ChatTemplateKwargs(enable_thinking: false)
         )
         request.httpBody = try JSONEncoder().encode(body)

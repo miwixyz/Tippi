@@ -482,12 +482,18 @@ final class DictationController: ObservableObject {
                             systemPrompt: prompt,
                             userText: trimmed,
                             forceProviderID: providerOverride,
-                            forceModel: modelOverride
+                            forceModel: modelOverride,
+                            temperature: TaskTemperature.transcriptCleanup
                         )
                     } else {
+                        // Cleanup is the one task where deviation IS the
+                        // failure — reproduce the input, fix punctuation and
+                        // fillers, change nothing else. 0.3 is a
+                        // creative-writing default and was wrong here.
                         return try await LLMRouter.shared.complete(
                             systemPrompt: prompt,
-                            userText: trimmed
+                            userText: trimmed,
+                            temperature: TaskTemperature.transcriptCleanup
                         )
                     }
                 }
