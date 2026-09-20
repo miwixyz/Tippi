@@ -136,6 +136,29 @@ final class MLXServerManager: ObservableObject {
             return port
         }
 
+        // Nothing answered. Before spawning, find out whether the port is even
+        // free — a second server cannot bind, and that failure used to surface
+        // as a startup timeout that blamed the download.
+        if let found = Self.listener(on: port) {
+            switch Self.occupantVerdict(listenerPID: found.pid, listenerCommand: found.command) {
+            case .staleMLXServer:
+                guard Self.clearStaleServer(on: port) else {
+                    let msg = String(format: String(localized: "mlx.error.stuckPort"), port)
+                    state = .failed(msg)
+                    throw MLXError.launchFailed(msg)
+                }
+            case .foreignProcess(let pid, let command):
+                // Never killed: it is not ours, and it might be doing something
+                // the user wants. Naming it is the help.
+                let name = command.split(separator: " ").first.map(String.init) ?? "unknown"
+                let msg = String(format: String(localized: "mlx.error.foreignPort"), port, name, pid)
+                state = .failed(msg)
+                throw MLXError.launchFailed(msg)
+            case .free:
+                break
+            }
+        }
+
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: binary.path)
         proc.arguments     = binary.arguments + [
@@ -370,6 +393,97 @@ final class MLXServerManager: ObservableObject {
     // MARK: - Health polling
 
     /// Query /v1/models to get the exact model ID the server registered.
+    // MARK: - A port that is occupied but silent
+
+    /// What is sitting on the configured port, when it does not answer.
+    enum PortOccupant: Equatable {
+        /// Nothing is listening — free to start.
+        case free
+        /// A stale `mlx_lm.server`, almost always one Tippi started and then
+        /// lost (a crash skips `applicationWillTerminate`). Safe to terminate:
+        /// it answers nothing, so it serves nobody.
+        case staleMLXServer(pid: Int32)
+        /// Something else holds the port. Never killed — naming it is the help.
+        case foreignProcess(pid: Int32, command: String)
+    }
+
+    /// Decides what to do with a listener that does not answer `/v1/models`.
+    ///
+    /// Pure, so the decision is testable without opening a socket or spawning
+    /// anything. `listenerCommand` is the full command line of whatever holds
+    /// the port, or `nil` when nothing does.
+    ///
+    /// Why this exists (2026-09-20, measured on Michael's Mac): an orphaned
+    /// server from an earlier Tippi crash held port 8080 for 27 minutes.
+    /// `PPID 1`, 0 % CPU, 22 MB resident — the model never loaded. It accepted
+    /// connections and closed them empty, because `mlx_lm.server` logs every
+    /// request to stderr and that pipe pointed at the dead parent: the write
+    /// failed, the handler died, the reply never came.
+    ///
+    /// The existing reuse path only handled a listener that *answers*. A silent
+    /// one fell through to spawning a second server, which then could not bind,
+    /// which surfaced as a startup timeout blaming the download. Every attempt
+    /// failed the same way regardless of model — reported as "Fehler kommt bei
+    /// allen MLX Modellen", and the port was the reason.
+    nonisolated static func occupantVerdict(listenerPID: Int32?, listenerCommand: String?) -> PortOccupant {
+        guard let pid = listenerPID, let command = listenerCommand else { return .free }
+        // Match the server itself and the uv/uvx wrapper Tippi launches it through.
+        if command.contains("mlx_lm.server") || command.contains("mlx-lm") {
+            return .staleMLXServer(pid: pid)
+        }
+        return .foreignProcess(pid: pid, command: command)
+    }
+
+    /// Who is listening on `port`, via `lsof`. `nil` when the port is free or
+    /// `lsof` is unavailable — the caller then behaves as before.
+    nonisolated static func listener(on port: Int) -> (pid: Int32, command: String)? {
+        let lsof = Process()
+        lsof.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        lsof.arguments = ["-nP", "-iTCP:\(port)", "-sTCP:LISTEN", "-t"]
+        let pipe = Pipe()
+        lsof.standardOutput = pipe
+        lsof.standardError = FileHandle.nullDevice
+        do { try lsof.run() } catch { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        lsof.waitUntilExit()
+        guard let first = String(decoding: data, as: UTF8.self)
+                .split(whereSeparator: \.isNewline).first,
+              let pid = Int32(first.trimmingCharacters(in: .whitespaces))
+        else { return nil }
+
+        let ps = Process()
+        ps.executableURL = URL(fileURLWithPath: "/bin/ps")
+        ps.arguments = ["-o", "command=", "-p", "\(pid)"]
+        let psPipe = Pipe()
+        ps.standardOutput = psPipe
+        ps.standardError = FileHandle.nullDevice
+        do { try ps.run() } catch { return (pid, "") }
+        let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
+        ps.waitUntilExit()
+        let command = String(decoding: psData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        return (pid, command)
+    }
+
+    /// Clears a stale MLX server off `port`. Returns `true` when the port is
+    /// free afterwards — verified by looking again, not assumed from the kill
+    /// having been issued.
+    nonisolated static func clearStaleServer(on port: Int) -> Bool {
+        guard let found = listener(on: port) else { return true }
+        guard case .staleMLXServer(let pid) = occupantVerdict(listenerPID: found.pid,
+                                                              listenerCommand: found.command) else {
+            return false
+        }
+        NSLog("Tippi MLX: terminating stale server pid \(pid) holding port \(port)")
+        kill(pid, SIGTERM)
+        for _ in 0..<20 {   // up to 2 s
+            usleep(100_000)
+            if listener(on: port) == nil { return true }
+        }
+        kill(pid, SIGKILL)
+        usleep(300_000)
+        return listener(on: port) == nil
+    }
+
     /// When the server is started with a local cache path the ID differs from the
     /// HuggingFace repo string — using this value prevents 404 errors in completions.
     private func fetchActiveModelID(port: Int) async -> String? {
@@ -406,7 +520,7 @@ final class MLXServerManager: ObservableObject {
     /// fragment and appears even when every file is already local.
     nonisolated static func failureMessage(lastProgress: String?) -> String {
         guard let progress = lastProgress else {
-            return "Server did not become ready in time. Start it again; if that keeps happening, check the model in Settings."
+            return String(localized: "mlx.error.noAnswer")
         }
         // A transferred/total fragment means bytes were genuinely moving.
         // A unit letter is required on BOTH sides. Without that, `(0/8)` from
@@ -415,12 +529,12 @@ final class MLXServerManager: ObservableObject {
         let movedBytes = progress.range(of: #"\d+(\.\d+)?\s*[KMGT]B?\s*/\s*\d+(\.\d+)?\s*[KMGT]B?"#,
                                         options: .regularExpression) != nil
         if movedBytes {
-            return "Model download stalled at \(progress). Check the connection and start again — finished parts are cached and will not be re-downloaded."
+            return String(format: String(localized: "mlx.error.stalled"), progress)
         }
         // No bytes moved: either the files are already local and the weights
         // were still loading, or the server never got that far. Both are fixed
         // by starting again, and neither is a connection problem.
-        return "Server did not answer in time while preparing the model (last step: \(progress)). The download is not necessarily the problem — already downloaded parts are cached. Start it again; loading several GB can exceed the wait on first use."
+        return String(format: String(localized: "mlx.error.noProgress"), progress)
     }
 
     /// Waits for the server to answer `/v1/models`.

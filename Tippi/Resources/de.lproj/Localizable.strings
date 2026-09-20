@@ -2,6 +2,11 @@
 "status.ready" = "Bereit";
 "status.warming" = "Modell lädt…";
 "status.error" = "Fehler";
+"mlx.error.stalled" = "Download hängt bei %@. Verbindung prüfen und erneut starten — fertige Teile sind zwischengespeichert und werden nicht erneut geladen.";
+"mlx.error.noProgress" = "Server hat beim Vorbereiten des Modells nicht rechtzeitig geantwortet (letzter Schritt: %@). Der Download ist nicht zwingend das Problem — bereits geladene Teile sind zwischengespeichert. Erneut starten; das Laden mehrerer Gigabyte kann beim ersten Mal länger dauern als die Wartezeit.";
+"mlx.error.noAnswer" = "Server war nicht rechtzeitig bereit. Erneut starten; wenn das wiederholt passiert, das Modell in den Einstellungen prüfen.";
+"mlx.error.stuckPort" = "Ein früherer MLX-Server hängt auf Port %lld und ließ sich nicht beenden. Beende ihn von Hand oder ändere Tippis MLX-Port in den Einstellungen.";
+"mlx.error.foreignPort" = "Port %1$lld ist von einem anderen Programm belegt, das nicht antwortet (%2$@, PID %3$lld). Beende es oder ändere Tippis MLX-Port in den Einstellungen.";
 "status.error.mlxNotInstalled" = "Lokales Modell nicht installiert";
 "status.error.mlxNotInstalled.action" = "Einstellungen ▸ MLX (local) öffnen und die Einrichtung starten — oder oben einen Cloud-Anbieter wählen.";
 "status.error.mlxFailed" = "Lokaler Server fehlgeschlagen";
