@@ -191,10 +191,17 @@ else
     echo "  ⚠ scripts/docs-drift-check.sh missing — Markdown/HTML docs NOT verified."
 fi
 
-echo "  ⚠ Not auto-checkable — confirm by hand before continuing if this release"
-echo "    touches user-facing behavior: in-app Help sections beyond What's New"
-echo "    (e.g. feature-specific bodies), and CONTRIBUTING.md if the dev workflow"
-echo "    itself changed. (Doc *numbers* and versions are now gated automatically.)"
+# This used to be a polite line saying "confirm by hand". It printed on every
+# run, six releases shipped in one day on 2026-09-20, and it was acted on zero
+# times — the in-app Help ended up five versions behind. A warning that never
+# blocks is a warning nobody reads. It is a gate now.
+if [ -f scripts/docs-release-gate.sh ]; then
+    if ! bash scripts/docs-release-gate.sh; then
+        exit 1
+    fi
+else
+    echo "  ⚠ scripts/docs-release-gate.sh missing — doc/code drift NOT verified."
+fi
 echo ""
 
 # ─── PRE-FLIGHT: Git sync check ───────────────────────────────────────────────

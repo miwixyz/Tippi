@@ -60,6 +60,36 @@ brew install cmake
 make prepare-binary   # builds whisper-cli statically and places it in Tippi/Helpers/
 ```
 
+## Documentation is part of the release
+
+`make release` runs `scripts/docs-release-gate.sh` and **stops** if the docs did
+not move with the code. Compared against the previous tag:
+
+| If this changed | then this must have changed |
+|---|---|
+| a new `.swift` file was added | `ARCHITECTURE.md` lists it |
+| `Tippi/UI`, `Tippi/Core`, `Tippi/LLM` | some `settings.help.*Body` other than What's New, in **both** languages |
+| `Makefile` or `scripts/` | `CONTRIBUTING.md` |
+| `Tippi/UI` or `Tippi/Core` | `README.md` **and** `docs/index.html` |
+
+The gate cannot judge whether the prose is any good — no script can. It checks
+the one thing that is checkable: whether the documentation moved at all.
+
+Skipping is allowed, but only out loud:
+
+```bash
+RELEASE_DOC_WAIVER="refactor only, no user-visible change" make release
+```
+
+The reason is printed into the release output, so a skipped gate leaves a trace
+instead of a silence.
+
+**Why it is a gate and not a reminder:** release.sh used to print a polite
+"confirm by hand" line on every run. On 2026-09-20 six releases shipped, the
+line printed six times, and nothing was confirmed — the in-app Help fell five
+versions behind. Run against those releases afterwards, this gate blocks all
+three of the ones that needed it and names each gap.
+
 ## Building a signed release
 
 A Developer ID–signed and Apple-notarized DMG is required for stable distribution.
