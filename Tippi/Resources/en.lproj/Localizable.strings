@@ -382,7 +382,7 @@
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
 "settings.help.whatsNewTitle" = "What's New";
-"settings.help.whatsNewBody" = "v2.11.3 — Tippi no longer crashes when you delete text in the Notes window while the AI is working. Tippi remembers which passage to replace when you trigger it; shorten the text while the answer is still coming in and that position pointed past the end. The replacement is now skipped instead of ending the app. The emoji suggestion list looks like the rest of the app again rather than a flat light slab — the fix for that already existed, it had just landed in only one of two identical copies. And the menu-bar activity indicator lights up again while an answer is being written.";
+"settings.help.whatsNewBody" = "v2.11.4 — Snippets expand in the Notes window again. Typing a trigger there now replaces it the same as in any other app; Tippi used to suppress expansion everywhere while one of its own windows was frontmost, when only the snippet editor in Settings was meant — that is where a trigger is being defined and must not expand itself. And notes written on your other Mac appear as soon as you click the Notes window. They were syncing the whole time; the list simply never re-read them, because it only loaded when the window opened.";
 "settings.help.howTitle" = "How Tippi works";
 "settings.help.howBody" = "Select text in any app, then press your hotkey (default ⌥⌘T). A popup appears near your cursor — pick a prompt, preview the result, and replace or copy.";
 "settings.help.instructTitle" = "Give an instruction — type or speak";

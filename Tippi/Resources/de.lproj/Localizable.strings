@@ -383,7 +383,7 @@
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.whatsNewTitle" = "Was ist neu";
-"settings.help.whatsNewBody" = "v2.11.3 — Tippi stürzt nicht mehr ab, wenn du im Notizfenster löschst, während die KI arbeitet. Tippi merkt sich beim Auslösen, welche Stelle ersetzt werden soll; verkürzt du den Text, während die Antwort noch läuft, zeigte diese Stelle ins Leere. Die Ersetzung wird jetzt ausgelassen, statt die App zu beenden. Die Emoji-Vorschlagsliste sieht wieder aus wie der Rest der App statt wie eine flache helle Fläche — der Fix dafür gab es schon, er war nur in einer von zwei baugleichen Kopien gelandet. Und die Aktivitätsanzeige in der Menüleiste leuchtet wieder, während eine Antwort entsteht.";
+"settings.help.whatsNewBody" = "v2.11.4 — Kürzel funktionieren wieder im Notizfenster. Tippst du dort ein Kürzel, wird es jetzt ersetzt wie in jeder anderen App; Tippi hatte das überall unterdrückt, solange ein eigenes Fenster vorne war — gemeint war nur das Eingabefeld in den Einstellungen, in dem man ein Kürzel gerade anlegt. Und Notizen vom anderen Mac erscheinen, sobald du das Notizfenster anklickst. Übertragen wurden sie die ganze Zeit, die Liste hat es nur nicht bemerkt — sie las bisher ausschließlich beim Öffnen des Fensters.";
 "settings.help.howTitle" = "So funktioniert Tippi";
 "settings.help.howBody" = "Text in einer beliebigen App markieren, dann Hotkey drücken (Standard: ⌥⌘T). Ein Popup erscheint am Cursor — Prompt wählen, Vorschau prüfen, ersetzen oder kopieren.";
 "settings.help.instructTitle" = "Anweisung geben — tippen oder sprechen";

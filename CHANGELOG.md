@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.11.4] — 2026-09-20
+
+Zwei Dinge im Notizfenster, die aussahen wie kaputt und es nicht waren.
+
+### Fixed
+
+- **Kürzel funktionieren wieder im Notizfenster.** Tippst du dort `:kürzel`,
+  wird es jetzt ersetzt wie in jeder anderen App. Tippi hatte die Ersetzung
+  überall unterdrückt, solange ein eigenes Fenster vorne war — gedacht war das
+  nur für das Eingabefeld in den Einstellungen, in dem man ein Kürzel gerade
+  *anlegt*. Dort bleibt es weiterhin aus, denn dort soll es sich nicht selbst
+  ersetzen.
+
+- **Notizen vom anderen Mac erscheinen, sobald du das Fenster anklickst.**
+  Die Notizen wurden die ganze Zeit korrekt über iCloud übertragen — die Liste
+  hat es nur nicht bemerkt. Sie las bisher ausschließlich beim Öffnen des
+  Fensters von der Platte. Stand das Fenster offen, während der andere Mac
+  schrieb, blieb die neue Notiz unsichtbar. Jetzt wird beim Wechsel zum
+  Notizfenster und beim Wechsel zu Tippi neu gelesen. Auch das Schließen und
+  Wiederöffnen zeigt jetzt den aktuellen Stand — vorher blieb dabei die erste
+  geladene Liste stehen.
+
 ## [2.11.3] — 2026-09-19
 
 Drei Stellen, die dasselbe taten, sind jetzt eine. Dabei kam ein Absturz zum
