@@ -22,6 +22,14 @@ final class NotesWindowController {
     private let minSize = NSSize(width: 480, height: 320)
     private let defaultSize = NSSize(width: 680, height: 440)
 
+    /// Kept so the observers die with the controller instead of firing into a
+    /// released object.
+    private var focusObservers: [NSObjectProtocol] = []
+
+    deinit {
+        for o in focusObservers { NotificationCenter.default.removeObserver(o) }
+    }
+
     var isOpen: Bool { windowController?.window?.isVisible ?? false }
 
     /// Brings the Notes window to front, creating it on first call. Always
@@ -46,6 +54,11 @@ final class NotesWindowController {
             windowController = makeWindowController()
         }
         windowController?.window?.makeKeyAndOrderFront(nil)
+        // Explicit, because `NotesRootView.onAppear` fires once per view
+        // lifetime and the window is `isReleasedWhenClosed = false` — reopening
+        // it reuses the same view, so onAppear does NOT run again and the list
+        // would show whatever was loaded the first time.
+        NotesStore.shared.refresh()
     }
 
     private func makeWindowController() -> NSWindowController {
@@ -74,6 +87,7 @@ final class NotesWindowController {
         window.identifier = Self.windowIdentifier
         window.delegate = FrameSaveDelegate.shared
         applyPinnedState(to: window)
+        installFocusObservers(for: window)
 
         if let savedFrame = NotesPreferences.windowFrame {
             window.setFrame(savedFrame, display: false)
@@ -83,6 +97,48 @@ final class NotesWindowController {
         }
 
         return NSWindowController(window: window)
+    }
+
+    /// Reloads the list whenever this window regains focus, and whenever Tippi
+    /// becomes the active app.
+    ///
+    /// `NotesStore` deliberately has no live `NSMetadataQuery` (see the sync
+    /// model documented there): it reads from disk on `refresh()` and nowhere
+    /// else. With refresh bound only to the window *opening*, a note written on
+    /// the other Mac landed in the iCloud container here and stayed invisible
+    /// while the window sat open — measured 2026-09-20, the files were present
+    /// and fully downloaded, only the list was stale. Reported as "Notizen
+    /// werden zwischen den Macs nicht synchronisiert"; the transport was never
+    /// the problem.
+    ///
+    /// Focus is the right trigger because it is exactly the moment a
+    /// two-Mac user arrives: switch machine, click the window, expect current
+    /// content. A live query is still the proper fix and stays on the backlog.
+    private func installFocusObservers(for window: NSWindow) {
+        let center = NotificationCenter.default
+        focusObservers.append(
+            center.addObserver(
+                forName: NSWindow.didBecomeKeyNotification,
+                object: window,
+                queue: .main
+            ) { _ in
+                MainActor.assumeIsolated { NotesStore.shared.refresh() }
+            }
+        )
+        focusObservers.append(
+            center.addObserver(
+                forName: NSApplication.didBecomeActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    // Only when Notes is actually on screen — otherwise every
+                    // app switch re-reads the directory for nothing.
+                    guard self?.isOpen == true else { return }
+                    NotesStore.shared.refresh()
+                }
+            }
+        )
     }
 
     /// Toggles "pinned": `.floating` window level + `.canJoinAllSpaces` keeps
