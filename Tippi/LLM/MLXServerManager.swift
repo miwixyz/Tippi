@@ -228,9 +228,7 @@ final class MLXServerManager: ObservableObject {
             // to boot need different reactions from the user, and the old
             // single message ("did not become ready") sent everyone looking at
             // the server.
-            let msg = downloadStatus.map {
-                "Model download stalled at \($0). Check the connection and start again — finished parts are cached and will not be re-downloaded."
-            } ?? "Server did not become ready in time."
+            let msg = Self.failureMessage(lastProgress: downloadStatus)
             downloadStatus = nil
             lastProgressAt = nil
             state = .failed(msg)
@@ -388,6 +386,41 @@ final class MLXServerManager: ObservableObject {
             return configured
         }
         return response.data.first?.id
+    }
+
+    /// Turns the last progress line into a message that points at the right
+    /// thing — and, crucially, does not point at the wrong one.
+    ///
+    /// Corrected 2026-09-20 after a real false alarm. A fully cached model
+    /// prints `Fetching 8 files: 0%` once and then nothing while several GB of
+    /// weights load, so the silence timeout fired and the message said
+    /// "Model download stalled — check the connection". Measured on that
+    /// machine at the time: all 8 files present, 3.3 GB cached, huggingface.co
+    /// answering in 0.18 s, and the server starting in **one second** when run
+    /// by hand. The connection was never the problem, and the advice sent the
+    /// user to look at it.
+    ///
+    /// The distinguishing signal is byte progress. `huggingface_hub` prints a
+    /// per-file bar with a transferred/total fragment (`1.80G/4.00G`) while
+    /// data actually moves; the `Fetching N files` preamble has no such
+    /// fragment and appears even when every file is already local.
+    nonisolated static func failureMessage(lastProgress: String?) -> String {
+        guard let progress = lastProgress else {
+            return "Server did not become ready in time. Start it again; if that keeps happening, check the model in Settings."
+        }
+        // A transferred/total fragment means bytes were genuinely moving.
+        // A unit letter is required on BOTH sides. Without that, `(0/8)` from
+        // the `Fetching 8 files` preamble reads as byte progress and the wrong
+        // message comes back — the exact failure this function exists to avoid.
+        let movedBytes = progress.range(of: #"\d+(\.\d+)?\s*[KMGT]B?\s*/\s*\d+(\.\d+)?\s*[KMGT]B?"#,
+                                        options: .regularExpression) != nil
+        if movedBytes {
+            return "Model download stalled at \(progress). Check the connection and start again — finished parts are cached and will not be re-downloaded."
+        }
+        // No bytes moved: either the files are already local and the weights
+        // were still loading, or the server never got that far. Both are fixed
+        // by starting again, and neither is a connection problem.
+        return "Server did not answer in time while preparing the model (last step: \(progress)). The download is not necessarily the problem — already downloaded parts are cached. Start it again; loading several GB can exceed the wait on first use."
     }
 
     /// Waits for the server to answer `/v1/models`.
