@@ -549,8 +549,36 @@ if [ -f "${APPCAST_TOOL}" ]; then
     "${APPCAST_TOOL}" "${DIST_DIR}" \
         --download-url-prefix "${GH_RELEASE_URL}/" \
         -o appcast.xml 2>/dev/null
-    gh gist edit 595ce79e698bb6a98008dc061f1f4a78 appcast.xml
-    echo "  ✓ appcast.xml generiert und Gist aktualisiert"
+    # Der Appcast liegt in einem Gist, und dafuer braucht das Token den
+    # 'gist'-Scope. Ein GITHUB_TOKEN aus der Umgebung ueberschreibt gh's
+    # Keyring-Anmeldung -- hat es den Scope nicht, antwortet GitHub mit
+    # 404 statt 403, und die Meldung sieht aus wie "Gist geloescht".
+    #
+    # Real am 2026-09-21: Beim Release 2.12.0 war ein GITHUB_TOKEN mit
+    # 'repo, workflow' exportiert, das Keyring-Token haette 'gist' gehabt.
+    # Der Release lief durch, der Appcast blieb auf 2.11.9 stehen -- Sparkle
+    # haette das neue Release NIEMANDEM angeboten, ohne dass etwas rot wurde.
+    GIST_ID="595ce79e698bb6a98008dc061f1f4a78"
+    if gh auth status 2>&1 | grep -q "'gist'"; then
+        gh gist edit "$GIST_ID" appcast.xml
+    else
+        echo "  ⚠ Aktives Token hat keinen 'gist'-Scope — versuche gh's Keyring-Anmeldung"
+        env -u GITHUB_TOKEN gh gist edit "$GIST_ID" appcast.xml
+    fi
+
+    # Nicht dem Exit-Code glauben, sondern nachsehen, was die URL liefert,
+    # die Tippi tatsaechlich abfragt.
+    sleep 2
+    LIVE=$(curl -s "https://gist.githubusercontent.com/miwixyz/${GIST_ID}/raw/appcast.xml" \
+           | grep -oE "<title>[0-9.]+</title>" | head -1 | tr -d '<title>/')
+    if [ "$LIVE" = "${VERSION}" ]; then
+        echo "  ✓ appcast.xml generiert, Gist aktualisiert und verifiziert (live: ${LIVE})"
+    else
+        echo "  ❌ Gist meldet weiterhin Version '${LIVE}', erwartet '${VERSION}'."
+        echo "     → Sparkle bietet ${VERSION} NIEMANDEM an, bis das behoben ist."
+        echo "     → ZU TUN: env -u GITHUB_TOKEN gh gist edit ${GIST_ID} appcast.xml"
+        exit 1
+    fi
 else
     echo "  ⚠ Sparkle tools nicht gefunden unter ${APPCAST_TOOL}"
     echo "    Setup: siehe docs/HANDOVER.md → Sparkle"
