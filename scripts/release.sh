@@ -566,13 +566,21 @@ if [ -f "${APPCAST_TOOL}" ]; then
         env -u GITHUB_TOKEN gh gist edit "$GIST_ID" appcast.xml
     fi
 
-    # Nicht dem Exit-Code glauben, sondern nachsehen, was die URL liefert,
-    # die Tippi tatsaechlich abfragt.
-    sleep 2
-    LIVE=$(curl -s "https://gist.githubusercontent.com/miwixyz/${GIST_ID}/raw/appcast.xml" \
-           | grep -oE "<title>[0-9.]+</title>" | head -1 | tr -d '<title>/')
+    # Nicht dem Exit-Code glauben, sondern nachsehen, was wirklich im Gist steht.
+    #
+    # Geprueft wird die API, NICHT die raw-URL: gist.githubusercontent.com
+    # liegt hinter einem CDN und liefert den alten Stand noch Minuten weiter.
+    # Die erste Fassung dieses Checks fragte die raw-URL nach zwei Sekunden und
+    # meldete deshalb einen Fehlschlag, obwohl der Upload gelaufen war —
+    # ein Fehlalarm, der einen korrekten Release als kaputt hinstellte.
+    # (2026-09-21, unmittelbar nachdem der Check gebaut wurde.)
+    LIVE=$(env -u GITHUB_TOKEN gh api "gists/${GIST_ID}" \
+             --jq '.files["appcast.xml"].content' 2>/dev/null \
+           | grep -oE "<title>[0-9.]+</title>" | head -1 \
+           | sed 's/<title>//; s|</title>||')
     if [ "$LIVE" = "${VERSION}" ]; then
-        echo "  ✓ appcast.xml generiert, Gist aktualisiert und verifiziert (live: ${LIVE})"
+        echo "  ✓ appcast.xml generiert, Gist aktualisiert und verifiziert (Gist: ${LIVE})"
+        echo "    Hinweis: Die raw-URL hinter dem CDN zieht ein paar Minuten nach." 
     else
         echo "  ❌ Gist meldet weiterhin Version '${LIVE}', erwartet '${VERSION}'."
         echo "     → Sparkle bietet ${VERSION} NIEMANDEM an, bis das behoben ist."
