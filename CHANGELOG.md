@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.12.1] — 2026-09-21
+
+### Fixed
+
+- **Bildschirm-OCR erfasste den falschen Bereich.** Das Auswahlrechteck kommt
+  aus AppKit (Ursprung unten links, Y wächst nach oben), `sourceRect` von
+  ScreenCaptureKit erwartet CoreGraphics (Ursprung oben links, Y wächst nach
+  unten). Ohne Umrechnung wurde ein vertikal gespiegelter Ausschnitt
+  aufgenommen — wer oben auswählte, bekam unten. Das meldete sich nicht als
+  Fehler, sondern als „In diesem Ausschnitt wurde kein Text gefunden", weil an
+  der gespiegelten Stelle meist nichts steht.
+
+- **Fehlende Berechtigung sah aus wie fehlender Text.** ScreenCaptureKit meldet
+  einen fehlenden Bildschirmaufnahme-Zugriff **nicht** als Fehler — es liefert
+  ein schwarzes Bild. Die Meldung war dadurch dieselbe wie bei einem leeren
+  Ausschnitt, und man suchte am falschen Ende. Ein einfarbiges Ergebnis wird
+  jetzt erkannt und führt zu einem Dialog mit dem Weg in die
+  Systemeinstellungen — inklusive des Hinweises, dass Tippi danach **neu
+  gestartet** werden muss, sonst bleibt der Zugriff schwarz.
+
+- **Messpunkt ergänzt:** Die Geometrie des Ausschnitts (Koordinaten, Größe,
+  Bildschirm) wird protokolliert. Beim ersten Fehlschlag gab es nichts zu
+  messen — nur die Vermutung. Inhalte werden weiterhin nie protokolliert.
+
 ## [2.12.0] — 2026-09-21
 
 ### Added
