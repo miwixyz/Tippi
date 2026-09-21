@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.12.2] — 2026-09-21
+
+### Added
+
+- **Zeilenumbrüche zusammenführen** (Einstellungen → Hotkeys, ab Werk an).
+  Die Texterkennung liefert jede *Bildschirmzeile* einzeln — das ist eine
+  Eigenschaft des Layouts, nicht des Textes. Beim Einfügen stand deshalb mitten
+  im Satz ein Umbruch.
+
+  Bewusst kein pauschales Löschen aller Umbrüche: Das macht aus einem Text eine
+  Wurst, in der Absätze verschwinden und Aufzählungen aneinanderkleben.
+  Unterschieden wird, **welcher Umbruch Layout ist und welcher Bedeutung trägt**:
+  Leerzeilen, Satzenden, Doppelpunkte, Aufzählungszeichen und nummerierte
+  Listen beginnen einen neuen Block; alles andere wird zu Fließtext verbunden.
+  Ein Trennstrich am Zeilenende wird zusammengezogen, ohne Leerzeichen
+  („Mo-\nnate" → „Monate"), und eine Abkürzung wie „z. B." erzeugt keinen
+  falschen Absatz.
+
+  Für Code oder Tabellen abschaltbar — dort trägt jede Zeile Bedeutung.
+
 ## [2.12.1] — 2026-09-21
 
 ### Fixed
