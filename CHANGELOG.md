@@ -1,5 +1,44 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Text aus einem Bildschirmausschnitt lesen.** Hotkey drücken, Rechteck
+  aufziehen, der erkannte Text liegt in der Zwischenablage. Die Erkennung läuft
+  lokal über Apples Vision-Framework (Deutsch und Englisch), die Aufnahme über
+  ScreenCaptureKit. Standard-Hotkey ⌥⌘2, belegbar.
+
+  **Ab Werk ausgeschaltet** — anders als Übersetzen, Emoji und Notizen. Die
+  Funktion verlangt die Berechtigung „Bildschirmaufnahme", und die ist eine
+  Dauervollmacht: einmal erteilt, kann Tippi jederzeit den gesamten Bildschirm
+  lesen. Zusammen mit dem vorhandenen Bedienungshilfen-Zugriff ergäbe das
+  „sieht alles und schreibt überall". Wer die Funktion nicht braucht, soll die
+  Vollmacht nie erteilen müssen. Abgefragt wird sie erst beim ersten Auslösen.
+
+  **Das Bild berührt nie die Platte.** Deshalb ScreenCaptureKit statt
+  `screencapture -i`: Letzteres schreibt eine PNG-Datei, die bei einem Absturz
+  zwischen Aufnahme und Löschen liegen bliebe. Kein Verlauf, kein Cache.
+  Protokolliert werden nur Vorgang und Zeichenzahl — **nie der erkannte Text**,
+  auch nicht in Fehlermeldungen.
+
+  **Universal Clipboard wird unterdrückt** (`prepareForNewContents(with: .currentHostOnly)`).
+  Ohne das synchronisiert macOS die Zwischenablage über Handoff auf iPhone und
+  iPad — ein erfasstes Passwort verließe damit das Gerät, obwohl an dieser
+  Funktion keine Zeile Netzwerkcode steht. Bewusst ohne Schalter: Eine
+  Einstellung, die das aufhebt, macht die Zusage unzuverlässig.
+
+  Optional lässt sich der Text zusätzlich vor Zwischenablage-Verläufen
+  (Raycast, Alfred, Paste) verbergen — ab Werk aus, damit er im Alltag
+  auffindbar bleibt.
+
+  Drei unabhängige Abbruchwege für das Auswahl-Overlay: ESC, Rechtsklick und
+  eine harte Zeitgrenze von 60 Sekunden. Ein unsichtbares Fenster über dem
+  ganzen Bildschirm darf bei einer Autostart-App nicht hängen bleiben.
+
+  Entworfen mit `rafter-secure-design` vor der ersten Zeile Code; die
+  Abwägungen stehen in `docs/SECURE-DESIGN-screen-ocr.md`.
+
 ## [2.11.9] — 2026-09-20
 
 Nur Dokumentation — die eingebaute Hilfe hinkte den letzten fünf Versionen

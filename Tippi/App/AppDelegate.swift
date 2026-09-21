@@ -70,6 +70,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// in Settings → Hotkeys, same shape as translate/emoji (see
     /// `NotesSettings`, `restartNotesHotkey`).
     let notesHotkeyManager = HotkeyManager(id: 5)
+    /// Sechster Carbon-Hotkey (id 6): Text aus einem Bildschirmausschnitt lesen.
+    /// Ab Werk AUS — die Funktion verlangt die Berechtigung „Bildschirmaufnahme",
+    /// und die ist eine Dauervollmacht. Siehe `ScreenOCRSettings` und
+    /// `docs/SECURE-DESIGN-screen-ocr.md`.
+    let screenOCRHotkeyManager = HotkeyManager(id: 6)
+    private let screenSelectionOverlay = ScreenSelectionOverlay()
+    /// Verhindert, dass ein zweiter Hotkey-Druck ein zweites Overlay öffnet.
+    private var screenOCRInProgress = false
     /// Passive `:prefix` suggestion list. Never takes keyboard focus — see
     /// `EmojiSuggestionPanel`.
     private let emojiSuggestionPanel = EmojiSuggestionPanel()
@@ -194,6 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         restartTranslateHotkey()
         restartEmojiHotkey()
         restartNotesHotkey()
+        restartScreenOCRHotkey()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -860,6 +869,94 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// (Re)registers the Notes window hot key. Call after the setting
     /// changes. Same shape as restartTranslateHotkey/restartEmojiHotkey —
     /// no readiness gate, just the enabled toggle + remappable combo.
+    func restartScreenOCRHotkey() {
+        screenOCRHotkeyManager.stop()
+        guard ScreenOCRSettings.isEnabled else {
+            NSLog("Tippi: screen OCR hot key inactive (disabled in settings)")
+            return
+        }
+
+        let combo = ScreenOCRSettings.combo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+
+        screenOCRHotkeyManager.update(
+            trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
+        )
+        screenOCRHotkeyManager.start { [weak self] in
+            Task { @MainActor in self?.beginScreenOCR() }
+        }
+        NSLog("Tippi: screen OCR hot key registered (\(combo.displayString))")
+    }
+
+    /// Auswahl aufziehen, Text erkennen, in die Zwischenablage legen.
+    ///
+    /// Protokolliert wird ausschliesslich der Vorgang — nie der erkannte Text.
+    /// Ein Bildschirmausschnitt kann alles enthalten, von einem Passwort bis zu
+    /// Patientendaten; siehe `docs/SECURE-DESIGN-screen-ocr.md`.
+    @MainActor
+    func beginScreenOCR() {
+        guard !screenOCRInProgress else { return }
+        screenOCRInProgress = true
+
+        screenSelectionOverlay.begin { [weak self] rect in
+            guard let self else { return }
+            guard let rect else {
+                // Abbruch ist ein normaler Ausgang, keine Fehlermeldung wert.
+                self.screenOCRInProgress = false
+                return
+            }
+            Task { @MainActor in
+                defer { self.screenOCRInProgress = false }
+                do {
+                    let text = try await ScreenTextCapture.text(in: rect)
+                    ScreenTextCapture.copyToPasteboard(
+                        text,
+                        concealed: ScreenOCRSettings.concealFromClipboardHistory
+                    )
+                    ToastWindowController.shared.show(
+                        message: "Text kopiert — \(text.count) Zeichen"
+                    )
+                } catch let failure as ScreenTextCapture.Failure {
+                    // Fehlende Berechtigung braucht einen Dialog mit
+                    // Handlungsanweisung -- eine Toast-Blase waere weg, bevor
+                    // man den Weg in die Systemeinstellungen gelesen hat.
+                    if case .noPermission = failure {
+                        self.showScreenOCRPermissionAlert(failure.userMessage)
+                    } else {
+                        ToastWindowController.shared.show(message: failure.userMessage)
+                    }
+                } catch {
+                    ToastWindowController.shared.show(
+                        message: "Texterkennung fehlgeschlagen. Bitte erneut versuchen."
+                    )
+                }
+            }
+        }
+    }
+
+    /// Eigener Dialog statt Toast: Der Weg in die Systemeinstellungen muss
+    /// lesbar stehen bleiben, und ein Knopf dorthin spart das Suchen.
+    @MainActor
+    private func showScreenOCRPermissionAlert(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Tippi darf den Bildschirm nicht lesen"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Systemeinstellungen öffnen")
+        alert.addButton(withTitle: "Später")
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn {
+            let url = "x-apple.systempreferences:com.apple.preference.security"
+                    + "?Privacy_ScreenCapture"
+            if let u = URL(string: url) { NSWorkspace.shared.open(u) }
+        }
+    }
+
     func restartNotesHotkey() {
         notesHotkeyManager.stop()
         guard NotesSettings.isEnabled else {

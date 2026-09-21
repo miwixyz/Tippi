@@ -206,6 +206,7 @@ private struct HotkeysTab: View {
     @ObservedObject private var translateHotkey: HotkeyManager
     @ObservedObject private var emojiHotkey: HotkeyManager
     @ObservedObject private var notesHotkey: HotkeyManager
+    @ObservedObject private var screenOCRHotkey: HotkeyManager
 
     init() {
         // A missing delegate cannot happen while Settings is on screen, but a
@@ -215,6 +216,8 @@ private struct HotkeysTab: View {
             wrappedValue: delegate?.translateHotkeyManager ?? HotkeyManager(id: 903))
         _emojiHotkey = ObservedObject(
             wrappedValue: delegate?.emojiHotkeyManager ?? HotkeyManager(id: 904))
+        _screenOCRHotkey = ObservedObject(
+            wrappedValue: delegate?.screenOCRHotkeyManager ?? HotkeyManager(id: 906))
         _notesHotkey = ObservedObject(
             wrappedValue: delegate?.notesHotkeyManager ?? HotkeyManager(id: 905))
     }
@@ -226,6 +229,12 @@ private struct HotkeysTab: View {
     @State private var emojiPickerEnabled: Bool = EmojiSettings.isPickerEnabled
     @State private var emojiCombo: KeyCombo = EmojiSettings.combo
     @State private var notesEnabled: Bool = NotesSettings.isEnabled
+
+    @State private var screenOCREnabled = ScreenOCRSettings.isEnabled
+
+    @State private var screenOCRCombo = ScreenOCRSettings.combo
+
+    @State private var screenOCRConceal = ScreenOCRSettings.concealFromClipboardHistory
     @State private var notesCombo: KeyCombo = NotesSettings.combo
 
     var body: some View {
@@ -389,6 +398,62 @@ private struct HotkeysTab: View {
                                 reset: { notesCombo = .notesDefault },
                                 test: { AppDelegate.shared?.showNotesWindow() }
                             )
+                        }
+                    }
+                    .padding(6)
+                }
+
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(isOn: $screenOCREnabled) {
+                            Text("Text aus Bildschirmausschnitt").font(.headline)
+                        }
+                        .onChange(of: screenOCREnabled) { _, new in
+                            ScreenOCRSettings.isEnabled = new
+                            AppDelegate.shared?.restartScreenOCRHotkey()
+                        }
+
+                        Text("Zieht ein Auswahlrechteck auf und legt den erkannten Text "
+                             + "in die Zwischenablage. Die Erkennung läuft lokal, "
+                             + "Deutsch und Englisch. Nichts wird gespeichert oder gesendet.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text("Verlangt die Berechtigung „Bildschirmaufnahme\u{201C}. Sie erlaubt "
+                             + "Tippi dauerhaft, den Bildschirm zu lesen — deshalb ist die "
+                             + "Funktion ab Werk aus und fragt erst beim ersten Auslösen.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if screenOCREnabled {
+                            HotkeyRecorderField(combo: $screenOCRCombo)
+                                .onChange(of: screenOCRCombo) { _, new in
+                                    ScreenOCRSettings.combo = new
+                                    AppDelegate.shared?.restartScreenOCRHotkey()
+                                }
+                            hotkeyControls(
+                                manager: screenOCRHotkey,
+                                combo: screenOCRCombo,
+                                reset: { screenOCRCombo = KeyCombo(keyCode: 19,
+                                                                   modifiers: [.option, .command]) },
+                                test: { AppDelegate.shared?.beginScreenOCR() }
+                            )
+
+                            Divider()
+
+                            Toggle("Vor Zwischenablage-Verlauf verbergen",
+                                   isOn: $screenOCRConceal)
+                                .onChange(of: screenOCRConceal) { _, new in
+                                    ScreenOCRSettings.concealFromClipboardHistory = new
+                                }
+                            Text("Raycast, Alfred und Paste überspringen den Text dann. "
+                                 + "Sinnvoll, wenn du Vertrauliches erfasst — im Alltag "
+                                 + "aus, damit der Text auffindbar bleibt.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     .padding(6)
