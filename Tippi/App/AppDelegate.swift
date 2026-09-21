@@ -925,7 +925,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // Fehlende Berechtigung braucht einen Dialog mit
                     // Handlungsanweisung -- eine Toast-Blase waere weg, bevor
                     // man den Weg in die Systemeinstellungen gelesen hat.
+                    // Beide Berechtigungsfaelle brauchen den Dialog mit Weg in
+                    // die Systemeinstellungen, nicht eine Toast-Blase.
                     if case .noPermission = failure {
+                        self.showScreenOCRPermissionAlert(failure.userMessage)
+                    } else if case .blankCapture = failure {
                         self.showScreenOCRPermissionAlert(failure.userMessage)
                     } else {
                         ToastWindowController.shared.show(message: failure.userMessage)

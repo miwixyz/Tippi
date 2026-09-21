@@ -27,6 +27,7 @@ enum ScreenTextCapture {
 
     enum Failure: Error {
         case noPermission
+        case blankCapture
         case displayUnavailable
         case captureFailed
         case recognitionFailed
@@ -38,6 +39,13 @@ enum ScreenTextCapture {
                 return "Tippi darf den Bildschirm nicht lesen.\n\n"
                      + "→ ZU TUN: Systemeinstellungen → Datenschutz & Sicherheit → "
                      + "Bildschirmaufnahme → Tippi aktivieren, danach Tippi neu starten."
+            case .blankCapture:
+                return "Der Ausschnitt kam leer zurück.\n\n"
+                     + "Das heißt fast immer: Die Berechtigung Bildschirmaufnahme fehlt "
+                     + "oder ist nach dem Erteilen noch nicht wirksam.\n\n"
+                     + "→ ZU TUN: Systemeinstellungen → Datenschutz & Sicherheit → "
+                     + "Bildschirmaufnahme → Tippi aktivieren, dann Tippi BEENDEN und neu "
+                     + "starten. Ohne Neustart bleibt die Aufnahme schwarz."
             case .displayUnavailable:
                 return "Der Bildschirm konnte nicht ermittelt werden. Bitte erneut versuchen."
             case .captureFailed:
@@ -64,6 +72,14 @@ enum ScreenTextCapture {
         guard rect.width >= 4, rect.height >= 4 else { throw Failure.empty }
 
         let image = try await capture(rect)
+        // ScreenCaptureKit meldet fehlende Berechtigung NICHT als Fehler — es
+        // liefert ein schwarzes Bild. Ohne diese Pruefung sieht das exakt aus
+        // wie "der Ausschnitt enthielt keinen Text", und man sucht am falschen
+        // Ende. Befund aus dem ersten Praxistest, 2026-09-21.
+        if isBlank(image) {
+            ocrLog.error("Aufnahme einfarbig — Berechtigung fehlt vermutlich")
+            throw Failure.blankCapture
+        }
         defer {
             // Hinweis für den Leser: `image` ist hier gleich nicht mehr
             // erreichbar. Der enge Gültigkeitsbereich ist Absicht — der Puffer
@@ -100,10 +116,26 @@ enum ScreenTextCapture {
         let filter = SCContentFilter(display: display, excludingWindows: [])
         let config = SCStreamConfiguration()
 
-        // sourceRect ist relativ zum Display, nicht global.
-        let local = CGRect(x: rect.minX - CGFloat(display.frame.minX),
-                           y: rect.minY - CGFloat(display.frame.minY),
-                           width: rect.width, height: rect.height)
+        // ── Koordinatenwechsel, der die erste Fassung unbrauchbar machte ──
+        //
+        // `rect` kommt aus AppKit (NSWindow.convertToScreen): Ursprung unten
+        // links, Y waechst nach oben. `sourceRect` erwartet CoreGraphics:
+        // Ursprung oben links, Y waechst nach unten.
+        //
+        // Ohne Umrechnung wird ein vertikal gespiegelter Bereich erfasst — wer
+        // oben auswaehlt, bekommt unten. Das faellt nicht als Fehler auf,
+        // sondern als "kein Text gefunden", weil dort meist nichts steht.
+        let displayW = CGFloat(display.width)
+        let displayH = CGFloat(display.height)
+        let local = CGRect(
+            x: rect.minX - display.frame.minX,
+            y: displayH - (rect.maxY - display.frame.minY),
+            width: rect.width,
+            height: rect.height
+        )
+        // Nur Geometrie, kein Inhalt — der Messpunkt, der beim ersten
+        // Fehlschlag fehlte.
+        ocrLog.info("Ausschnitt lokal \(Int(local.minX)),\(Int(local.minY)) \(Int(local.width))x\(Int(local.height)) auf Display \(Int(displayW))x\(Int(displayH))")
         config.sourceRect = local
         config.captureResolution = .best
         config.showsCursor = false
@@ -129,6 +161,31 @@ enum ScreenTextCapture {
             ocrLog.error("Aufnahme fehlgeschlagen")
             throw Failure.captureFailed
         }
+    }
+
+    /// Ist das Bild praktisch einfarbig? Dann kam nichts an.
+    ///
+    /// Betrachtet werden Stichproben der Rohbytes, nur auf Streuung — es geht um
+    /// "schwarz oder nicht", nicht um Bildanalyse. Inhalte werden weder
+    /// ausgewertet noch protokolliert.
+    private static func isBlank(_ image: CGImage) -> Bool {
+        guard let data = image.dataProvider?.data,
+              let ptr = CFDataGetBytePtr(data) else { return false }
+        let length = CFDataGetLength(data)
+        guard length > 0 else { return true }
+
+        let step = max(1, length / 2000)
+        var minV: UInt8 = 255
+        var maxV: UInt8 = 0
+        var i = 0
+        while i < length {
+            let v = ptr[i]
+            if v < minV { minV = v }
+            if v > maxV { maxV = v }
+            if Int(maxV) - Int(minV) > 12 { return false }
+            i += step
+        }
+        return true
     }
 
     // MARK: - Texterkennung
