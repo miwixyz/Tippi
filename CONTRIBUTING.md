@@ -143,7 +143,37 @@ make release
 | 8 | Apple notarization via `xcrun notarytool submit --wait` (~3–10 min) |
 | 9 | Notarization ticket stapled |
 | 10 | GitHub Release created, DMG uploaded |
-| 11 | `generate_appcast` updates `appcast.xml`, Gist updated |
+| 11 | `generate_appcast` updates `appcast.xml`, Gist updated **and verified against the Gist API** |
+
+### The appcast step needs the `gist` scope — and it is easy to lose
+
+The appcast lives in a GitHub Gist. Updating it requires a token with the
+**`gist`** scope, which `gh`'s own keychain login normally has.
+
+**The trap:** an exported `GITHUB_TOKEN` *overrides* that login. If the exported
+token only carries `repo, workflow`, the update fails — and GitHub answers with
+**404, not 403**, so the message reads like a deleted Gist rather than a missing
+permission.
+
+That happened on 2026-09-21 during the 2.12.0 release. The release itself was
+complete — signed, notarised, published — while the appcast stayed on 2.11.9.
+**Sparkle would have offered the new version to nobody**, and nothing turned red
+beyond one line that looked like an infrastructure hiccup.
+
+`release.sh` now checks the scope, falls back to `gh`'s keychain login, and then
+reads the Gist back through the **API** to confirm the version actually landed.
+The API, not the raw URL: `gist.githubusercontent.com` sits behind a CDN and
+serves the previous content for minutes afterwards. The first version of this
+check queried the raw URL after two seconds and failed a release that was
+perfectly fine — a false alarm is more expensive than no check, because the next
+person routes around it.
+
+If you release from a shell that exports `GITHUB_TOKEN`, either give that token
+the `gist` scope or unset it for the release:
+
+```bash
+env -u GITHUB_TOKEN make release
+```
 
 After the script completes:
 
