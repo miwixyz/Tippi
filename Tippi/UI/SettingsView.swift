@@ -235,6 +235,7 @@ private struct HotkeysTab: View {
     @State private var screenOCRCombo = ScreenOCRSettings.combo
 
     @State private var screenOCRConceal = ScreenOCRSettings.concealFromClipboardHistory
+    @State private var screenOCRJoin = ScreenOCRSettings.joinLines
     @State private var notesCombo: KeyCombo = NotesSettings.combo
 
     var body: some View {
@@ -442,6 +443,18 @@ private struct HotkeysTab: View {
                             )
 
                             Divider()
+
+                            Toggle("Zeilenumbrüche zusammenführen", isOn: $screenOCRJoin)
+                                .onChange(of: screenOCRJoin) { _, new in
+                                    ScreenOCRSettings.joinLines = new
+                                }
+                            Text("Die Erkennung liefert jede Bildschirmzeile einzeln — beim "
+                                 + "Einfügen steht sonst mitten im Satz ein Umbruch. Absätze, "
+                                 + "Aufzählungen und Satzenden bleiben erhalten, Trennstriche "
+                                 + "werden zusammengezogen. Für Code oder Tabellen ausschalten.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
 
                             Toggle("Vor Zwischenablage-Verlauf verbergen",
                                    isOn: $screenOCRConceal)

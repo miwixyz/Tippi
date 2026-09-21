@@ -913,7 +913,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 defer { self.screenOCRInProgress = false }
                 do {
-                    let text = try await ScreenTextCapture.text(in: rect)
+                    var text = try await ScreenTextCapture.text(in: rect)
+                    if ScreenOCRSettings.joinLines {
+                        text = RecognizedTextJoiner.join(text)
+                    }
                     ScreenTextCapture.copyToPasteboard(
                         text,
                         concealed: ScreenOCRSettings.concealFromClipboardHistory

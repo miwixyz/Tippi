@@ -8,6 +8,7 @@ enum ScreenOCRSettings {
     private static let enabledKey = "screenOCR.hotkey.enabled"
     private static let comboKey = "screenOCR.hotkeyCombo.v1"
     private static let concealKey = "screenOCR.concealFromClipboardHistory"
+    private static let joinKey = "screenOCR.joinLines"
 
     /// **Ab Werk AUS** — anders als Übersetzen, Emoji und Notizen.
     ///
@@ -37,6 +38,20 @@ enum ScreenOCRSettings {
                 UserDefaults.standard.set(data, forKey: comboKey)
             }
         }
+    }
+
+    /// Zeilenumbrüche innerhalb von Absätzen zusammenführen.
+    ///
+    /// Die Texterkennung liefert jede Bildschirmzeile einzeln — eine Eigenschaft
+    /// des Layouts, nicht des Textes. Beim Einfügen steht dann mitten im Satz
+    /// ein Umbruch. Absätze, Aufzählungen und Satzenden bleiben erhalten;
+    /// siehe `RecognizedTextJoiner`.
+    ///
+    /// **Ab Werk AN**: Fließtext ist der häufigere Fall. Wer Code oder Tabellen
+    /// erfasst, schaltet es aus — dort trägt jede Zeile Bedeutung.
+    static var joinLines: Bool {
+        get { UserDefaults.standard.object(forKey: joinKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: joinKey) }
     }
 
     /// Erkannten Text vor Zwischenablage-Verläufen verbergen
