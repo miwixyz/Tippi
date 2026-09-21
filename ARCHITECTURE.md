@@ -39,6 +39,8 @@ Tippi/
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
+│   ├── ScreenTextCapture.swift     # v2.12 — ScreenCaptureKit + Vision-OCR, nur RAM
+│   ├── ScreenOCRSettings.swift     # v2.12 — Hotkey + Voreinstellungen (ab Werk AUS)
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
 │   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
 │   │                               #   Ergebnis geschrieben wird (Notizfenster /
@@ -89,6 +91,7 @@ Tippi/
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
 │   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
+│   ├── ScreenSelectionOverlay.swift # v2.12 — Auswahlrechteck, 3 Abbruchwege
 │   ├── Notes/                      # v2.3 — resizable Fenster, Liste + Editor
 │   │   ├── NotesWindowController.swift     # NSWindow, aktivierend (kein Panel wie Preview/Translate)
 │   │   ├── NotesRootView.swift             # Split View

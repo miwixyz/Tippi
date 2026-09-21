@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2.12.0] — 2026-09-21
 
 ### Added
 
@@ -38,6 +38,9 @@
 
   Entworfen mit `rafter-secure-design` vor der ersten Zeile Code; die
   Abwägungen stehen in `docs/SECURE-DESIGN-screen-ocr.md`.
+
+- **Hilfe in den Einstellungen** erklärt die Funktion, warum sie ab Werk aus ist
+  und was die Berechtigung umfasst (Deutsch und Englisch).
 
 ## [2.11.9] — 2026-09-20
 

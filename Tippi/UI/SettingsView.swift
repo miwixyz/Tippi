@@ -1727,6 +1727,8 @@ private struct HelpTab: View {
                   title: String(localized: "settings.help.promptsTitle"), body: String(localized: "settings.help.promptsBody")),
         HelpEntry(id: "chains", icon: "arrow.right.circle", category: .automation,
                   title: String(localized: "settings.help.chainsTitle"), body: String(localized: "settings.help.chainsBody")),
+        HelpEntry(id: "screenOCR", icon: "text.viewfinder", category: .automation,
+                  title: String(localized: "settings.help.screenOCRTitle"), body: String(localized: "settings.help.screenOCRBody")),
         HelpEntry(id: "localActions", icon: "bolt", category: .automation,
                   title: String(localized: "settings.help.localActionsTitle"), body: String(localized: "settings.help.localActionsBody")),
         HelpEntry(id: "selectionPopup", icon: "rectangle.and.hand.point.up.left", category: .automation,
