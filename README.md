@@ -30,9 +30,10 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Pick an emoji without the system palette | Rocket | **⌥⌘E picker + `:name:` shortcodes** (v2.1) |
 | Text shortcuts that expand while typing | Espanso, TextExpander | **Text Snippets** — reads existing Espanso files as-is (v2.0) |
 | Action bar next to any text selection | PopClip | **Selection action bar**, position configurable (v2.0) |
-| Dictation that runs on-device | MacWhisper, Superwhisper | **Dictation mode**, Whisper/Parakeet local (v1.7) |
+| Dictation that runs on-device | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode**, Whisper/Parakeet **on your Mac** — no account, no subscription, audio never leaves the machine (v1.7) |
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
+| Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
 | AI rewriting, grammar, tone | Grammarly, ChatGPT desktop | **24 built-in prompts + your own**, 11 providers |
 | Text case/formatting one-offs (bold, UPPERCASE, join lines, word count) | TextSoap, a word-count widget | **Local Quick Actions** — instant, no AI call, works offline (v2.0) |
 

@@ -39,9 +39,10 @@ covers that whole row:
 | Emoji without the system palette | Rocket | **⌥⌘E picker + `:name:` shortcodes** |
 | Text shortcuts while typing | Espanso · TextExpander | **Text Snippets** (reads Espanso files as-is) |
 | Action bar at your text selection | PopClip | **Selection action bar** |
-| On-device dictation | MacWhisper · Superwhisper | **Dictation mode** (Whisper / Parakeet) |
+| On-device dictation | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode** (Whisper / Parakeet) — on your Mac, no account, audio stays local |
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
+| Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |
 | AI rewriting, grammar, tone | Grammarly · ChatGPT desktop | **24 prompts + your own**, 11 providers |
 | Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |
 

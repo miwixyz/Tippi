@@ -203,6 +203,67 @@ fi
 # Honest limit: a marker can be bumped without touching a single feature sentence. It cannot
 # prove the text is current; it only makes "ship a release without looking at the page" an
 # explicit act rather than an oversight. That is the whole claim.
+# ── Comparison table covers every hotkey feature ──────────────────────────
+#
+# Why this exists (2026-09-22): The "what it replaces" table in README and
+# ONE-PAGER grew with every feature — except v2.12. Screen OCR shipped with a
+# hotkey, a website section and a Help chapter, and had **no row** in either
+# table. Nobody noticed for two days, and no gate looked.
+#
+# The list of features comes from the code (the named HotkeyManager instances
+# in AppDelegate), not from a list someone maintains. A NEW hotkey that this
+# check does not know about is itself a finding — that is the point. It cannot
+# guess marketing wording, so adding a feature means adding a row AND a line in
+# the map below. Loud beats silent.
+printf '\n▶ Comparison table covers every hotkey feature\n'
+hotkeys=$(grep -oE 'let [a-zA-Z]+HotkeyManager = HotkeyManager' Tippi/App/AppDelegate.swift \
+          | sed -E 's/let ([a-zA-Z]+)HotkeyManager.*/\1/' | sort -u)
+table_checked=0
+for feature in $hotkeys; do
+  # Map: code name → the word the tables must contain.
+  case "$feature" in
+    dictation) needle="Dictation" ;;
+    translate) needle="translat" ;;     # deckt "translation" und "Translate"
+    emoji)     needle="emoji" ;;
+    notes)     needle="Notes" ;;
+    screenOCR) needle="OCR" ;;
+    *)
+      bad "unknown hotkey feature '$feature' — add a comparison row to README.md AND docs/ONE-PAGER.md, then map it in $(basename "$0")"
+      continue
+      ;;
+  esac
+  for doc in README.md docs/ONE-PAGER.md; do
+    [ -f "$doc" ] || continue
+    table_checked=$((table_checked + 1))
+    # NUR die Vergleichstabelle, erkannt an ihrer Kopfzeile ("In Tippi"), bis
+    # zur ersten Leerzeile danach.
+    #
+    # Die erste Fassung suchte in JEDER Tabellenzeile des Dokuments — und blieb
+    # deshalb gruen, als die OCR-Zeile testweise entfernt wurde: Die
+    # Roadmap-Tabelle nennt OCR ebenfalls. Gruen aus dem falschen Grund,
+    # gefunden durch die Negativprobe. Gescannt wird mit python3, weil `grep`
+    # und `awk` in dieser Umgebung ueberschattet sein koennen.
+    if ! python3 - "$doc" "$needle" <<'PY'
+import sys
+doc, needle = sys.argv[1], sys.argv[2].lower()
+rows, inside = [], False
+for line in open(doc, encoding="utf-8"):
+    if not inside:
+        if line.startswith("|") and "in tippi" in line.lower():
+            inside = True
+        continue
+    if not line.startswith("|"):
+        break
+    rows.append(line.lower())
+sys.exit(0 if any(needle in r for r in rows) else 1)
+PY
+    then
+      bad "$doc: Vergleichstabelle nennt '${needle}' nicht — Feature '${feature}' hat einen Hotkey, aber keine Zeile in der 'what it replaces'-Tabelle"
+    fi
+  done
+done
+ok "$table_checked table row check(s) across $(printf '%s' "$hotkeys" | wc -w | tr -d ' ') hotkey feature(s)"
+
 printf '\n▶ Marketing surfaces mention v%s\n' "$MINOR"
 marker_checked=0
 if [ -f docs/ONE-PAGER.md ]; then
