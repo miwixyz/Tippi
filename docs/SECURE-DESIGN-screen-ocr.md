@@ -90,6 +90,42 @@ Absturzbericht mit Speicherauszug.
 Gültigkeitsbereich so eng wie möglich. Tippi sendet keine Absturzberichte an
 Dritte — das bleibt so, und dieses Feature ist ein zusätzlicher Grund dafür.
 
+> ⚠️ **Nachtrag 2026-09-22 — der Puffer ist deutlich größer geworden.**
+>
+> Bis dahin wurde **nur der ausgewählte Ausschnitt** aufgenommen: erst Auswahl,
+> dann Aufnahme. Das war genau der Fehler, den Michael gemeldet hat — das
+> Auswahl-Overlay ruft `NSApp.activate(ignoringOtherApps:)` und **schließt damit
+> jedes Pop-Up und Menü**. Wer Text aus einem Pop-Up erfassen wollte, bekam
+> einen Bildschirm ohne das Pop-Up.
+>
+> Seit **freeze-first** wird zuerst **jeder Bildschirm vollständig** aufgenommen
+> und die Auswahl auf dem Standbild getroffen. Damit liegt kurzzeitig ein
+> Vollbild je Display im Speicher — auf Michaels Mac mini sind das
+> 3440×1440 und 1920×1080, bei Retina-Faktor entsprechend mehr Pixel.
+>
+> **Das ist eine echte Vergrößerung der Angriffsfläche dieses Absatzes, keine
+> Umsetzungsdetail-Änderung.** Was vorher gar nicht erst aufgenommen wurde,
+> liegt jetzt im Adressraum — auch der Teil des Bildschirms, den der Nutzer
+> nie auswählen wollte.
+>
+> Abwägung, bewusst getroffen: Der Fehler war unbehebbar, solange die Aufnahme
+> nach der Auswahl kam — Pop-Ups sind genau der Fall, für den das Feature
+> gebaut wurde. Dagegen steht ein größerer, **kurzlebiger** Puffer.
+>
+> Gegenmaßnahmen, die dabei bleiben oder neu sind:
+> - Die Standbilder leben nur, solange das Overlay offen ist, und werden mit
+>   ihm freigegeben (Zeitgrenze 60 s, plus ESC und Rechtsklick).
+> - Der Zuschnitt wird **aus dem Standbild geschnitten**, nicht neu aufgenommen;
+>   an Vision geht weiterhin **nur der Ausschnitt**.
+> - Weiterhin **nichts auf die Platte**, weiterhin kein Verlauf, weiterhin keine
+>   Absturzberichte an Dritte.
+> - Protokolliert wird nur Geometrie und Bildschirmzahl, **nie Inhalt**.
+>
+> **Verbleibendes Restrisiko, getragen:** Ein Speicherauszug während geöffnetem
+> Overlay enthält den ganzen Bildschirm statt nur des Ausschnitts. Bei einer
+> App ohne Absturzbericht-Versand und ohne Sandbox-Nachbarn ist das
+> verhältnismäßig — aber es steht hier, damit es nicht überrascht.
+
 ### E — Elevation of Privilege
 
 **E-1 — Die Berechtigung selbst ist der größte Posten. 🔴**

@@ -1,5 +1,58 @@
 # Changelog
 
+## [2.12.3] — 2026-09-22
+
+### Behoben
+
+- **Bildschirm-OCR: Ein Pop-Up war weg, bevor man es auswählen konnte.**
+  Michaels Befund: „Wenn ich einen Text aus einem Bild extrahieren würde oder
+  aus einem Pop-Up extrahieren würde, darf dieses Pop-Up nicht schließen, sonst
+  kann ich keine Auswahl treffen."
+
+  Die Reihenfolge war verkehrt. Das Auswahl-Overlay ruft
+  `NSApp.activate(ignoringOtherApps:)` — und das schließt **jedes** Pop-Up, Menü
+  und Tooltip. Aufgenommen wurde erst **nach** der Auswahl, also von einem
+  Bildschirm, auf dem das Gesuchte nicht mehr war. Bilder funktionierten, weil
+  die nicht verschwinden; alles Fokus-Empfindliche nicht.
+
+  **Jetzt freeze-first:** Beim Tastendruck wird sofort jeder Bildschirm
+  aufgenommen, und die Auswahl läuft auf dem **Standbild**. Das Pop-Up ist im
+  Bild, unabhängig davon, ob es real noch offen ist. Das Overlay zeigt dieses
+  Standbild — man sieht also genau, was aufgenommen wurde.
+
+  **Nebengewinn:** Eine fehlende Bildschirmaufnahme-Berechtigung fällt jetzt
+  **vor** dem Aufziehen auf statt danach.
+
+  **Grenze, die bleibt:** Echte Menüs (Menüleiste, Kontextmenüs) laufen in einer
+  eigenen Event-Schleife und verschlucken globale Tastenkürzel — dort kommt der
+  Hotkey mit hoher Wahrscheinlichkeit gar nicht an. Das bräuchte einen Vorlauf
+  („in 5 Sekunden aufnehmen"), wie Apples Bildschirmfoto-Werkzeug. Bewusst
+  nicht in dieser Version.
+
+### Neu
+
+- **11 Tests für die Koordinaten-Umrechnung** (311 gesamt). Sie prüfen genau die
+  Stelle, an der beim ersten OCR-Anlauf ein **Spiegelungsfehler** saß: AppKit
+  zählt Y von unten, ein `CGImage` von oben — wer oben auswählte, bekam unten,
+  und es fiel nicht als Fehler auf, sondern als „kein Text gefunden".
+
+  Die Umrechnung ist dafür als **reine Funktion** herausgezogen
+  (`ScreenTextCapture.cropRect`) und ohne Bildschirm, ohne Aufnahme und ohne
+  Berechtigung prüfbar. Durch Mutationsprobe abgenommen: Nimmt man die
+  Y-Umkehrung heraus, fallen fünf der elf Tests.
+
+  Mitgeprüft: zweiter Bildschirm rechts und oberhalb (eigener Ursprung), Retina
+  und Nicht-Retina, unterschiedliche Skalierung in X und Y, Vollbild-Auswahl,
+  Haarlinien-Auswahl (mindestens ein Pixel), Bildschirmframe der Größe Null.
+
+### Geändert
+
+- **`docs/SECURE-DESIGN-screen-ocr.md` (I-3) nachgezogen.** Freeze-first hält
+  kurzzeitig **ein Vollbild je Display** im Speicher statt nur des Ausschnitts —
+  eine echte Vergrößerung dieses Postens, keine Umsetzungsdetail-Änderung. Die
+  Abwägung, die Gegenmaßnahmen und das getragene Restrisiko stehen dort. An
+  Vision geht weiterhin **nur der Ausschnitt**, weiterhin nichts auf die Platte.
+
 ## [2.12.2] — 2026-09-21
 
 ### Added

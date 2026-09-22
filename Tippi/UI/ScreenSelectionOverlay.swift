@@ -24,15 +24,26 @@ final class ScreenSelectionOverlay {
     private var timeoutTask: Task<Void, Never>?
     private var previousApp: NSRunningApplication?
 
-    /// Zeigt das Overlay. `completion` bekommt das Rechteck in globalen
-    /// Koordinaten — oder `nil`, wenn abgebrochen wurde.
-    func begin(completion: @escaping (CGRect?) -> Void) {
+    /// Zeigt das Overlay über den **eingefrorenen** Bildschirmen.
+    ///
+    /// `frozen` ist das Standbild, das vor dem Öffnen dieses Overlays
+    /// aufgenommen wurde. Es wird als Hintergrund gezeichnet — deshalb ist
+    /// sichtbar, was tatsächlich aufgenommen wurde, und ein Pop-Up bleibt im
+    /// Bild, obwohl `NSApp.activate` es real geschlossen hat.
+    ///
+    /// `completion` bekommt das Rechteck in globalen Koordinaten — oder `nil`
+    /// bei Abbruch.
+    func begin(frozen: [ScreenTextCapture.FrozenScreen],
+               completion: @escaping (CGRect?) -> Void) {
         guard windows.isEmpty else { return }
         self.completion = completion
         previousApp = NSWorkspace.shared.frontmostApplication
 
         for screen in NSScreen.screens {
             let view = SelectionView(frame: .zero)
+            // Zuordnung über die Geometrie: `frozen` traegt dieselben
+            // NSScreen-Frames, aus denen es erzeugt wurde.
+            view.frozenImage = frozen.first { $0.frame == screen.frame }?.image
             view.onFinish = { [weak self] rect in self?.finish(rect) }
             view.onCancel = { [weak self] in self?.finish(nil) }
 
@@ -96,6 +107,10 @@ private final class SelectionView: NSView {
     var onFinish: ((CGRect) -> Void)?
     var onCancel: (() -> Void)?
 
+    /// Das Standbild dieses Bildschirms. `nil` nur, wenn die Zuordnung
+    /// fehlschlug — dann verhält sich das Overlay wie vorher (durchsichtig).
+    var frozenImage: CGImage?
+
     private var start: NSPoint?
     private var current: NSPoint?
 
@@ -106,15 +121,32 @@ private final class SelectionView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        // Leichte Abdunklung, damit erkennbar ist, dass eine Auswahl läuft.
+        // Zuerst das Standbild. Ohne es waere das Overlay durchsichtig und
+        // zeigte den LIVE-Bildschirm — auf dem das Pop-Up schon fehlt.
+        if let frozenImage, let ctx = NSGraphicsContext.current?.cgContext {
+            ctx.draw(frozenImage, in: bounds)
+        }
+
+        let rect = selectionRect
+
+        // Abdunklung nur AUSSERHALB der Auswahl, als vier Rechtecke. Der
+        // frühere Weg („alles abdunkeln, Auswahl mit .copy freistellen") würde
+        // das Standbild an dieser Stelle mit ausradieren.
         NSColor.black.withAlphaComponent(0.22).setFill()
-        bounds.fill()
+        if let rect {
+            NSRect(x: bounds.minX, y: rect.maxY,
+                   width: bounds.width, height: bounds.maxY - rect.maxY).fill()
+            NSRect(x: bounds.minX, y: bounds.minY,
+                   width: bounds.width, height: rect.minY - bounds.minY).fill()
+            NSRect(x: bounds.minX, y: rect.minY,
+                   width: rect.minX - bounds.minX, height: rect.height).fill()
+            NSRect(x: rect.maxX, y: rect.minY,
+                   width: bounds.maxX - rect.maxX, height: rect.height).fill()
+        } else {
+            bounds.fill()
+        }
 
-        guard let rect = selectionRect else { return }
-
-        // Ausgewählter Bereich wird wieder freigestellt.
-        NSColor.clear.set()
-        rect.fill(using: .copy)
+        guard let rect else { return }
 
         NSColor.controlAccentColor.setStroke()
         let path = NSBezierPath(rect: rect)

@@ -903,7 +903,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !screenOCRInProgress else { return }
         screenOCRInProgress = true
 
-        screenSelectionOverlay.begin { [weak self] rect in
+        // ZUERST einfrieren, DANN auswählen.
+        //
+        // Befund von Michael, 2026-09-22: Das Overlay ruft
+        // `NSApp.activate(ignoringOtherApps:)` und schließt damit jedes Pop-Up,
+        // Menü und Tooltip. Wer Text aus einem Pop-Up erfassen wollte, bekam
+        // einen Bildschirm ohne das Pop-Up — die Auswahl kam zu spät.
+        //
+        // Nebengewinn: Eine fehlende Bildschirmaufnahme-Berechtigung fällt
+        // jetzt VOR dem Aufziehen auf, nicht erst danach.
+        Task { @MainActor in
+            let frozen: [ScreenTextCapture.FrozenScreen]
+            do {
+                frozen = try await ScreenTextCapture.freezeAllScreens()
+            } catch let failure as ScreenTextCapture.Failure {
+                self.screenOCRInProgress = false
+                // Berechtigungsfaelle brauchen den Dialog mit Weg in die
+                // Systemeinstellungen, alles andere reicht als Toast.
+                switch failure {
+                case .noPermission, .blankCapture:
+                    self.showScreenOCRPermissionAlert(failure.userMessage)
+                default:
+                    ToastWindowController.shared.show(message: failure.userMessage)
+                }
+                return
+            } catch {
+                self.screenOCRInProgress = false
+                ToastWindowController.shared.show(message: "Aufnahme fehlgeschlagen")
+                return
+            }
+
+            self.screenSelectionOverlay.begin(frozen: frozen) { [weak self] rect in
             guard let self else { return }
             guard let rect else {
                 // Abbruch ist ein normaler Ausgang, keine Fehlermeldung wert.
@@ -913,7 +943,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in
                 defer { self.screenOCRInProgress = false }
                 do {
-                    var text = try await ScreenTextCapture.text(in: rect)
+                    var text = try await ScreenTextCapture.text(in: rect, from: frozen)
                     if ScreenOCRSettings.joinLines {
                         text = RecognizedTextJoiner.join(text)
                     }
@@ -942,6 +972,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         message: "Texterkennung fehlgeschlagen. Bitte erneut versuchen."
                     )
                 }
+            }
             }
         }
     }

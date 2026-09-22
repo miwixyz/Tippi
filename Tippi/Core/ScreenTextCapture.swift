@@ -67,7 +67,155 @@ enum ScreenTextCapture {
     /// der anderen, weil Vision mehr raten muss (entschieden 2026-09-21).
     private static let languages = ["de-DE", "en-US"]
 
+    // MARK: - Eingefrorener Bildschirm (freeze-first)
+
+    /// Ein eingefrorener Bildschirm: Bild plus die Geometrie, die zum
+    /// Zurückrechnen nötig ist.
+    struct FrozenScreen {
+        /// AppKit-Bildschirmkoordinaten in Punkten, Ursprung unten links.
+        let frame: CGRect
+        /// Pixel, Ursprung **oben links**.
+        let image: CGImage
+    }
+
+    /// Nimmt **alle** Bildschirme auf, bevor irgendeine Oberfläche erscheint.
+    ///
+    /// **Warum diese Reihenfolge (Befund von Michael, 2026-09-22):** Das
+    /// Auswahl-Overlay ruft `NSApp.activate(ignoringOtherApps:)` — und das
+    /// schließt jedes Pop-Up, Menü und Tooltip. Wer Text aus einem Pop-Up
+    /// erfassen wollte, bekam einen Bildschirm ohne das Pop-Up. Die Auswahl kam
+    /// zu spät.
+    ///
+    /// Jetzt wird zuerst eingefroren und dann auf dem **Standbild** ausgewählt.
+    /// Das Pop-Up ist im Bild, egal ob es real noch offen ist. Nebeneffekt: Man
+    /// sieht genau, was aufgenommen wurde — und eine fehlende Berechtigung
+    /// fällt **vor** dem Aufziehen auf, nicht danach.
+    static func freezeAllScreens() async throws -> [FrozenScreen] {
+        let content: SCShareableContent
+        do {
+            content = try await SCShareableContent.excludingDesktopWindows(
+                false, onScreenWindowsOnly: true
+            )
+        } catch {
+            ocrLog.error("Bildschirminhalt nicht verfügbar — vermutlich fehlende Berechtigung")
+            throw Failure.noPermission
+        }
+
+        var result: [FrozenScreen] = []
+        for display in content.displays {
+            // Zuordnung über die Display-ID, nicht über die Geometrie: Zwei
+            // Bildschirme können dieselbe Größe haben.
+            guard let screen = NSScreen.screens.first(where: {
+                ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID)
+                    == display.displayID
+            }) else { continue }
+
+            let scale = screen.backingScaleFactor
+            let filter = SCContentFilter(display: display, excludingWindows: [])
+            let config = SCStreamConfiguration()
+            config.captureResolution = .best
+            config.showsCursor = false
+            config.width = max(1, Int(screen.frame.width * scale))
+            config.height = max(1, Int(screen.frame.height * scale))
+
+            do {
+                let image = try await SCScreenshotManager.captureImage(
+                    contentFilter: filter, configuration: config
+                )
+                result.append(FrozenScreen(frame: screen.frame, image: image))
+            } catch {
+                ocrLog.error("Aufnahme eines Bildschirms fehlgeschlagen")
+                throw Failure.captureFailed
+            }
+        }
+
+        guard !result.isEmpty else { throw Failure.displayUnavailable }
+        // Nur Geometrie, kein Inhalt.
+        ocrLog.info("\(result.count) Bildschirm(e) eingefroren")
+        return result
+    }
+
+    /// **Reine** Umrechnung: Auswahl (AppKit global, Punkte, Y nach oben) →
+    /// Zuschnitt im eingefrorenen Bild (Pixel, Ursprung oben links).
+    ///
+    /// Ausgelagert und ohne Seiteneffekte, weil genau hier schon einmal ein
+    /// Fehler saß: Die erste Fassung des Bildschirm-OCR erfasste einen vertikal
+    /// **gespiegelten** Bereich — wer oben auswählte, bekam unten. Das fiel
+    /// nicht als Fehler auf, sondern als „kein Text gefunden". Jetzt prüfbar
+    /// ohne Bildschirm, ohne Berechtigung und ohne Aufnahme.
+    nonisolated static func cropRect(selection: CGRect, screenFrame: CGRect,
+                         imagePixelSize: CGSize) -> CGRect {
+        guard screenFrame.width > 0, screenFrame.height > 0 else { return .zero }
+        let sx = imagePixelSize.width / screenFrame.width
+        let sy = imagePixelSize.height / screenFrame.height
+
+        // Y umdrehen: AppKit zählt von unten, CoreGraphics-Bilder von oben.
+        let localX = selection.minX - screenFrame.minX
+        let localTop = screenFrame.maxY - selection.maxY
+
+        return CGRect(x: (localX * sx).rounded(.down),
+                      y: (localTop * sy).rounded(.down),
+                      width: max(1, (selection.width * sx).rounded()),
+                      height: max(1, (selection.height * sy).rounded()))
+    }
+
+    /// Welcher eingefrorene Bildschirm enthält die Auswahl?
+    nonisolated static func screen(for selection: CGRect,
+                       in frozen: [FrozenScreen]) -> FrozenScreen? {
+        frozen.first { $0.frame.intersects(selection) } ?? frozen.first
+    }
+
+    /// OCR auf dem Zuschnitt eines **eingefrorenen** Bildes.
+    static func text(in rect: CGRect, from frozen: [FrozenScreen]) async throws -> String {
+        guard rect.width >= 4, rect.height >= 4 else { throw Failure.empty }
+        guard let target = screen(for: rect, in: frozen) else {
+            throw Failure.displayUnavailable
+        }
+
+        let pixelSize = CGSize(width: target.image.width, height: target.image.height)
+        let crop = cropRect(selection: rect, screenFrame: target.frame,
+                            imagePixelSize: pixelSize)
+        ocrLog.info("Zuschnitt \(Int(crop.minX)),\(Int(crop.minY)) \(Int(crop.width))x\(Int(crop.height)) aus \(Int(pixelSize.width))x\(Int(pixelSize.height))")
+
+        guard let cropped = target.image.cropping(to: crop) else {
+            ocrLog.error("Zuschnitt lag außerhalb des Bildes")
+            throw Failure.captureFailed
+        }
+
+        if isBlank(cropped) {
+            ocrLog.error("Aufnahme einfarbig — Berechtigung fehlt vermutlich")
+            throw Failure.blankCapture
+        }
+
+        let image = downscaleIfNeeded(cropped)
+        return try await recognize(image)
+    }
+
+    /// Verkleinert, wenn der Zuschnitt die Pixelgrenze überschreitet. OCR
+    /// braucht Kantenschärfe, keine Auflösungsrekorde.
+    private static func downscaleIfNeeded(_ image: CGImage) -> CGImage {
+        let pixels = image.width * image.height
+        guard pixels > maxPixels else { return image }
+        let factor = (Double(maxPixels) / Double(pixels)).squareRoot()
+        let w = max(1, Int(Double(image.width) * factor))
+        let h = max(1, Int(Double(image.height) * factor))
+        ocrLog.info("Zuschnitt herunterskaliert auf \(w)×\(h)")
+        guard let space = image.colorSpace,
+              let ctx = CGContext(data: nil, width: w, height: h,
+                                  bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: space,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return image }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage() ?? image
+    }
+
     /// Erfasst `rect` (in globalen Bildschirmkoordinaten) und gibt den Text zurück.
+    ///
+    /// **Älterer Weg**, nimmt erst nach der Auswahl auf. Bleibt für Aufrufer
+    /// ohne eingefrorenes Bild; der Bildschirm-OCR benutzt ihn seit 2026-09-22
+    /// nicht mehr.
     static func text(in rect: CGRect) async throws -> String {
         guard rect.width >= 4, rect.height >= 4 else { throw Failure.empty }
 

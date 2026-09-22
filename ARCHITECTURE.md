@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.12.2. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.12.3. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -40,6 +40,8 @@ Tippi/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
 │   ├── ScreenTextCapture.swift     # v2.12 — ScreenCaptureKit + Vision-OCR, nur RAM
+│   │                                 # v2.12.3 — freeze-first: erst alle Schirme
+│   │                                 # aufnehmen, dann auswählen (Pop-Ups!)
 │   ├── ScreenOCRSettings.swift     # v2.12 — Hotkey + Voreinstellungen (ab Werk AUS)
 │   ├── RecognizedTextJoiner.swift  # v2.12.2 — OCR-Zeilen zu Absätzen, Layout vs. Bedeutung
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
@@ -93,6 +95,7 @@ Tippi/
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
 │   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
 │   ├── ScreenSelectionOverlay.swift # v2.12 — Auswahlrechteck, 3 Abbruchwege
+│   │                                 # v2.12.3 — zeichnet das Standbild
 │   ├── Notes/                      # v2.3 — resizable Fenster, Liste + Editor
 │   │   ├── NotesWindowController.swift     # NSWindow, aktivierend (kein Panel wie Preview/Translate)
 │   │   ├── NotesRootView.swift             # Split View
