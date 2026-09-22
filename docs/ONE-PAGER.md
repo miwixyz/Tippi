@@ -43,7 +43,7 @@ covers that whole row:
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
 | Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |
-| AI rewriting, grammar, tone | Grammarly · ChatGPT desktop | **24 prompts + your own**, 11 providers |
+| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 11 providers — in place, no app switch |
 | Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |
 
 Several of those are cheap or free — the saving isn't mainly money. It's eight

@@ -216,8 +216,25 @@ fi
 # guess marketing wording, so adding a feature means adding a row AND a line in
 # the map below. Loud beats silent.
 printf '\n▶ Comparison table covers every hotkey feature\n'
-hotkeys=$(grep -oE 'let [a-zA-Z]+HotkeyManager = HotkeyManager' Tippi/App/AppDelegate.swift \
-          | sed -E 's/let ([a-zA-Z]+)HotkeyManager.*/\1/' | sort -u)
+# Aufzaehlung mit python3, nicht mit grep+sed: Das erste Muster
+# ([a-zA-Z]+HotkeyManager) uebersah den WICHTIGSTEN Hotkey — das
+# KI-Umschreiben heisst im Code schlicht `hotkeyManager`, ohne Praefix. Die
+# tragende Zeile der Tabelle war damit ungeprueft. Gefunden am 2026-09-22,
+# nachdem Michael den ChatGPT-Desktop-Ueberhang in genau dieser Zeile gemeldet
+# hatte.
+hotkeys=$(python3 - <<'PY'
+import re
+src = open("Tippi/App/AppDelegate.swift", encoding="utf-8").read()
+names = set()
+for m in re.finditer(r"let ([a-zA-Z]+) = HotkeyManager\(", src):
+    name = m.group(1)
+    if not name.lower().endswith("hotkeymanager"):
+        continue
+    prefix = name[: -len("HotkeyManager")] if name.endswith("HotkeyManager") else ""
+    names.add(prefix if prefix else "main")
+print(" ".join(sorted(names)))
+PY
+)
 table_checked=0
 for feature in $hotkeys; do
   # Map: code name → the word the tables must contain.
@@ -227,6 +244,7 @@ for feature in $hotkeys; do
     emoji)     needle="emoji" ;;
     notes)     needle="Notes" ;;
     screenOCR) needle="OCR" ;;
+    main)      needle="rewriting" ;;   # das KI-Umschreiben, Tippis Kernfeature
     *)
       bad "unknown hotkey feature '$feature' — add a comparison row to README.md AND docs/ONE-PAGER.md, then map it in $(basename "$0")"
       continue

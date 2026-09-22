@@ -34,7 +34,7 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
 | Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
-| AI rewriting, grammar, tone | Grammarly, ChatGPT desktop | **24 built-in prompts + your own**, 11 providers |
+| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 11 providers — in place, no app switch, your own keys |
 | Text case/formatting one-offs (bold, UPPERCASE, join lines, word count) | TextSoap, a word-count widget | **Local Quick Actions** — instant, no AI call, works offline (v2.0) |
 
 The point isn't only cost — Rocket and Espanso are free or cheap. It's that
