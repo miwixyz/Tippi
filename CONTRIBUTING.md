@@ -53,6 +53,8 @@ make open          # generates Tippi.xcodeproj and opens Xcode
 
 Build and run with **⌘R** in Xcode. Unsigned Debug builds work for development but have TCC quirks (Accessibility permission may reset between builds). A signed release build is needed for stable permission testing.
 
+**Testing anything that needs Accessibility** (selection bar, snippets, text replacement) next to an installed Tippi release: run `scripts/devid-testbuild.sh`, then `open /tmp/tippi-devid/export/Tippi.app`. macOS keeps a single Accessibility entry per bundle ID and checks it against the signing certificate. `make build` signs with Apple Development and therefore does **not** satisfy the grant the installed Developer-ID release holds — it runs without the permission. The script produces a Developer-ID build (archive + export + re-sign, no notarization, nothing published) that uses the existing grant as is.
+
 For voice features, build `whisper-cli` once:
 
 ```bash
