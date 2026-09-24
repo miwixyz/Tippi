@@ -236,6 +236,29 @@ final class SyncedPreferencesTests: XCTestCase {
     }
 }
 
+extension SyncedPreferencesTests {
+    /// iCloud that swallows every write — what a build without the iCloud
+    /// entitlement gets. Pushing then never makes local and remote equal, and the
+    /// timestamp write fires `UserDefaults.didChangeNotification`, which pushed
+    /// again: unbounded recursion, stack overflow at launch (crash report
+    /// 2026-09-24, 56 Tippi frames of `pushLocalChanges` ↔ `start()`).
+    func testUnreachableICloudDoesNotRecurse() {
+        let sync = SyncedPreferences(store: DeafUbiquitousStore(), defaults: defaults)
+        sync.start()
+        defer { sync.stopForTesting() }
+        defaults.set(["CINEWEB"], forKey: wordsKey)   // must return, not overflow
+        XCTAssertEqual(defaults.stringArray(forKey: wordsKey), ["CINEWEB"])
+    }
+}
+
+final class DeafUbiquitousStore: NSUbiquitousKeyValueStore {
+    override func object(forKey aKey: String) -> Any? { nil }
+    override func set(_ anObject: Any?, forKey aKey: String) {}
+    override func set(_ aDouble: Double, forKey aKey: String) {}
+    override func double(forKey aKey: String) -> Double { 0 }
+    override func synchronize() -> Bool { false }
+}
+
 /// Minimal stand-in for `NSUbiquitousKeyValueStore`.
 ///
 /// `NSUbiquitousKeyValueStore` has no injectable variant, and its `.default`

@@ -61,6 +61,12 @@ final class SyncedPreferences {
     /// Guards against the echo: applying a remote value writes to UserDefaults,
     /// which fires the change notification, which would push it straight back.
     private var isApplyingRemote = false
+    /// Guards the other echo: pushing writes the timestamp to UserDefaults,
+    /// which fires the change notification synchronously, which pushed again.
+    /// Harmless while iCloud accepts the write (local == remote ends it after one
+    /// round); when it does not, that was unbounded recursion — a stack overflow
+    /// at launch (2026-09-24, build without the iCloud entitlement).
+    private var isPushing = false
     private var observers: [NSObjectProtocol] = []
 
     init(store: NSUbiquitousKeyValueStore = .default, defaults: UserDefaults = .standard) {
@@ -191,7 +197,9 @@ final class SyncedPreferences {
     /// change notifications fire for every key in the domain, most of which are
     /// none of this type's business.
     private func pushLocalChanges() {
-        guard !isApplyingRemote else { return }
+        guard !isApplyingRemote, !isPushing else { return }
+        isPushing = true
+        defer { isPushing = false }
 
         for key in Self.syncedKeys {
             guard let local = defaults.object(forKey: key) else { continue }
@@ -257,6 +265,13 @@ final class SyncedPreferences {
     // MARK: - Testing seam
 
     /// Exposed for tests: runs one round trip without the notification plumbing.
+    /// Removes the observers `start()` installed — tests only, so one test's
+    /// sync cannot keep reacting to the next test's defaults.
+    func stopForTesting() {
+        observers.forEach(NotificationCenter.default.removeObserver)
+        observers = []
+    }
+
     func syncNowForTesting() {
         pushLocalChanges()
         applyRemoteChanges(nil)

@@ -3,6 +3,7 @@ import Carbon
 import Combine
 import QuartzCore
 import Sparkle
+import UserNotifications
 import SwiftUI
 import os
 
@@ -121,6 +122,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let notesWindowController = NotesWindowController()
     private var cancellables = Set<AnyCancellable>()
     private var updaterController: SPUStandardUpdaterController?
+    /// The menu's update row — renamed to "Update to X ready…" while a gentle
+    /// reminder is pending (see the Sparkle user driver delegate below).
+    private var updateMenuItem: NSMenuItem?
+    /// Keeps the notification delegate alive; UNUserNotificationCenter holds it weakly.
+    private let notificationRouter = NotificationClickRouter()
 
     private var safetyHotKeyRef: EventHotKeyRef?
     private var safetyHotKeyHandler: EventHandlerRef?
@@ -189,8 +195,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             updaterDelegate: nil,
             userDriverDelegate: self
         )
+        UNUserNotificationCenter.current().delegate = notificationRouter
         checkAgainIfJustUpdated()
         setupMenuBar()
+        // Test hook: triggers a background check like the schedule does — after
+        // two minutes, because right after launch Sparkle deliberately shows the
+        // window itself in front ("launched recently", measured on Kalli
+        // 2026-09-24). The reminder path is only reachable later.
+        if ProcessInfo.processInfo.arguments.contains("-TippiHintergrundpruefung") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 120) { [weak self] in
+                self?.updaterController?.updater.checkForUpdatesInBackground()
+            }
+        }
         observeFrontmostApp()
         observePermissions()
         hotkeyManager.update(trigger: loadHotkeyTrigger())
@@ -539,6 +555,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateItem.target = self
         updateItem.image = menuIcon("arrow.triangle.2.circlepath")
         menu.addItem(updateItem)
+        updateMenuItem = updateItem
 
         menu.addItem(.separator())
 
@@ -705,6 +722,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func checkForUpdates(_ sender: Any?) {
+        appDelegateLog.notice("user-initiated update check (active=\(NSApp.isActive, privacy: .public))")
         updaterController?.checkForUpdates(sender)
     }
 
@@ -1746,13 +1764,88 @@ private func safetyHotKeyCallback(
 // works even when another application is frontmost. The observer is one-shot
 // and self-cancels after a short timeout so it can never grab an unrelated
 // window later in the session.
+//
+// Update 2026-09-24: that fix still works when the USER asks (menu click →
+// measured on screen as window #1). It cannot work for a SCHEDULED check.
+// Sparkle's own header says what happens for background apps: the alert is
+// shown "immediately, but behind other running applications", and macOS no
+// longer lets an app pull itself forward without a user action. Sparkle even
+// logs it: "Background app automatically schedules for update checks but does
+// not implement gentle reminders." So scheduled finds now become a gentle
+// reminder — a notification plus the menu row — and a click on either opens
+// the window as a user action, i.e. in front.
 extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
+    static let updateReminderID = "tippi.update"
+
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    /// Never let Sparkle show a SCHEDULED update itself — not even when it
+    /// claims "immediate focus" (app just launched). Measured 2026-09-24 on
+    /// macOS 27: Sparkle logged "shows the window itself (front)", and the
+    /// window sat at position 3 behind two others; Michael saw nothing. Only a
+    /// user action gets a window to the front, so every scheduled find becomes
+    /// the gentle reminder, and the click on it opens the window.
+    func standardUserDriverShouldHandleShowingScheduledUpdate(
+        _ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool
+    ) -> Bool {
+        false
+    }
+
     func standardUserDriverWillHandleShowingUpdate(
         _ handleShowingUpdate: Bool,
         forUpdate update: SUAppcastItem,
         state: SPUUserUpdateState
     ) {
-        raiseNextWindowToFront()
+        guard !handleShowingUpdate else {
+            appDelegateLog.notice("update \(update.displayVersionString, privacy: .public): Sparkle shows the window itself (front)")
+            raiseNextWindowToFront()
+            return
+        }
+        appDelegateLog.notice("update \(update.displayVersionString, privacy: .public): gentle reminder instead of a window")
+        updateMenuItem?.title = String(
+            format: String(localized: "menu.updateReady"), update.displayVersionString)
+        guard !state.userInitiated else { return }
+        postUpdateReminder(version: update.displayVersionString)
+    }
+
+    func standardUserDriverDidReceiveUserAttention(forUpdate update: SUAppcastItem) {
+        clearUpdateReminder()
+    }
+
+    func standardUserDriverWillFinishUpdateSession() {
+        clearUpdateReminder()
+    }
+
+    private func postUpdateReminder(version: String) {
+        let content = UNMutableNotificationContent()
+        content.title = String(format: String(localized: "update.reminder.title"), version)
+        content.body = String(localized: "update.reminder.body")
+        let request = UNNotificationRequest(
+            identifier: Self.updateReminderID, content: content, trigger: nil)
+        // Ask first if nobody has yet — posting while the permission sheet is
+        // up drops the notification silently (same rule as ProblemNotifier).
+        // Denied is fine: the menu row still carries the reminder.
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, error in
+            // Never silent: without permission the reminder lives only in the
+            // menu row, and the log must say so (2026-09-24, a test build posted
+            // nothing and left no trace of why).
+            guard granted else {
+                appDelegateLog.notice("update reminder: notifications not permitted (\(error?.localizedDescription ?? "no error", privacy: .public)) — menu row only")
+                return
+            }
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error {
+                    appDelegateLog.error("update reminder failed: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+        }
+    }
+
+    private func clearUpdateReminder() {
+        updateMenuItem?.title = String(localized: "menu.checkForUpdates")
+        let center = UNUserNotificationCenter.current()
+        center.removeDeliveredNotifications(withIdentifiers: [Self.updateReminderID])
+        center.removePendingNotificationRequests(withIdentifiers: [Self.updateReminderID])
     }
 
     /// Sparkle's own alerts (e.g. "You're up to date", error dialogs) go
@@ -1791,6 +1884,7 @@ extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
             NSApp.activate()
             window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
+            appDelegateLog.notice("update window raised (active=\(NSApp.isActive, privacy: .public), key=\(window.isKeyWindow, privacy: .public))")
         }
     }
 }
@@ -1844,5 +1938,32 @@ private final class StatusMenuRowView: NSView {
 
     override var intrinsicContentSize: NSSize {
         NSSize(width: NSView.noIntrinsicMetric, height: 22)
+    }
+}
+
+
+/// Routes clicks on Tippi's notifications. Tippi had no delegate before, so a
+/// click merely activated the app. The update reminder needs the click to open
+/// the update window — as a user action, which is what lets it come to front.
+final class NotificationClickRouter: NSObject, UNUserNotificationCenterDelegate {
+    /// Show banners even while Tippi is the active app (without a delegate
+    /// macOS suppresses them then — e.g. while the Notes window is open).
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter, willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner]
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse
+    ) async {
+        let id = response.notification.request.identifier
+        appDelegateLog.notice("notification clicked: \(id, privacy: .public)")
+        guard id == AppDelegate.updateReminderID else { return }
+        await MainActor.run {
+            // AppDelegate.shared, never `NSApp.delegate as? AppDelegate` — that
+            // cast is silently nil here (see `shared`); the click would do nothing.
+            AppDelegate.shared?.checkForUpdates(nil)
+        }
     }
 }

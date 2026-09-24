@@ -1,5 +1,34 @@
 # Changelog
 
+## [2.12.5] — 2026-09-24
+
+### Behoben
+
+- **Das Update-Fenster lag wieder hinter anderen Apps.** Michael: „Das
+  Update-Fenster bei Tippi und Kalli fokussiert wieder oder immer noch nicht im
+  Vordergrund. Das irritiert!"
+
+  Der Fix aus 1.24.0 (Fenster abwarten, dann `orderFrontRegardless()`) wirkt
+  nur, wenn man selbst auf „Nach Updates suchen…" klickt — gemessen: Fenster auf
+  Platz 1. Bei einer **automatischen** Prüfung kann er unter macOS 27 nicht mehr
+  wirken: Sparkle zeigt das Fenster bei Apps ohne Dock-Symbol laut eigener Doku
+  „behind other running applications", und macOS lässt eine App ohne
+  Nutzeraktion nicht nach vorn. Sparkle protokollierte die Lücke selbst („does
+  not implement gentle reminders"). Auch direkt nach dem Start, wo Sparkle
+  „Fenster vorn" meldete, lag es gemessen auf Platz 3.
+
+  Jetzt: **kein Fenster bei automatischer Prüfung**, sondern die Mitteilung
+  „Tippi … ist da" und im Menü „Update auf … bereit". Ein Klick auf eins von
+  beiden öffnet das Fenster — als Nutzeraktion, also vorn. Tippi hat dafür
+  erstmals einen Mitteilungs-Delegate (vorher tat ein Klick auf eine
+  Tippi-Mitteilung nichts außer die App zu aktivieren).
+
+- **Einstellungs-Sync konnte sich endlos selbst aufrufen.** Schreibt iCloud
+  nicht mit (Build ohne iCloud-Berechtigung), löste der Zeitstempel-Schreibvorgang
+  sofort den nächsten Push aus — Stapelüberlauf beim Start, gefunden an einer
+  Testversion. Jetzt mit Wiedereintrittssperre; ein neuer Test mit „tauber"
+  iCloud stellt den Fall nach (vor der Sperre: Absturz, danach grün).
+
 ## [2.12.4] — 2026-09-24
 
 ### Behoben
