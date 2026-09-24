@@ -1,5 +1,47 @@
 # Changelog
 
+## [2.12.4] — 2026-09-24
+
+### Behoben
+
+- **Die Auswahlleiste blieb stehen, obwohl man längst woanders war.**
+  Michaels Befund: „Wenn man Text markiert und ein anderes Fenster öffnet oder
+  woanders hingeht, bleibt das Pop-up offen. Das sollte schließen, wenn der
+  Mauszeiger sich weiter weg entfernt."
+
+  Bisher schloss die Leiste nur bei einem Klick, bei Escape oder nach fünf
+  Sekunden ohne Maus darauf. Neu dazu:
+  - **Maus weit weg** — mehr als rund 3 cm vom Bereich aus Leiste *und*
+    markiertem Text: Die Leiste geht innerhalb einer halben Sekunde zu. Gemessen
+    wird bewusst ab beiden zusammen: Am Ende einer langen markierten Zeile steht
+    die Maus sonst schon beim Erscheinen zu weit von der mittig sitzenden Leiste
+    weg, und man käme nie an sie heran.
+  - **App-Wechsel** — ⌘-Tab, Dock, Mission Control: sofort zu. Dabei gibt es
+    keinen Klick, den die Leiste hätte sehen können.
+
+- **Nach einem Klick daneben blitzte die Leiste noch einmal auf.**
+  „Wenn ich woanders klicke, popt das Pop-up kurz auf. Besser wäre, wenn es bei
+  Entfernen gar nicht mehr angezeigt wird."
+
+  Tippi prüft nach **jedem** Loslassen der Maustaste, ob Text markiert ist. Viele
+  Klicks — Menüleiste, Dock, eine Symbolleiste — lassen die Markierung stehen,
+  also kam die Leiste zurück und wurde gleich wieder zugemacht. Jetzt merkt sich
+  Tippi eine Markierung, deren Leiste ohne Aktion geschlossen wurde. Für genau
+  diese erscheint sie erst wieder, wenn die Maustaste **auf** dem markierten Text
+  losgelassen wird — also beim bewussten Neu-Markieren.
+
+  **Grenze:** Apps, die Tippi nicht sagen, wo die Markierung auf dem Bildschirm
+  liegt (manche Electron-Apps), behalten das alte Verhalten — dort lässt sich ein
+  Klick auf den Text nicht von einem Klick daneben unterscheiden.
+
+### Doku
+
+- `make build` signiert seit 2.9.1 mit **Apple Development**, nicht mit Developer
+  ID — README und `CLAUDE.md` behaupteten noch das Gegenteil. Neu dokumentiert:
+  macOS führt pro Bundle-ID nur einen Bedienungshilfen-Eintrag, lokaler Build und
+  installierte Release verdrängen sich darin gegenseitig. Für Tests daneben gibt
+  es jetzt `scripts/devid-testbuild.sh` (Developer-ID-Build ohne Veröffentlichung).
+
 ## [2.12.3] — 2026-09-22
 
 ### Behoben

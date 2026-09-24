@@ -100,4 +100,56 @@ final class SelectionPopupPositionerTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(origin.y, tinyScreen.minY)
         XCTAssertLessThanOrEqual(origin.y + popupSize.height, tinyScreen.maxY)
     }
+
+    // MARK: - Dismiss when the pointer moves away
+
+    private let bar = CGRect(x: 750, y: 440, width: 200, height: 40) // below `selection`
+
+    func testPointerOnBarOrSelectionHasNotLeft() {
+        XCTAssertFalse(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 850, y: 460), popupFrame: bar, selectionBounds: selection))
+        XCTAssertFalse(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 850, y: 510), popupFrame: bar, selectionBounds: selection))
+    }
+
+    func testPointerJustInsideTheMarginHasNotLeft() {
+        // 99pt right of the zone's right edge — the bar (950) is wider than the selection (900)
+        XCTAssertFalse(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: bar.maxX + 99, y: 510), popupFrame: bar, selectionBounds: selection))
+    }
+
+    func testPointerFarAwayHasLeft() {
+        XCTAssertTrue(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: bar.maxX + 101, y: 510), popupFrame: bar, selectionBounds: selection))
+        XCTAssertTrue(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 20, y: 1060), popupFrame: bar, selectionBounds: selection)) // menu bar, top left
+    }
+
+    func testEndOfLongSelectionFarFromCentredBarHasNotLeft() {
+        // The reason the zone includes the selection: a 900pt-wide line, bar
+        // centred on it, pointer resting where the drag ended — 350pt from the
+        // bar's edge, yet the bar must stay reachable.
+        let longLine = CGRect(x: 100, y: 500, width: 900, height: 20)
+        let centredBar = CGRect(x: 450, y: 440, width: 200, height: 40)
+        XCTAssertFalse(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 1000, y: 505), popupFrame: centredBar, selectionBounds: longLine))
+    }
+
+    func testZeroSizeFallbackAnchorStillCountsAsInsideTheZone() {
+        // No usable AX bounds → anchor is the mouse position as a zero-size rect.
+        let mousePoint = CGRect(x: 1500, y: 800, width: 0, height: 0)
+        let barNearMouse = CGRect(x: 1400, y: 740, width: 200, height: 40)
+        XCTAssertFalse(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 1500, y: 800), popupFrame: barNearMouse, selectionBounds: mousePoint))
+        XCTAssertFalse(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 1500, y: 895), popupFrame: barNearMouse, selectionBounds: mousePoint))
+    }
+
+    // MARK: - Re-showing a dismissed selection
+
+    func testMouseUpOnTheSelectionCountsAsOnIt() {
+        XCTAssertTrue(SelectionPopupPositioner.pointerIsOnSelection(CGPoint(x: 850, y: 510), selectionBounds: selection))
+        // right at the glyph edge, within the 4pt slack
+        XCTAssertTrue(SelectionPopupPositioner.pointerIsOnSelection(CGPoint(x: selection.maxX + 3, y: 510), selectionBounds: selection))
+    }
+
+    func testClickNextToOrFarFromTheSelectionIsNotOnIt() {
+        // The 2026-09-24 case: a click elsewhere that leaves the selection intact
+        XCTAssertFalse(SelectionPopupPositioner.pointerIsOnSelection(CGPoint(x: selection.maxX + 30, y: 510), selectionBounds: selection))
+        XCTAssertFalse(SelectionPopupPositioner.pointerIsOnSelection(CGPoint(x: 20, y: 1060), selectionBounds: selection))
+        // on the bar is not on the selection either
+        XCTAssertFalse(SelectionPopupPositioner.pointerIsOnSelection(CGPoint(x: 850, y: 460), selectionBounds: selection))
+    }
 }

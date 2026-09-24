@@ -12,6 +12,32 @@ final class SelectionActionBarPanel {
     private var escapeKeyMonitor: Any?
     private var autoHideTimer: Timer?
     private var idleSeconds: TimeInterval = 0
+    private var appActivationObserver: NSObjectProtocol?
+    /// Where the bar belongs — the selection (or the mouse-position fallback).
+    /// Moving the pointer well away from this plus the bar closes it.
+    private var selectionZone: CGRect = .null
+
+    /// Identifies one selection: same app, same text, same position.
+    private struct SelectionSignature: Equatable {
+        let pid: pid_t?
+        let text: String
+        let location: Int?
+
+        init(_ snapshot: SelectionSnapshot) {
+            pid = snapshot.sourceApp?.processIdentifier
+            text = snapshot.text
+            location = snapshot.range.map { $0.location } ?? snapshot.nativeRange.map { $0.location }
+        }
+    }
+    /// The selection the bar is showing for right now.
+    private var shownSignature: SelectionSignature?
+    /// The last selection whose bar was closed without an action being taken
+    /// (pointer moved away, click elsewhere, Escape, app switch, time-out).
+    /// The monitor re-checks on every mouse-up anywhere, and many clicks —
+    /// menu bar, Dock, a toolbar — leave the selection intact, so this same
+    /// selection would otherwise pop the bar straight back up (reported
+    /// 2026-09-24: "wenn ich woanders klicke popt das Pop-Up kurz auf").
+    private var dismissedSignature: SelectionSignature?
 
     /// The bar disappears on its own after this much time without the pointer
     /// on it. Before this existed it sat there until the user clicked
@@ -38,11 +64,11 @@ final class SelectionActionBarPanel {
         let view = SelectionActionBarView(
             onAction: { [weak self] action in
                 onAction(action, snapshot)
-                self?.close()
+                self?.close(afterAction: true)
             },
             onTranslate: { [weak self] in
                 onTranslate(snapshot.text)
-                self?.close()
+                self?.close(afterAction: true)
             }
         )
 
@@ -92,11 +118,27 @@ final class SelectionActionBarPanel {
                 && NSScreen.screens.contains { $0.frame.intersects(rect) }
         }
         let anchorBounds: CGRect
+        let hasRealBounds: Bool
         if let bounds = snapshot.bounds, isUsable(bounds) {
             anchorBounds = bounds
+            hasRealBounds = true
         } else {
             anchorBounds = CGRect(origin: NSEvent.mouseLocation, size: .zero)
+            hasRealBounds = false
         }
+
+        // A dismissed selection only comes back when the mouse went up ON it —
+        // that is someone selecting it again on purpose. A click anywhere else
+        // that merely left it selected must not resurrect the bar. Without real
+        // bounds there is no way to tell the two apart, so those apps keep the
+        // old behaviour.
+        let signature = SelectionSignature(snapshot)
+        if hasRealBounds, signature == dismissedSignature,
+           !SelectionPopupPositioner.pointerIsOnSelection(NSEvent.mouseLocation, selectionBounds: anchorBounds) {
+            return
+        }
+        dismissedSignature = nil
+        shownSignature = signature
         let origin = SelectionPopupPositioner.origin(
             for: anchorBounds,
             popupSize: popupSize,
@@ -106,6 +148,7 @@ final class SelectionActionBarPanel {
         panel.setFrameOrigin(origin)
 
         self.panel = panel
+        selectionZone = anchorBounds
 
         globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
@@ -118,6 +161,19 @@ final class SelectionActionBarPanel {
         // pressed in the app the user is actually working in, not in Tippi.
         escapeKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard event.keyCode == 53 else { return } // kVK_Escape
+            Task { @MainActor in self?.close() }
+        }
+
+        // Switching to another app (⌘-Tab, Dock, Mission Control) involves no
+        // click, so the mouse monitor above never sees it — the bar used to
+        // float over the next app until the auto-hide ran out. Tippi's own
+        // activation counts too: the bar belongs to the source app's text.
+        let sourcePID = snapshot.sourceApp?.processIdentifier
+        appActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            let activated = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            guard activated?.processIdentifier != sourcePID else { return }
             Task { @MainActor in self?.close() }
         }
 
@@ -151,9 +207,15 @@ final class SelectionActionBarPanel {
         // Pointer on the bar means the user is reaching for it — that is the
         // one moment it must not vanish. Reset rather than pause, so moving
         // away restarts the full countdown instead of the remainder.
-        if NSMouseInRect(NSEvent.mouseLocation, panel.frame, false) {
+        let pointer = NSEvent.mouseLocation
+        if NSMouseInRect(pointer, panel.frame, false) {
             idleSeconds = 0
             return
+        }
+        // Pointer moved on to something else entirely — no reason to wait
+        // out the countdown (2026-09-24: bar stayed over an open Apple menu).
+        if SelectionPopupPositioner.pointerHasLeft(pointer, popupFrame: panel.frame, selectionBounds: selectionZone) {
+            return close()
         }
         idleSeconds += Self.autoHideTick
         if idleSeconds >= Self.autoHideAfter { close() }
@@ -164,7 +226,13 @@ final class SelectionActionBarPanel {
         autoHideTimer = nil
     }
 
-    func close() {
+    /// `afterAction`: the user used the bar, so there is nothing to remember —
+    /// every other close counts as "not wanted for this selection".
+    func close(afterAction: Bool = false) {
+        if !afterAction, let shown = shownSignature {
+            dismissedSignature = shown
+        }
+        shownSignature = nil
         stopAutoHide()
         if let monitor = globalMouseMonitor {
             NSEvent.removeMonitor(monitor)
@@ -174,6 +242,11 @@ final class SelectionActionBarPanel {
             NSEvent.removeMonitor(monitor)
             escapeKeyMonitor = nil
         }
+        if let observer = appActivationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            appActivationObserver = nil
+        }
+        selectionZone = .null
         panel?.orderOut(nil)
         panel = nil
     }

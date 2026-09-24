@@ -136,7 +136,7 @@ make open
 
 Then build and run in Xcode (⌘R). Note: an unsigned build will have TCC permission quirks. For a stable signed build see [Building a release](#building-a-release) below.
 
-For a local command-line build, `make build` writes to `build/Build/Products/Release/` and signs the app with your Developer ID certificate so the granted Accessibility permission survives rebuilds (a stable TCC identity tied to Team ID + bundle ID):
+For a local command-line build, `make build` writes to `build/Build/Products/Release/` and signs the app with your **Apple Development** certificate (Developer ID is reserved for notarised releases — a Developer-ID-signed local build gets killed at launch because the embedded development profile doesn't match):
 
 ```bash
 make build
@@ -240,7 +240,11 @@ This route always works because macOS does the binding, not Tippi.
 
 ### Local build permissions (test builds)
 
-`make build` signs with your Developer ID certificate, so the Accessibility grant has a stable TCC identity (Team ID + bundle ID) and persists across rebuilds — you grant it once.
+`make build` signs with your Apple Development certificate. The Accessibility grant is stable across rebuilds — but macOS keeps **one** entry per bundle ID (`com.tippi.app`) and checks it against the certificate. A local build and an installed Developer-ID release therefore **push each other out**: the one granted last wins, the other runs without the permission.
+
+**Testing next to an installed release:** use `scripts/devid-testbuild.sh` instead. It produces a Developer-ID-signed build in `/tmp/tippi-devid/export/` that satisfies the existing grant — no toggling in System Settings.
+
+On **macOS 27** the Accessibility pane is called **Device Control and Data Access** (German: *Gerätesteuerung und Datenzugriff*).
 
 1. **System Settings → Privacy & Security → Accessibility** → enable **Tippi**. If Tippi is not listed, add it via **+** → `build/Build/Products/Release/Tippi.app`.
 2. Make sure only **one** `Tippi.app` with bundle ID `com.tippi.app` exists. A second copy (e.g. an old release in `/Applications`) creates a LaunchServices conflict that can bind the grant to the wrong bundle. Remove duplicates.
@@ -423,6 +427,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 | Version | Status | Highlights |
 |---------|--------|------------|
+| v2.12.4 | ✅ Done | **Selection bar closes when you move on** — the pointer moving well away from the bar *and* the selected text (measured from both together, so the end of a long selected line stays in reach) or switching to another app now closes it at once, instead of waiting out the 5-second timer · **no more flash on a click elsewhere** — the bar re-checks on every mouse-up, and clicks on the menu bar, Dock or a toolbar leave the selection intact, so the bar popped back up. A selection whose bar was dismissed now only brings it back when the mouse goes up on the text itself, i.e. a deliberate re-selection. Apps that report no selection bounds keep the old behaviour · docs: `make build` signs with Apple Development, and `scripts/devid-testbuild.sh` gives a Developer-ID test build that shares the installed release's Accessibility grant |
 | v2.12.3 | ✅ Done | **Freeze-first screen capture** — the selection overlay calls `NSApp.activate(ignoringOtherApps:)`, which closes every pop-up, menu and tooltip. Since the capture happened *after* the selection, anything focus-sensitive was already gone; images worked because they don't disappear. The screen is now frozen on keypress and the selection runs on that still, so the pop-up is in the picture regardless. Side benefit: a missing Screen Recording permission now surfaces *before* you drag, not after. 11 tests cover the coordinate flip that was wrong once before (AppKit counts Y from the bottom, a CGImage from the top) — removing the flip fails 5 of them. Trade-off recorded in `docs/SECURE-DESIGN-screen-ocr.md`: one full-screen buffer per display now lives briefly in memory instead of just the crop |
 | v2.12.2 | ✅ Done | **Join wrapped lines** (on by default) — recognition returns one entry per *screen line*, which is a property of the layout, not the text, so pasted results broke mid-sentence. Deliberately not a blanket strip of every newline: blank lines, sentence endings, colons, bullets and numbered lists start a new block, everything else becomes flowing text. A hyphen at the end of a line is joined without a space, and an abbreviation like "z. B." does not create a false paragraph. Switch it off for code or tables |
 | v2.12.1 | ✅ Done | **Screen OCR captured the wrong region** — the selection rectangle comes from AppKit (origin bottom-left), while `sourceRect` expects CoreGraphics (origin top-left). Without the conversion a vertically mirrored area was captured: select at the top, get the bottom. It never surfaced as an error, only as "no text found", because the mirrored spot is usually empty · **a missing permission looked like missing text** — ScreenCaptureKit does not report a denied Screen Recording permission, it returns a black image. A blank capture is now detected and explained, including the restart that macOS requires |

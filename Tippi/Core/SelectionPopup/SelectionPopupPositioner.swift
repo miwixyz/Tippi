@@ -35,6 +35,42 @@ enum SelectionPopupPositioner {
     /// margin needs more clearance than it looks like on paper.
     static let gap: CGFloat = 16
 
+    /// How far the pointer may stray before the bar closes, measured from the
+    /// area covered by the bar AND the selection together — not from the bar
+    /// alone: at the end of a long selected line the pointer can already sit
+    /// hundreds of points from a bar centred on that line, and a bar-only
+    /// distance would close it before it could ever be reached. ~3 cm on a
+    /// typical display: far enough to not fire while reaching for a button,
+    /// near enough that moving on to other work closes it at once.
+    static let dismissDistance: CGFloat = 100
+
+    /// True when `pointer` has moved more than `distance` outside the area
+    /// covered by `popupFrame` and `selectionBounds`. `selectionBounds` may be
+    /// a zero-size rect (the mouse-position fallback when an app reports no
+    /// usable bounds) — it still counts as a point inside the zone.
+    static func pointerHasLeft(
+        _ pointer: CGPoint,
+        popupFrame: CGRect,
+        selectionBounds: CGRect,
+        distance: CGFloat = dismissDistance
+    ) -> Bool {
+        // `union` keeps a zero-size (non-null) rect as a point — pinned by a test.
+        let zone = popupFrame.union(selectionBounds).insetBy(dx: -distance, dy: -distance)
+        return !zone.contains(pointer)
+    }
+
+    /// True when `pointer` sits on the selection itself (plus a few points of
+    /// slack for the edge of a glyph). Used to tell a deliberate re-selection —
+    /// the drag or double-click ends on the text — from a click elsewhere that
+    /// merely left an old selection intact.
+    static func pointerIsOnSelection(
+        _ pointer: CGPoint,
+        selectionBounds: CGRect,
+        tolerance: CGFloat = 4
+    ) -> Bool {
+        selectionBounds.insetBy(dx: -tolerance, dy: -tolerance).contains(pointer)
+    }
+
     static func origin(
         for selectionBounds: CGRect,
         popupSize: CGSize,
