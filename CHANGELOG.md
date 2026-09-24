@@ -34,6 +34,10 @@
   liegt (manche Electron-Apps), behalten das alte Verhalten — dort lässt sich ein
   Klick auf den Text nicht von einem Klick daneben unterscheiden.
 
+- **„Was ist neu“ zeigte seit 2.12.2 wörtlich `\n\n` zwischen den Einträgen**
+  statt einer Leerzeile — in den Strings stand ein maskierter Backslash. Deutsch
+  und Englisch repariert.
+
 ### Doku
 
 - `make build` signiert seit 2.9.1 mit **Apple Development**, nicht mit Developer
