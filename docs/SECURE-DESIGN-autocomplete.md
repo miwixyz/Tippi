@@ -55,7 +55,12 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
   Einstellungen.
 - **Tampering/Größe:** Kontext hart auf die letzten 400 Zeichen vor dem Cursor
   begrenzt (UTF-16-sicher geschnitten). Nur Text-Rollen (`AXTextField`, `AXTextArea`,
-  `AXComboBox`); alles andere → kein Vorschlag.
+  `AXComboBox`); alles andere → kein Vorschlag. **Ergänzt 2026-09-25:** `AXWebArea`
+  nur, wenn ihr Wert setzbar (= bearbeitbar) ist — der Mail-Textkörper ist genau das
+  (gemessen). Eine gelesene Webseite bleibt ausgeschlossen. Die Cursorstelle kommt dort
+  über `AXSelectedTextMarkerRange` → `AXIndexForTextMarker`; Text und Position danach
+  über dieselben begrenzten Bereichs-Aufrufe (400 Zeichen) wie überall. Passwort-Signale
+  werden weiterhin vorher geprüft.
 - **Denial of service:** Anfrage erst nach 350 ms Pause, höchstens eine gleichzeitig,
   eine neue Taste bricht die laufende ab. Unter 3 Zeichen Kontext keine Anfrage.
 

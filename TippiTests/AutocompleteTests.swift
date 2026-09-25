@@ -160,10 +160,27 @@ final class AutocompleteTests: XCTestCase {
 
     private func exclusion(
         bundleID: String? = "com.apple.mail", role: String? = "AXTextArea", subrole: String? = nil,
-        secure: Bool = false, excluded: Set<String> = ["com.apple.Terminal"], own: String? = "com.tippi.app"
+        secure: Bool = false, excluded: Set<String> = ["com.apple.Terminal"], own: String? = "com.tippi.app",
+        editable: Bool = true
     ) -> AutocompleteExclusion.Reason? {
         AutocompleteExclusion.reason(bundleID: bundleID, role: role, subrole: subrole, secureInputActive: secure,
-                                     excludedBundleIDs: excluded, ownBundleID: own)
+                                     excludedBundleIDs: excluded, ownBundleID: own, isEditable: editable)
+    }
+
+    /// Real 2026-09-25: Der Mail-Textkörper ist `AXWebArea` (gemessen) — ohne
+    /// diese Regel kam in Mail nie ein Vorschlag.
+    func testEditableWebAreaIsAllowed() {
+        XCTAssertNil(exclusion(role: "AXWebArea", editable: true))
+    }
+
+    /// Eine Webseite, die man nur liest, ist kein Eingabefeld.
+    func testReadOnlyWebAreaIsBlocked() {
+        XCTAssertEqual(exclusion(role: "AXWebArea", editable: false), .notTextRole)
+    }
+
+    /// Passwort-Signale gewinnen auch im Web-Inhalt.
+    func testSecureInputBeatsEditableWebArea() {
+        XCTAssertEqual(exclusion(role: "AXWebArea", secure: true, editable: true), .secureInput)
     }
 
     func testOrdinaryTextFieldIsAllowed() {

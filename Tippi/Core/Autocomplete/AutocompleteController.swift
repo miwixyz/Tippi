@@ -265,13 +265,18 @@ final class AutocompleteController: ObservableObject {
             subrole: focused.flatMap { Self.string($0, kAXSubroleAttribute) },
             secureInputActive: IsSecureEventInputEnabled(),
             excludedBundleIDs: Set(AutocompleteSettings.excludedBundleIDs),
-            ownBundleID: Bundle.main.bundleIdentifier
+            ownBundleID: Bundle.main.bundleIdentifier,
+            isEditable: focused.map(Self.isValueSettable) ?? false
         ) {
             skip("\(reason.rawValue) bundle=\(app.bundleIdentifier ?? "?") role=\(focused.flatMap { Self.string($0, kAXRoleAttribute) } ?? "?")")
             return nil
         }
         guard let focused else { skip("no focused element"); return nil }
-        guard let range = Self.selectedRange(focused) else {
+        // Web-Inhalt (Mail) kennt keine AXSelectedTextRange, nur WebKit-Textmarker.
+        // Die Cursorstelle wird darüber in eine Zahl umgerechnet; Text und
+        // Position laufen danach über dieselben Aufrufe wie überall (gemessen
+        // 2026-09-25 an einem bearbeitbaren WebKit-Dokument).
+        guard let range = Self.selectedRange(focused) ?? Self.selectedRangeViaTextMarkers(focused) else {
             skip("no selected range role=\(Self.string(focused, kAXRoleAttribute) ?? "?")"); return nil
         }
         guard range.length == 0, range.location > 0 else {   // Auswahl aktiv → nichts
@@ -337,6 +342,32 @@ final class AutocompleteController: ObservableObject {
             element, kAXStringForRangeParameterizedAttribute as CFString, axRange, &ref
         ) == .success else { return nil }
         return ref as? String
+    }
+
+    private static func isValueSettable(_ element: AXUIElement) -> Bool {
+        var settable: DarwinBoolean = false
+        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success
+            && settable.boolValue
+    }
+
+    private static func selectedRangeViaTextMarkers(_ element: AXUIElement) -> CFRange? {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, "AXSelectedTextMarkerRange" as CFString, &ref) == .success,
+              let raw = ref, CFGetTypeID(raw) == AXTextMarkerRangeGetTypeID() else { return nil }
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
+        let markers = raw as! AXTextMarkerRange
+        guard let start = index(of: AXTextMarkerRangeCopyStartMarker(markers), in: element),
+              let end = index(of: AXTextMarkerRangeCopyEndMarker(markers), in: element),
+              start >= 0, end >= start else { return nil }
+        return CFRange(location: start, length: end - start)
+    }
+
+    private static func index(of marker: AXTextMarker, in element: AXUIElement) -> Int? {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element, "AXIndexForTextMarker" as CFString, marker, &ref
+        ) == .success else { return nil }
+        return (ref as? NSNumber)?.intValue
     }
 
     private static func selectedRange(_ element: AXUIElement) -> CFRange? {

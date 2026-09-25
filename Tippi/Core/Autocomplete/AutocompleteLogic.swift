@@ -58,6 +58,9 @@ enum AutocompleteExclusion {
     /// Design §3: nur Text-Rollen.
     static let textRoles: Set<String> = ["AXTextField", "AXTextArea", "AXComboBox"]
     static let secureTextFieldRole = "AXSecureTextField"
+    /// Bearbeitbarer Web-Inhalt (Mail-Textkörper, gemessen 2026-09-25) — nur
+    /// erlaubt, wenn er bearbeitbar ist; eine gelesene Webseite nie.
+    static let webAreaRole = "AXWebArea"
 
     enum Reason: String, Equatable {
         case secureInput, secureField, unknownApp, tippiItself, excludedApp, notTextRole
@@ -71,7 +74,8 @@ enum AutocompleteExclusion {
         subrole: String?,
         secureInputActive: Bool,
         excludedBundleIDs: Set<String>,
-        ownBundleID: String?
+        ownBundleID: String?,
+        isEditable: Bool
     ) -> Reason? {
         if secureInputActive { return .secureInput }
         if role == secureTextFieldRole || subrole == secureTextFieldRole { return .secureField }
@@ -79,7 +83,7 @@ enum AutocompleteExclusion {
         guard let bundleID else { return .unknownApp }
         if let ownBundleID, bundleID == ownBundleID { return .tippiItself }
         if excludedBundleIDs.contains(bundleID) { return .excludedApp }
-        guard let role, textRoles.contains(role) else { return .notTextRole }
+        guard let role, textRoles.contains(role) || (role == webAreaRole && isEditable) else { return .notTextRole }
         return nil
     }
 }
