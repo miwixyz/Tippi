@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.14.0] — 2026-09-25
+
+### Neu
+
+- **Aussprache-Varianten in den eigenen Wörtern.** Michael: „Wenn ich Tippi spreche,
+  wird nicht Tippi mit zwei p geschrieben." Parakeet hört „Tipi" — ein echtes Wort (das
+  Zelt), und die KI-Nachbearbeitung darf echte Wörter bewusst nicht umschreiben. Deshalb
+  jetzt ausdrücklich: Einträge wie `Tipi → Tippi` (auch `->`, `=>`, mehrere Varianten mit
+  Komma). Tippi ersetzt nach der Erkennung fest, ohne KI, nur ganze Wörter und egal ob
+  groß oder klein — mit Parakeet und Whisper und auch bei ausgeschalteter Nachbearbeitung.
+  Die KI bekommt weiter nur die Zielschreibweise, die strenge Regel bleibt. Folge: jedes
+  gesprochene „Tipi" wird zu „Tippi", auch das gemeinte Zelt.
+- **Darstellung: System · Hell · Dunkel.** Einstellungen → Allgemein. Gilt für die ganze
+  App — Einstellungen, Notizen, Übersetzungs-Fenster, Emoji-Auswahl. Pro Mac, nicht per
+  iCloud synchronisiert, weil es am Bildschirm hängt.
+- **Notizen aus dem Dock.** Solange die Notizen offen sind, zeigt Tippi ein Dock-Symbol.
+  Angeheftet (Rechtsklick → Optionen → Im Dock behalten) öffnet ein Klick darauf die
+  Notizen. Wirkt, solange Tippi läuft; läuft Tippi nicht, startet der erste Klick die App.
+  Auch ein erneutes Öffnen per Finder oder Spotlight zeigt jetzt die Notizen.
+
+### Intern
+
+- 23 neue Tests (Varianten-Parser und -Ersetzung, Darstellung, Dock-Weiterleitung),
+  353 insgesamt.
+
 ## [2.13.0] — 2026-09-25
 
 ### Geändert
