@@ -11,19 +11,18 @@ import XCTest
 @MainActor
 final class ScreenOCRSettingsTests: XCTestCase {
 
-    private let keys = [
-        "screenOCR.hotkey.enabled",
-        "screenOCR.hotkeyCombo.v1",
-        "screenOCR.concealFromClipboardHistory",
-    ]
+    // Throwaway suite, never `.standard` — see DictationInputModeTests: `.standard`
+    // in the test host is the installed app's real preferences file.
+    private let suites = ThrowawayDefaults()
 
     override func setUp() {
         super.setUp()
-        keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+        ScreenOCRSettings.store = suites.make()
     }
 
     override func tearDown() {
-        keys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+        ScreenOCRSettings.store = .standard
+        suites.removeAll()
         super.tearDown()
     }
 

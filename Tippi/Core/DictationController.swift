@@ -6,6 +6,14 @@ import AppKit
 /// activatable once a Whisper model is configured (`WhisperConfig.isConfigured`).
 @MainActor
 enum DictationSettings {
+    /// Where every setting in here is read and written. Always `.standard` in the
+    /// app. Tests swap in a throwaway suite: the test host IS the installed app
+    /// (same bundle ID, same preferences file), so a test writing `.standard`
+    /// overwrote the user's real settings. Real case, 2026-09-25: after every
+    /// update Michael had to set the dictation mode back to "single key" —
+    /// `DictationInputModeTests` deleted it on every `make test` before a release.
+    static var store: UserDefaults = .standard
+
     private static let enabledKey               = "dictation.enabled"
     private static let comboKey                 = "dictation.hotkeyCombo.v1"
     private static let postProcessEnabledKey    = "dictation.postProcess.enabled"
@@ -75,8 +83,8 @@ enum DictationSettings {
     """
 
     static var isEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: enabledKey) }
-        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+        get { store.bool(forKey: enabledKey) }
+        set { store.set(newValue, forKey: enabledKey) }
     }
 
     /// How the dictation hot key behaves.
@@ -109,34 +117,34 @@ enum DictationSettings {
 
     static var indicatorPosition: IndicatorPosition {
         get {
-            guard let raw = UserDefaults.standard.string(forKey: indicatorPositionKey),
+            guard let raw = store.string(forKey: indicatorPositionKey),
                   let pos = IndicatorPosition(rawValue: raw) else { return .bottom }
             return pos
         }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: indicatorPositionKey) }
+        set { store.set(newValue.rawValue, forKey: indicatorPositionKey) }
     }
 
     static var mode: InputMode {
         get {
-            guard let raw = UserDefaults.standard.string(forKey: modeKey),
+            guard let raw = store.string(forKey: modeKey),
                   let mode = InputMode(rawValue: raw) else { return .combo }
             return mode
         }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: modeKey) }
+        set { store.set(newValue.rawValue, forKey: modeKey) }
     }
 
     static var tapOrHoldModifier: ModifierKey {
         get {
-            guard let raw = UserDefaults.standard.string(forKey: tapOrHoldModifierKey),
+            guard let raw = store.string(forKey: tapOrHoldModifierKey),
                   let mod = ModifierKey(rawValue: raw) else { return .rightShift }
             return mod
         }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: tapOrHoldModifierKey) }
+        set { store.set(newValue.rawValue, forKey: tapOrHoldModifierKey) }
     }
 
     static var combo: KeyCombo {
         get {
-            guard let data = UserDefaults.standard.data(forKey: comboKey),
+            guard let data = store.data(forKey: comboKey),
                   let combo = try? JSONDecoder().decode(KeyCombo.self, from: data) else {
                 return .dictationDefault
             }
@@ -144,7 +152,7 @@ enum DictationSettings {
         }
         set {
             if let data = try? JSONEncoder().encode(newValue) {
-                UserDefaults.standard.set(data, forKey: comboKey)
+                store.set(data, forKey: comboKey)
             }
         }
     }
@@ -153,8 +161,8 @@ enum DictationSettings {
     /// provider to remove filler words and add punctuation. Default: OFF
     /// (adds 1–3 s latency, opt-in).
     static var postProcessEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: postProcessEnabledKey) }
-        set { UserDefaults.standard.set(newValue, forKey: postProcessEnabledKey) }
+        get { store.bool(forKey: postProcessEnabledKey) }
+        set { store.set(newValue, forKey: postProcessEnabledKey) }
     }
 
     /// User-supplied terms that transcription reliably gets wrong: brand names,
@@ -172,12 +180,12 @@ enum DictationSettings {
     /// replaced deterministically after transcription — see
     /// `CustomWordVariants`.
     static var customWords: [String] {
-        get { UserDefaults.standard.stringArray(forKey: customWordsKey) ?? [] }
+        get { store.stringArray(forKey: customWordsKey) ?? [] }
         set {
             let cleaned = newValue
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
-            UserDefaults.standard.set(cleaned, forKey: customWordsKey)
+            store.set(cleaned, forKey: customWordsKey)
         }
     }
 
@@ -217,13 +225,13 @@ enum DictationSettings {
     }
 
     static var postProcessPrompt: String {
-        get { UserDefaults.standard.string(forKey: postProcessPromptKey) ?? defaultPostProcessPrompt }
+        get { store.string(forKey: postProcessPromptKey) ?? defaultPostProcessPrompt }
         set {
             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty {
-                UserDefaults.standard.removeObject(forKey: postProcessPromptKey)
+                store.removeObject(forKey: postProcessPromptKey)
             } else {
-                UserDefaults.standard.set(newValue, forKey: postProcessPromptKey)
+                store.set(newValue, forKey: postProcessPromptKey)
             }
         }
     }
@@ -233,13 +241,13 @@ enum DictationSettings {
     /// a specific provider ID (e.g. "groq") to always polish through the
     /// fastest available hosted LLM regardless of the chat provider.
     static var postProcessProviderOverride: String {
-        get { UserDefaults.standard.string(forKey: postProcessProviderKey) ?? "" }
+        get { store.string(forKey: postProcessProviderKey) ?? "" }
         set {
             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty {
-                UserDefaults.standard.removeObject(forKey: postProcessProviderKey)
+                store.removeObject(forKey: postProcessProviderKey)
             } else {
-                UserDefaults.standard.set(trimmed, forKey: postProcessProviderKey)
+                store.set(trimmed, forKey: postProcessProviderKey)
             }
         }
     }
@@ -247,13 +255,13 @@ enum DictationSettings {
     /// Optional model override for the polish step, paired with the provider
     /// override. Empty = use the provider's `defaultModel`.
     static var postProcessModelOverride: String {
-        get { UserDefaults.standard.string(forKey: postProcessModelKey) ?? "" }
+        get { store.string(forKey: postProcessModelKey) ?? "" }
         set {
             let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty {
-                UserDefaults.standard.removeObject(forKey: postProcessModelKey)
+                store.removeObject(forKey: postProcessModelKey)
             } else {
-                UserDefaults.standard.set(trimmed, forKey: postProcessModelKey)
+                store.set(trimmed, forKey: postProcessModelKey)
             }
         }
     }

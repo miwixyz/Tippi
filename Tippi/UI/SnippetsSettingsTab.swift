@@ -333,17 +333,18 @@ struct SnippetsTab: View {
     @ViewBuilder
     private var customWordsSection: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // Lesbar statt Fussnote (Michael, 2026-09-25: „extrem klein und kaum zu
+            // lesen") — die Erklaerung zum Pfeil-Format muss man wirklich lesen koennen.
             Text(String(localized: "settings.voice.dictation.customWords.label"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.headline)
             Text(String(localized: "settings.voice.dictation.customWords.hint"))
-                .font(.caption2)
+                .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if dictationCustomWords.isEmpty {
                 Text(String(localized: "settings.voice.dictation.customWords.empty"))
-                    .font(.caption)
+                    .font(.callout)
                     .foregroundStyle(.tertiary)
             } else {
                 // Same row-with-trash shape the snippet list uses, rather than
@@ -352,7 +353,7 @@ struct SnippetsTab: View {
                 ForEach(dictationCustomWords, id: \.self) { word in
                     HStack {
                         Text(word)
-                            .font(.system(.caption, design: .monospaced))
+                            .font(.system(.body, design: .monospaced))
                         Spacer()
                         Button(role: .destructive) {
                             dictationCustomWords.removeAll { $0 == word }

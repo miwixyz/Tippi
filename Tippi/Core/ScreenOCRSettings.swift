@@ -5,6 +5,9 @@ import Foundation
 /// über `AppDelegate.restartScreenOCRHotkey()`.
 @MainActor
 enum ScreenOCRSettings {
+    /// See `DictationSettings.store`: `.standard` in the app, a throwaway suite in
+    /// tests — the test host shares the installed app's preferences file.
+    static var store: UserDefaults = .standard
     private static let enabledKey = "screenOCR.hotkey.enabled"
     private static let comboKey = "screenOCR.hotkeyCombo.v1"
     private static let concealKey = "screenOCR.concealFromClipboardHistory"
@@ -19,15 +22,15 @@ enum ScreenOCRSettings {
     /// ergäbe das „sieht alles und schreibt überall". Wer die Funktion nicht
     /// braucht, soll die Vollmacht nie erteilen müssen.
     static var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? false }
-        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+        get { store.object(forKey: enabledKey) as? Bool ?? false }
+        set { store.set(newValue, forKey: enabledKey) }
     }
 
     /// ⌥⌘2 — die Ziffern sind bei Tippi noch frei, und die Taste liegt nah an
     /// der System-Bildschirmfoto-Belegung (⇧⌘4), ohne mit ihr zu kollidieren.
     static var combo: KeyCombo {
         get {
-            guard let data = UserDefaults.standard.data(forKey: comboKey),
+            guard let data = store.data(forKey: comboKey),
                   let combo = try? JSONDecoder().decode(KeyCombo.self, from: data) else {
                 return KeyCombo(keyCode: 19, modifiers: [.option, .command])
             }
@@ -35,7 +38,7 @@ enum ScreenOCRSettings {
         }
         set {
             if let data = try? JSONEncoder().encode(newValue) {
-                UserDefaults.standard.set(data, forKey: comboKey)
+                store.set(data, forKey: comboKey)
             }
         }
     }
@@ -50,8 +53,8 @@ enum ScreenOCRSettings {
     /// **Ab Werk AN**: Fließtext ist der häufigere Fall. Wer Code oder Tabellen
     /// erfasst, schaltet es aus — dort trägt jede Zeile Bedeutung.
     static var joinLines: Bool {
-        get { UserDefaults.standard.object(forKey: joinKey) as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: joinKey) }
+        get { store.object(forKey: joinKey) as? Bool ?? true }
+        set { store.set(newValue, forKey: joinKey) }
     }
 
     /// Erkannten Text vor Zwischenablage-Verläufen verbergen
@@ -64,7 +67,7 @@ enum ScreenOCRSettings {
     /// Schalter für den Moment, in dem etwas Heikles erfasst wird, statt einer
     /// Voreinstellung, die im Alltag stört (entschieden 2026-09-21).
     static var concealFromClipboardHistory: Bool {
-        get { UserDefaults.standard.object(forKey: concealKey) as? Bool ?? false }
-        set { UserDefaults.standard.set(newValue, forKey: concealKey) }
+        get { store.object(forKey: concealKey) as? Bool ?? false }
+        set { store.set(newValue, forKey: concealKey) }
     }
 }

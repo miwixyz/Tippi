@@ -73,6 +73,7 @@ Makefile                 ← convenience wrappers (make build, make release, mak
 | `scripts/generate-emoji-data.py` | regenerates `Tippi/Resources/emoji-data.json` from pinned Unicode sources. `--check` fails if the committed file is stale |
 | `scripts/docs-drift-check.sh` | verifies Markdown/HTML docs against the code (provider count, built-in prompt count, version headers, ARCHITECTURE paths). Exit 1 = docs drift, exit 2 = the parser itself broke — never treat 2 as "clean". Historical lines (roadmaps, `v1.x` mentions) and lines marked `drift-ok` are skipped by design |
 | `scripts/prune-releases.sh` | keeps the newest 5 GitHub releases, deletes older ones. Never deletes tags, and never a release the appcast still points at (that would break Sparkle for users mid-update). `--dry-run` to preview, `--keep N` to change the limit |
+| `scripts/real-defaults-guard.sh` | `snapshot`/`compare` around `make test`: fails if a test changed the installed app's real feature settings (`dictation.*`, `voice.*`, `screenOCR.*` …). Added 2026-09-25 after a test wiped the dictation mode before every release |
 | `scripts/devid-testbuild.sh` | Developer-ID-signed test build (archive + export + re-sign, no notarization, no publish). **Use it for Accessibility features** (selection bar, snippets, text replacement): macOS keeps ONE Accessibility entry per bundle ID, owned by the installed Developer-ID release — a `make build` app (Apple Development) doesn't satisfy it and runs without the permission. Found 2026-09-24 |
 | `scripts/release.sh` | release pipeline. `--no-publish` stops after the notarized DMG (no GitHub release, no appcast) — use it to test a build in release quality without shipping to users. `--no-prune` skips the automatic release cleanup at the end. Includes drift check that aborts if Help strings don't match provider count, plus the docs-drift gate above |
 
@@ -120,6 +121,8 @@ make release        # full pipeline: lint + build + notarize + DMG + GitHub Rele
 | New release | `make bump VERSION=X.Y.Z` (patches project.yml + CHANGELOG stub) → edit CHANGELOG entries → commit → `make release` |
 
 ## Anti-footguns
+
+- **Never write `UserDefaults.standard` in a test** — the test host is the installed app, so it overwrites Michael's real settings (2026-09-25: a test deleted the dictation mode on every `make test`). Use the settings type's `store` + `ThrowawayDefaults`; `make test` fails via `scripts/real-defaults-guard.sh` if real settings change.
 
 - **Never edit `Localizable.strings` with `cat >>`** — wrong encoding, `plutil -lint` rejects. Use Edit tool or `git checkout HEAD -- file.strings` to recover.
 - **Mixed German `„` opener + ASCII `"` closer in `.strings` files breaks parsing** — `"` ends the string literal early. Use typographic `"` or `\"` consistently.

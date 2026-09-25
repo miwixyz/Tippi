@@ -108,8 +108,13 @@ test: generate
 # strukturell nicht sieht — der Absturz in 2.11.5 lag in einem Pfad, der nur
 # bei einem echten Fehlerzustand laeuft.
 	@bash scripts/concurrency-lint.sh
+	@bash scripts/real-defaults-guard.sh snapshot
 	xcodebuild test -project Tippi.xcodeproj -scheme Tippi -destination 'platform=macOS'
 	@$(MAKE) --no-print-directory purge-test-defaults
+# Echte Einstellungen der installierten App: kein Test darf sie aendern. Der Test-Host
+# IST die installierte App (gleiche Bundle-ID). Bis 2026-09-25 loeschte ein Test bei
+# jedem Lauf den Diktat-Modus — nach jedem Update war „Einzelne Sondertaste" weg.
+	@bash scripts/real-defaults-guard.sh compare
 
 purge-test-defaults:
 # Wiederholt, nicht einmalig (korrigiert 2026-09-20, nachdem der erste Entwurf

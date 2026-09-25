@@ -65,6 +65,17 @@ brew install cmake
 make prepare-binary   # builds whisper-cli statically and places it in Tippi/Helpers/
 ```
 
+## Tests never touch the real preferences
+
+The test host **is** the installed app — same bundle ID, same preferences file. A test that
+writes `UserDefaults.standard` overwrites the user's real settings. Until 2026-09-25 one test
+deleted the dictation mode on every `make test`, so after every update "single key" was gone.
+
+- Settings types expose a swappable `store` (`DictationSettings.store`, `ScreenOCRSettings.store`);
+  tests set it to a `ThrowawayDefaults` suite in `setUp` and back to `.standard` in `tearDown`.
+- `make test` guards this: `scripts/real-defaults-guard.sh` snapshots Tippi's feature settings
+  before the run and fails if any changed afterwards.
+
 ## Documentation is part of the release
 
 `make release` runs `scripts/docs-release-gate.sh` and **stops** if the docs did

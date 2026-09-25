@@ -16,15 +16,22 @@ final class DictationInputModeTests: XCTestCase {
     private let modeKey = "dictation.inputMode.v1"
     private let modifierKey = "dictation.tapOrHold.modifier.v1"
 
+    // Throwaway suite, NEVER `.standard`: the test host is the installed app, so
+    // `.standard` is the user's real preferences file. Until 2026-09-25 this setUp
+    // deleted Michael's dictation mode on every `make test` (i.e. before every
+    // release) — he had to re-select "single key" after each update.
+    private let suites = ThrowawayDefaults()
+    private var store: UserDefaults!
+
     override func setUp() {
         super.setUp()
-        UserDefaults.standard.removeObject(forKey: modeKey)
-        UserDefaults.standard.removeObject(forKey: modifierKey)
+        store = suites.make()
+        DictationSettings.store = store
     }
 
     override func tearDown() {
-        UserDefaults.standard.removeObject(forKey: modeKey)
-        UserDefaults.standard.removeObject(forKey: modifierKey)
+        DictationSettings.store = .standard
+        suites.removeAll()
         super.tearDown()
     }
 
@@ -44,8 +51,8 @@ final class DictationInputModeTests: XCTestCase {
     /// A garbage value in UserDefaults must fall back, not crash or disable the
     /// hot key.
     func testUnknownStoredValuesFallBackToDefaults() {
-        UserDefaults.standard.set("nonsense", forKey: modeKey)
-        UserDefaults.standard.set("nonsense", forKey: modifierKey)
+        store.set("nonsense", forKey: modeKey)
+        store.set("nonsense", forKey: modifierKey)
         XCTAssertEqual(DictationSettings.mode, .combo)
         XCTAssertEqual(DictationSettings.tapOrHoldModifier, .rightShift)
     }
