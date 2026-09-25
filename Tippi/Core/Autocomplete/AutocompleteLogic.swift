@@ -117,8 +117,8 @@ enum AutocompleteKeyDecision {
 // MARK: - Bereinigung der Modellantwort (Design §3 „Tampering der Ausgabe")
 
 enum AutocompleteSanitizer {
-    static let maxWords = 3
-    static let maxCharacters = 40
+    static let maxWords = 8
+    static let maxCharacters = 80
 
     /// Bidi-Steuerzeichen: könnten den angezeigten Vorschlag optisch anders
     /// aussehen lassen, als er eingefügt wird. ZWJ bleibt — Emoji brauchen ihn.
@@ -273,14 +273,14 @@ enum AutocompleteRequest {
     /// Design §3: Zeitlimit 1,5 s.
     static let timeout: TimeInterval = 1.5
     /// Gemessen 2026-09-25 (Gemma 4 E2B): ~20 Token, temperature 0.2, 6/6 Vorschläge.
-    static let maxTokens = 20
+    static let maxTokens = 40
     static let temperature = 0.2
     /// Nur nicht-privilegierte Ports (Bereichsprüfung, Design §3).
     static let allowedPorts = 1024...65_535
 
     static let systemPrompt = """
         Setze den Text des Nutzers fort, in seiner Sprache. Gib NUR die Fortsetzung aus: \
-        1 bis 3 Wörter, höchstens bis zum Satzende. Wiederhole den Anfang nicht. \
+        den Rest des aktuellen Satzes, höchstens 8 Wörter. Wiederhole den Anfang nicht. \
         Endet der Text mitten in einem Wort, beginne mit dem Rest dieses Wortes.
         """
 
@@ -311,11 +311,31 @@ enum AutocompleteRequest {
     }
 
     /// Die fertige Anfrage — oder `nil`, wenn `server` kein Loopback ist.
-    static func make(server: URL, model: String, context: String) -> URLRequest? {
+    /// Höchstens so viele eigene Wörter, je höchstens so lang — der Prompt
+    /// bleibt kurz, auch bei einer langen Liste.
+    static let maxGlossaryTerms = 40
+    static let maxGlossaryTermLength = 40
+
+    /// Grundprompt plus die eigenen Wörter des Nutzers als Schreibweisen-Liste.
+    /// Die Begriffe sind Daten: Steuerzeichen/Zeilenumbrüche werden zu
+    /// Leerzeichen, überlange und leere fallen weg.
+    static func systemPrompt(glossary: [String]) -> String {
+        let terms = glossary
+            .map { term in
+                String(term.unicodeScalars.map { $0.properties.generalCategory == .control ? " " : Character($0) })
+                    .split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            }
+            .filter { !$0.isEmpty && $0.count <= maxGlossaryTermLength }
+            .prefix(maxGlossaryTerms)
+        guard !terms.isEmpty else { return systemPrompt }
+        return systemPrompt + " Schreibe diese Namen und Begriffe genau so: " + terms.joined(separator: ", ") + "."
+    }
+
+    static func make(server: URL, model: String, context: String, glossary: [String] = []) -> URLRequest? {
         guard isLoopback(server) else { return nil }
         let body = Body(
             model: model,
-            messages: [Message(role: "system", content: systemPrompt),
+            messages: [Message(role: "system", content: systemPrompt(glossary: glossary)),
                        Message(role: "user", content: context)],
             stream: false,
             max_tokens: maxTokens,
@@ -343,6 +363,39 @@ enum AutocompleteRequest {
             let choices: [Choice]
         }
         return (try? JSONDecoder().decode(Response.self, from: data))?.choices.first?.message.content
+    }
+}
+
+// MARK: - Wort für Wort (⇥) und Weitertippen
+
+enum AutocompleteSuggestion {
+    /// ⇥ nimmt nur das nächste Wort (samt führendem Leerzeichen und anhängender
+    /// Satzzeichen); der Rest bleibt stehen. `rest == nil` = nichts mehr übrig.
+    static func nextWord(of suggestion: String) -> (take: String, rest: String?) {
+        let leading = suggestion.prefix { $0.isWhitespace }
+        let word = suggestion.dropFirst(leading.count).prefix { !$0.isWhitespace }
+        let take = String(leading + word)
+        let rest = String(suggestion.dropFirst(take.count))
+        return (take, rest.trimmingCharacters(in: .whitespaces).isEmpty ? nil : rest)
+    }
+
+    enum TypeThrough: Equatable {
+        /// Getipptes Zeichen passt — Vorschlag um dieses Zeichen kürzen.
+        case keep(String)
+        /// Passt, aber danach ist nichts mehr übrig.
+        case usedUp
+        /// Passt nicht — Vorschlag verwerfen, neu anfragen.
+        case mismatch
+    }
+
+    /// „Einfach weitertippen": Tippt der Nutzer genau das nächste Zeichen des
+    /// Vorschlags, bleibt der Vorschlag stehen und wird kürzer — kein Flackern,
+    /// keine neue Anfrage. Groß/klein egal (Satzanfang).
+    static func afterTyping(_ typed: String, suggestion: String) -> TypeThrough {
+        guard typed.count == 1, let next = suggestion.first,
+              typed.lowercased() == String(next).lowercased() else { return .mismatch }
+        let rest = String(suggestion.dropFirst())
+        return rest.trimmingCharacters(in: .whitespaces).isEmpty ? .usedUp : .keep(rest)
     }
 }
 

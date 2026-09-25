@@ -81,15 +81,24 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
   angezeigter Vorschlag, eingefügt wird **nur auf ⇥** als reiner Text. Kein
   automatisches Einfügen, nie.
 - **Tampering der Ausgabe:** Vor der Anzeige bereinigt: Steuerzeichen und
-  Zeilenumbrüche raus, auf 3 Wörter / 40 Zeichen gekürzt, Wiederholung des bereits
-  Getippten entfernt, leere Antwort → nichts anzeigen.
+  Zeilenumbrüche raus, auf 8 Wörter / 80 Zeichen gekürzt (bis 2026-09-25: 3 / 40 —
+  angehoben mit Wort-für-Wort-⇥, gemessen gleich schnell), Wiederholung des bereits
+  Getippten entfernt, leere Antwort → nichts anzeigen. ⇥ fügt nur das nächste Wort ein.
+- **Eigene Wörter im Prompt (ab 2026-09-25):** Die Liste „Eigene Wörter" des Nutzers
+  (lokal/iCloud, von ihm selbst gepflegt) geht als Schreibweisen-Liste mit in den
+  System-Prompt — nur Zielwörter, höchstens 40 Begriffe à 40 Zeichen, Steuerzeichen
+  und Umbrüche entfernt. Bleibt wie alles andere auf dem eigenen Loopback-Server.
 
 ### Tastatur → Tippi (aktiver Tap)
 - **Elevation/Tampering — Tasten schlucken:** Der Tap wird **nur erzeugt, wenn die
   Funktion an ist**, und schluckt ausschließlich ⇥ **ohne** Modifier, **nur** solange
   ein Vorschlag sichtbar ist. Alle anderen Ereignisse laufen unverändert durch.
-- **Information disclosure:** Der Tap liest keine Tasteninhalte mit — er nutzt
-  Tastendrücke nur als „es wurde getippt" (Pausen-Timer, Verwerfen). Kein Puffer.
+- **Information disclosure:** Ohne sichtbaren Vorschlag liest der Tap keine
+  Tasteninhalte — nur „es wurde getippt" (Pausen-Timer, Verwerfen). **Ab 2026-09-25
+  („einfach weitertippen"):** Solange ein Vorschlag sichtbar ist, wird das *eine*
+  getippte Zeichen mit dem Vorschlag verglichen und sofort vergessen — kein Puffer,
+  kein Protokoll, nicht bei ⌘/⌃. Tippis eigene Ereignisse (⌘V beim Einfügen,
+  nachgereichtes ⇥) erkennt der Tap an der Absender-PID und übergeht sie.
 - **Denial of service:** Deaktiviert macOS den Tap (`tapDisabledByTimeout`), wird er
   wieder eingeschaltet; der Rückruf macht keine Arbeit außer Flags setzen. Hängt der
   Tap trotzdem, darf nie ⇥ verloren gehen → bei Zweifel durchlassen.
@@ -154,7 +163,7 @@ Tests in `TippiTests/AutocompleteTests.swift` (48 Fälle).
 | §3 Bereinigung: Steuerzeichen, Umbrüche, 3 Wörter/40 Zeichen, Wiederholung, leer | `L:AutocompleteSanitizer.clean/overlapLength/truncate` | 16 Tests `testRepetition…` bis `testEmptyAnswersGiveNothing` |
 | §3 Prompt Injection: kein Werkzeug, Einfügen nur auf ⇥ als Text | `C:acceptShownSuggestion` → `TextInsertion.replace(with:in:)`; sonst kein Einfügepfad | — (Code-Review) |
 | §3 Tap nur wenn an, schluckt nur ⇥ ohne Modifier bei sichtbarem Vorschlag | `C:start/stop`, `L:AutocompleteKeyDecision.shouldSwallow`, atomar in `C:AutocompleteTapBridge.consumeIfAccepting` | `testTabWithoutModifier…`, `testTabWithModifier…`, `testOtherKeys…`, `testCapsLock…` |
-| §3 Tap liest keine Inhalte, kein Puffer | `C:autocompleteTapCallback` liest nur Tastencode + Modifier | — (Code-Review) |
+| §3 Tap liest Inhalte nur bei sichtbarem Vorschlag, ein Zeichen, kein Puffer | `C:autocompleteTapCallback` + `typedCharacters`, `L:AutocompleteSuggestion.afterTyping` | `testTyping…` (3) + Code-Review |
 | §3 `tapDisabledByTimeout` → wieder an; ⇥ nie verlieren | `C:autocompleteTapCallback`; `C:acceptShownSuggestion` reicht ⇥ per `repostTab` nach, wenn nicht eingefügt werden kann | — (manuell) |
 | verwerfen bei Taste/Esc/Klick/App-Wechsel | `C:userTyped`, `C:userClicked`, App-Wechsel-Beobachter in `C:start` | `testEscapeAndShortcuts…` |
 | §4 Schalter in Einstellungen und Menü; aus = Tap sofort weg | `AppDelegate.setAutocompleteEnabled/restartAutocomplete/toggleAutocomplete`, `C:stop` | — (manuell) |

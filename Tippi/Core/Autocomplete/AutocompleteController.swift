@@ -23,6 +23,8 @@ final class AutocompleteController: ObservableObject {
 
     /// Design §3: Anfrage erst nach 350 ms Pause.
     static let pauseNanoseconds: UInt64 = 350_000_000
+    /// Wartezeit, bis die App nach Einfügen/Tippen den Cursor weitergerückt hat.
+    static let reshowDelayNanoseconds: UInt64 = 40_000_000
 
     /// Wahr, solange Emoji-Vorschlag, Auswahlleiste oder Snippet-Erweiterung
     /// gerade aktiv sind — dann kein Vorschlag, damit sich nichts überlagert.
@@ -134,7 +136,20 @@ final class AutocompleteController: ObservableObject {
 
     // MARK: - Ereignisse aus dem Tap
 
-    func userTyped(restartPause: Bool) {
+    func userTyped(restartPause: Bool, typed: String? = nil) {
+        // „Einfach weitertippen": passt das Zeichen zum Vorschlag, bleibt er
+        // stehen (gekürzt) — keine neue Anfrage, kein Flackern.
+        if let shown, let typed {
+            switch AutocompleteSuggestion.afterTyping(typed, suggestion: shown.text) {
+            case .keep(let rest):
+                self.shown = (rest, shown.pid)
+                bridge.setVisible(true)
+                reshow(rest, pid: shown.pid)
+                return
+            case .usedUp, .mismatch:
+                break
+            }
+        }
         cancelPending()
         dismiss()
         guard restartPause else { return }
@@ -162,11 +177,39 @@ final class AutocompleteController: ObservableObject {
             Self.repostTab()
             return
         }
-        let text = shown.text
+        // Wort für Wort: ⇥ nimmt nur das nächste Wort, der Rest bleibt stehen.
+        let split = AutocompleteSuggestion.nextWord(of: shown.text)
+        let pid = shown.pid
         cancelPending()
         dismiss()
-        autocompleteLog.notice("accepted bundle=\(front?.bundleIdentifier ?? "?", privacy: .public) len=\(text.count, privacy: .public)")
-        Task { await TextInsertion.replace(with: text, in: front) }
+        autocompleteLog.notice("accepted bundle=\(front?.bundleIdentifier ?? "?", privacy: .public) len=\(split.take.count, privacy: .public) rest=\(split.rest?.count ?? 0, privacy: .public)")
+        let gen = generation
+        Task {
+            await TextInsertion.replace(with: split.take, in: front)
+            // Hat der Nutzer währenddessen weitergetippt, gilt der Rest nicht mehr.
+            guard let rest = split.rest, gen == self.generation else { return }
+            self.shown = (rest, pid)
+            self.bridge.setVisible(true)
+            self.reshow(rest, pid: pid)
+        }
+    }
+
+    /// Zeigt `text` an der aktuellen Cursorstelle — nach einem übernommenen
+    /// Wort oder einem passend getippten Zeichen. Die App braucht einen Moment,
+    /// bis der Cursor weitergerückt ist; lässt er sich nicht (mehr) lesen,
+    /// verschwindet der Vorschlag.
+    private func reshow(_ text: String, pid: pid_t) {
+        let gen = generation
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: Self.reshowDelayNanoseconds)
+            guard let self, gen == self.generation, self.shown?.text == text else { return }
+            guard let app = NSWorkspace.shared.frontmostApplication, app.processIdentifier == pid,
+                  let field = self.readFocusedField(in: app) else {
+                self.dismiss()
+                return
+            }
+            self.panel.show(text, caret: field.caret)
+        }
     }
 
     private func cancelPending() {
@@ -195,8 +238,11 @@ final class AutocompleteController: ObservableObject {
         }
         guard let app = NSWorkspace.shared.frontmostApplication else { return skip("no frontmost app") }
         guard let field = readFocusedField(in: app) else { return }
+        let glossary = CustomWordVariants.glossaryTerms(from: DictationSettings.customWords)
         guard let request = AutocompleteRequest.make(server: server, model: MLXServerManager.activeModel,
-                                                     context: field.context) else { return skip("request not built") }
+                                                     context: field.context, glossary: glossary) else {
+            return skip("request not built")
+        }
         let gen = generation
         let started = Date()
         let bundleID = app.bundleIdentifier ?? "?"
@@ -398,6 +444,11 @@ final class AutocompleteTapBridge: @unchecked Sendable {
         visible = value
     }
 
+    var isVisible: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return visible
+    }
+
     /// Schluckt genau dann, wenn `AutocompleteKeyDecision.shouldSwallow` ja
     /// sagt, und setzt „sichtbar" im selben Schritt zurück.
     func consumeIfAccepting(keyCode: Int64, flags: CGEventFlags) -> Bool {
@@ -412,8 +463,10 @@ final class AutocompleteTapBridge: @unchecked Sendable {
 
 /// Der Rückruf macht keine Arbeit außer Flags lesen/setzen und die eigentliche
 /// Reaktion auf den Main-Actor zu schicken (Design §3 „Denial of service").
-/// Tasteninhalte werden nicht gelesen — nur Tastencode und Modifier für die
-/// ⇥-Entscheidung; nichts wird gepuffert.
+/// Tasteninhalte werden nur gelesen, solange ein Vorschlag sichtbar ist — dann
+/// wird das eine Zeichen mit dem Vorschlag verglichen („weitertippen") und
+/// sofort vergessen; nichts wird gepuffert oder protokolliert.
+/// Eigene Ereignisse (⌘V beim Einfügen, nachgereichtes ⇥) werden übergangen.
 private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, userInfo in
     guard let userInfo else { return Unmanaged.passUnretained(event) }
     let bridge = Unmanaged<AutocompleteTapBridge>.fromOpaque(userInfo).takeUnretainedValue()
@@ -422,6 +475,9 @@ private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, user
         // macOS hat den Tap abgeschaltet → wieder einschalten.
         if let tap = bridge.tap { CGEvent.tapEnable(tap: tap, enable: true) }
     case .keyDown:
+        if event.getIntegerValueField(.eventSourceUnixProcessID) == Int64(getpid()) {
+            return Unmanaged.passUnretained(event)
+        }
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
         if bridge.consumeIfAccepting(keyCode: keyCode, flags: flags) {
@@ -429,13 +485,24 @@ private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, user
             return nil
         }
         let restart = AutocompleteKeyDecision.restartsPause(keyCode: keyCode, flags: flags)
-        Task { @MainActor in bridge.controller?.userTyped(restartPause: restart) }
+        let typed = bridge.isVisible && flags.isDisjoint(with: [.maskCommand, .maskControl])
+            ? typedCharacters(event) : nil
+        Task { @MainActor in bridge.controller?.userTyped(restartPause: restart, typed: typed) }
     case .leftMouseDown, .rightMouseDown, .otherMouseDown:
         Task { @MainActor in bridge.controller?.userClicked() }
     default:
         break
     }
     return Unmanaged.passUnretained(event)
+}
+
+/// Das eine getippte Zeichen (für „weitertippen"), sonst `nil`.
+private func typedCharacters(_ event: CGEvent) -> String? {
+    var length = 0
+    var chars = [UniChar](repeating: 0, count: 4)
+    event.keyboardGetUnicodeString(maxStringLength: chars.count, actualStringLength: &length, unicodeString: &chars)
+    guard length > 0 else { return nil }
+    return String(utf16CodeUnits: chars, count: length)
 }
 
 /// Design §3: Weiterleitungen werden nicht verfolgt.
