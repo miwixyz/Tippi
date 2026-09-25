@@ -81,8 +81,7 @@ final class EmojiSuggestionPanel {
         panel.ignoresMouseEvents = false
         panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .stationary]
 
-        let isDark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
-        panel.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+        panel.appearance = AppearanceSettings.panelAppearance()
 
         self.panel = panel
     }

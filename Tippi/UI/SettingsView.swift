@@ -122,9 +122,22 @@ private struct GeneralSettingsTab: View {
     @AppStorage(LocalQuickActionSettings.showActionsKey) private var showLocalQuickActions: Bool = true
     @AppStorage(SelectionPopupSettings.enabledKey) private var selectionPopupEnabled: Bool = false
     @State private var selectionPopupPosition: SelectionPopupPosition = SelectionPopupSettings.position
+    @State private var appearanceMode: AppearanceSettings.Mode = AppearanceSettings.mode
 
     var body: some View {
         Form {
+            Section {
+                Picker(String(localized: "settings.general.appearance"), selection: $appearanceMode) {
+                    Text(String(localized: "settings.general.appearance.system")).tag(AppearanceSettings.Mode.system)
+                    Text(String(localized: "settings.general.appearance.light")).tag(AppearanceSettings.Mode.light)
+                    Text(String(localized: "settings.general.appearance.dark")).tag(AppearanceSettings.Mode.dark)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: appearanceMode) { _, new in
+                    AppearanceSettings.mode = new
+                }
+            }
+
             Section {
                 Toggle(String(localized: "settings.general.autostart"), isOn: $autostart)
                     .onChange(of: autostart) { _, new in
@@ -1785,6 +1798,8 @@ private struct HelpTab: View {
         HelpEntry(id: "translate", icon: "character.bubble", category: .voice,
                   title: String(localized: "settings.help.translateTitle"), body: String(localized: "settings.help.translateBody")),
 
+        HelpEntry(id: "appearance", icon: "circle.lefthalf.filled", category: .misc,
+                  title: String(localized: "settings.help.appearanceTitle"), body: String(localized: "settings.help.appearanceBody")),
         HelpEntry(id: "notes", icon: "note.text", category: .misc,
                   title: String(localized: "settings.help.notesTitle"), body: String(localized: "settings.help.notesBody")),
         HelpEntry(id: "history", icon: "clock.arrow.circlepath", category: .misc,

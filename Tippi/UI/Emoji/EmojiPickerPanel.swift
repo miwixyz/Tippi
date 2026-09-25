@@ -158,9 +158,9 @@ final class EmojiPickerPanel {
         }
     }
 
+    /// Tippi's effective mode — see `AppearanceSettings.panelAppearance()`.
     private func applySystemAppearance(to panel: NSPanel) {
-        let isDark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
-        panel.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+        panel.appearance = AppearanceSettings.panelAppearance()
     }
 
     func close() {

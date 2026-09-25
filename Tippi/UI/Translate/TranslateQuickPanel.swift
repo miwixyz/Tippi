@@ -161,10 +161,10 @@ final class TranslateQuickPanel {
         panel.makeKeyAndOrderFront(nil)
     }
 
-    /// Sets the panel's appearance to the current system light/dark mode.
+    /// Sets the panel's appearance to Tippi's effective light/dark mode — the
+    /// system's, unless Settings → General forces light or dark.
     private func applySystemAppearance(to panel: NSPanel) {
-        let isDark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
-        panel.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+        panel.appearance = AppearanceSettings.panelAppearance()
     }
 
     func close() {

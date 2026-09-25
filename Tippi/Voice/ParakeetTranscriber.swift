@@ -44,13 +44,20 @@ enum SpeechEngine {
 /// `WhisperTranscriber.transcribe`: consumes the WAV (deleted on every exit
 /// path) and returns the transcribed text.
 enum SpeechTranscriber {
+    /// Both engines return here, and every microphone path (dictation, prompt
+    /// popup, translate panel) goes through here — so this is the one place the
+    /// user's `Tipi → Tippi` corrections are applied: once, for both engines,
+    /// before any AI cleanup, and also when cleanup is off.
     static func transcribe(wavURL: URL) async throws -> String {
+        let raw: String
         switch SpeechEngine.current {
         case .whisper:
-            return try await WhisperTranscriber.transcribe(wavURL: wavURL)
+            raw = try await WhisperTranscriber.transcribe(wavURL: wavURL)
         case .parakeet:
-            return try await ParakeetTranscriber.shared.transcribe(wavURL: wavURL)
+            raw = try await ParakeetTranscriber.shared.transcribe(wavURL: wavURL)
         }
+        let entries = await MainActor.run { DictationSettings.customWords }
+        return CustomWordVariants.apply(to: raw, entries: entries)
     }
 
     /// Called when recording starts, so model loading overlaps with the

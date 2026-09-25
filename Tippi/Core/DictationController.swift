@@ -167,6 +167,10 @@ enum DictationSettings {
     /// capitalisation to what looks like a normal compound word. No model
     /// choice fixes that, because the model has no way to know the house
     /// spelling. It has to be told.
+    ///
+    /// An entry may also read `Tipi → Tippi` (heard → intended); those are
+    /// replaced deterministically after transcription — see
+    /// `CustomWordVariants`.
     static var customWords: [String] {
         get { UserDefaults.standard.stringArray(forKey: customWordsKey) ?? [] }
         set {
@@ -190,11 +194,22 @@ enum DictationSettings {
     /// instruction: telling a small model to "fix similar-sounding words"
     /// invites it to rewrite words that were already right. The rule here only
     /// bites when the term is actually present.
+    ///
+    /// `Tipi → Tippi` entries contribute only their target: the variant was
+    /// already replaced deterministically right after transcription
+    /// (`SpeechTranscriber.transcribe`), and naming it here would invite the
+    /// model to guess — see `CustomWordVariants`.
     static var effectivePostProcessPrompt: String {
-        let words = customWords
-        guard !words.isEmpty else { return postProcessPrompt }
+        promptWithGlossary(postProcessPrompt, customWords: customWords)
+    }
+
+    /// Pure half of `effectivePostProcessPrompt`, testable without touching
+    /// the real preferences.
+    static func promptWithGlossary(_ base: String, customWords: [String]) -> String {
+        let words = CustomWordVariants.glossaryTerms(from: customWords)
+        guard !words.isEmpty else { return base }
         let list = words.joined(separator: ", ")
-        return postProcessPrompt + """
+        return base + """
 
 
         Spelling: these terms have a fixed spelling and must appear exactly as written here whenever they occur — \(list). Correct only the spelling or capitalisation of these specific terms; never insert them, and never alter any other word to resemble them.

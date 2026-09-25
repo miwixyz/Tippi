@@ -51,6 +51,9 @@ Tippi/
 │   │                               #   Vorher 3 Kopien in AppDelegate → 2× derselbe Bug
 │   ├── KeychainStore.swift         # API-Keys
 │   ├── SyncedPreferences.swift     # v2.11 — Allow-List, die per iCloud über Macs wandert
+│   ├── CustomWordVariants.swift    # „Tipi → Tippi“ in Eigene Wörter: deterministische Ersetzung
+│   │                               #   direkt nach der Erkennung (SpeechTranscriber), vor der KI
+│   ├── AppearanceSettings.swift    # System/Hell/Dunkel → NSApp.appearance + die drei Panels
 │   ├── TippiStatusMonitor.swift    # Ampel für die Menüleiste. `Status.error` traegt seit
 │   │                               #   v2.11.5 Ursache UND Handlungsanweisung, nicht nur „Fehler"
 │   ├── ProblemNotifier.swift       # v2.11.5 — meldet Ausfaelle ungefragt, einmal pro neuem

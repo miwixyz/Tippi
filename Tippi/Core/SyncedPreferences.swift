@@ -31,6 +31,8 @@ private let syncLog = Logger(subsystem: "com.tippi.app", category: "sync")
 ///   machine where it is the wrong answer, not the same one.
 /// - **Anything holding a path** (watched snippet directory, imported file
 ///   paths) — a path is a statement about one filesystem.
+/// - **Light/dark appearance** (`AppearanceSettings`) — depends on the Mac's
+///   display and where it is used, not on the user's writing.
 ///
 /// ## Conflict handling
 ///

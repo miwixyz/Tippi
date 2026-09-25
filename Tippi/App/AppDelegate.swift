@@ -175,6 +175,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // values, so a newer version from iCloud is already in place. The
         // allow-list and the reasons for every exclusion live in the type.
         SyncedPreferences.shared.start()
+        // Light/dark override from Settings → General, before any window opens.
+        AppearanceSettings.apply()
         // Remap persisted Nebius model ids that the provider removed (they 404).
         ProviderModelPresets.migrateRetiredModels()
         // Best-effort, non-blocking: catch a provider retiring the configured
@@ -894,6 +896,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func showNotesWindow() {
         notesWindowController.show()
+    }
+
+    /// A click on Tippi's Dock icon — or opening Tippi.app again while it is
+    /// already running — opens Notes.
+    ///
+    /// The Dock icon only exists while Notes is open (`NotesWindowController`
+    /// switches to `.regular`), but it can be kept in the Dock from there
+    /// ("Options → Keep in Dock"). Without this method a click on that kept
+    /// icon did nothing at all: Tippi has no main window for AppKit to
+    /// restore. SwiftUI's `@NSApplicationDelegateAdaptor` forwards this
+    /// selector to us — verified with a minimal LSUIElement app on
+    /// 2026-09-25, and pinned by `DockReopenTests`.
+    ///
+    /// Returns `false`: we handled it, AppKit must not try its own default.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if Self.isRunningUnitTests { return false }
+        showNotesWindow()
+        return false
     }
 
     /// (Re)registers the Notes window hot key. Call after the setting
