@@ -39,7 +39,17 @@ case "${1:-}" in
   snapshot) auszug > "$SNAP" ;;
   compare)
     [ -f "$SNAP" ] || { echo "✗ real-defaults-guard: kein Schnappschuss — erst 'snapshot'"; exit 1; }
-    NACHHER=$(auszug)
+    # Messstelle, 2026-09-25: Ein Lauf meldete direkt nach purge-test-defaults
+    # „keine Tippi-Einstellungen", obwohl alle da waren (Plist unveraendert, einzeln
+    # gestartet gruen). Ursache ungeklaert — der Neustart von cfprefsd allein
+    # reproduziert es nicht. Deshalb bis zu 5 Versuche, und SICHTBAR melden, wenn
+    # mehr als einer noetig war. Sind die Einstellungen wirklich weg, bleibt es rot.
+    for versuch in 1 2 3 4 5; do
+      NACHHER=$(auszug 2>/dev/null) && break
+      [ "$versuch" = 5 ] && { auszug; exit 1; }
+      sleep 1
+    done
+    [ "$versuch" -gt 1 ] && echo "⚠︎ real-defaults-guard: Einstellungen erst im $versuch. Versuch lesbar (Messstelle — Muster beobachten)"
     if [ "$NACHHER" = "$(cat "$SNAP")" ]; then
       echo "✓ echte Tippi-Einstellungen unveraendert"
     else

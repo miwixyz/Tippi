@@ -88,6 +88,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Passive `:prefix` suggestion list. Never takes keyboard focus — see
     /// `EmojiSuggestionPanel`.
     private let emojiSuggestionPanel = EmojiSuggestionPanel()
+    /// Labs: Autovervollständigung beim Tippen (ab Werk AUS). Schweigt, solange
+    /// Emoji-Vorschlag, Auswahlleiste oder Snippet-Erweiterung aktiv sind.
+    /// Siehe `docs/SECURE-DESIGN-autocomplete.md`.
+    lazy var autocomplete = AutocompleteController(isOtherTypingUIActive: { [weak self] in
+        guard let self else { return false }
+        return self.emojiSuggestionPanel.isOpen || self.selectionPopupPanel.isOpen || self.snippetMonitor.isInjecting
+    })
+    private var autocompleteMenuItem: NSMenuItem?
 
     private var statusItem: NSStatusItem?
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
@@ -226,6 +234,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         restartEmojiHotkey()
         restartNotesHotkey()
         restartScreenOCRHotkey()
+        restartAutocomplete()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -369,6 +378,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             selectionPopupMonitor.start()
         }
         appDelegateLog.notice("restartSelectionPopupEngine done, monitor.isActive=\(self.selectionPopupMonitor.isActive, privacy: .public), lastError=\(self.selectionPopupMonitor.lastError ?? "nil", privacy: .public)")
+    }
+
+    /// Labs-Autovervollständigung: Einstellung anwenden (Tap an/aus) und das
+    /// Häkchen im Menü nachziehen. Einstellungen und Menü rufen beide hierher.
+    func restartAutocomplete() {
+        autocomplete.apply()
+        autocompleteMenuItem?.state = autocomplete.isEnabled ? .on : .off
+    }
+
+    func setAutocompleteEnabled(_ enabled: Bool) {
+        AutocompleteSettings.isEnabled = enabled
+        restartAutocomplete()
+    }
+
+    @objc private func toggleAutocomplete() {
+        setAutocompleteEnabled(!AutocompleteSettings.isEnabled)
     }
 
     /// Applies a selection-bar action to the snapshot captured at the moment
@@ -558,6 +583,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notesItem.keyEquivalentModifierMask = [.command, .option]
         notesItem.image = menuIcon("note.text")
         menu.addItem(notesItem)
+
+        let autocompleteItem = NSMenuItem(
+            title: String(localized: "menu.autocomplete"),
+            action: #selector(toggleAutocomplete),
+            keyEquivalent: ""
+        )
+        autocompleteItem.image = menuIcon("text.cursor")
+        menu.addItem(autocompleteItem)
+        autocompleteMenuItem = autocompleteItem
 
         menu.addItem(.separator())
 

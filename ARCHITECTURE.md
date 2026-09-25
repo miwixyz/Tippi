@@ -74,6 +74,14 @@ Tippi/
 │   │   ├── EmojiDatabase.swift             # Laden, Alias-Map, EmojiSearch (rein)
 │   │   ├── EmojiInlineMatcher.swift        # `:name:`-Erkennung, rein + unit-getestet
 │   │   └── EmojiSettings.swift             # Hotkey, Toggles, Recents
+│   ├── Autocomplete/               # Labs — Autovervollständigung beim Tippen (ab Werk AUS)
+│   │   ├── AutocompleteController.swift    # aktiver CGEvent-Tap (nur wenn an; schluckt NUR ⇥ bei
+│   │   │                                   #   sichtbarem Vorschlag), 350-ms-Pause, AX-Kontext,
+│   │   │                                   #   Anfrage an Tippis EIGENEN MLX-Server, Overlay
+│   │   ├── AutocompleteLogic.swift         # rein + unit-getestet: Kontext-Schnitt, Ausschluss,
+│   │   │                                   #   ⇥-Entscheidung, Bereinigung, Loopback-Anfrage
+│   │   └── AutocompleteSettings.swift      # an/aus + Ausschlussliste, `store` für Tests
+│   │                                       #   Design: docs/SECURE-DESIGN-autocomplete.md
 │   ├── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync
 │       ├── Note.swift                      # Model, nicht Codable (1 .txt-Datei/Notiz)
@@ -95,6 +103,8 @@ Tippi/
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
+│   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # grauer Vorschlag am Cursor, nie Key, keine Klicks
+│   ├── AutocompleteSettingsSection.swift  # Labs-Abschnitt in Einstellungen → Allgemein
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
 │   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
 │   ├── ScreenSelectionOverlay.swift # v2.12 — Auswahlrechteck, 3 Abbruchwege

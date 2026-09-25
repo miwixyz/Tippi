@@ -178,6 +178,10 @@ private struct GeneralSettingsTab: View {
                     }
                 }
             }
+
+            if let autocomplete = AppDelegate.shared?.autocomplete {
+                AutocompleteSettingsSection(controller: autocomplete)
+            }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -1785,6 +1789,9 @@ private struct HelpTab: View {
                   title: String(localized: "settings.help.syncTitle"), body: String(localized: "settings.help.syncBody")),
         HelpEntry(id: "emoji", icon: "face.smiling", category: .snippets,
                   title: String(localized: "settings.help.emojiTitle"), body: String(localized: "settings.help.emojiBody")),
+        HelpEntry(id: "autocomplete", icon: "text.cursor", category: .snippets,
+                  title: String(localized: "settings.help.autocompleteTitle"),
+                  body: String(localized: "settings.help.autocompleteBody")),
 
         HelpEntry(id: "api", icon: "key", category: .providers,
                   title: String(localized: "settings.help.apiTitle"), body: String(localized: "settings.help.apiBody")),

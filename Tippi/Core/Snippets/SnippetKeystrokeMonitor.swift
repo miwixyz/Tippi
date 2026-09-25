@@ -46,8 +46,9 @@ final class SnippetKeystrokeMonitor: ObservableObject {
 
     /// Set while sending our own corrective backspace+paste, so those
     /// synthetic events don't feed back into the matcher and corrupt the
-    /// buffer or re-trigger on our own output.
-    private var isInjecting = false
+    /// buffer or re-trigger on our own output. Readable so the autocomplete
+    /// can stay quiet while an expansion is being typed.
+    private(set) var isInjecting = false
 
     /// Keys that reset the buffer instead of being appended to it — a
     /// Return/Tab/Escape means "no longer mid-word", an arrow key means the

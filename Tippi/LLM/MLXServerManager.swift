@@ -344,6 +344,27 @@ final class MLXServerManager: ObservableObject {
 
     static var isInstalled: Bool { resolvedBinary() != nil }
 
+    // MARK: - Own server only (autocomplete)
+
+    /// Base URL of the server **this Tippi process started itself** — `nil` in
+    /// every other case, including a server `start()` merely adopted because it
+    /// already answered on the port.
+    ///
+    /// The autocomplete sends everything the user types. An adopted listener
+    /// could be any program that got to the port first, so it must never receive
+    /// that text (docs/SECURE-DESIGN-autocomplete.md §3 "Spoofing").
+    var ownedServerURL: URL? {
+        Self.ownedServerURL(state: state, ownsRunningProcess: process?.isRunning == true)
+    }
+
+    /// Pure form of `ownedServerURL`, testable without spawning anything.
+    /// `ownsRunningProcess` is false on the adoption path: that branch sets
+    /// `.running` without ever assigning `process`.
+    nonisolated static func ownedServerURL(state: ServerState, ownsRunningProcess: Bool) -> URL? {
+        guard ownsRunningProcess, case .running(let port) = state else { return nil }
+        return AutocompleteRequest.loopbackURL(port: port)
+    }
+
     /// The model ID that the running server actually registered (from /v1/models).
     /// Falls back to the configured model string if the server is not yet running.
     static var activeModel: String { shared.activeModelID ?? model }
