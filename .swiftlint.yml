@@ -1,0 +1,128 @@
+# SwiftLint — Tippi
+# Eingeführt 2026-09-25 auf Basis der Kalli-Config (2026-09-24). Jede Abweichung
+# vom Default ist bewusst entschieden, Begründung steht dabei.
+# Lauf: `make lint` (oder `swiftlint lint --strict`).
+
+included:
+  - Tippi
+  - TippiTests
+
+excluded:
+  # whisper.cpp ist ein gitignorierter Upstream-Checkout von `make prepare-binary`
+  # (Beispiel-Apps inklusive, 63 Treffer). Fremdcode, und je nach Mac vorhanden
+  # oder nicht — ohne Ausschluss hinge das Lint-Ergebnis vom Rechner ab.
+  - Tippi/Helpers
+  - build
+  - build-check
+  - build-test
+  - dist
+  - .build
+
+disabled_rules:
+  # Komma nach dem letzten Element macht Diffs sauberer (eine Zeile statt zwei).
+  - trailing_comma
+  # `var x: T? = nil` ist explizit und schadet nicht — reine Stilfrage.
+  - implicit_optional_initialization
+  # `Button(action: { … }) { Label }` und `.sheet(isPresented:onDismiss:) { … }`
+  # sind die üblichen SwiftUI-Formen. Die Regel verlangt `label:` ausgeschrieben —
+  # schlechter lesbar, kein Fehler dahinter.
+  - multiple_closures_with_trailing_closure
+
+identifier_name:
+  # r/g/b bei Farben, v/c in Closures, `.on` als Enum-Fall: kurz ist hier lesbarer.
+  min_length:
+    warning: 1
+    error: 1
+  # JSON-Feldnamen der Provider-APIs (Anthropic, OpenAI-kompatibel, Gemini, MLX).
+  # Die Codable-Structs spiegeln das Wire-Format 1:1; umbenennen hieße CodingKeys
+  # nachrüsten — Verhaltensrisiko ohne Gewinn. Nur diese Namen, nicht `_` generell.
+  excluded:
+    - max_tokens
+    - stop_reason
+    - has_more
+    - finish_reason
+    - system_instruction
+    - enable_thinking
+    - chat_template_kwargs
+
+line_length:
+  warning: 150
+  error: 250
+  ignores_comments: true
+  ignores_urls: true
+  # Die langen Zeilen sind os_log-Meldungen mit Interpolation — umbrechen macht sie
+  # schlechter lesbar, nicht besser.
+  ignores_interpolated_strings: true
+  # Die System-Prompts (DemoPrompt, Diktat-Nachbearbeitung, Anweisungs-Prompt) sind
+  # mehrzeilige String-Literale: ein Umbruch darin ist ein Zeilenumbruch IM PROMPT
+  # und ändert, was das Modell bekommt.
+  ignores_multiline_strings: true
+
+# Sperrklinke statt Refactoring: knapp über dem Stand vom 2026-09-25
+# (PromptPopupView 733 Zeilen; größter Typ-Rumpf 390 Zeilen, ein Tab-Struct in
+# SettingsView). Wächst eine
+# Datei darüber hinaus, ist das der Moment zum Aufteilen — nicht vorher.
+# Ausreißer sind im Code markiert, jeweils mit Begründung „Bestand 2026-09-25":
+# file_length dateiweit in AppDelegate.swift (1969) und SettingsView.swift (2532);
+# type_body_length per `disable:next` an AppDelegate, SettingsView.VoiceTab und
+# PreviewView. Ein globaler Wert auf deren Niveau wäre wertlos.
+file_length:
+  warning: 750
+  error: 800
+type_body_length:
+  warning: 400
+  error: 450
+
+# Sperrklinke: knapp über dem Bestand vom 2026-09-25 (SelectionActionBarPanel 80
+# Zeilen). Die zwei 108-Zeilen-Ausreißer (AppDelegate.setupMenuBar,
+# MLXServerManager.start) sind einzeln im Code markiert, statt den Wert für alle
+# auf 110 zu heben.
+function_body_length:
+  warning: 80
+  error: 110
+
+# Sperrklinke: auf dem Bestand vom 2026-09-25 (WhisperModelManager, PreviewView je
+# 16). Reine `switch`-Tabellen zählen nicht mit — KeyCombo.keyName(for:) ordnet
+# Tastencodes Namen zu (sonst 68) und wird durch Aufteilen nicht verständlicher.
+cyclomatic_complexity:
+  warning: 16
+  error: 25
+  ignores_case_statements: true
+
+# Sperrklinke: HistoryStore.append hat 8 Parameter (Bestand 2026-09-25).
+function_parameter_count:
+  warning: 8
+  error: 10
+
+# Die Provider dekodieren verschachteltes JSON mit verschachtelten Decodable-Structs
+# (ResponseBody › Choice › Message). Die Struktur spiegelt das Wire-Format;
+# flachziehen macht das Mapping unübersichtlicher. Einziger tieferer Fall
+# (Gemini › Part, Ebene 4) ist per `disable:this` markiert.
+nesting:
+  type_level:
+    warning: 3
+
+# EmojiSearch.rank sortiert lokal (index, score, emoji) — ein benanntes 3er-Tupel
+# ist dort lesbarer als ein Hilfs-struct für eine Funktion.
+large_tuple:
+  warning: 3
+  error: 4
+
+custom_rules:
+  # Tippi, 2026-09-14: `NSApp.delegate as? AppDelegate` an 21 Stellen. In einer
+  # SwiftUI-App mit @NSApplicationDelegateAdaptor ist NSApp.delegate NICHT die
+  # eigene AppDelegate-Instanz — der Cast liefert immer nil, `?.` verschluckt es,
+  # nichts passiert, kein Fehler. Vier Stunden Fehlersuche.
+  # Stattdessen: AppDelegate-Instanz explizit durchreichen oder ein eigenes
+  # statisches `AppDelegate.shared` setzen.
+  dead_app_delegate_cast:
+    name: "Toter AppDelegate-Cast"
+    regex: 'NSApp(lication\.shared)?\.delegate\s+as[?!]\s*AppDelegate'
+    # Nur Code, keine Kommentare: Die Warnkommentare, die genau vor diesem Cast
+    # warnen, zitieren ihn — ohne Ausschluss meldete die Regel beim Tippi-Rollout
+    # (2026-09-25) 3 Treffer, alle in solchen Kommentaren.
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "NSApp.delegate ist unter SwiftUI nicht die eigene AppDelegate — Cast liefert still nil. AppDelegate explizit durchreichen."
+    severity: error

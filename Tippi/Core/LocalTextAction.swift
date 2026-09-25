@@ -70,6 +70,8 @@ struct LocalTextAction: Identifiable, Equatable {
         self.category = category
     }
 
+    // Eine Aktion pro Zeile, als Tabelle lesbar — umbrechen würde das zerreißen.
+    // swiftlint:disable line_length
     static var all: [LocalTextAction] {
         [
             LocalTextAction(kind: .bold, title: String(localized: "local.action.bold"), symbol: "bold", category: .formatting),
@@ -90,6 +92,7 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .wordCount, title: String(localized: "local.action.wordCount"), symbol: "text.word.spacing", category: .info),
         ]
     }
+    // swiftlint:enable line_length
 
     func perform(on text: String) -> LocalTextActionResult {
         switch kind {

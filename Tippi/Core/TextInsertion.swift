@@ -172,6 +172,7 @@ enum TextInsertion {
             element, kAXSelectedTextRangeAttribute as CFString, &verifyRef) == .success,
            let verifyValue = verifyRef, CFGetTypeID(verifyValue) == AXValueGetTypeID() {
             var actual = CFRange()
+            // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
             if AXValueGetValue(verifyValue as! AXValue, .cfRange, &actual),
                actual.length != range.length {
                 insertLog.notice(
@@ -292,6 +293,7 @@ enum TextInsertion {
             return false
         }
 
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
         return setSelectedText(text, on: focusedRaw as! AXUIElement)
     }
 
@@ -388,6 +390,7 @@ enum TextInsertion {
               CFGetTypeID(focusedRaw) == AXUIElementGetTypeID() else {
             return nil
         }
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
         return (focusedRaw as! AXUIElement)
     }
 

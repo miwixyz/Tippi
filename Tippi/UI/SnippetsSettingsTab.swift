@@ -48,7 +48,8 @@ struct SnippetsTab: View {
             }
         }
         .sheet(item: $editingSnippet) { snippet in
-            SnippetEditorSheet(trigger: snippet.trigger, replacement: snippet.replacement, vars: snippet.vars) { newTrigger, newReplacement, newVars in
+            SnippetEditorSheet(trigger: snippet.trigger, replacement: snippet.replacement,
+                               vars: snippet.vars) { newTrigger, newReplacement, newVars in
                 var updated = snippet
                 updated.trigger = newTrigger
                 updated.replacement = newReplacement

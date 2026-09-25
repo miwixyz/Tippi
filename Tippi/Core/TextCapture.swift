@@ -89,6 +89,7 @@ enum TextCapture {
 
         var range = CFRange()
         guard CFGetTypeID(rangeValue) == AXValueGetTypeID(),
+              // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
               AXValueGetValue(rangeValue as! AXValue, .cfRange, &range), range.length > 0 else {
             return nil
         }
@@ -120,6 +121,7 @@ enum TextCapture {
         }
 
         var axRect = CGRect.zero
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
         guard AXValueGetValue(boundsValue as! AXValue, .cgRect, &axRect) else { return nil }
 
         // AX/Quartz coordinates are anchored to the primary screen's top-left
@@ -172,6 +174,7 @@ enum TextCapture {
         var windowRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &windowRef) == .success,
            let windowRaw = windowRef, CFGetTypeID(windowRaw) == AXUIElementGetTypeID() {
+            // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
             return findSelectedText(in: windowRaw as! AXUIElement, depth: 0, deadline: deadline)
         }
 
@@ -221,6 +224,7 @@ enum TextCapture {
               CFGetTypeID(focusedRaw) == AXUIElementGetTypeID() else {
             return nil
         }
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
         return (focusedRaw as! AXUIElement)
     }
 

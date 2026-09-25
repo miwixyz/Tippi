@@ -73,7 +73,8 @@ final class SnippetStoreTests: XCTestCase {
         XCTAssertEqual(store.appSnippets.last?.trigger, ":mlg")
 
         store.addSnippet(shortcut: ";already", replacement: "x")
-        XCTAssertEqual(store.appSnippets.last?.trigger, ";already", "a shortcut that already starts with a (different) prefix must not get double-prefixed")
+        XCTAssertEqual(store.appSnippets.last?.trigger, ";already",
+                       "a shortcut that already starts with a (different) prefix must not get double-prefixed")
     }
 
     /// Regression test for a real bug found on 2026-09-09: Espanso's actual

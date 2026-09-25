@@ -401,7 +401,7 @@ Notion, Obsidian, VS Code, Xcode, iTerm, Tot, Things, Reminders, Bear, Spark.
 ## 14. Code-Konventionen
 
 - **Swift Style:** Apple Swift API Design Guidelines
-- **SwiftLint** mit `.swiftlint.yml` als Hard Gate im CI
+- **SwiftLint** mit `.swiftlint.yml` als Hard Gate vor jedem Release (`make lint`, `make release` hängt davon ab; kein CI)
 - **Async/Await** für alle Netzwerk-Calls — kein Completion-Handler-Mix
 - **Keine Drittabhängigkeiten** außer:
   - **Sparkle 2** (Auto-Update, v1.1)

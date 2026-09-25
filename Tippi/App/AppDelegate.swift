@@ -1,3 +1,7 @@
+// swiftlint:disable file_length
+// Bestand 2026-09-25, Sperrklinke: 1969 Zeilen, weit über jedem sinnvollen globalen
+// Wert. Aufteilen ist eigene Arbeit, kein Lint-Nebenprodukt.
+
 import AppKit
 import Carbon
 import Combine
@@ -9,7 +13,9 @@ import os
 
 private let appDelegateLog = Logger(subsystem: "com.tippi.app", category: "app-delegate")
 
+// Bestand 2026-09-25, Sperrklinke: Klassenrumpf 1172 Zeilen (Grenze 450).
 @MainActor
+// swiftlint:disable:next type_body_length
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Reliable handle on the delegate.
     ///
@@ -143,7 +149,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// enough for a second hotkey press to arrive and close what the first one
     /// opened.
     private var isOpeningTranslatePanel = false
-
 
     /// True while the app is only serving as the unit-test host.
     ///
@@ -285,10 +290,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     TextCapture.boundsForSelection(element: $0.element, range: $0.range)
                 }
                 let reason: String
-                if app == nil { reason = "no frontmost app" }
-                else if selection == nil { reason = "no selection range" }
-                else if caret == nil { reason = "no bounds for range" }
-                else { reason = "ok" }
+                if app == nil {
+                    reason = "no frontmost app"
+                } else if selection == nil {
+                    reason = "no selection range"
+                } else if caret == nil {
+                    reason = "no bounds for range"
+                } else {
+                    reason = "ok"
+                }
                 appDelegateLog.notice(
                     """
                     emoji suggestion anchor: \(reason, privacy: .public) \
@@ -481,6 +491,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Menu bar
 
+    // Bestand 2026-09-25, Sperrklinke: 108 Zeilen (Grenze 80) — linearer Menüaufbau.
+    // swiftlint:disable:next function_body_length
     private func setupMenuBar() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         let menubarImage = NSImage(named: "tippi-menubar-black")
@@ -766,11 +778,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// in `SettingsView.swift`. Add a new entry in both places.
     private static let dictationLanguages: [(code: String, label: String)] = [
         ("auto", String(localized: "settings.voice.language.auto")),
-        ("de",   "Deutsch"),
-        ("en",   "English"),
-        ("es",   "Español"),
-        ("fr",   "Français"),
-        ("ja",   "日本語"),
+        ("de", "Deutsch"),
+        ("en", "English"),
+        ("es", "Español"),
+        ("fr", "Français"),
+        ("ja", "日本語"),
     ]
 
     private func buildDictationLanguageSubmenu() -> NSMenu {
@@ -898,9 +910,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var flags: UInt32 = 0
         let m = combo.modifiers
         if m.contains(.command) { flags |= UInt32(cmdKey) }
-        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
         if m.contains(.control) { flags |= UInt32(controlKey) }
-        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
 
         screenOCRHotkeyManager.update(
             trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
@@ -1024,9 +1036,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var flags: UInt32 = 0
         let m = combo.modifiers
         if m.contains(.command) { flags |= UInt32(cmdKey) }
-        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
         if m.contains(.control) { flags |= UInt32(controlKey) }
-        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
 
         notesHotkeyManager.update(
             trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
@@ -1138,9 +1150,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             var flags: UInt32 = 0
             let m = combo.modifiers
             if m.contains(.command) { flags |= UInt32(cmdKey) }
-            if m.contains(.option)  { flags |= UInt32(optionKey) }
+            if m.contains(.option) { flags |= UInt32(optionKey) }
             if m.contains(.control) { flags |= UInt32(controlKey) }
-            if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+            if m.contains(.shift) { flags |= UInt32(shiftKey) }
 
             dictationHotkeyManager.update(
                 trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
@@ -1197,9 +1209,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var flags: UInt32 = 0
         let m = combo.modifiers
         if m.contains(.command) { flags |= UInt32(cmdKey) }
-        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
         if m.contains(.control) { flags |= UInt32(controlKey) }
-        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
 
         translateHotkeyManager.update(
             trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
@@ -1226,9 +1238,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var flags: UInt32 = 0
         let m = combo.modifiers
         if m.contains(.command) { flags |= UInt32(cmdKey) }
-        if m.contains(.option)  { flags |= UInt32(optionKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
         if m.contains(.control) { flags |= UInt32(controlKey) }
-        if m.contains(.shift)   { flags |= UInt32(shiftKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
 
         emojiHotkeyManager.update(
             trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags)
@@ -1940,7 +1952,6 @@ private final class StatusMenuRowView: NSView {
         NSSize(width: NSView.noIntrinsicMetric, height: 22)
     }
 }
-
 
 /// Routes clicks on Tippi's notifications. Tippi had no delegate before, so a
 /// click merely activated the app. The update reminder needs the click to open

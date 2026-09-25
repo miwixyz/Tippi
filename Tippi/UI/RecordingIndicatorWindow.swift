@@ -132,7 +132,8 @@ final class RecordingIndicatorWindowController {
 
     func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false, providerName: String? = nil) {
         generation &+= 1
-        let hostView = NSHostingView(rootView: RecordingIndicatorView(mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName))
+        let hostView = NSHostingView(rootView: RecordingIndicatorView(
+            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName))
         hostView.layout()
         let size = hostView.fittingSize
 

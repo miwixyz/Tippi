@@ -61,7 +61,7 @@ struct GeminiProvider: LLMProvider {
         struct ResponseBody: Decodable {
             struct Candidate: Decodable {
                 struct Content: Decodable {
-                    struct Part: Decodable { let text: String }
+                    struct Part: Decodable { let text: String } // swiftlint:disable:this nesting - JSON-Tiefe
                     let parts: [Part]
                 }
                 // content/parts can be absent when the generation was blocked

@@ -97,7 +97,8 @@ struct ImportedSnippet: Codable, Equatable, Identifiable {
     /// allows and resolves by file precedence.
     var sourcePath: String?
 
-    init(id: UUID = UUID(), triggers: [String], replace: String, vars: [SnippetVar], shellApproval: SnippetApproval? = nil, sourcePath: String? = nil) {
+    init(id: UUID = UUID(), triggers: [String], replace: String, vars: [SnippetVar],
+         shellApproval: SnippetApproval? = nil, sourcePath: String? = nil) {
         self.id = id
         self.trigger = triggers.first ?? ""
         self.triggers = triggers

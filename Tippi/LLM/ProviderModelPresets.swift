@@ -1,3 +1,7 @@
+// swiftlint:disable comma
+// Die Preset-Tabellen sind spaltenweise ausgerichtet, damit isFastest/isReasoning
+// zeilenweise vergleichbar bleiben — die comma-Regel würde das plattmachen.
+
 import Foundation
 
 /// Curated lists of "current and suitable" model IDs per provider, so the
@@ -260,6 +264,7 @@ enum ProviderModelPresets {
         .init(providerID: "openrouter", deadID: "openai/gpt-4o-mini",      replacementID: "openai/gpt-5.6-luna"),
         .init(providerID: "openrouter", deadID: "google/gemini-3.5-flash", replacementID: "google/gemini-flash-latest"),
     ]
+    // swiftlint:enable comma
 
     /// Rewrites every persisted model selection that points at a known-dead
     /// id: the provider's own `defaultModel.<id>`, the dictation-polish

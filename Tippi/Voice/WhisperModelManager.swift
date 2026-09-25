@@ -21,13 +21,16 @@ struct WhisperModel: Identifiable, Hashable {
         FileManager.default.fileExists(atPath: localURL.path)
     }
 
+    // Spaltenausrichtung ist hier Absicht (Modelle zeilenweise vergleichbar).
+    // swiftlint:disable comma colon
     static let catalog: [WhisperModel] = [
-        WhisperModel(id: "tiny.en",  displayName: "Tiny (English)",        filename: "ggml-tiny.en.bin",  sizeMB:  77,  languages: "English only"),
+        WhisperModel(id: "tiny.en", displayName: "Tiny (English)",        filename: "ggml-tiny.en.bin",  sizeMB:  77,  languages: "English only"),
         WhisperModel(id: "base.en",  displayName: "Base (English)",        filename: "ggml-base.en.bin",  sizeMB: 148,  languages: "English only"),
         WhisperModel(id: "base",     displayName: "Base (Multilingual)",   filename: "ggml-base.bin",     sizeMB: 148,  languages: "Multilingual"),
         WhisperModel(id: "small.en", displayName: "Small (English)",       filename: "ggml-small.en.bin", sizeMB: 488,  languages: "English only"),
         WhisperModel(id: "small",    displayName: "Small (Multilingual)",  filename: "ggml-small.bin",    sizeMB: 488,  languages: "Multilingual"),
     ]
+    // swiftlint:enable comma colon
 }
 
 // MARK: - Download manager

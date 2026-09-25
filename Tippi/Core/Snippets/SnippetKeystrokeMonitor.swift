@@ -185,7 +185,7 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         // charactersIgnoringModifiers still reflects Shift (":" from
         // Shift+;) but not Option/Command, so ⌥/⌘ combos never pollute the
         // buffer with dead-key or shortcut side effects.
-        guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
+        guard event.modifierFlags.isDisjoint(with: [.command, .control, .option]),
               let chars = event.charactersIgnoringModifiers, !chars.isEmpty else {
             return
         }

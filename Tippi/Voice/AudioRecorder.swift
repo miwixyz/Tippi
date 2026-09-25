@@ -93,11 +93,11 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             .appendingPathComponent("tippi-voice-\(UUID().uuidString).wav")
 
         let settings: [String: Any] = [
-            AVFormatIDKey:          Int(kAudioFormatLinearPCM),
-            AVSampleRateKey:        16_000,
-            AVNumberOfChannelsKey:  1,
+            AVFormatIDKey: Int(kAudioFormatLinearPCM),
+            AVSampleRateKey: 16_000,
+            AVNumberOfChannelsKey: 1,
             AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsFloatKey:  false,
+            AVLinearPCMIsFloatKey: false,
         ]
 
         do {

@@ -84,7 +84,8 @@ cd ~/Coding/Tippi
 make open           # opens Xcode for development
 make build          # release build, signs with *Apple Development* (not Developer ID — see Makefile), output in build/Build/Products/Release/
 scripts/devid-testbuild.sh   # Developer-ID test build in /tmp — use this to test anything needing Accessibility next to the installed release
-make release        # full pipeline: build + notarize + DMG + GitHub Release + Sparkle appcast
+make lint           # SwiftLint --strict, rules + reasons in .swiftlint.yml (release depends on it)
+make release        # full pipeline: lint + build + notarize + DMG + GitHub Release + Sparkle appcast
 ```
 
 ## Release pipeline gotchas

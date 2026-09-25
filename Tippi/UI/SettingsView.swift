@@ -1,3 +1,7 @@
+// swiftlint:disable file_length
+// Bestand 2026-09-25, Sperrklinke: 2532 Zeilen, alle Settings-Tabs in einer Datei.
+// Aufteilen ist eigene Arbeit, kein Lint-Nebenprodukt.
+
 import AVFoundation
 import ServiceManagement
 import SwiftUI
@@ -1107,7 +1111,10 @@ private struct ProviderRow: View {
         modelName = UserDefaults.standard.string(forKey: "defaultModel.\(provider.id)") ?? ""
         if isMLX {
             mlxPort = "\(MLXServerManager.port)"
-            if let match = Self.mlxPresets.first(where: { $0.repoID == modelName || $0.repoID == (UserDefaults.standard.string(forKey: "defaultModel.mlx") ?? MLXServerManager.defaultModel) }) {
+            if let match = Self.mlxPresets.first(where: {
+                $0.repoID == modelName
+                    || $0.repoID == (UserDefaults.standard.string(forKey: "defaultModel.mlx") ?? MLXServerManager.defaultModel)
+            }) {
                 mlxPreset = match.id
                 modelName = match.repoID
             } else {
@@ -1975,6 +1982,8 @@ private struct AboutTab: View {
 
 // MARK: - Voice
 
+// Bestand 2026-09-25, Sperrklinke: Rumpf 413 Zeilen (Grenze 400).
+// swiftlint:disable:next type_body_length
 private struct VoiceTab: View {
     @EnvironmentObject var permissions: PermissionsManager
     @StateObject private var modelManager = WhisperModelManager()

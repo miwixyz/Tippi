@@ -178,11 +178,11 @@ struct WhisperTranscriber {
         try await runProcess(
             binary: binary,
             arguments: [
-                "--model",    modelPath,
+                "--model", modelPath,
                 "--language", language,
                 "--flash-attn",
                 "--output-txt",
-                "--file",     wavURL.path,
+                "--file", wavURL.path,
             ]
         )
 

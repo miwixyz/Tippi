@@ -1,5 +1,7 @@
 import SwiftUI
 
+// Bestand 2026-09-25, Sperrklinke: Rumpf 590 Zeilen (Grenze 450).
+// swiftlint:disable:next type_body_length
 struct PreviewView: View {
     let prompt: DemoPrompt
     let originalText: String

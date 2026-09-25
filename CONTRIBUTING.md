@@ -17,6 +17,9 @@ Open a [GitHub issue](https://github.com/miwixyz/Tippi/issues). For bugs, includ
 - Run `make test` before opening a PR. It does three things in order: a concurrency
   lint, the test suite, and a cleanup of the preference domains the tests leave behind
   (verified to reach zero, not assumed)
+- Run `make lint` (SwiftLint, strict — needs `brew install swiftlint`). `make release`
+  refuses to start on a violation; rules and the reason for every deviation from the
+  defaults are in `.swiftlint.yml`
 
 ## Running the tests
 

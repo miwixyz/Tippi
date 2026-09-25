@@ -27,8 +27,11 @@ final class HistoryStore: @unchecked Sendable {
     /// Shared instance. Crashes only if Application Support is unwritable —
     /// at that point the rest of Tippi is broken anyway.
     static let shared: HistoryStore = {
-        do { return try HistoryStore() }
-        catch { fatalError("HistoryStore failed to initialize: \(error)") }
+        do {
+            return try HistoryStore()
+        } catch {
+            fatalError("HistoryStore failed to initialize: \(error)")
+        }
     }()
 
     private let dbQueue: DatabaseQueue

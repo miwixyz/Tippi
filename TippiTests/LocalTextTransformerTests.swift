@@ -30,12 +30,6 @@ final class LocalTextTransformerTests: XCTestCase {
         XCTAssertEqual(LocalTextTransformer.transliterateUmlauts("Café"), "Café")
     }
 
-    /// Regression test for a real bug (2026-09-09): `.uppercase` and
-    /// `.lowercase` both used the SF Symbol "textformat" — invisible in the
-    /// full popup (which shows a text title next to each icon), but the two
-    /// actions became visually indistinguishable the moment an icon-only
-    /// context (the selection action bar) started reusing this same list.
-    /// Every action needs a symbol no other action uses.
     // MARK: - splitUnderscore (inverse of `underscore`)
 
     func testSplitUnderscoreSeparatesWords() {
@@ -73,6 +67,12 @@ final class LocalTextTransformerTests: XCTestCase {
         XCTAssertEqual(LocalTextTransformer.splitUnderscore(joined), "Ueber uns")
     }
 
+    /// Regression test for a real bug (2026-09-09): `.uppercase` and
+    /// `.lowercase` both used the SF Symbol "textformat" — invisible in the
+    /// full popup (which shows a text title next to each icon), but the two
+    /// actions became visually indistinguishable the moment an icon-only
+    /// context (the selection action bar) started reusing this same list.
+    /// Every action needs a glyph (label or symbol) no other action uses.
     func testEveryLocalActionHasAUniqueGlyph() {
         let glyphs = LocalTextAction.all.map { $0.label ?? $0.symbol }
         XCTAssertEqual(Set(glyphs).count, glyphs.count, "duplicate button glyph(s): \(glyphs)")

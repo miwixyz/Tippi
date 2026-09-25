@@ -77,7 +77,11 @@ struct ModifierRecorderField: View {
     }
 
     private func toggleRecording() {
-        recording ? stopRecording() : startRecording()
+        if recording {
+            stopRecording()
+        } else {
+            startRecording()
+        }
     }
 
     private func startRecording() {

@@ -481,7 +481,9 @@ final class SnippetStore: ObservableObject {
 
     func approveShellSnippet(_ snippet: ImportedSnippet) {
         guard let idx = importedSnippets.firstIndex(where: { $0.id == snippet.id }) else { return }
-        guard let approval = SnippetApprovalSigner.sign(trigger: snippet.trigger, command: snippet.shellCommandDigest, service: keychainService) else {
+        guard let approval = SnippetApprovalSigner.sign(trigger: snippet.trigger,
+                                                        command: snippet.shellCommandDigest,
+                                                        service: keychainService) else {
             storeLog.error("could not sign shell snippet approval — Keychain key unavailable")
             approvalError = String(localized: "settings.snippets.approvalFailed")
             return
@@ -558,7 +560,8 @@ final class SnippetStore: ObservableObject {
 
     private func isSnippetActive(_ snippet: ImportedSnippet) -> Bool {
         guard snippet.hasShellVars else { return true }
-        return SnippetApprovalSigner.verify(snippet.shellApproval, trigger: snippet.trigger, command: snippet.shellCommandDigest, service: keychainService)
+        return SnippetApprovalSigner.verify(snippet.shellApproval, trigger: snippet.trigger,
+                                            command: snippet.shellCommandDigest, service: keychainService)
     }
 
     /// Advances `pendingShellApproval` to the next snippet that still needs a

@@ -69,7 +69,7 @@ struct MLXProvider: LLMProvider {
             model: resolvedModel,
             messages: [
                 Message(role: "system", content: systemPrompt),
-                Message(role: "user",   content: userText)
+                Message(role: "user", content: userText)
             ],
             stream: false,
             max_tokens: maxTokens(for: userText),

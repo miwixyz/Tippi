@@ -7,12 +7,10 @@ import Foundation
 struct GroqProvider: OpenAICompatibleProvider {
     let id = "groq"
     let displayName = "Groq"
-    /// Llama 3.3 70B Versatile — strong quality at ~270 tok/s. The
-    /// `llama-3.1-8b-instant` preset is faster (~800 tok/s) when latency
-    /// matters more than quality.
-    // Groq deprecated its whole Llama chat line on 2026-06-17. gpt-oss-20b
-    // is the replacement Groq itself names for the fast tier, and keeps this
-    // provider in its role as Tippi's low-latency option.
+    // Default = `openai/gpt-oss-20b`: the replacement Groq itself names for
+    // its fast tier, keeping this provider in its role as Tippi's low-latency
+    // option. Until 2026-06-17 this was Llama 3.3 70B Versatile; Groq
+    // deprecated its whole Llama chat line on that date.
     let defaultModel = "openai/gpt-oss-20b"
     let requiresAPIKey = true
 

@@ -45,10 +45,10 @@ struct KeyCombo: Codable, Equatable {
     var displayString: String {
         var parts: [String] = []
         let m = modifiers
-        if m.contains(.control)  { parts.append("⌃") }
-        if m.contains(.option)   { parts.append("⌥") }
-        if m.contains(.shift)    { parts.append("⇧") }
-        if m.contains(.command)  { parts.append("⌘") }
+        if m.contains(.control) { parts.append("⌃") }
+        if m.contains(.option) { parts.append("⌥") }
+        if m.contains(.shift) { parts.append("⇧") }
+        if m.contains(.command) { parts.append("⌘") }
         parts.append(Self.keyName(for: keyCode))
         return parts.joined()
     }

@@ -87,7 +87,7 @@ final class MLXServerManager: ObservableObject {
 
     /// Start the server if it isn't already running.
     /// - Returns: The port the server is listening on.
-    func start() async throws -> Int {
+    func start() async throws -> Int { // swiftlint:disable:this function_body_length - Bestand 2026-09-25, 108 Zeilen
         if case .running(let p) = state { return p }
         if state == .starting {
             // Wait for existing startup
@@ -163,14 +163,14 @@ final class MLXServerManager: ObservableObject {
         proc.executableURL = URL(fileURLWithPath: binary.path)
         proc.arguments     = binary.arguments + [
             "--model", model,
-            "--port",  "\(port)",
+            "--port", "\(port)",
             // Pin the bind address instead of inheriting whatever the
             // installed mlx-lm defaults to. Today that default is 127.0.0.1
             // (verified in the installed package), but this server receives
             // the user's selected text — its reachability must not depend on
             // an upstream default that a `uv tool upgrade` could change
             // without anyone noticing. Hardening, added 2026-09-19.
-            "--host",  "127.0.0.1"
+            "--host", "127.0.0.1"
         ]
         // stdout stays discarded (request logging, not interesting). stderr is
         // read: that is where huggingface_hub reports the first-run model
@@ -336,10 +336,8 @@ final class MLXServerManager: ObservableObject {
             ("\(NSHomeDirectory())/.local/bin/uvx", ["--from", "mlx-lm", "mlx_lm.server"]),
             ("/usr/local/bin/uvx", ["--from", "mlx-lm", "mlx_lm.server"]),
         ]
-        for (path, args) in candidates {
-            if FileManager.default.isExecutableFile(atPath: path) {
-                return ResolvedBinary(path: path, arguments: args)
-            }
+        for (path, args) in candidates where FileManager.default.isExecutableFile(atPath: path) {
+            return ResolvedBinary(path: path, arguments: args)
         }
         return nil
     }
@@ -392,7 +390,7 @@ final class MLXServerManager: ObservableObject {
 
     // MARK: - Health polling
 
-    /// Query /v1/models to get the exact model ID the server registered.
+    // Query /v1/models to get the exact model ID the server registered.
     // MARK: - A port that is occupied but silent
 
     /// What is sitting on the configured port, when it does not answer.
@@ -446,6 +444,9 @@ final class MLXServerManager: ObservableObject {
         do { try lsof.run() } catch { return nil }
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         lsof.waitUntilExit()
+        // Bewusst nicht failable: ungültiges UTF-8 in der lsof-Ausgabe wird ersetzt,
+        // statt die ganze Erkennung zu verwerfen.
+        // swiftlint:disable:next optional_data_string_conversion
         guard let first = String(decoding: data, as: UTF8.self)
                 .split(whereSeparator: \.isNewline).first,
               let pid = Int32(first.trimmingCharacters(in: .whitespaces))
@@ -460,6 +461,7 @@ final class MLXServerManager: ObservableObject {
         do { try ps.run() } catch { return (pid, "") }
         let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
         ps.waitUntilExit()
+        // swiftlint:disable:next optional_data_string_conversion - wie oben: ersetzen statt verwerfen
         let command = String(decoding: psData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
         return (pid, command)
     }

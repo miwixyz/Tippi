@@ -128,8 +128,8 @@ final class MLXInstaller {
     static var isUVInstalled: Bool { resolvedUVPath() != nil }
 
     static func resolvedUVPath() -> String? {
-        for path in uvCandidates {
-            if FileManager.default.isExecutableFile(atPath: path) { return path }
+        for path in uvCandidates where FileManager.default.isExecutableFile(atPath: path) {
+            return path
         }
         return nil
     }
@@ -140,8 +140,8 @@ final class MLXInstaller {
     ]
 
     private static func resolvedBrewPath() -> String? {
-        for path in brewCandidates {
-            if FileManager.default.isExecutableFile(atPath: path) { return path }
+        for path in brewCandidates where FileManager.default.isExecutableFile(atPath: path) {
+            return path
         }
         return nil
     }

@@ -117,7 +117,8 @@ final class SelectionPopupPositionerTests: XCTestCase {
 
     func testPointerFarAwayHasLeft() {
         XCTAssertTrue(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: bar.maxX + 101, y: 510), popupFrame: bar, selectionBounds: selection))
-        XCTAssertTrue(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 20, y: 1060), popupFrame: bar, selectionBounds: selection)) // menu bar, top left
+        // menu bar, top left
+        XCTAssertTrue(SelectionPopupPositioner.pointerHasLeft(CGPoint(x: 20, y: 1060), popupFrame: bar, selectionBounds: selection))
     }
 
     func testEndOfLongSelectionFarFromCentredBarHasNotLeft() {

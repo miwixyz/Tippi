@@ -30,13 +30,14 @@ help:
 	@echo "  make open             Generate + open in Xcode"
 	@echo "  make build            Build Release configuration (Apple Development signed — matches the embedded dev profile)"
 	@echo "  make test             Run the test suite, then purge the preference domains it leaks"
+	@echo "  make lint             SwiftLint, strict (rules + reasons in .swiftlint.yml)"
 	@echo "  make clean            Remove generated project and build artifacts"
 	@echo "  make icons            Open icons/ folder"
 	@echo ""
 	@echo "  make prepare-binary   Copy whisper-cli + dylibs from Homebrew, fix rpaths"
 	@echo "                        Run once per build machine (needs: brew install whisper-cpp)"
 	@echo "  make bump VERSION=X.Y.Z   Patch project.yml + CHANGELOG.md stub (no commit)"
-	@echo "  make release          prepare-binary + build + sign + notarize + DMG"
+	@echo "  make release          lint + prepare-binary + build + sign + notarize + DMG"
 	@echo "  make release-dry-run  Show release env without running"
 
 generate:
@@ -141,10 +142,17 @@ icons:
 prepare-binary:
 	@./scripts/prepare-binary.sh
 
-release: prepare-binary
+# SwiftLint -- Regeln und Begruendungen in .swiftlint.yml. Exit != 0 bei Verstoss.
+lint:
+	@command -v swiftlint >/dev/null || { echo "swiftlint fehlt auf diesem Mac -> brew install swiftlint"; exit 1; }
+	swiftlint lint --quiet --strict
+
+# lint zuerst: ein Release mit Linter-Verstoss geht gar nicht erst los.
+release: lint prepare-binary
 	@./scripts/release.sh
 
 release-dry-run:
+	@printf "LINT:           "; swiftlint lint --quiet --strict >/dev/null 2>&1 && echo "ok" || echo "✗ — 'make lint' zeigt die Verstoesse, 'make release' bricht daran ab"
 	@echo "DEVELOPER_ID:   $${DEVELOPER_ID:-(not set — load from release.env or Keychain)}"
 	@echo "NOTARY_PROFILE: $${NOTARY_PROFILE:-tippi-notary}"
 	@echo "VERSION:        $$(awk -F'\"' '/MARKETING_VERSION:/ { print $$2; exit }' project.yml) (from project.yml)"

@@ -3,14 +3,11 @@ import Foundation
 struct OpenAIProvider: OpenAICompatibleProvider {
     let id = "openai"
     let displayName = "OpenAI"
-    /// Default = `gpt-4o-mini`: fast, cheap, non-reasoning — best fit for
-    /// Tippi's "fix this short text, return the result" use case. The
-    /// gpt-5* reasoning family adds thinking-token latency that hurts the
-    /// dictation/transform UX. Users can opt into reasoning in the model
-    /// picker.
-    // gpt-4o-mini is no longer in OpenAI's current model list (checked
-    // 2026-09-02) — the catalogue is the gpt-5.6 trio now. Luna is the
-    // cheapest/fastest of the three, matching what gpt-4o-mini was picked for.
+    // Default = `gpt-5.6-luna`: the cheapest/fastest of the gpt-5.6 trio —
+    // best fit for Tippi's "fix this short text, return the result" use case.
+    // Until 2026-09-02 this was `gpt-4o-mini`, picked for the same reason;
+    // it is no longer in OpenAI's model list. Users can pick a larger model
+    // in the model picker.
     let defaultModel = "gpt-5.6-luna"
     let requiresAPIKey = true
 

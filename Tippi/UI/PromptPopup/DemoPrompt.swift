@@ -253,7 +253,9 @@ struct DemoPrompt: Identifiable, Equatable {
                 systemPrompt: """
                 Add fitting emojis to the following text. Place them regularly, roughly every 1–2 sentences. Fix obvious spelling and grammar errors along the way. Preserve the style and meaning of the original text. Stay in {language}. Return ONLY the text with emojis, no explanations.
                 """,
-                transform: { @Sendable text in text.trimmingCharacters(in: .whitespacesAndNewlines) + " ✨ [local demo — add an API key for real emoji placement]" }
+                transform: { @Sendable text in
+                    text.trimmingCharacters(in: .whitespacesAndNewlines) + " ✨ [local demo — add an API key for real emoji placement]"
+                }
             ),
 
             // ── Structure (list-formatting) ───────────────────────────────────
@@ -329,7 +331,9 @@ struct DemoPrompt: Identifiable, Equatable {
                 systemPrompt: """
                 You receive an emotionally spoken or written message. First identify the actual goal, concern, and underlying frustration of the speaker. Then formulate a clear, respectful, and effective message that helps them reach that goal. Preserve relevant facts, concrete problems, boundaries, expectations, and necessary urgency. Remove insults, threats, sarcasm, accusations, and unnecessary escalation. If multiple grievances are mentioned, condense them to the decisive core points. The tone should be calm, human, firm, and solution-oriented. Stay in {language}. Return ONLY the finished message, no commentary.
                 """,
-                transform: { @Sendable text in text.trimmingCharacters(in: .whitespacesAndNewlines) + " [defused — local demo, add an API key for real rewriting]" }
+                transform: { @Sendable text in
+                    text.trimmingCharacters(in: .whitespacesAndNewlines) + " [defused — local demo, add an API key for real rewriting]"
+                }
             ),
             DemoPrompt(
                 id: "emailReply",

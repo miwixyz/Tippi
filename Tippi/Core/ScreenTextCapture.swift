@@ -144,7 +144,7 @@ enum ScreenTextCapture {
     /// nicht als Fehler auf, sondern als „kein Text gefunden". Jetzt prüfbar
     /// ohne Bildschirm, ohne Berechtigung und ohne Aufnahme.
     nonisolated static func cropRect(selection: CGRect, screenFrame: CGRect,
-                         imagePixelSize: CGSize) -> CGRect {
+                                     imagePixelSize: CGSize) -> CGRect {
         guard screenFrame.width > 0, screenFrame.height > 0 else { return .zero }
         let sx = imagePixelSize.width / screenFrame.width
         let sy = imagePixelSize.height / screenFrame.height
@@ -161,7 +161,7 @@ enum ScreenTextCapture {
 
     /// Welcher eingefrorene Bildschirm enthält die Auswahl?
     nonisolated static func screen(for selection: CGRect,
-                       in frozen: [FrozenScreen]) -> FrozenScreen? {
+                                   in frozen: [FrozenScreen]) -> FrozenScreen? {
         frozen.first { $0.frame.intersects(selection) } ?? frozen.first
     }
 

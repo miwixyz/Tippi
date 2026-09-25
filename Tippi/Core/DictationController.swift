@@ -570,8 +570,8 @@ final class DictationController: ObservableObject {
             "let me", "i'll ", "i will ", "no problem",
             "could you", "would you", "happy to"
         ]
-        for starter in conversationalStarters {
-            if lower.hasPrefix(starter) { return true }
+        for starter in conversationalStarters where lower.hasPrefix(starter) {
+            return true
         }
         return false
     }
