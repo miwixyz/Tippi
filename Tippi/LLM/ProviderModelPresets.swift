@@ -35,6 +35,8 @@ import Foundation
 ///    net, not the plan — it can only warn, never pick a good replacement.
 ///
 /// Last full audit: 2026-09-02 (verified against each provider's own docs).
+/// Partial audit 2026-09-25: Anthropic (Opus 5.5) and OpenRouter (live
+/// `/api/v1/models` + per-model `/endpoints`), see the notes on each list.
 enum ProviderModelPresets {
 
     struct Preset: Identifiable, Hashable {
@@ -77,7 +79,7 @@ enum ProviderModelPresets {
         Preset(id: "gpt-5.6-sol",   label: "GPT-5.6 Sol — premium",               isFastest: false, isReasoning: true),
     ]
 
-    // MARK: - Anthropic (verified against platform.claude.com, 2026-09-02)
+    // MARK: - Anthropic (verified against platform.claude.com, 2026-09-02; Opus 5.5 2026-09-25)
     //
     // Haiku 4.5 is still the fastest and cheapest of the lineup ($1/$5 per
     // MTok) and stays the ⭐ pick for short rewrites — but Anthropic lists its
@@ -85,10 +87,14 @@ enum ProviderModelPresets {
     // time and there is no Haiku 5 yet. Sonnet 5 is the fallback when it goes.
     // Sonnet 4.5 / Opus 4.5 were shipped here until now and are both legacy —
     // replaced by the 5 generation and migrated via `retiredModels`.
+    // 2026-09-25: Opus 5.5 (`claude-opus-5-5`, $4/$20) replaces Opus 5 as the
+    // premium preset — cheaper and faster. Opus 5 itself is NOT retired (not
+    // before 2027-07-24), so stored `claude-opus-5` selections are left alone.
+    // Sonnet/Haiku 5.5 were announced for "the coming weeks" without ids.
     static let anthropic: [Preset] = [
         Preset(id: "claude-haiku-4-5",  label: "Claude Haiku 4.5 — fastest, cheapest ⭐", isFastest: true,  isReasoning: false),
         Preset(id: "claude-sonnet-5",   label: "Claude Sonnet 5 — balanced",              isFastest: false, isReasoning: false),
-        Preset(id: "claude-opus-5",     label: "Claude Opus 5 — premium",                 isFastest: false, isReasoning: false),
+        Preset(id: "claude-opus-5-5",   label: "Claude Opus 5.5 — premium",               isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Gemini (updated 2026-09-01)
@@ -191,10 +197,19 @@ enum ProviderModelPresets {
     // safe starting trio. OpenRouter aliasing a vendor rename doesn't make
     // Tippi immune to the "hardcoded id goes stale" problem (see gemini-2.5
     // incident, 2026-09-01) — it inherits whatever the upstream vendor does.
+    //
+    // Checked live 2026-09-25 against /api/v1/models and each model's
+    // /endpoints: OpenRouter's ids do NOT mirror the vendor's own spelling.
+    // `google/gemini-flash-latest` returned 404 — the auto-updating alias is
+    // `~google/gemini-flash-latest` (leading tilde). `anthropic/claude-haiku-4-5`
+    // still resolved, but only as an alias of `anthropic/claude-haiku-4.5`
+    // (dot); the catalogue lists the dotted form, so ModelAvailabilityChecker's
+    // prefix match would flag the dashed one as outdated. Always copy ids from
+    // OpenRouter's catalogue, never derive them from the vendor's id.
     static let openRouter: [Preset] = [
-        Preset(id: "anthropic/claude-haiku-4-5",   label: "Claude Haiku 4.5 (via OpenRouter) — fastest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "anthropic/claude-haiku-4.5",   label: "Claude Haiku 4.5 (via OpenRouter) — fastest ⭐", isFastest: true,  isReasoning: false),
         Preset(id: "openai/gpt-5.6-luna",          label: "GPT-5.6 Luna (via OpenRouter) — cheap",          isFastest: false, isReasoning: false),
-        Preset(id: "google/gemini-flash-latest",   label: "Gemini Flash latest (via OpenRouter)",           isFastest: false, isReasoning: false),
+        Preset(id: "~google/gemini-flash-latest",  label: "Gemini Flash latest (via OpenRouter)",           isFastest: false, isReasoning: false),
     ]
 
     /// Default model for dictation polish on a given provider — picks the
@@ -251,7 +266,7 @@ enum ProviderModelPresets {
         // cheapest model Anthropic sells and remains the right pick until its
         // announced retirement (not before 2026-10-15).
         .init(providerID: "anthropic", deadID: "claude-sonnet-4-5", replacementID: "claude-sonnet-5"),
-        .init(providerID: "anthropic", deadID: "claude-opus-4-5",   replacementID: "claude-opus-5"),
+        .init(providerID: "anthropic", deadID: "claude-opus-4-5",   replacementID: "claude-opus-5-5"),
 
         // Groq deprecated its entire Llama chat line on 2026-06-17. These two
         // were Tippi's default and its "fastest" pick — replacements are the
@@ -262,7 +277,11 @@ enum ProviderModelPresets {
         // OpenRouter passes vendor ids straight through, so it inherits every
         // upstream retirement above under its `vendor/` prefix.
         .init(providerID: "openrouter", deadID: "openai/gpt-4o-mini",      replacementID: "openai/gpt-5.6-luna"),
-        .init(providerID: "openrouter", deadID: "google/gemini-3.5-flash", replacementID: "google/gemini-flash-latest"),
+        .init(providerID: "openrouter", deadID: "google/gemini-3.5-flash", replacementID: "~google/gemini-flash-latest"),
+        // 2026-09-25: Tippi's own presets used ids OpenRouter doesn't list —
+        // one 404s, the other is only an alias (see the openRouter presets).
+        .init(providerID: "openrouter", deadID: "google/gemini-flash-latest", replacementID: "~google/gemini-flash-latest"),
+        .init(providerID: "openrouter", deadID: "anthropic/claude-haiku-4-5", replacementID: "anthropic/claude-haiku-4.5"),
     ]
     // swiftlint:enable comma
 
