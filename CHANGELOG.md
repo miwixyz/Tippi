@@ -2,7 +2,39 @@
 
 ## [2.15.0] — 2026-09-25
 
-- _Add release notes here._
+### Neu
+
+- **Autovervollständigung beim Tippen (Labs, ab Werk aus).** Nach einer kurzen
+  Tipppause schlägt dein lokales Modell den Rest des Satzes vor — grau, direkt am
+  Cursor, in jeder App mit normalem Textfeld und in Mail. **⇥ übernimmt Wort für
+  Wort**, der Rest bleibt stehen; wer einfach weitertippt und dabei die
+  vorgeschlagenen Buchstaben trifft, behält den Vorschlag, alles andere verwirft ihn.
+  Deine Eigenen Wörter kennt das Modell mit ihrer Schreibweise. Einschalten über die
+  Menüleiste („Autovervollständigung") oder Einstellungen → Allgemein.
+  **Alles bleibt auf dem Mac:** Getipptes geht nur an den MLX-Server, den Tippi selbst
+  gestartet hat, über `127.0.0.1` — nie an einen Cloud-Anbieter, nie an ein fremdes
+  Programm auf demselben Port. Nichts wird gespeichert, das Protokoll kennt nur App,
+  Längen und Dauer. Passwortfelder, Secure Input, Passwortmanager und Terminals werden
+  nie gelesen. ⇥ wird nur abgefangen, solange ein Vorschlag sichtbar ist — Einrücken
+  im Code-Editor bleibt, wie es war. Gemessen mit Gemma 4 E2B: Vorschläge nach im
+  Mittel 0,36 s. Sicherheitsdesign: `docs/SECURE-DESIGN-autocomplete.md`.
+
+### Behoben
+
+- **Dein Diktat-Modus bleibt nach Updates erhalten.** Bisher stand nach jedem Update
+  „Einzelne Sondertaste" wieder auf „Tastenkombination", und das Diktat schien nicht
+  zu reagieren, obwohl der Haken gesetzt war. Ursache: Die Tests liefen in der
+  installierten App und schrieben in deren echte Einstellungen. Die Tests nutzen jetzt
+  eigene Wegwerf-Einstellungen, und `make test` prüft vor jedem Release, dass die echten
+  unverändert bleiben.
+- **Eigene Wörter lesbar.** Überschrift, Erklärung und Einträge in normaler
+  Schriftgröße statt Fußnote.
+
+### Intern
+
+- `scripts/real-defaults-guard.sh` in `make test` (Schnappschuss vorher, Vergleich
+  nachher, bis zu 5 Leseversuche mit sichtbarer Meldung).
+- 62 neue Tests, 415 insgesamt.
 
 ## [2.14.0] — 2026-09-25
 

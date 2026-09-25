@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
-<meta name="tippi:documented-version" content="2.14.0">
+<meta name="tippi:documented-version" content="2.15.0">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>Tippi — System-wide AI writing assistant for macOS</title>
 <meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 11 AI providers, fully local option via MLX. macOS only.">
@@ -294,8 +294,8 @@
     <h1 data-lang="en">Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
     <h1 data-lang="de">Text markieren.<br><span class="accent">⌥⌘T drücken.</span> KI macht den Rest.</h1>
 
-    <p class="sub" data-lang="en">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in — plus on-device dictation, translation, text snippets, an emoji picker, and iCloud-synced quick notes, all in the same menu-bar app. Open-source, BYOK, with a fully local option.</p>
-    <p class="sub" data-lang="de">Ein systemweiter KI-Schreibassistent für macOS, der dich nicht aus deiner App reißt — dazu lokales Diktat, Übersetzung, Text-Kürzel, eine Emoji-Auswahl und iCloud-synchronisierte Notizen, alles in derselben Menüleisten-App. Open Source, BYOK, mit voll-lokaler Option.</p>
+    <p class="sub" data-lang="en">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in — plus on-device dictation, autocomplete while you type, translation, text snippets, an emoji picker, and iCloud-synced quick notes, all in the same menu-bar app. Open-source, BYOK, with a fully local option.</p>
+    <p class="sub" data-lang="de">Ein systemweiter KI-Schreibassistent für macOS, der dich nicht aus deiner App reißt — dazu lokales Diktat, Autovervollständigung beim Tippen, Übersetzung, Text-Kürzel, eine Emoji-Auswahl und iCloud-synchronisierte Notizen, alles in derselben Menüleisten-App. Open Source, BYOK, mit voll-lokaler Option.</p>
 
     <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
@@ -424,6 +424,13 @@
         <h3 data-lang="de">Systemweiter Hotkey</h3>
         <p data-lang="en">Triggers in any app. No need to switch to a chat window or paste into a different tab. Every hot key shows whether it is really registered — and says so when another app already owns the combination.</p>
         <p data-lang="de">Funktioniert in jeder App. Kein Wechsel zu Chat-Fenstern, kein Einfügen in andere Tabs. Jeder Hotkey zeigt, ob er wirklich registriert ist — und sagt es, wenn eine andere App die Kombination schon belegt.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 22h-1a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4h1"/><path d="M7 22h1a4 4 0 0 0 4-4v-1"/><path d="M7 2h1a4 4 0 0 1 4 4v1"/></svg></div>
+        <h3 data-lang="en">Autocomplete while you type (Labs, v2.15)</h3>
+        <h3 data-lang="de">Autovervollständigung beim Tippen (Labs, v2.15)</h3>
+        <p data-lang="en">Pause for a moment and your local model suggests the rest of the sentence in grey, right at the cursor — in Mail and any app with a regular text field. ⇥ takes it word by word, or just keep typing. Runs only on your Mac, never reads password fields, and is off until you turn it on.</p>
+        <p data-lang="de">Kurz innehalten, und dein lokales Modell schlägt den Rest des Satzes grau direkt am Cursor vor — in Mail und jeder App mit normalem Textfeld. ⇥ übernimmt Wort für Wort, oder du tippst einfach weiter. Läuft nur auf deinem Mac, liest nie Passwortfelder und ist aus, bis du es einschaltest.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="10" x2="17" y2="10"></line><line x1="7" y1="14" x2="13" y2="14"></line></svg></div>
@@ -624,6 +631,15 @@
           <strong data-lang="de">Keine Telemetrie, niemals</strong>
           <p data-lang="en">No analytics, no crash reporting, no usage stats.</p>
           <p data-lang="de">Kein Analytics, keine Crash-Reports, keine Nutzungsstatistik.</p>
+        </div>
+      </div>
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div>
+          <strong data-lang="en">Autocomplete never leaves your Mac</strong>
+          <strong data-lang="de">Autovervollständigung bleibt auf dem Mac</strong>
+          <p data-lang="en">What you type goes only to the local model Tippi started itself — never to a cloud provider. Password fields are never read, nothing is stored.</p>
+          <p data-lang="de">Was du tippst, geht nur an das lokale Modell, das Tippi selbst gestartet hat — nie an einen Cloud-Anbieter. Passwortfelder werden nie gelesen, nichts wird gespeichert.</p>
         </div>
       </div>
       <div class="privacy-item">
