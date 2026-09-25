@@ -16,8 +16,17 @@ struct OpenRouterProvider: OpenAICompatibleProvider {
     let displayName = "OpenRouter"
     /// Matches Tippi's native OpenAI default so behaviour is comparable
     /// either way; tracks the same upstream retirement (see OpenAIProvider).
-    let defaultModel = "openai/gpt-5.6-luna"
+    let defaultModel = "openai/gpt-6-luna"
     let requiresAPIKey = true
 
     let endpoint = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+
+    /// Same switch-off as the native provider. OpenRouter lists `none` in
+    /// `supported_efforts` for openai/gpt-6-luna and -sol and passes
+    /// `reasoning_effort` through (catalogue checked 2026-09-25).
+    func reasoningEffort(for model: String) -> String? {
+        let lower = model.lowercased()
+        guard lower.hasPrefix("openai/") else { return nil }
+        return OpenAIProvider.reasoningEffortNone(String(lower.dropFirst("openai/".count))) ? "none" : nil
+    }
 }

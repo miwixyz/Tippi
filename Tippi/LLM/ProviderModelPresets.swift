@@ -73,10 +73,18 @@ enum ProviderModelPresets {
     // there is no true "non-reasoning" option at OpenAI anymore. Luna is the
     // cheapest and fastest of the three and therefore the ⭐ pick for Tippi's
     // short-rewrite workload.
+    //
+    // 2026-09-25: gpt-6-luna ($0.10/$0.50) and gpt-6-sol ($2/$10) replace their
+    // 5.6 namesakes. Both are reasoning models but accept
+    // `reasoning_effort: "none"`, which OpenAIProvider sends — so they run
+    // without thinking tokens and count as non-reasoning here. There is no
+    // gpt-6-terra; gpt-5.6-terra stays as the middle option. gpt-5.6-luna/-sol
+    // are NOT retired (not on OpenAI's deprecations page), so stored picks of
+    // them keep working and are deliberately not rewritten.
     static let openAI: [Preset] = [
-        Preset(id: "gpt-5.6-luna",  label: "GPT-5.6 Luna — fastest, cheapest ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "gpt-5.6-terra", label: "GPT-5.6 Terra — balanced",            isFastest: false, isReasoning: true),
-        Preset(id: "gpt-5.6-sol",   label: "GPT-5.6 Sol — premium",               isFastest: false, isReasoning: true),
+        Preset(id: "gpt-6-luna",    label: "GPT-6 Luna — fastest, cheapest ⭐", isFastest: true,  isReasoning: false),
+        Preset(id: "gpt-5.6-terra", label: "GPT-5.6 Terra — balanced",          isFastest: false, isReasoning: true),
+        Preset(id: "gpt-6-sol",     label: "GPT-6 Sol — premium",               isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Anthropic (verified against platform.claude.com, 2026-09-02; Opus 5.5 2026-09-25)
@@ -208,7 +216,7 @@ enum ProviderModelPresets {
     // OpenRouter's catalogue, never derive them from the vendor's id.
     static let openRouter: [Preset] = [
         Preset(id: "anthropic/claude-haiku-4.5",   label: "Claude Haiku 4.5 (via OpenRouter) — fastest ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "openai/gpt-5.6-luna",          label: "GPT-5.6 Luna (via OpenRouter) — cheap",          isFastest: false, isReasoning: false),
+        Preset(id: "openai/gpt-6-luna",            label: "GPT-6 Luna (via OpenRouter) — cheap",            isFastest: false, isReasoning: false),
         Preset(id: "~google/gemini-flash-latest",  label: "Gemini Flash latest (via OpenRouter)",           isFastest: false, isReasoning: false),
     ]
 
@@ -255,11 +263,13 @@ enum ProviderModelPresets {
         // model list (developers.openai.com, checked 2026-09-02); the whole
         // catalogue is the gpt-5.6 trio now. Luna is the cheapest/fastest and
         // the closest match to what these ids were chosen for.
-        .init(providerID: "openai", deadID: "gpt-4o-mini", replacementID: "gpt-5.6-luna"),
+        // Targets moved to gpt-6 on 2026-09-25 (the 5.6 Luna/Sol are no longer
+        // presets, and a target must be one — see ProviderModelPresetsTests).
+        .init(providerID: "openai", deadID: "gpt-4o-mini", replacementID: "gpt-6-luna"),
         .init(providerID: "openai", deadID: "gpt-4o",      replacementID: "gpt-5.6-terra"),
-        .init(providerID: "openai", deadID: "gpt-5-nano",  replacementID: "gpt-5.6-luna"),
+        .init(providerID: "openai", deadID: "gpt-5-nano",  replacementID: "gpt-6-luna"),
         .init(providerID: "openai", deadID: "gpt-5-mini",  replacementID: "gpt-5.6-terra"),
-        .init(providerID: "openai", deadID: "gpt-5",       replacementID: "gpt-5.6-sol"),
+        .init(providerID: "openai", deadID: "gpt-5",       replacementID: "gpt-6-sol"),
 
         // Anthropic's 4.5 Sonnet/Opus are legacy since the 5 generation.
         // Haiku 4.5 is deliberately NOT remapped — it's still the fastest and
@@ -276,7 +286,7 @@ enum ProviderModelPresets {
 
         // OpenRouter passes vendor ids straight through, so it inherits every
         // upstream retirement above under its `vendor/` prefix.
-        .init(providerID: "openrouter", deadID: "openai/gpt-4o-mini",      replacementID: "openai/gpt-5.6-luna"),
+        .init(providerID: "openrouter", deadID: "openai/gpt-4o-mini",      replacementID: "openai/gpt-6-luna"),
         .init(providerID: "openrouter", deadID: "google/gemini-3.5-flash", replacementID: "~google/gemini-flash-latest"),
         // 2026-09-25: Tippi's own presets used ids OpenRouter doesn't list —
         // one 404s, the other is only an alias (see the openRouter presets).

@@ -77,7 +77,7 @@ Tippi/
 │       └── NotesSettings.swift     Hotkey-Enable/Combo, UserDefaults — Muster von TranslateSettings
 ├── LLM/
 │   ├── LLMProvider.swift           Protocol + LLMError
-│   ├── OpenAIProvider.swift        gpt-5.6-luna, /v1/chat/completions
+│   ├── OpenAIProvider.swift        gpt-6-luna (reasoning_effort none), /v1/chat/completions
 │   ├── AnthropicProvider.swift     claude-haiku-4-5, /v1/messages
 │   ├── GeminiProvider.swift        gemini-flash-latest, generativelanguage.googleapis.com
 │   ├── MistralProvider.swift       mistral-small-latest, OpenAI-kompatibel
@@ -273,7 +273,7 @@ Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedli
 
 | Provider | Default Modell | API Endpoint | Auth | Notes |
 |----------|----------------|--------------|------|-------|
-| OpenAI | `gpt-5.6-luna` | `https://api.openai.com/v1/chat/completions` | `Authorization: Bearer <key>` | Schnell, günstig, gute deutsche Sprache |
+| OpenAI | `gpt-6-luna` | `https://api.openai.com/v1/chat/completions` | `Authorization: Bearer <key>` | Schnell, günstig, gute deutsche Sprache |
 | Anthropic | `claude-haiku-4-5` | `https://api.anthropic.com/v1/messages` | `x-api-key: <key>` + `anthropic-version: 2023-06-01` | Beste Prosa-Qualität |
 | Google | `gemini-flash-latest` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` | Header `x-goog-api-key: <key>` (nicht Query-Param — Tabelle war hier veraltet) | Großzügiges Free-Tier. 2.5-Generation seit 2026-09 teils HTTP 404 („no longer available to new users") |
 | Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris) |
@@ -281,7 +281,7 @@ Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedli
 | Groq | `openai/gpt-oss-20b` | `https://api.groq.com/openai/v1/chat/completions` | `Authorization: Bearer <key>` | LPU-Hardware, ~270-800 tok/s |
 | Kimi/Moonshot | `kimi-k2` | `https://api.moonshot.cn/v1/chat/completions` | `Authorization: Bearer <key>` | 1T-MoE, SWE-Bench #1 |
 | Nebius | `Qwen/Qwen3-30B-A3B-Instruct-2507` | `https://api.studio.nebius.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Amsterdam) |
-| **OpenRouter** | `openai/gpt-5.6-luna` | `https://openrouter.ai/api/v1/chat/completions` | `Authorization: Bearer <key>` | Unified Gateway, 300+ Modelle, Modell-IDs im Format `vendor/model` |
+| **OpenRouter** | `openai/gpt-6-luna` | `https://openrouter.ai/api/v1/chat/completions` | `Authorization: Bearer <key>` | Unified Gateway, 300+ Modelle, Modell-IDs im Format `vendor/model` |
 | Ollama | `llama3.3` | `http://localhost:11434/api/chat` | Keine | Lokal, gratis, voll privat |
 | MLX | `mlx-community/Qwen3.5-2B-MLX-4bit` | `http://localhost:8080/v1/chat/completions` (lokaler `mlx_lm.server`) | Keine | Lokal, Apple-Silicon-nativ |
 

@@ -80,7 +80,7 @@
 "setup.inputMonitoring.manualStep3" = "3. Navigate to Applications and pick Tippi.app";
 
 "setup.apiKey.title" = "Your API Key";
-"setup.apiKey.body" = "Tippi uses your own API keys (BYOK — Bring Your Own Key). No keys are stored on any server. Recommended start: OpenAI gpt-5.6-luna — fast and affordable. Or go fully local with MLX, no key at all.";
+"setup.apiKey.body" = "Tippi uses your own API keys (BYOK — Bring Your Own Key). No keys are stored on any server. Recommended start: OpenAI gpt-6-luna — fast and affordable. Or go fully local with MLX, no key at all.";
 "setup.apiKey.placeholder" = "sk-…";
 "setup.apiKey.save" = "Save to Keychain";
 "setup.apiKey.saved" = "Saved securely to macOS Keychain.";
@@ -365,7 +365,7 @@
 "settings.providers.keySaved" = "Key saved";
 "settings.providers.noKey" = "No key yet";
 "settings.providers.localBadge" = "Local — no key needed";
-"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default: GPT-5.6 Luna — the cheapest and fastest of the current gpt-5.6 trio. Note that all current OpenAI models do some reasoning, which costs a little latency on short rewrites; a local model (MLX) or Claude Haiku is snappier for those.";
+"settings.providers.hint.openai" = "Get a key at platform.openai.com → API keys. Default: GPT-6 Luna — OpenAI's cheapest and fastest current model. For GPT-6 Luna and Sol, Tippi switches reasoning off, so short rewrites come back without a thinking pause. GPT-5.6 Terra still reasons and is slower for that.";
 "settings.providers.hint.anthropic" = "Get a key at console.anthropic.com. Default: claude-haiku-4-5 — excellent for German text.";
 "settings.providers.hint.gemini" = "Get a free key at aistudio.google.com/apikey. Default: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Get a key at console.mistral.ai. EU-hosted (Paris) → GDPR-clean. Excellent German/French quality. Default: mistral-small-latest (fast, great for dictation polish).";

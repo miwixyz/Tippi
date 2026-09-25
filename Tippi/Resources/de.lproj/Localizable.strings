@@ -80,7 +80,7 @@
 "setup.inputMonitoring.manualStep3" = "3. Geh in den Programme-Ordner und wähle Tippi.app";
 
 "setup.apiKey.title" = "Dein API-Key";
-"setup.apiKey.body" = "Tippi nutzt deine eigenen API-Keys (BYOK — Bring Your Own Key). Kein Key wird auf einem Server gespeichert. Empfehlung: OpenAI gpt-5.6-luna — schnell und günstig. Oder komplett lokal mit MLX, ganz ohne Key.";
+"setup.apiKey.body" = "Tippi nutzt deine eigenen API-Keys (BYOK — Bring Your Own Key). Kein Key wird auf einem Server gespeichert. Empfehlung: OpenAI gpt-6-luna — schnell und günstig. Oder komplett lokal mit MLX, ganz ohne Key.";
 "setup.apiKey.placeholder" = "sk-…";
 "setup.apiKey.save" = "Im Schlüsselbund speichern";
 "setup.apiKey.saved" = "Sicher im macOS-Schlüsselbund gespeichert.";
@@ -366,7 +366,7 @@
 "settings.providers.keySaved" = "Key gespeichert";
 "settings.providers.noKey" = "Noch kein Key";
 "settings.providers.localBadge" = "Lokal — kein Key nötig";
-"settings.providers.hint.openai" = "Key bei platform.openai.com → API keys. Standard: GPT-5.6 Luna — das günstigste und schnellste der aktuellen gpt-5.6-Modelle. Beachte: alle aktuellen OpenAI-Modelle denken intern mit, was bei kurzen Umformulierungen etwas Latenz kostet — dafür ist ein lokales Modell (MLX) oder Claude Haiku flotter.";
+"settings.providers.hint.openai" = "Key bei platform.openai.com → API keys. Standard: GPT-6 Luna — das günstigste und schnellste aktuelle OpenAI-Modell. Tippi schaltet bei GPT-6 Luna und Sol das interne Mitdenken ab, damit kurze Umformulierungen ohne Denkpause zurückkommen. GPT-5.6 Terra denkt weiter mit und ist dafür langsamer.";
 "settings.providers.hint.anthropic" = "Key bei console.anthropic.com. Standard: claude-haiku-4-5 — sehr stark bei deutschem Text.";
 "settings.providers.hint.gemini" = "Gratis-Key bei aistudio.google.com/apikey. Standard: gemini-2.5-flash.";
 "settings.providers.hint.mistral" = "Key bei console.mistral.ai. EU-Hosting (Paris) → DSGVO-sauber. Exzellente Deutsch-/Französisch-Qualität. Standard: mistral-small-latest (schnell, perfekt für Diktat-Glättung).";

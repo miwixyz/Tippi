@@ -164,6 +164,11 @@ protocol OpenAICompatibleProvider: LLMProvider {
     /// Temperature for a given model. Default 0.3; return `nil` to omit the
     /// field (reasoning models reject a custom temperature).
     func temperature(for model: String) -> Double?
+    /// `reasoning_effort` for a given model, or `nil` to omit the field
+    /// (default). Reasoning models think at their default effort ("medium"
+    /// for gpt-6) on every call unless told otherwise — for Tippi's short
+    /// rewrites that is pure latency.
+    func reasoningEffort(for model: String) -> String?
 }
 
 /// Shared `GET .../models` response shape for every OpenAI-compatible
@@ -180,6 +185,7 @@ struct OpenAIModelsResponse: Decodable {
 
 extension OpenAICompatibleProvider {
     func temperature(for model: String) -> Double? { 0.3 }
+    func reasoningEffort(for model: String) -> String? { nil }
 
     /// Every OpenAI-compatible provider Tippi uses (OpenAI, Mistral, Scaleway,
     /// Groq, Kimi, Nebius, OpenRouter) also serves `GET .../models` one path
@@ -218,7 +224,8 @@ extension OpenAICompatibleProvider {
             model: modelName,
             systemPrompt: systemPrompt,
             userText: userText,
-            temperature: Self.effectiveTemperature(providerDefault: temperature(for: modelName), hint: hint)
+            temperature: Self.effectiveTemperature(providerDefault: temperature(for: modelName), hint: hint),
+            reasoningEffort: reasoningEffort(for: modelName)
         )
     }
 
@@ -235,7 +242,8 @@ extension OpenAICompatibleProvider {
             id: id, displayName: displayName, endpoint: endpoint,
             model: modelName,
             systemPrompt: systemPrompt, userText: userText,
-            temperature: temperature(for: modelName)
+            temperature: temperature(for: modelName),
+            reasoningEffort: reasoningEffort(for: modelName)
         )
     }
 }
@@ -263,6 +271,7 @@ func openAIChatComplete(
     systemPrompt: String,
     userText: String,
     temperature: Double?,
+    reasoningEffort: String? = nil,
     timeout: TimeInterval = 60
 ) async throws -> String {
     var request = URLRequest(url: endpoint)
@@ -276,13 +285,18 @@ func openAIChatComplete(
         let model: String
         let messages: [Message]
         let temperature: Double?
-        enum CodingKeys: String, CodingKey { case model, messages, temperature }
+        let reasoningEffort: String?
+        enum CodingKeys: String, CodingKey {
+            case model, messages, temperature
+            case reasoningEffort = "reasoning_effort"
+        }
         func encode(to encoder: Encoder) throws {
             var c = encoder.container(keyedBy: CodingKeys.self)
             try c.encode(model, forKey: .model)
             try c.encode(messages, forKey: .messages)
             // Reasoning models reject a custom temperature — omit when nil.
             if let temperature { try c.encode(temperature, forKey: .temperature) }
+            if let reasoningEffort { try c.encode(reasoningEffort, forKey: .reasoningEffort) }
         }
     }
     let body = Body(
@@ -291,7 +305,8 @@ func openAIChatComplete(
             Message(role: "system", content: systemPrompt),
             Message(role: "user", content: userText)
         ],
-        temperature: temperature
+        temperature: temperature,
+        reasoningEffort: reasoningEffort
     )
     request.httpBody = try JSONEncoder().encode(body)
 
@@ -333,7 +348,8 @@ func openAIProviderStream(
     model: String,
     systemPrompt: String,
     userText: String,
-    temperature: Double?
+    temperature: Double?,
+    reasoningEffort: String? = nil
 ) -> AsyncThrowingStream<String, Error> {
     AsyncThrowingStream { continuation in
         let task = Task {
@@ -341,7 +357,8 @@ func openAIProviderStream(
                 let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
                 for try await delta in openAIChatStream(
                     endpoint: endpoint, apiKey: apiKey, model: model,
-                    systemPrompt: systemPrompt, userText: userText, temperature: temperature
+                    systemPrompt: systemPrompt, userText: userText, temperature: temperature,
+                    reasoningEffort: reasoningEffort
                 ) {
                     continuation.yield(delta)
                 }
@@ -364,6 +381,7 @@ func openAIChatStream(
     systemPrompt: String,
     userText: String,
     temperature: Double?,
+    reasoningEffort: String? = nil,
     timeout: TimeInterval = 60
 ) -> AsyncThrowingStream<String, Error> {
     AsyncThrowingStream { continuation in
@@ -380,14 +398,19 @@ func openAIChatStream(
                     let model: String
                     let messages: [Message]
                     let temperature: Double?
+                    let reasoningEffort: String?
                     let stream: Bool
-                    enum CodingKeys: String, CodingKey { case model, messages, temperature, stream }
+                    enum CodingKeys: String, CodingKey {
+                        case model, messages, temperature, stream
+                        case reasoningEffort = "reasoning_effort"
+                    }
                     func encode(to encoder: Encoder) throws {
                         var c = encoder.container(keyedBy: CodingKeys.self)
                         try c.encode(model, forKey: .model)
                         try c.encode(messages, forKey: .messages)
                         try c.encode(stream, forKey: .stream)
                         if let temperature { try c.encode(temperature, forKey: .temperature) }
+                        if let reasoningEffort { try c.encode(reasoningEffort, forKey: .reasoningEffort) }
                     }
                 }
                 let body = Body(
@@ -397,6 +420,7 @@ func openAIChatStream(
                         Message(role: "user", content: userText)
                     ],
                     temperature: temperature,
+                    reasoningEffort: reasoningEffort,
                     stream: true
                 )
                 request.httpBody = try JSONEncoder().encode(body)
