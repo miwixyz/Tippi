@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import NaturalLanguage
 
 // Reine Entscheidungen der Autovervollständigung — ohne Fenster, ohne
 // Bedienungshilfen, ohne Netz, damit jede Sicherheitsregel aus
@@ -145,6 +146,16 @@ enum AutocompleteSanitizer {
             body = String(body.dropFirst(overlap))
             completesWord = !(body.first?.isWhitespace ?? true)
             if body.trimmingCharacters(in: .whitespaces).isEmpty { return nil }
+        } else if let letter = startedSingleLetter(context),
+                  body.first.map({ String($0).lowercased() == letter.lowercased() }) == true,
+                  body.prefix(while: \.isLetter).count > 1,
+                  !isOneLetterWord(letter, context: context) {
+            // Ein angefangenes Wort aus nur einem Buchstaben („gut g" + „geht")
+            // fängt `overlapLength` bewusst nicht (minOverlap 2, sonst „I have
+            // pple"). Hier entscheidet die Sprache: Ist der Buchstabe dort kein
+            // Wort, wird er vervollständigt statt ein neues Wort anzuhängen.
+            body = String(body.dropFirst())
+            completesWord = true
         }
 
         // 3. Anschluss an den Kontext.
@@ -153,6 +164,33 @@ enum AutocompleteSanitizer {
 
         // 4. Kürzen.
         return truncate(joined)
+    }
+
+    /// Einbuchstabige Wörter je Sprache. Deutsch hat keine — dort ist ein
+    /// einzelner Buchstabe am Ende immer ein angefangenes Wort.
+    static let oneLetterWords: [NLLanguage: Set<String>] = [
+        .german: [], .english: ["a", "i"], .spanish: ["a", "e", "o", "u", "y"],
+        .french: ["a", "y"], .italian: ["a", "e", "i", "o"], .portuguese: ["a", "e", "o"],
+    ]
+
+    /// Endet der Kontext mit genau einem Buchstaben nach einer Wortgrenze?
+    static func startedSingleLetter(_ context: String) -> String? {
+        guard let last = context.last, last.isLetter else { return nil }
+        let before = context.dropLast().last
+        guard before.map({ !$0.isLetter && !$0.isNumber }) ?? true else { return nil }
+        return String(last)
+    }
+
+    /// Ist `letter` in der Sprache des Kontexts ein eigenes Wort? Unbekannte
+    /// Sprache → Vereinigung aller Listen (lieber altes Verhalten als falsch
+    /// zusammenkleben).
+    static func isOneLetterWord(_ letter: String, context: String) -> Bool {
+        let lower = letter.lowercased()
+        if let language = NLLanguageRecognizer.dominantLanguage(for: context),
+           let words = oneLetterWords[language] {
+            return words.contains(lower)
+        }
+        return oneLetterWords.values.contains { $0.contains(lower) }
     }
 
     private static func stripControls(_ text: String) -> String {

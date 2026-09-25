@@ -47,6 +47,20 @@ final class AutocompleteTests: XCTestCase {
         XCTAssertEqual(AutocompleteSanitizer.clean("apple", context: "I have a"), " apple")
     }
 
+    /// Real 2026-09-25 (Michael, Screenshot): „…alles gut g" + „geht" ergab
+    /// „gut g geht". Im Deutschen ist ein einzelner Buchstabe nie ein Wort.
+    func testSingleLetterStartedWordIsCompletedInGerman() {
+        XCTAssertEqual(AutocompleteSanitizer.clean("geht", context: "Ich hoffe dass alles gut g"), "eht")
+        XCTAssertEqual(AutocompleteSanitizer.clean(" geht es dir", context: "Ich hoffe dass alles gut g"), "eht es dir")
+        XCTAssertEqual(AutocompleteSanitizer.clean("Gut", context: "Das Wetter ist heute richtig g"), "ut")
+    }
+
+    /// Wo der Buchstabe ein echtes Wort ist, bleibt er stehen.
+    func testOneLetterWordStaysInEnglishAndSpanish() {
+        XCTAssertEqual(AutocompleteSanitizer.clean("apple", context: "I have a"), " apple")
+        XCTAssertEqual(AutocompleteSanitizer.clean("yo también", context: "Mañana voy a la playa y"), " yo también")
+    }
+
     func testNewWordGetsLeadingSpace() {
         XCTAssertEqual(AutocompleteSanitizer.clean("wirklich gut.", context: "Das ist"), " wirklich gut.")
     }

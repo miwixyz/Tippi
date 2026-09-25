@@ -141,6 +141,7 @@ final class AutocompleteController: ObservableObject {
         pauseTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Self.pauseNanoseconds)
             guard !Task.isCancelled else { return }
+            autocompleteLog.notice("pause elapsed")
             self?.requestSuggestion()
         }
     }
@@ -185,15 +186,17 @@ final class AutocompleteController: ObservableObject {
     // MARK: - Vorschlag holen
 
     private func requestSuggestion() {
-        guard bridge.tap != nil, !isOtherTypingUIActive() else { return }
+        // Messpunkte (2026-09-25, „es kommt gar nichts"): jeder Ausstieg nennt
+        // seinen Grund — nur Gründe und Zahlen, nie getippten Text.
+        guard bridge.tap != nil else { return skip("no tap") }
+        guard !isOtherTypingUIActive() else { return skip("other typing UI active") }
         guard let server = MLXServerManager.shared.ownedServerURL else {
-            autocompleteLog.debug("skip: no server started by Tippi")
-            return
+            return skip("no server started by Tippi (state=\(MLXServerManager.shared.state))")
         }
-        guard let app = NSWorkspace.shared.frontmostApplication,
-              let field = readFocusedField(in: app),
-              let request = AutocompleteRequest.make(server: server, model: MLXServerManager.activeModel,
-                                                     context: field.context) else { return }
+        guard let app = NSWorkspace.shared.frontmostApplication else { return skip("no frontmost app") }
+        guard let field = readFocusedField(in: app) else { return }
+        guard let request = AutocompleteRequest.make(server: server, model: MLXServerManager.activeModel,
+                                                     context: field.context) else { return skip("request not built") }
         let gen = generation
         let started = Date()
         let bundleID = app.bundleIdentifier ?? "?"
@@ -214,6 +217,10 @@ final class AutocompleteController: ObservableObject {
             self.bridge.setVisible(true)
             autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
         }
+    }
+
+    private func skip(_ why: String) {
+        autocompleteLog.notice("skip: \(why, privacy: .public)")
     }
 
     private func fetch(_ request: URLRequest) async -> String? {
@@ -247,7 +254,7 @@ final class AutocompleteController: ObservableObject {
     /// gelesen werden darf oder kann. Die Ausschlussprüfung läuft, bevor ein
     /// einziges Zeichen Text gelesen wird.
     private func readFocusedField(in app: NSRunningApplication) -> Field? {
-        guard AXIsProcessTrusted() else { return nil }
+        guard AXIsProcessTrusted() else { skip("not trusted (Bedienungshilfen)"); return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         // Eine hängende App darf das Tippen nicht einfrieren.
         AXUIElementSetMessagingTimeout(appElement, 0.25)
@@ -260,11 +267,16 @@ final class AutocompleteController: ObservableObject {
             excludedBundleIDs: Set(AutocompleteSettings.excludedBundleIDs),
             ownBundleID: Bundle.main.bundleIdentifier
         ) {
-            autocompleteLog.debug("skip: \(reason.rawValue, privacy: .public) bundle=\(app.bundleIdentifier ?? "?", privacy: .public)")
+            skip("\(reason.rawValue) bundle=\(app.bundleIdentifier ?? "?") role=\(focused.flatMap { Self.string($0, kAXRoleAttribute) } ?? "?")")
             return nil
         }
-        guard let focused, let range = Self.selectedRange(focused),
-              range.length == 0, range.location > 0 else { return nil }   // Auswahl aktiv → nichts
+        guard let focused else { skip("no focused element"); return nil }
+        guard let range = Self.selectedRange(focused) else {
+            skip("no selected range role=\(Self.string(focused, kAXRoleAttribute) ?? "?")"); return nil
+        }
+        guard range.length == 0, range.location > 0 else {   // Auswahl aktiv → nichts
+            skip("selection len=\(range.length) loc=\(range.location)"); return nil
+        }
         AXUIElementSetMessagingTimeout(focused, 0.25)
         let loc = range.location
         let start = max(0, loc - AutocompleteContext.maxUTF16)
@@ -279,11 +291,12 @@ final class AutocompleteController: ObservableObject {
             let cursor = full.utf16.index(full.utf16.startIndex, offsetBy: min(loc, full.utf16.count))
             next = full.unicodeScalars[cursor...].first.map(Character.init)
         } else {
+            skip("text not readable role=\(Self.string(focused, kAXRoleAttribute) ?? "?")")
             return nil
         }
-        guard AutocompleteContext.isLongEnough(context),
-              AutocompleteContext.cursorIsAtLineEnd(nextCharacter: next),
-              let caret = caretRect(focused, location: loc) else { return nil }
+        guard AutocompleteContext.isLongEnough(context) else { skip("context too short"); return nil }
+        guard AutocompleteContext.cursorIsAtLineEnd(nextCharacter: next) else { skip("not at line end"); return nil }
+        guard let caret = caretRect(focused, location: loc) else { skip("no plausible caret bundle=\(app.bundleIdentifier ?? "?")"); return nil }
         return Field(context: context, caret: caret)
     }
 
