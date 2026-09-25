@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.12.5. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.13.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```

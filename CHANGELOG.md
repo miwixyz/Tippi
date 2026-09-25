@@ -1,5 +1,40 @@
 # Changelog
 
+## [2.13.0] — 2026-09-25
+
+### Geändert
+
+- **OpenAI-Standard ist jetzt GPT-6 Luna — halb so teuer und ohne Denkpause.**
+  `gpt-6-luna` kostet $0.10/$0.50 pro Million Tokens statt $0.20/$1.20 bei
+  `gpt-5.6-luna`. Es ist ein Reasoning-Modell und würde ohne Anweisung bei jeder
+  Anfrage auf Stufe „medium" nachdenken. Tippi schickt deshalb
+  `reasoning_effort: "none"` mit (neues Feld im Request, nur für GPT-6 Luna und
+  Sol). Ohne das Feld hätte der Wechsel sogar gar nicht funktioniert: Mit
+  Denkstufe lehnt OpenAI die Temperatur ab (HTTP 400). Premium-Preset ist
+  GPT-6 Sol, GPT-5.6 Terra bleibt als Mittelweg. Wer GPT-5.6 Luna oder Sol
+  ausdrücklich gewählt hat, behält sie — beide laufen weiter.
+- **Anthropic-Premium ist jetzt Claude Opus 5.5** (günstiger und schneller als
+  Opus 5, das weiter wählbar bleibt).
+
+### Behoben
+
+- **Zwei OpenRouter-Modelle hatten falsche IDs.** `google/gemini-flash-latest`
+  gibt es bei OpenRouter nicht (HTTP 404) — richtig ist
+  `~google/gemini-flash-latest`. `anthropic/claude-haiku-4-5` lief nur noch als
+  Umleitung auf `anthropic/claude-haiku-4.5`. Beide Presets korrigiert; wer eine
+  der alten IDs gespeichert hat, wird beim Start umgestellt. Gefunden über die
+  Modell-News der Newsletter-Auswertung, einzeln gegen OpenRouters Katalog
+  geprüft.
+- **Hilfe „Welches Modell?" empfahl ein abgeschaltetes Modell** (Groq Llama
+  3.1 8B Instant, seit Juni abgeschaltet) — jetzt GPT-OSS 20B.
+
+### Intern
+
+- **SwiftLint** eingeführt: `make lint`, und `make release` bricht bei einem
+  Verstoß ab. 346 Befunde auf 0, ohne Verhaltensänderung.
+- Neue Tests: Migration der OpenRouter-IDs, Konsistenz von Presets und
+  Migrationszielen, `reasoning_effort` im echten Request-Body (330 Tests).
+
 ## [2.12.5] — 2026-09-24
 
 ### Behoben
