@@ -11,6 +11,11 @@ struct NotesEditorView: View {
     @ObservedObject var store: NotesStore
     let note: Note
     @State private var text: String
+    /// The content as last written to (or loaded from) the store. `text` differs
+    /// from it only while the user has unsaved edits. Without it, leaving a note
+    /// saved the editor's copy unconditionally — stale text over a newer version
+    /// from the other Mac, stamped "now", gone on both (audit 2026-09-27).
+    @State private var lastSavedText: String
     @State private var saveTask: Task<Void, Never>?
     @State private var isGeneratingTitle = false
     @State private var titleTask: Task<Void, Never>?
@@ -19,6 +24,7 @@ struct NotesEditorView: View {
         self.store = store
         self.note = note
         _text = State(initialValue: note.content)
+        _lastSavedText = State(initialValue: note.content)
     }
 
     var body: some View {
@@ -28,6 +34,17 @@ struct NotesEditorView: View {
             })
             .onChange(of: text) { _, newValue in
                 scheduleSave(newValue)
+            }
+            // `note` is re-read from the store on every change, but `.id(note.id)`
+            // keeps this view's @State — so a newer version from the other Mac
+            // (via refresh on window focus) never reached the editor. Adopt it
+            // when there is nothing unsaved here; with unsaved edits the local
+            // text wins, as before.
+            .onChange(of: note.content) { _, external in
+                if let adopted = Self.adoptedText(external: external, text: text, lastSaved: lastSavedText) {
+                    text = adopted
+                    lastSavedText = adopted
+                }
             }
             .onAppear {
                 // Tells the store to hold back external changes for this note
@@ -45,6 +62,9 @@ struct NotesEditorView: View {
                 // can run the new view's onAppear before this onDisappear, and
                 // clearing unconditionally would unguard the note just opened.
                 if store.noteBeingEdited == note.id { store.noteBeingEdited = nil }
+                // The held-back change was skipped by live sync, not queued —
+                // reload so "applied once you leave this note" actually happens.
+                if store.heldBackExternalEdit { store.refresh() }
             }
 
             Divider()
@@ -149,7 +169,9 @@ struct NotesEditorView: View {
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                     .trimmingCharacters(in: CharacterSet(charactersIn: "\"“”'—-"))
                 guard !title.isEmpty else { return }
-                text = "\(title)\n\n\(content)"
+                // Current `text`, not the snapshot sent to the model: anything
+                // typed while the request ran must survive.
+                text = "\(title)\n\n\(text)"
             } catch {
                 guard !Task.isCancelled else { return }
                 ToastWindowController.shared.show(message: String(localized: "notes.generateTitle.failed"))
@@ -176,10 +198,22 @@ struct NotesEditorView: View {
         saveIfStillExists(content: text)
     }
 
+    /// Only writes real edits: a save stamps `modifiedAt = now`, so writing an
+    /// unchanged copy would make it "newest" and overwrite the other Mac's edit.
     private func saveIfStillExists(content: String) {
+        guard content != lastSavedText else { return }
         guard store.notes.contains(where: { $0.id == note.id }) else { return }
         var updated = note
         updated.content = content
         store.save(updated)
+        lastSavedText = content
+    }
+
+    /// The external version to show in the editor, or `nil` to keep the
+    /// editor's text: unsaved local edits always win, and an unchanged
+    /// external value is no news.
+    nonisolated static func adoptedText(external: String, text: String, lastSaved: String) -> String? {
+        guard text == lastSaved, external != text else { return nil }
+        return external
     }
 }

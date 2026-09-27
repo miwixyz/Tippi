@@ -54,7 +54,10 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     /// Return/Tab/Escape means "no longer mid-word", an arrow key means the
     /// cursor moved somewhere the buffer no longer describes. Espanso resets
     /// on the same class of keys.
-    private static let resetKeyCodes: Set<UInt16> = [36, 48, 53, 123, 124, 125, 126] // Return, Tab, Escape, ←→↓↑
+    private static let resetKeyCodes: Set<UInt16> = [
+        36, 48, 53, 123, 124, 125, 126,   // Return, Tab, Escape, ←→↓↑
+        115, 116, 117, 119, 121,          // Home, PgUp, Forward Delete, End, PgDn
+    ]
     private static let deleteKeyCode: UInt16 = 51
 
     init(store: SnippetStore) {
@@ -71,10 +74,15 @@ final class SnippetKeystrokeMonitor: ObservableObject {
             return
         }
 
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        // Mouse clicks too: a click moves the caret somewhere the buffer no
+        // longer describes. Without this, `:da` + click + `te` matched `:date`
+        // and the backspaces deleted unrelated text at the new spot (audit
+        // 2026-09-27). Still one watcher — the same monitors, a wider mask.
+        let mask: NSEvent.EventTypeMask = [.keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown]
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] event in
             self?.handle(event)
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { [weak self] event in
             self?.handle(event)
             return event
         }
@@ -130,6 +138,15 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     }
 
     private func handle(_ event: NSEvent) {
+        if event.type != .keyDown {
+            // A click in Tippi's own suggestion list is a pick, not a caret
+            // move: resetting here closed the list on mouse-down, before the
+            // pick fires on mouse-up (review 2026-09-27).
+            if event.window is NonKeyPanel { return }
+            matcher.reset()
+            clearSuggestions()
+            return
+        }
         // Recorded before every guard below: this is the only honest answer to
         // "do keystrokes reach the watcher at all?"
         lastKeystrokeAt = Date()
@@ -171,7 +188,12 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         lastProcessedAt = Date()
 
         if event.keyCode == Self.deleteKeyCode {
-            matcher.deleteLastCharacter()
+            // ⌥⌫ / ⌘⌫ delete a word or a line, not one character.
+            if event.modifierFlags.isDisjoint(with: [.command, .option, .control]) {
+                matcher.deleteLastCharacter()
+            } else {
+                matcher.reset()
+            }
             refreshSuggestions()
             return
         }
@@ -183,13 +205,20 @@ final class SnippetKeystrokeMonitor: ObservableObject {
             clearSuggestions()
             return
         }
-        // charactersIgnoringModifiers still reflects Shift (":" from
-        // Shift+;) but not Option/Command, so ⌥/⌘ combos never pollute the
-        // buffer with dead-key or shortcut side effects.
-        guard event.modifierFlags.isDisjoint(with: [.command, .control, .option]),
-              let chars = event.charactersIgnoringModifiers, !chars.isEmpty else {
+        // ⌘/⌃ shortcuts (⌘V, ⌘Z, ⌘A …) change the text in ways the buffer
+        // cannot follow — start over.
+        guard event.modifierFlags.isDisjoint(with: [.command, .control]) else {
+            matcher.reset()
+            clearSuggestions()
             return
         }
+        // Without ⌥: charactersIgnoringModifiers (still reflects Shift).
+        // With ⌥: the character actually typed — on a German layout `@ | \ [ ]
+        // { }` all need ⌥, and dropping them meant `:-|` or `\o/` could never
+        // match (audit 2026-09-27). Dead keys (⌥N for `~`, `^`) yield "" and
+        // add nothing, so triggers containing those still cannot match.
+        let typed = event.modifierFlags.contains(.option) ? event.characters : event.charactersIgnoringModifiers
+        guard let chars = typed, !chars.isEmpty else { return }
         for char in chars {
             matcher.appendCharacter(char)
         }

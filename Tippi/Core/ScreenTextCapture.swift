@@ -159,10 +159,17 @@ enum ScreenTextCapture {
                       height: max(1, (selection.height * sy).rounded()))
     }
 
-    /// Welcher eingefrorene Bildschirm enthält die Auswahl?
+    /// Welcher eingefrorene Bildschirm enthält die Auswahl? Der mit der größten
+    /// Überdeckung — nicht der erste berührte: Eine Auswahl, die 1 pt in einen
+    /// anderen Monitor ragte, wurde sonst dort als 1–2-px-Streifen ausgeschnitten
+    /// (Audit 2026-09-27, Absturz in `recognize`).
     nonisolated static func screen(for selection: CGRect,
                                    in frozen: [FrozenScreen]) -> FrozenScreen? {
-        frozen.first { $0.frame.intersects(selection) } ?? frozen.first
+        let area: (FrozenScreen) -> CGFloat = { screen in
+            let overlap = screen.frame.intersection(selection)
+            return overlap.isNull ? 0 : overlap.width * overlap.height
+        }
+        return frozen.filter { area($0) > 0 }.max { area($0) < area($1) } ?? frozen.first
     }
 
     /// OCR auf dem Zuschnitt eines **eingefrorenen** Bildes.
@@ -181,6 +188,8 @@ enum ScreenTextCapture {
             ocrLog.error("Zuschnitt lag außerhalb des Bildes")
             throw Failure.captureFailed
         }
+        // Vision lehnt Bilder mit ≤ 2 px Kantenlänge ab (gemessen 2026-09-27).
+        guard cropped.width >= 3, cropped.height >= 3 else { throw Failure.empty }
 
         if isBlank(cropped) {
             ocrLog.error("Aufnahme einfarbig — Berechtigung fehlt vermutlich")
@@ -211,105 +220,7 @@ enum ScreenTextCapture {
         return ctx.makeImage() ?? image
     }
 
-    /// Erfasst `rect` (in globalen Bildschirmkoordinaten) und gibt den Text zurück.
-    ///
-    /// **Älterer Weg**, nimmt erst nach der Auswahl auf. Bleibt für Aufrufer
-    /// ohne eingefrorenes Bild; der Bildschirm-OCR benutzt ihn seit 2026-09-22
-    /// nicht mehr.
-    static func text(in rect: CGRect) async throws -> String {
-        guard rect.width >= 4, rect.height >= 4 else { throw Failure.empty }
-
-        let image = try await capture(rect)
-        // ScreenCaptureKit meldet fehlende Berechtigung NICHT als Fehler — es
-        // liefert ein schwarzes Bild. Ohne diese Pruefung sieht das exakt aus
-        // wie "der Ausschnitt enthielt keinen Text", und man sucht am falschen
-        // Ende. Befund aus dem ersten Praxistest, 2026-09-21.
-        if isBlank(image) {
-            ocrLog.error("Aufnahme einfarbig — Berechtigung fehlt vermutlich")
-            throw Failure.blankCapture
-        }
-        defer {
-            // Hinweis für den Leser: `image` ist hier gleich nicht mehr
-            // erreichbar. Der enge Gültigkeitsbereich ist Absicht — der Puffer
-            // soll so kurz wie möglich im Adressraum liegen.
-            ocrLog.debug("Ausschnitt verarbeitet, Puffer freigegeben")
-        }
-        return try await recognize(image)
-    }
-
     // MARK: - Aufnahme
-
-    private static func capture(_ rect: CGRect) async throws -> CGImage {
-        let content: SCShareableContent
-        do {
-            content = try await SCShareableContent.excludingDesktopWindows(
-                false, onScreenWindowsOnly: true
-            )
-        } catch {
-            // SCShareableContent schlägt genau dann fehl, wenn die Berechtigung
-            // fehlt. Die Fehlermeldung selbst ist wenig aussagekräftig, deshalb
-            // wird sie hier in eine Handlungsanweisung übersetzt.
-            ocrLog.error("Bildschirminhalt nicht verfügbar — vermutlich fehlende Berechtigung")
-            throw Failure.noPermission
-        }
-
-        // Der Bildschirm, auf dem die Auswahl liegt.
-        guard let display = content.displays.first(where: {
-            CGRect(x: $0.frame.minX, y: $0.frame.minY,
-                   width: $0.frame.width, height: $0.frame.height).intersects(rect)
-        }) ?? content.displays.first else {
-            throw Failure.displayUnavailable
-        }
-
-        let filter = SCContentFilter(display: display, excludingWindows: [])
-        let config = SCStreamConfiguration()
-
-        // ── Koordinatenwechsel, der die erste Fassung unbrauchbar machte ──
-        //
-        // `rect` kommt aus AppKit (NSWindow.convertToScreen): Ursprung unten
-        // links, Y waechst nach oben. `sourceRect` erwartet CoreGraphics:
-        // Ursprung oben links, Y waechst nach unten.
-        //
-        // Ohne Umrechnung wird ein vertikal gespiegelter Bereich erfasst — wer
-        // oben auswaehlt, bekommt unten. Das faellt nicht als Fehler auf,
-        // sondern als "kein Text gefunden", weil dort meist nichts steht.
-        let displayW = CGFloat(display.width)
-        let displayH = CGFloat(display.height)
-        let local = CGRect(
-            x: rect.minX - display.frame.minX,
-            y: displayH - (rect.maxY - display.frame.minY),
-            width: rect.width,
-            height: rect.height
-        )
-        // Nur Geometrie, kein Inhalt — der Messpunkt, der beim ersten
-        // Fehlschlag fehlte.
-        ocrLog.info("Ausschnitt lokal \(Int(local.minX)),\(Int(local.minY)) \(Int(local.width))x\(Int(local.height)) auf Display \(Int(displayW))x\(Int(displayH))")
-        config.sourceRect = local
-        config.captureResolution = .best
-        config.showsCursor = false
-
-        // Skalierung gegen übergroße Auswahlen.
-        let scale = NSScreen.main?.backingScaleFactor ?? 2
-        var pixelW = Int(local.width * scale)
-        var pixelH = Int(local.height * scale)
-        if pixelW * pixelH > maxPixels {
-            let factor = (Double(maxPixels) / Double(pixelW * pixelH)).squareRoot()
-            pixelW = Int(Double(pixelW) * factor)
-            pixelH = Int(Double(pixelH) * factor)
-            ocrLog.info("Auswahl herunterskaliert auf \(pixelW)×\(pixelH)")
-        }
-        config.width = max(1, pixelW)
-        config.height = max(1, pixelH)
-
-        do {
-            return try await SCScreenshotManager.captureImage(
-                contentFilter: filter, configuration: config
-            )
-        } catch {
-            ocrLog.error("Aufnahme fehlgeschlagen")
-            throw Failure.captureFailed
-        }
-    }
 
     /// Ist das Bild praktisch einfarbig? Dann kam nichts an.
     ///
@@ -340,7 +251,12 @@ enum ScreenTextCapture {
 
     private static func recognize(_ image: CGImage) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
+            // Vision meldet manche Fehler doppelt — per Completion-Handler UND
+            // per `perform`-Exception (gemessen 2026-09-27). Ein zweites `resume`
+            // ist ein Absturz; dieser Wächter lässt nur das erste durch.
+            let once = ResumeOnce()
             let request = VNRecognizeTextRequest { request, error in
+                guard once.claim() else { return }
                 if error != nil {
                     // Bewusst ohne `error` im Log: Vision hängt in manchen
                     // Fehlerfällen erkannte Fragmente an die Meldung an.
@@ -371,6 +287,7 @@ enum ScreenTextCapture {
             do {
                 try handler.perform([request])
             } catch {
+                guard once.claim() else { return }
                 ocrLog.error("Texterkennung konnte nicht starten")
                 continuation.resume(throwing: Failure.recognitionFailed)
             }
@@ -397,5 +314,20 @@ enum ScreenTextCapture {
             pasteboard.setData(Data(), forType: .init("org.nspasteboard.ConcealedType"))
         }
         pasteboard.setString(text, forType: .string)
+    }
+}
+
+/// Lässt genau einen Aufrufer durch — für Continuations, die zwei mögliche
+/// Fortsetzungswege haben.
+final class ResumeOnce: @unchecked Sendable {
+    private let lock = NSLock()
+    private var claimed = false
+
+    func claim() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !claimed else { return false }
+        claimed = true
+        return true
     }
 }

@@ -59,15 +59,11 @@ final class CustomPromptStore: ObservableObject {
 
     @Published private(set) var prompts: [CustomPrompt] = []
 
-    private let storageKey = "tippi.customPrompts.v1"
+    static let storageKey = "tippi.customPrompts.v1"
+    private var storageKey: String { Self.storageKey }
 
     private init() {
         load()
-    }
-
-    func add(title: String, symbol: String, systemPrompt: String) {
-        prompts.append(CustomPrompt(title: title, symbol: symbol, systemPrompt: systemPrompt))
-        save()
     }
 
     /// Append a fully-built prompt (used by the editor, which constructs the
@@ -78,7 +74,12 @@ final class CustomPromptStore: ObservableObject {
     }
 
     func update(_ prompt: CustomPrompt) {
-        guard let index = prompts.firstIndex(where: { $0.id == prompt.id }) else { return }
+        // Deleted on the other Mac while the editor was open (the sync reload
+        // removed it): keep the user's edit instead of dropping it silently.
+        guard let index = prompts.firstIndex(where: { $0.id == prompt.id }) else {
+            add(prompt)
+            return
+        }
         prompts[index] = prompt
         save()
     }
@@ -91,6 +92,12 @@ final class CustomPromptStore: ObservableObject {
     func move(fromOffsets source: IndexSet, toOffset destination: Int) {
         prompts.move(fromOffsets: source, toOffset: destination)
         save()
+    }
+
+    /// Re-reads the list after `SyncedPreferences` wrote a newer version from
+    /// the other Mac into defaults.
+    func reloadFromDefaults() {
+        load()
     }
 
     private func load() {

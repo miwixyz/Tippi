@@ -485,24 +485,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// The main trigger is always the Carbon combo (default ⌥⌘T). The old
+    /// hold/doubleTap branches read four defaults keys nothing ever wrote —
+    /// removed in the 2026-09-27 audit.
     private func loadHotkeyTrigger() -> HotkeyTrigger {
-        let defaults = UserDefaults.standard
-        // Carbon combo (default ⌥⌘T) works without Input Monitoring; double-tap needs an event tap.
-        let mode = defaults.string(forKey: "hotkeyMode") ?? "combo"
-        let modString = defaults.string(forKey: "hotkeyModifier") ?? ModifierKey.rightOption.rawValue
-        guard let mod = ModifierKey(rawValue: modString) else { return comboTriggerFromStore() }
-        switch mode {
-        case "hold":
-            let raw = defaults.integer(forKey: "hotkeyHoldMs")
-            return .hold(modifier: mod, durationMs: raw > 0 ? raw : 500)
-        case "doubleTap":
-            let raw = defaults.integer(forKey: "hotkeyDoubleTapMs")
-            return .doubleTap(modifier: mod, thresholdMs: raw > 0 ? raw : 300)
-        case "combo":
-            return comboTriggerFromStore()
-        default:
-            return comboTriggerFromStore()
-        }
+        comboTriggerFromStore()
     }
 
     private func comboTriggerFromStore() -> HotkeyTrigger {
@@ -950,7 +937,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
-    /// (Re)registers the Notes window hot key. Call after the setting
+    /// (Re)registers the screen-text (OCR) hot key. Call after the setting
     /// changes. Same shape as restartTranslateHotkey/restartEmojiHotkey —
     /// no readiness gate, just the enabled toggle + remappable combo.
     func restartScreenOCRHotkey() {
@@ -1215,7 +1202,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 guard let self else { return }
                 Task { @MainActor in
                     let target = self.resolvedSourceAppForCapture()
-                    await self.dictationController.toggle(targetApp: target)
+                    await self.dictationController.toggle(
+                        targetApp: target, notesTextView: Self.focusedNotesTextView())
                 }
             }
             NSLog("Tippi: dictation hot key registered (\(combo.displayString))")
@@ -1237,11 +1225,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     let target = self.resolvedSourceAppForCapture()
                     switch event {
                     case .doubleTap:
-                        await self.dictationController.toggle(targetApp: target)
+                        await self.dictationController.toggle(
+                            targetApp: target, notesTextView: Self.focusedNotesTextView())
                     case .holdBegan:
                         await self.dictationController.beginHoldRecording()
                     case .holdEnded:
-                        self.dictationController.endHoldRecording(targetApp: target)
+                        self.dictationController.endHoldRecording(
+                            targetApp: target, notesTextView: Self.focusedNotesTextView())
                     }
                 }
             }
@@ -1440,52 +1430,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             emojiPickerPanel.toggle()
         }
-    }
-
-    /// Permission-free demo entry used by the Welcome wizard's "Try Tippi" button.
-    /// Shows the popup with a built-in demo text and a result alert — no capture or paste.
-    @objc func runDemoPopup() {
-        // Same guard set as handleTriggered — a hotkey firing while the wizard
-        // button is clicked must not open a second popup/preview over this one.
-        guard !isHandlingTrigger, !popupController.isOpen, !previewWindowController.isOpen else { return }
-        let demoText = String(localized: "setup.tryIt.demo.text")
-        NSLog("Tippi: runDemoPopup launched")
-
-        let mouseLocation = NSEvent.mouseLocation
-        let prompts = DemoPrompt.all
-        popupController.show(
-            at: mouseLocation,
-            prompts: prompts,
-            onSelect: { [weak self] prompt in
-                Task { @MainActor in
-                    self?.showDemoResult(prompt: prompt, original: demoText)
-                }
-            },
-            onDismiss: {
-                NSLog("Tippi: demo popup dismissed")
-            }
-        )
-    }
-
-    private func showDemoResult(prompt: DemoPrompt, original: String) {
-        let transformed = prompt.transform(original)
-        NSLog("Tippi: demo result for \(prompt.id)")
-
-        NSApp.activate()
-        let alert = NSAlert()
-        alert.messageText = String(
-            format: String(localized: "demo.result.title"),
-            prompt.title
-        )
-        alert.informativeText = """
-        \(String(localized: "demo.result.original")):
-        \(original)
-
-        \(String(localized: "demo.result.transformed")):
-        \(transformed)
-        """
-        alert.alertStyle = .informational
-        alert.runModal()
     }
 
     private func resolvedSourceAppForCapture() -> NSRunningApplication? {

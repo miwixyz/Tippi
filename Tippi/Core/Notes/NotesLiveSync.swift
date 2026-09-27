@@ -39,8 +39,6 @@ final class NotesLiveSync {
         for observer in observers { NotificationCenter.default.removeObserver(observer) }
     }
 
-    var isRunning: Bool { query?.isStarted ?? false }
-
     /// Starts watching `directory`. Safe to call repeatedly — a running query
     /// for a different directory is replaced, one for the same directory is
     /// left alone so an in-flight gather is not restarted.

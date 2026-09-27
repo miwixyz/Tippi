@@ -96,7 +96,7 @@ make release        # full pipeline: lint + build + notarize + DMG + GitHub Rele
 1. **`release.env` must NOT define VERSION** — project.yml MARKETING_VERSION is the single source of truth (since 2026-06-02). `release.sh` aborts if release.env still carries a VERSION. Bump via `./scripts/bump-version.sh X.Y.Z` (patches project.yml + CHANGELOG stub).
 2. **CHANGELOG.md release notes missing, empty, or still the placeholder stub** — added 2026-06-05 (Hex-Pattern, fail-fast). `release.sh` extracts the `## [VERSION]` section and aborts if (a) the section is missing, (b) the section body is blank, or (c) the section contains only the bump-version.sh placeholder `- _Add release notes here._`. Fix: write real notes in CHANGELOG.md before `make release`.
 3. **Help strings don't mention all providers** — `settings.help.apiBody` (en + de) must list every provider in `LLMRouter.allProviders`. `settings.about.feature2` must match the provider count. When adding a new provider, update both languages.
-4. **Sparkle CLI missing** — needs `~/Developer/sparkle-tools/bin/generate_appcast`. If missing, appcast step is silently skipped (auto-updates break).
+4. **Sparkle CLI missing** — needs `~/Developer/sparkle-tools/bin/generate_appcast`. Checked in pre-flight (publishing runs only): if missing, `release.sh` stops before anything is published (since 2026-09-27 — it used to skip the appcast silently after the GitHub release).
 5. **Notarization not set up** — needs `xcrun notarytool store-credentials tippi-notary`.
 
 ## Architecture key decisions (non-obvious)

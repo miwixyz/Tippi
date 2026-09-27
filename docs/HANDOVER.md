@@ -70,7 +70,7 @@ Tippi/
 │   ├── TextCapture.swift           AX-API zuerst, Pasteboard-Fallback
 │   ├── TextInsertion.swift         Replace / Append / Copy via simuliertem ⌘V
 │   ├── CustomPrompt.swift          User-Prompts + JSON-Persistierung
-│   ├── TippiColors.swift           Color.tippiNavy / .tippiSurface / .tippiMist Extensions
+│   ├── TippiColors.swift           Color.tippiMist Extension (BrandNavy/BrandSurface nur als Asset)
 │   └── Notes/                      (ab v2.3.0)
 │       ├── Note.swift              Model — id/content/createdAt/modifiedAt, nicht Codable
 │       ├── NotesStore.swift        iCloud-Ubiquity-Container + lokaler Fallback, NSFileCoordinator
@@ -497,7 +497,7 @@ Die App ist vollständig Dark/Light-Mode-konform:
 
 - Popup: `.regularMaterial` — adaptiert automatisch, kein manueller Override nötig
 - Alle Farben: semantische System-Colors (`.primary`, `.secondary`, `.tint`, `.accentColor`) oder Assets mit Dark-Varianten (`BrandMistBlue`, `BrandSurface`)
-- `BrandNavy` hat bewusst **keine** Dark-Variante — es ist immer die Marken-Tinte (#10192B), z.B. für den Logo-Kreis im About-Tab
+- `BrandNavy` hat bewusst **keine** Dark-Variante — es ist immer die Marken-Tinte (#10192B). Stand 2026-09-27 nutzt kein Code das Asset (Audit), es bleibt als Palettenreferenz
 - Kein `window.appearance`-Lock irgendwo — alle Fenster übernehmen das System-Appearance
 
 **Stolperstein beim Auswahlzustand im Popup:** Wenn eine Zeile ausgewählt ist (AccentColor-Hintergrund), muss der Text ablesbar bleiben. Statt `Color.white` (hardcoded) wird `Color(nsColor: .selectedMenuItemTextColor)` verwendet — der macOS-Systemtoken für Text auf einem ausgewählten Menüelement. Aktuell weiß, aber semantisch korrekt und zukunftssicher gegen Theme-Änderungen.

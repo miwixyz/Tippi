@@ -135,7 +135,7 @@ struct LLMRouter {
                 // / network), try the next configured provider. This sends the
                 // text to a second provider, so it's off by default (privacy).
                 if fallbackOn, Self.isRetriableCloudError(error) {
-                    NSLog("Tippi LLM: \(provider.id) failed (\(error.localizedDescription)) — falling back to next provider")
+                    NSLog("Tippi LLM: \(provider.id) failed (\(LLMError.logSummary(error))) — falling back to next provider")
                     continue
                 }
                 throw error
@@ -304,15 +304,6 @@ struct LLMRouter {
             providerID: provider.id,
             model: modelName
         )
-    }
-
-    @MainActor
-    func anyProviderConfigured() -> Bool {
-        for provider in providers {
-            if !provider.requiresAPIKey { return true }
-            if hasAPIKey(for: provider.id) { return true }
-        }
-        return false
     }
 
     /// The providers `complete` may actually use, in order.

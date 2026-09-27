@@ -204,6 +204,22 @@ else
 fi
 echo ""
 
+# ─── PRE-FLIGHT: Sparkle tools ────────────────────────────────────────────────
+# Must exist BEFORE anything is published: missing them used to be noticed only
+# after `gh release create`, then "✓ Release complete" with the appcast
+# unchanged — a release nobody gets offered (audit 2026-09-27). Skipped for
+# --no-publish, which never writes an appcast.
+APPCAST_TOOL="${HOME}/Developer/sparkle-tools/bin/generate_appcast"
+if [ "${PUBLISH}" -eq 1 ]; then
+    echo "▶ [Pre-flight] Sparkle tools..."
+    [ -x "${APPCAST_TOOL}" ] || {
+        echo "✗ Sparkle generate_appcast fehlt: ${APPCAST_TOOL}"
+        echo "  → ZU TUN: Setup siehe docs/HANDOVER.md → Sparkle, dann erneut make release"
+        exit 1
+    }
+    echo "  ✓ ${APPCAST_TOOL}"
+fi
+
 # ─── PRE-FLIGHT: Git sync check ───────────────────────────────────────────────
 # Prevent the Zwei-Mac disaster: a make-release on a stale local branch
 # would build successfully, push the DMG to GitHub, and then fail git push
@@ -455,17 +471,21 @@ if kill -0 "${LAUNCH_PID}" 2>/dev/null; then
     wait "${LAUNCH_PID}" 2>/dev/null || true
     echo "  ✓ Profile, entitlements and launch verified"
 else
-    # Already gone after two seconds. That is only a failure when the kernel
-    # killed it: amfid answers a profile/entitlement mismatch with SIGKILL
-    # (137). Exiting on its own is normal here — a second instance of a
-    # single-instance app steps aside when one is already running, which is the
-    # usual state on the developer's own machine.
+    # Already gone after two seconds. Only a clean exit (rc 0) passes. The old
+    # rule failed on 137 alone, on the belief that a second instance "steps
+    # aside" — Tippi has no single-instance logic, so an early exit is a crash:
+    # 133 = Swift trap, 134 = abort (the 2.11.5 class), 137 = amfid SIGKILL on a
+    # profile/entitlement mismatch. All of them used to print ✓ (audit 2026-09-27).
     set +e; wait "${LAUNCH_PID}" 2>/dev/null; LAUNCH_RC=$?; set -e
     if [ "${LAUNCH_RC}" -eq 137 ]; then
         echo "✗ App killed on launch (SIGKILL) — profile/entitlement mismatch (amfid -413)"
         exit 1
     fi
-    echo "  ✓ Profile and entitlements verified (app exited on its own, rc=${LAUNCH_RC})"
+    if [ "${LAUNCH_RC}" -ne 0 ]; then
+        echo "✗ App crashed on launch (rc=${LAUNCH_RC}) — check Console.app → Crash Reports for Tippi"
+        exit 1
+    fi
+    echo "  ✓ Profile and entitlements verified (app exited on its own, rc=0)"
 fi
 
 # 5. Create DMG
@@ -544,7 +564,6 @@ gh release view "v${VERSION}" >/dev/null
 
 # 10. Generate appcast.xml — DMGs are hosted on GitHub Releases, not Gist
 echo "▶ [9/9] Generating appcast.xml..."
-APPCAST_TOOL="${HOME}/Developer/sparkle-tools/bin/generate_appcast"
 if [ -f "${APPCAST_TOOL}" ]; then
     "${APPCAST_TOOL}" "${DIST_DIR}" \
         --download-url-prefix "${GH_RELEASE_URL}/" \
@@ -588,8 +607,9 @@ if [ -f "${APPCAST_TOOL}" ]; then
         exit 1
     fi
 else
-    echo "  ⚠ Sparkle tools nicht gefunden unter ${APPCAST_TOOL}"
-    echo "    Setup: siehe docs/HANDOVER.md → Sparkle"
+    # Unreachable after the pre-flight check — kept as a hard stop, not a warning.
+    echo "✗ Sparkle tools verschwunden unter ${APPCAST_TOOL} — Release ist veröffentlicht, Appcast NICHT aktualisiert"
+    exit 1
 fi
 
 # 11. Final report

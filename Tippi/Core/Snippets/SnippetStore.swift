@@ -134,13 +134,6 @@ final class SnippetStore: ObservableObject {
         reloadEspansoFiles()
     }
 
-    /// Espanso's real default macOS config location (`espanso path` reports
-    /// the same directory) — pointing Tippi at it picks up exactly what's
-    /// already there, no file moves needed for the migration.
-    static var defaultEspansoMatchDirectory: URL {
-        systemAppSupportDirectory.appendingPathComponent("espanso/match", isDirectory: true)
-    }
-
     private static var systemAppSupportDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
     }

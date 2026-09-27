@@ -127,6 +127,11 @@ final class WhisperModelManager: NSObject, ObservableObject {
 
                     // Make the downloaded model the active model explicitly.
                     WhisperConfig.modelPath = model.localURL.path
+                    // The dictation hotkey is registered only while a model
+                    // exists. Here, not in the settings row: the row may be gone
+                    // (tab switched, window closed) by the time a multi-minute
+                    // download finishes (review 2026-09-27).
+                    AppDelegate.shared?.restartDictationHotkey()
                 } catch {
                     self.downloadError = error.localizedDescription
                 }
@@ -170,5 +175,7 @@ final class WhisperModelManager: NSObject, ObservableObject {
         if wasActive {
             WhisperConfig.modelPath = ""
         }
+        // Last model gone → the hotkey must unregister (audit 2026-09-27).
+        AppDelegate.shared?.restartDictationHotkey()
     }
 }

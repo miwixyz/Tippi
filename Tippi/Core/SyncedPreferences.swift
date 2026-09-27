@@ -190,6 +190,13 @@ final class SyncedPreferences {
             defaults.set(remoteStamp, forKey: Self.timestampKey(for: key))
             isApplyingRemote = false
             syncLog.info("applied newer value for \(key, privacy: .public) from iCloud")
+            // Custom words are read from defaults on every use, but the prompt
+            // store keeps its list in memory: without this reload the next local
+            // edit saved the stale list, pushed it as newest, and deleted the
+            // other Mac's prompt on both (audit 2026-09-27).
+            if key == CustomPromptStore.storageKey {
+                CustomPromptStore.shared.reloadFromDefaults()
+            }
         }
     }
 

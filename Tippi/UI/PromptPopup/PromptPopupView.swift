@@ -96,7 +96,7 @@ struct PromptPopupView: View {
                 }
             }
             .frame(maxHeight: 420)
-            if audioRecorder != nil || !WhisperConfig.isConfigured {
+            if audioRecorder != nil || !SpeechEngine.isCurrentEngineReady {
                 Divider()
                 VoiceSection(
                     audioRecorder: audioRecorder,
@@ -432,7 +432,7 @@ private struct VoiceSection: View {
 
     var body: some View {
         Group {
-            if !WhisperConfig.isConfigured {
+            if !SpeechEngine.isCurrentEngineReady {  // Parakeet (default) needs no Whisper model — audit 2026-09-27
                 setupBanner
             } else {
                 voiceControls

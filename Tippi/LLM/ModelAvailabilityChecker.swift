@@ -27,13 +27,8 @@ final class ModelAvailabilityChecker: ObservableObject {
         let suggested: String?
     }
 
-    /// Provider ids whose configured model was NOT found in that provider's
-    /// live catalogue on the last check. Empty until the first check
-    /// completes, or if every check failed/was skipped.
-    @Published private(set) var possiblyStale: Set<String> = []
     /// Details + verified replacement per stale provider, keyed by provider id.
     @Published private(set) var staleDetails: [String: StaleModel] = [:]
-    @Published private(set) var lastCheckedAt: Date?
 
     private init() {}
 
@@ -49,7 +44,6 @@ final class ModelAvailabilityChecker: ObservableObject {
         guard let detail = staleDetails[providerID], let suggested = detail.suggested else { return }
         UserDefaults.standard.set(suggested, forKey: "defaultModel.\(providerID)")
         NSLog("Tippi: switched \(providerID) from retired '\(detail.configured)' to '\(suggested)' on user request")
-        possiblyStale.remove(providerID)
         staleDetails[providerID] = nil
     }
 
@@ -101,8 +95,6 @@ final class ModelAvailabilityChecker: ObservableObject {
         for entry in found {
             NSLog("Tippi: \(entry.providerID)'s configured model '\(entry.configured)' is not in its live catalogue — suggesting '\(entry.suggested ?? "none available")'")
         }
-        possiblyStale = Set(found.map(\.providerID))
         staleDetails = Dictionary(uniqueKeysWithValues: found.map { ($0.providerID, $0) })
-        lastCheckedAt = Date()
     }
 }

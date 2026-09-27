@@ -64,16 +64,4 @@ enum HotkeyTrigger: Codable, Equatable {
 
     static let `default`: HotkeyTrigger = .doubleTap(modifier: .rightOption, thresholdMs: 300)
 
-    var summary: String {
-        switch self {
-        case .doubleTap(let mod, _):
-            return "Double-tap \(mod.displayName)"
-        case .hold(let mod, let ms):
-            return "Hold \(mod.displayName) for \(ms) ms"
-        case .combo:
-            return "Custom key combo"
-        case .tapOrHold(let mod, _):
-            return "Tap or hold \(mod.displayName)"
-        }
-    }
 }

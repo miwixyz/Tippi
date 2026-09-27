@@ -246,10 +246,6 @@ enum TextCapture {
     /// callers already handle.
     private static let axWalkBudget: CFTimeInterval = 0.4
 
-    static func findSelectedText(in element: AXUIElement, depth: Int) -> String? {
-        findSelectedText(in: element, depth: depth, deadline: CFAbsoluteTimeGetCurrent() + axWalkBudget)
-    }
-
     private static func findSelectedText(in element: AXUIElement, depth: Int, deadline: CFAbsoluteTime) -> String? {
         guard depth <= 14 else { return nil }
         guard CFAbsoluteTimeGetCurrent() < deadline else {

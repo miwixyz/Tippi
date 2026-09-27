@@ -22,10 +22,6 @@ enum TextInsertion {
         insertLog.notice("clipboard paste done")
     }
 
-    static func replace(with text: String) async {
-        await replace(with: text, in: nil)
-    }
-
     static func replace(with attributedText: NSAttributedString, fallbackPlainText: String, in app: NSRunningApplication?) async {
         if let app, replaceSelectionViaAccessibility(with: fallbackPlainText, in: app) {
             return
@@ -36,14 +32,6 @@ enum TextInsertion {
 
         if let app { await TextCapture.activateAndWaitForFocus(app) }
         await paste(attributedText: attributedText, fallbackPlainText: fallbackPlainText)
-    }
-
-    static func replace(with attributedText: NSAttributedString, fallbackPlainText: String) async {
-        await replace(with: attributedText, fallbackPlainText: fallbackPlainText, in: nil)
-    }
-
-    static func append(_ text: String) async {
-        await paste(text: text)
     }
 
     /// Bypasses AX entirely and inserts `text` via clipboard + synthetic ⌘V.
@@ -392,6 +380,23 @@ enum TextInsertion {
         }
         // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
         return (focusedRaw as! AXUIElement)
+    }
+
+    /// Synthetic Return, used after a dictation in apps the user opted in
+    /// (`DictationSettings.autoReturnBundleIDs`). Flags are cleared explicitly:
+    /// a modifier still held from the dictation gesture would otherwise turn it
+    /// into ⇧↩ — a line break instead of "send" in chat apps.
+    static func pressReturn() {
+        let src = CGEventSource(stateID: .hidSystemState)
+        let returnKey: CGKeyCode = 36 // kVK_Return
+
+        let down = CGEvent(keyboardEventSource: src, virtualKey: returnKey, keyDown: true)
+        down?.flags = []
+        down?.post(tap: .cghidEventTap)
+
+        let up = CGEvent(keyboardEventSource: src, virtualKey: returnKey, keyDown: false)
+        up?.flags = []
+        up?.post(tap: .cghidEventTap)
     }
 
     private static func simulatePaste() {

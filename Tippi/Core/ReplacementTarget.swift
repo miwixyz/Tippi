@@ -97,6 +97,17 @@ enum ReplacementWriter {
             writeNative(plainText, in: textView, range: range)
 
         case .accessibility(let element, let range, let app):
+            // A result identical to the selection must not be written: the
+            // document would stay byte-for-byte the same, `replaceViaElement`
+            // reads that as "app ignored the write" and the clipboard fallback
+            // then pastes a second copy ("Hallo weltHallo welt"). The selection
+            // bar had this guard since 2026-09-14; hotkey actions, AI replace
+            // and translate did not (audit 2026-09-27). Rich replacements are
+            // excluded — same plain text, different formatting is the point.
+            if attributed == nil, isUnchanged(plainText, original: originalText) {
+                replacementLog.notice("write → skipped (result identical to selection)")
+                return
+            }
             switch TextInsertion.replaceViaElement(element, range: range, with: plainText, expecting: originalText) {
             case .replaced:
                 return
@@ -112,6 +123,12 @@ enum ReplacementWriter {
         case .blind(let app):
             await writeFallback(plainText, attributed: attributed, in: app)
         }
+    }
+
+    nonisolated static func isUnchanged(_ text: String, original: String?) -> Bool {
+        guard let original else { return false }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+            == original.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Replaces `range` in `textView` directly via AppKit — used for Tippi's

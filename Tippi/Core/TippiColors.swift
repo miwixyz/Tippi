@@ -8,11 +8,6 @@ import SwiftUI
 // The extensions below expose the supporting brand palette.
 
 extension Color {
-    /// Tippi Navy (#010D24) — deep brand ink, nearly black-navy background.
-    static let tippiNavy = Color("BrandNavy")
-
-    /// Adaptive surface — Warm White (#E5DEDA) in light mode, dark navy in dark mode.
-    static let tippiSurface = Color("BrandSurface")
 
     /// Adaptive mist — Mist Blue (#EAF3FF) in light mode, deep navy-blue in dark mode.
     /// Used as the suggestion column background tint in the preview window.

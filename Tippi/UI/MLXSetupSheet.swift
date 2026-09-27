@@ -142,7 +142,7 @@ struct MLXSetupSheet: View {
 
     // MARK: - Phase row
 
-    private enum RowState { case pending, active, done, failed, skipped }
+    private enum RowState { case pending, active, done, failed }
 
     private func phaseRow(icon: String, label: String, state: RowState) -> some View {
         HStack(spacing: 10) {
@@ -159,9 +159,6 @@ struct MLXSetupSheet: View {
             case .failed:
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(.red)
-            case .skipped:
-                Image(systemName: "minus.circle")
-                    .foregroundStyle(.secondary)
             }
             Image(systemName: icon).frame(width: 20)
             Text(label).font(.callout)

@@ -48,3 +48,6 @@ graphify-out/
 .claude/
 build-check/
 build-test/
+
+# Coverage-Artefakt aus Test-Laeufen (Audit 2026-09-27)
+*.profraw

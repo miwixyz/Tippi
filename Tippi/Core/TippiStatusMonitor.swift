@@ -46,8 +46,6 @@ final class TippiStatusMonitor: ObservableObject {
         case warming   // yellow
         case error(Problem)   // red
 
-        var isError: Bool { if case .error = self { return true }; return false }
-
         var problem: Problem? { if case .error(let p) = self { return p }; return nil }
 
         var label: String {

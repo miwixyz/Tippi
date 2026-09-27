@@ -81,7 +81,4 @@ enum EmojiSettings {
         recents = list
     }
 
-    static func clearRecents() {
-        UserDefaults.standard.removeObject(forKey: recentsKey)
-    }
 }

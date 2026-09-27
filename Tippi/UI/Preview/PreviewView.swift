@@ -10,7 +10,6 @@ struct PreviewView: View {
     @State private var state: ViewState
     @State private var task: Task<Void, Never>?
     @State private var refineInstruction = ""
-    @FocusState private var refineFocused: Bool
 
     /// Live progress of a running chain, e.g. "Schritt 2/3: Übersetze → EN".
     /// `nil` for single-step prompts and once the chain has finished.
@@ -305,7 +304,6 @@ struct PreviewView: View {
                     .foregroundStyle(.secondary)
                 TextField(String(localized: "preview.refine.placeholder"), text: $refineInstruction)
                     .textFieldStyle(.roundedBorder)
-                    .focused($refineFocused)
                     .onSubmit { refine(from: suggestion) }
                 Button(String(localized: "preview.refine.apply")) { refine(from: suggestion) }
                     .disabled(refineInstruction.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -402,7 +400,8 @@ struct PreviewView: View {
                         userText: current
                     )
                     guard !Task.isCancelled else { return }
-                    current = result.text
+                    // An empty step must fail the chain, not feed "" to the next step.
+                    current = try LLMError.nonEmpty(result.text)
                 } catch LLMError.noProviderConfigured, LLMError.noAPIKey {
                     guard !Task.isCancelled else { return }
                     chainProgress = nil
@@ -445,6 +444,7 @@ struct PreviewView: View {
             do {
                 let result = try await LLMRouter.shared.complete(systemPrompt: resolved, userText: input)
                 guard !Task.isCancelled else { return }
+                _ = try LLMError.nonEmpty(result.text)
                 chainProgress = nil
                 logToHistory(result: result, input: originalText)
                 state = .ready(text: result.text, providerInfo: "\(result.providerDisplay) · \(formatDuration(result.duration))")
@@ -476,7 +476,7 @@ struct PreviewView: View {
             guard !Task.isCancelled else { return }
             chainProgress = nil
             let duration = Date().timeIntervalSince(start)
-            let finalText = accumulated.trimmingCharacters(in: .whitespacesAndNewlines)
+            let finalText = try LLMError.nonEmpty(accumulated)
             state = .ready(text: finalText, providerInfo: "\(streaming.providerDisplay) · \(formatDuration(duration))")
             logToHistory(
                 result: CompletionResult(
@@ -604,7 +604,9 @@ struct PreviewView: View {
                 }
                 guard !Task.isCancelled else { return }
                 let duration = Date().timeIntervalSince(start)
-                let finalText = accumulated.trimmingCharacters(in: .whitespacesAndNewlines)
+                // An empty result offered as "ready" meant Return deleted the
+                // selection (audit 2026-09-27) — every provider, not just SSE.
+                let finalText = try LLMError.nonEmpty(accumulated)
                 let unchanged = finalText == input.trimmingCharacters(in: .whitespacesAndNewlines)
                 state = .ready(
                     text: finalText,
@@ -659,6 +661,7 @@ struct PreviewView: View {
                     result = try await LLMRouter.shared.complete(systemPrompt: systemPrompt, userText: userText)
                 }
                 guard !Task.isCancelled else { return }
+                _ = try LLMError.nonEmpty(result.text)
                 logToHistory(result: result, input: input)
                 let unchanged = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
                     == input.trimmingCharacters(in: .whitespacesAndNewlines)

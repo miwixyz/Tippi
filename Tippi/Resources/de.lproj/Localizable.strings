@@ -101,7 +101,6 @@
 "setup.apiKey.alreadySaved" = "Key bereits gespeichert — neuen Key eingeben, um zu aktualisieren";
 
 "setup.tryIt.title" = "Du bist startklar!";
-"setup.tryIt.body" = "Text in einer beliebigen App markieren, dann ⌥⌘T drücken (Standard-Hotkey). Das Prompt-Menü erscheint am Cursor — Aktion wählen, Ergebnis ersetzt den Text.";
 "setup.tryIt.hotkey" = "Standard-Hotkey: ⌥⌘T  ·  ändern unter Einstellungen → Hotkeys";
 "setup.tryIt.demo.heading" = "Demo-Text — probier es gleich aus:";
 "setup.tryIt.demo.text" = "dieser satz hat ein paar grammatik fehler und seltsame formulierungen er könnte echt deutlich verbesert werden findest du nicht";
@@ -112,9 +111,6 @@
 "setup.tryIt.testHint" = "Diese Demo funktioniert ohne irgendwelche Berechtigungen. Klicke auf den Knopf, das Menü erscheint, wähl etwas aus — und Tippi zeigt dir, was es mit dem obigen Text gemacht hätte.";
 
 /* Demo-Ergebnis */
-"demo.result.title" = "Tippi Demo: %@";
-"demo.result.original" = "Original";
-"demo.result.transformed" = "Ergebnis";
 
 /* Demo-Sheet (im Willkommens-Fenster) */
 "demo.sheet.close" = "Schließen";
@@ -148,6 +144,7 @@
 "preview.refine.apply" = "Verfeinern";
 "preview.truncated.badge" = "Abgeschnitten (Längen-Limit)";
 "preview.truncated.empty" = "Die Antwort wurde abgeschnitten, bevor Text ankam (Längen-Limit). Versuche einen kürzeren Eingabetext.";
+"llm.error.empty" = "Die KI hat keinen Text geliefert — an deiner Auswahl wurde nichts geändert.";
 
 /* Übersetzungs-Fenster */
 "translate.panel.placeholder" = "Text zum Übersetzen eingeben…";
@@ -167,12 +164,6 @@
 "setup.tryIt.hotkey.heading" = "Sobald die Berechtigungen erteilt sind, ist der globale Hotkey:";
 
 /* Phase 2 Demo-Alerts */
-"alert.preview.title" = "Tippi — Aufgenommener Text";
-"alert.preview.body" = "Aufgenommener Text:\n\n%@\n\nQuell-App: %@\nMethode: %@\n\nWähle eine Demo-Transformation zum Einfügen oder kopiere in die Zwischenablage.";
-"alert.preview.uppercase" = "Mit GROSSBUCHSTABEN ersetzen (Demo)";
-"alert.preview.exclaim" = "Sparkle ✨ anhängen (Demo)";
-"alert.preview.copyOnly" = "In Zwischenablage kopieren";
-"alert.preview.cancel" = "Abbrechen";
 
 /* Settings */
 "settings.window.title" = "Tippi — Einstellungen";
@@ -316,14 +307,6 @@
 "modifier.recorder.pressNow" = "Drücke jetzt die Taste …";
 "modifier.recorder.needsModifier" = "Das ist keine Sondertaste. Nimm Umschalt, Control, Option oder Command.";
 
-"settings.hotkeys.mode" = "Auslöse-Modus";
-"settings.hotkeys.mode.doubleTap" = "Modifier doppelt tippen";
-"settings.hotkeys.mode.hold" = "Modifier halten";
-"settings.hotkeys.mode.disabled" = "Aus (Menü-Icon nutzen)";
-"settings.hotkeys.modifier" = "Modifier-Taste";
-"settings.hotkeys.doubleTapMs" = "Doppeltipp innerhalb %d ms";
-"settings.hotkeys.holdMs" = "Mind. halten für %d ms";
-"settings.hotkeys.apply" = "Anwenden";
 "settings.hotkeys.active" = "Aktiv: %@";
 "settings.hotkeys.inactive" = "Hotkey nicht aktiv — Eingabeüberwachung erteilen, dann Tippi neu starten";
 
@@ -367,10 +350,7 @@
 "prompts.import.panel.message" = "Wähle eine .tippipack-Datei aus.";
 
 "settings.general.autostart" = "Tippi beim Anmelden starten";
-"settings.general.updates" = "Auf Updates prüfen";
-"settings.hotkeys.placeholder" = "Hotkey-Konfiguration folgt in der nächsten Phase.";
 "settings.providers.save" = "Speichern";
-"settings.providers.empty" = "Noch kein Key gespeichert";
 "settings.providers.default" = "Standard-Anbieter";
 "settings.providers.default.hint" = "Tippi probiert diesen Anbieter zuerst. Wenn kein Key gesetzt ist, fällt es auf den nächsten konfigurierten zurück.";
 "settings.providers.fallback" = "Bei Fehler auf andere Anbieter ausweichen";
@@ -515,14 +495,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.voice.systemAudio.title" = "Systemaudio";
 "settings.voice.systemAudio.enable" = "Systemaudio während der Aufnahme stummschalten";
 "settings.voice.systemAudio.body" = "Schaltet die Mac-Lautsprecher/-Ausgabe für die Dauer der Aufnahme stumm (Diktat, Sprachbefehl-Popup, Übersetzen) und stellt danach genau den vorherigen Zustand wieder her — war es vorher schon stumm, bleibt es stumm. Nützlich wenn Musik oder ein Video läuft, während du diktierst. Standardmäßig aus. Manche Audiogeräte (z. B. bestimmte USB-/Bluetooth-Ausgänge) unterstützen keine Stummschaltung — dann bleibt diese Option wirkungslos, ohne die Aufnahme zu beeinträchtigen.";
-"settings.voice.binary.title" = "whisper-cli Binärdatei";
-"settings.voice.binary.detected" = "Automatisch gefunden: %@";
-"settings.voice.binary.notFound" = "Nicht gefunden — Tippi neu installieren";
-"settings.voice.binary.placeholder" = "/opt/homebrew/bin/whisper-cli";
-"settings.voice.binary.hint" = "whisper-cli ist in Tippi eingebettet — keine manuelle Installation nötig";
 "settings.voice.model.title" = "Whisper-Modell";
-"settings.voice.model.placeholder" = "~/.cache/whisper/ggml-base.en.bin";
-"settings.voice.model.hint" = "Modell oben herunterladen. Modelle werden in ~/Library/Application Support/Tippi/Models/ gespeichert.";
 "settings.voice.engine.title" = "Sprach-Engine";
 "settings.voice.engine.hint" = "Parakeet v3 (Beta) ist schneller und genauer für europäische Sprachen. Das Modell (~600 MB) wird beim ersten Einsatz geladen.";
 "settings.voice.engine.status.notDownloaded" = "Modell nicht heruntergeladen — wird sonst beim ersten Diktat geladen";
@@ -545,7 +518,6 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "voice.error.noBinary" = "whisper-cli nicht gefunden. Tippi bitte neu installieren.";
 "voice.error.noModel" = "Whisper-Modell nicht gefunden. In Einstellungen → Sprache herunterladen.";
 
-"insert.clipboardFallback" = "In Zwischenablage kopiert — ⌘V zum Einfügen";
 "dictation.toast.inserted" = "Diktat eingefügt";
 "dictation.toast.cancelled" = "Diktat abgebrochen";
 "dictation.toast.micDenied" = "Mikrofon-Zugriff verweigert";
@@ -566,6 +538,16 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "dictation.indicator.aiPolishing" = "KI-Bereinigung …";
 "dictation.indicator.aiSuffix" = "KI";
 "dictation.toast.cleanupFallback" = "KI-Cleanup hat geantwortet statt bereinigt — Original eingefügt";
+"dictation.toast.cleanupFailed" = "KI-Bereinigung fehlgeschlagen (%@) — Original eingefügt";
+"dictation.toast.cleanupTimeout" = "nach 30 s abgebrochen";
+"dictation.toast.cleanupEmpty" = "leere Antwort";
+"dictation.toast.cleanupProviderError" = "Anbieter meldete einen Fehler";
+"dictation.toast.returnPressed" = "Enter gedrückt";
+"dictation.toast.returnWithheld" = "Enter nicht gedrückt";
+"dictation.toast.notesClosedCopied" = "Notizen-Fenster geschlossen — Diktat in die Zwischenablage kopiert";
+"settings.voice.dictation.autoReturn.title" = "Nach dem Einfügen Enter drücken";
+"settings.voice.dictation.autoReturn.body" = "Nur in diesen Apps, und nur wenn die App beim Einfügen noch vorne ist. Praktisch für Chats wie Claude, wo Enter abschickt. Gilt für alle Fenster der App. In Terminals, Code-Editoren und Coding-Agenten (Terminal, iTerm, Ghostty, VS Code, Codex …) drückt Tippi nur Enter, wenn die KI-Bereinigung den diktierten Text nicht verändert hat — ein Befehl kann dort nie von der KI stammen.";
+"settings.voice.dictation.autoReturn.empty" = "Keine App eingetragen — Tippi drückt nie Enter.";
 "settings.voice.dictation.title" = "Diktat-Modus";
 "settings.voice.dictation.body" = "Diktat-Hotkey drücken zum Aufnehmen, erneut drücken zum Stoppen — Tippi transkribiert und fügt den Text an der Cursor-Position ein. Kein Popup, keine Textmarkierung nötig.";
 "settings.voice.dictation.enable" = "Diktat-Hotkey aktivieren";

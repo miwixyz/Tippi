@@ -48,9 +48,9 @@ should be corrected against this file.
 // AccentColor drives all .tint / .accentColor / .borderedProminent throughout the app
 // Supporting palette via TippiColors.swift:
 
-Color.tippiNavy   // #10192B — dark ink, logo bg
-Color.tippiSurface // adaptive surface
-Color.tippiMist    // adaptive suggestion column tint
+Color.tippiMist    // adaptive suggestion column tint (asset BrandMistBlue)
+// BrandNavy (#10192B) and BrandSurface stay in Assets.xcassets as brand palette
+// reference; their unused Swift accessors were removed in the 2026-09-27 audit.
 ```
 
 ## Typography

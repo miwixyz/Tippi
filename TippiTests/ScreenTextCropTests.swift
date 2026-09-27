@@ -161,6 +161,20 @@ final class ScreenTextCropTests: XCTestCase {
         XCTAssertEqual(picked?.frame, right.frame)
     }
 
+    /// A drag that ends 1 pt into the neighbouring display must be read from the
+    /// display holding almost all of it — picking the first one touched cut a
+    /// 1–2 px strip there, which Vision rejects twice and crashed (audit 2026-09-27).
+    func testScreenForSelectionPicksLargestOverlap() throws {
+        let left = ScreenTextCapture.FrozenScreen(frame: main, image: try Self.dummyImage())
+        let right = ScreenTextCapture.FrozenScreen(
+            frame: CGRect(x: main.maxX, y: 0, width: 1920, height: 1080),
+            image: try Self.dummyImage()
+        )
+        let mostlyRight = CGRect(x: main.maxX - 1, y: 100, width: 400, height: 50)
+
+        XCTAssertEqual(ScreenTextCapture.screen(for: mostlyRight, in: [left, right])?.frame, right.frame)
+    }
+
     /// A selection that intersects nothing (stale coordinates after a display
     /// was unplugged) must fall back rather than throw the user out.
     func testScreenForSelectionFallsBackWhenNothingIntersects() throws {

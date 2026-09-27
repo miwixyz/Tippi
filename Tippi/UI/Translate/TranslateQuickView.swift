@@ -306,7 +306,9 @@ struct TranslateQuickView: View {
                     userText: text
                 )
                 guard !Task.isCancelled else { return }
-                state = .result(text: result.text, providerDisplay: result.providerDisplay)
+                // An empty translation offered as a result let ⌘↩ delete the selection.
+                let translated = try LLMError.nonEmpty(result.text)
+                state = .result(text: translated, providerDisplay: result.providerDisplay)
             } catch {
                 guard !Task.isCancelled else { return }
                 state = .failed(message: error.localizedDescription)

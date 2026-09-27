@@ -75,6 +75,11 @@ final class NotesStore: ObservableObject {
     func refresh() {
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
+            // Queued writes first: reading the disk while the editor's last
+            // save is still in flight would hand back the older version, which
+            // the editor now adopts (review 2026-09-27).
+            let pending = await MainActor.run { self.pendingWrite }
+            await pending?.value
             let (directory, usingiCloud) = Self.resolveStorageDirectory()
             if usingiCloud {
                 Self.migrateLocalNotesIfNeeded(into: directory)
@@ -83,7 +88,8 @@ final class NotesStore: ObservableObject {
             await MainActor.run {
                 self.currentDirectory = directory
                 self.isUsingiCloud = usingiCloud
-                self.notes = loaded.sorted { $0.modifiedAt > $1.modifiedAt }
+                self.notes = Self.preferNewer(loaded: loaded, current: self.notes)
+                    .sorted { $0.modifiedAt > $1.modifiedAt }
                 self.loadError = nil
                 self.heldBackExternalEdit = false
                 self.startLiveSync(in: directory, enabled: usingiCloud)
@@ -172,6 +178,18 @@ final class NotesStore: ObservableObject {
         if result.heldBack {
             heldBackExternalEdit = true
             notesLog.notice("external change held back: note is open in the editor")
+        }
+    }
+
+    /// A full reload from disk, except that an in-memory note newer than its
+    /// file wins — a save made while the reload ran must not be undone by it.
+    /// Notes absent on disk are dropped, as before (deleted on the other Mac).
+    nonisolated static func preferNewer(loaded: [Note], current: [Note]) -> [Note] {
+        loaded.map { disk in
+            if let mine = current.first(where: { $0.id == disk.id }), mine.modifiedAt > disk.modifiedAt {
+                return mine
+            }
+            return disk
         }
     }
 

@@ -33,10 +33,17 @@ final class LLMActivityStreamTests: XCTestCase {
         try await waitForIdle()
         XCTAssertFalse(AIActivityMonitor.shared.isActive, "precondition: nothing else in flight")
 
+        // Finish a beat after the deltas: with an instant finish, the wrapper's
+        // `end()` hop could reach the main actor before this loop resumed on the
+        // first delta, and the indicator read as dark — a race in the test, not
+        // the wrapper (flaked 2 of 5 `make test` runs, 2026-09-27).
         let upstream = makeStream { continuation in
             continuation.yield("hello")
             continuation.yield(" world")
-            continuation.finish()
+            Task {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                continuation.finish()
+            }
         }
 
         var received = ""

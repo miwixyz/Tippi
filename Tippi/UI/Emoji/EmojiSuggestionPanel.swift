@@ -31,9 +31,6 @@ final class EmojiSuggestionPanel {
 
     var isOpen: Bool { panel != nil }
 
-    /// Currently highlighted entry — what Tab/Space will insert.
-    var topSuggestion: Emoji? { model.suggestions.first }
-
     /// Shows or updates the list. `anchor` is the caret rect in AppKit screen
     /// coordinates; nil falls back to the mouse location, the same fallback
     /// the selection action bar uses when an app doesn't implement
@@ -163,9 +160,9 @@ private struct EmojiSuggestionView: View {
                 .lineLimit(1)
             Spacer(minLength: 4)
             if isTop {
-                // Names the key that inserts it — without this the list looks
-                // like it wants arrow keys, which deliberately don't work here.
-                Text("⇥")
+                // Names the key that inserts it — Space accepts the top entry
+                // (Tab resets the buffer and closes the list, so "⇥" was wrong).
+                Text("␣")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)

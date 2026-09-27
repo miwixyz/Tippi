@@ -28,13 +28,9 @@ struct SnippetMatcher {
         buffer.removeLast()
     }
 
-    /// Longest-trigger-wins: checked longest-first so a more specific
-    /// trigger (":nl-do") matches before a shorter one (":nl") that happens
-    /// to also be a suffix of it once ":nl-do" has been fully typed... wait,
-    /// ":nl" is not a suffix of ":nl-do", but ":nl-do" contains ":nl" as a
-    /// prefix, not a suffix — the longest-first order still matters whenever
-    /// two configured triggers share a suffix (e.g. two different user
-    /// snippets both ending "...ok"), so it stays the general rule.
+    /// Longest-trigger-wins: when two configured triggers share a suffix
+    /// (":ok" and ":bok" both end the buffer ":bok"), the longer, more
+    /// specific one must match — so triggers are checked longest-first.
     func matchedTrigger(among triggers: [String]) -> String? {
         guard !buffer.isEmpty else { return nil }
         for trigger in triggers.sorted(by: { $0.count > $1.count }) where !trigger.isEmpty {

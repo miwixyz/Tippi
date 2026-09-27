@@ -104,11 +104,6 @@ final class DictationInputModeTests: XCTestCase {
         }
     }
 
-    func testTapOrHoldSummaryNamesTheKey() {
-        let summary = HotkeyTrigger.tapOrHold(modifier: .rightShift, holdThresholdMs: 250).summary
-        XCTAssertTrue(summary.contains(ModifierKey.rightShift.displayName), "summary was: \(summary)")
-    }
-
     // MARK: - Safety constants
 
     /// A stuck key must not record forever. The exact value is a judgement call;

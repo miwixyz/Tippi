@@ -402,8 +402,7 @@ struct SnippetsTab: View {
     /// The status is polled on redraw, which is enough for a settings pane.
     private var monitor: SnippetKeystrokeMonitor? { AppDelegate.shared?.snippetMonitor }
 
-    /// Turns the two timestamps into one plain sentence. Deliberately not
-    /// localized as marketing copy — this is a diagnostic line.
+    /// Turns the two timestamps into one plain, localized diagnostic sentence.
     private func diagnosticLine(received: Date?, processed: Date?) -> String {
         guard let received else {
             return String(localized: "settings.snippets.diag.noKeystrokes")

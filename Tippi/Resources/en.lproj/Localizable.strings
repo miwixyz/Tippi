@@ -101,7 +101,6 @@
 "setup.apiKey.alreadySaved" = "Key already saved — enter a new one to update";
 
 "setup.tryIt.title" = "You're all set!";
-"setup.tryIt.body" = "Select text in any app, then press ⌥⌘T (default hotkey). Tippi's prompt menu appears at your cursor — pick a transformation and the result replaces your text.";
 "setup.tryIt.hotkey" = "Default shortcut: ⌥⌘T  ·  change in Settings → Hotkeys";
 "setup.tryIt.demo.heading" = "Demo text — try it now:";
 "setup.tryIt.demo.text" = "this sentence has some grammer mistakes and weird wording it could realy be improved a lot dont you think";
@@ -112,9 +111,6 @@
 "setup.tryIt.testHint" = "This demo works without any permissions. Click to see the prompt menu, pick one, and Tippi shows what it would do with the text above.";
 
 /* Demo result */
-"demo.result.title" = "Tippi demo: %@";
-"demo.result.original" = "Original";
-"demo.result.transformed" = "Result";
 
 /* Demo sheet (in Welcome wizard) */
 "demo.sheet.close" = "Close";
@@ -148,6 +144,7 @@
 "preview.refine.apply" = "Refine";
 "preview.truncated.badge" = "Cut off (length limit)";
 "preview.truncated.empty" = "The response was cut off before any text arrived (output length limit). Try a shorter input.";
+"llm.error.empty" = "The AI returned no text — your selection was not changed.";
 
 /* Translate Quick Panel */
 "translate.panel.placeholder" = "Type text to translate…";
@@ -167,12 +164,6 @@
 "setup.tryIt.hotkey.heading" = "Once permissions are granted, the global hotkey is:";
 
 /* Phase 2 demo alerts */
-"alert.preview.title" = "Tippi — Captured Text";
-"alert.preview.body" = "Captured text:\n\n%@\n\nSource app: %@\nMethod: %@\n\nPick a demo transformation to paste back, or copy to clipboard.";
-"alert.preview.uppercase" = "Replace with UPPERCASE (demo)";
-"alert.preview.exclaim" = "Append Sparkle ✨ (demo)";
-"alert.preview.copyOnly" = "Copy to Clipboard";
-"alert.preview.cancel" = "Cancel";
 
 /* Settings */
 "settings.window.title" = "Tippi — Settings";
@@ -316,14 +307,6 @@
 "modifier.recorder.pressNow" = "Press the key now…";
 "modifier.recorder.needsModifier" = "That is not a modifier key. Use Shift, Control, Option or Command.";
 
-"settings.hotkeys.mode" = "Trigger mode";
-"settings.hotkeys.mode.doubleTap" = "Double-tap a modifier key";
-"settings.hotkeys.mode.hold" = "Hold a modifier key";
-"settings.hotkeys.mode.disabled" = "Off (use menu bar instead)";
-"settings.hotkeys.modifier" = "Modifier key";
-"settings.hotkeys.doubleTapMs" = "Double-tap within %d ms";
-"settings.hotkeys.holdMs" = "Hold for at least %d ms";
-"settings.hotkeys.apply" = "Apply";
 "settings.hotkeys.active" = "Active: %@";
 "settings.hotkeys.inactive" = "Hotkey not active — grant Input Monitoring, then restart Tippi";
 
@@ -366,10 +349,7 @@
 "prompts.import.panel.title" = "Import prompts";
 "prompts.import.panel.message" = "Select a .tippipack file.";
 "settings.general.autostart" = "Launch Tippi at login";
-"settings.general.updates" = "Check for updates";
-"settings.hotkeys.placeholder" = "Hotkey configuration coming in the next phase.";
 "settings.providers.save" = "Save";
-"settings.providers.empty" = "No key saved yet";
 "settings.providers.default" = "Default Provider";
 "settings.providers.default.hint" = "Tippi will try this provider first when you trigger a prompt. If no key is set, it falls through to the next configured one.";
 "settings.providers.fallback" = "Fall back to other providers on error";
@@ -540,14 +520,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.systemAudio.title" = "System Audio";
 "settings.voice.systemAudio.enable" = "Mute system audio while recording";
 "settings.voice.systemAudio.body" = "Mutes your Mac's speakers/output for the duration of the recording (dictation, voice-command popup, translate) and restores the exact previous state afterward — if it was already muted, it stays muted. Useful when music or a video is playing while you dictate. Off by default. Some audio devices (certain USB/Bluetooth outputs) don't support muting — the option is a no-op there, without affecting the recording itself.";
-"settings.voice.binary.title" = "whisper-cli binary";
-"settings.voice.binary.detected" = "Auto-detected: %@";
-"settings.voice.binary.notFound" = "Not found — try reinstalling Tippi";
-"settings.voice.binary.placeholder" = "/opt/homebrew/bin/whisper-cli";
-"settings.voice.binary.hint" = "whisper-cli is bundled inside Tippi — no manual installation needed";
 "settings.voice.model.title" = "Whisper Model";
-"settings.voice.model.placeholder" = "~/.cache/whisper/ggml-base.en.bin";
-"settings.voice.model.hint" = "Download a model above. Models are stored in ~/Library/Application Support/Tippi/Models/.";
 "settings.voice.engine.title" = "Speech engine";
 "settings.voice.engine.hint" = "Parakeet v3 (beta) is faster and more accurate for European languages. The model (~600 MB) downloads on first use.";
 "settings.voice.engine.status.notDownloaded" = "Model not downloaded — dictation would download it on first use";
@@ -570,7 +543,6 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "voice.error.noBinary" = "whisper-cli not found. Please reinstall Tippi.";
 "voice.error.noModel" = "Whisper model not found. Download one in Settings → Voice.";
 
-"insert.clipboardFallback" = "Copied to clipboard — press ⌘V to insert";
 "dictation.toast.inserted" = "Dictation inserted";
 "dictation.toast.cancelled" = "Dictation cancelled";
 "dictation.toast.micDenied" = "Microphone access denied";
@@ -591,6 +563,16 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.indicator.aiPolishing" = "AI cleanup…";
 "dictation.indicator.aiSuffix" = "AI";
 "dictation.toast.cleanupFallback" = "AI responded instead of cleaning — original inserted";
+"dictation.toast.cleanupFailed" = "AI cleanup failed (%@) — original inserted";
+"dictation.toast.cleanupTimeout" = "stopped after 30 s";
+"dictation.toast.cleanupEmpty" = "empty response";
+"dictation.toast.cleanupProviderError" = "provider reported an error";
+"dictation.toast.returnPressed" = "Return pressed";
+"dictation.toast.returnWithheld" = "Return not pressed";
+"dictation.toast.notesClosedCopied" = "Notes window closed — dictation copied to the clipboard";
+"settings.voice.dictation.autoReturn.title" = "Press Return after inserting";
+"settings.voice.dictation.autoReturn.body" = "Only in these apps, and only if the app is still in front when the text goes in. Handy for chats like Claude, where Return sends. Applies to every window of the app. In terminals, code editors and coding agents (Terminal, iTerm, Ghostty, VS Code, Codex …) Tippi presses Return only if AI cleanup left your dictated text unchanged — a command there can never come from the AI.";
+"settings.voice.dictation.autoReturn.empty" = "No app added — Tippi never presses Return.";
 "settings.voice.dictation.title" = "Dictation Mode";
 "settings.voice.dictation.body" = "Press the dictation hot key to start recording, press again to stop — Tippi transcribes and inserts the text at your cursor. No popup, no text selection needed.";
 "settings.voice.dictation.enable" = "Enable dictation hot key";

@@ -307,12 +307,12 @@ final class DictationController: ObservableObject {
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion. A press while
     /// transcription is running cancels it.
-    func toggle(targetApp: NSRunningApplication?) async {
+    func toggle(targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) async {
         switch state {
         case .idle:
             await start()
         case .recording(let url):
-            beginTranscription(wavURL: url, targetApp: targetApp)
+            beginTranscription(wavURL: url, targetApp: targetApp, notesTextView: notesTextView)
         case .transcribing:
             NSLog("Tippi: dictation cancel requested")
             transcriptionTask?.cancel()
@@ -344,13 +344,13 @@ final class DictationController: ObservableObject {
 
     /// Ends the hold gesture and transcribes. No-op unless recording, so a
     /// release without a matching press cannot fire anything.
-    func endHoldRecording(targetApp: NSRunningApplication?) {
+    func endHoldRecording(targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) {
         guard case .recording(let url) = state else {
             holdWatchdog?.invalidate()
             holdWatchdog = nil
             return
         }
-        beginTranscription(wavURL: url, targetApp: targetApp)
+        beginTranscription(wavURL: url, targetApp: targetApp, notesTextView: notesTextView)
     }
 
     // MARK: - Private
@@ -393,7 +393,7 @@ final class DictationController: ObservableObject {
         }
     }
 
-    private func beginTranscription(wavURL: URL, targetApp: NSRunningApplication?) {
+    private func beginTranscription(wavURL: URL, targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) {
         // Central exit from `.recording` — covers tap-toggle, hold release and watchdog.
         holdWatchdog?.invalidate()
         holdWatchdog = nil
@@ -405,25 +405,88 @@ final class DictationController: ObservableObject {
             aiEnabled: DictationSettings.postProcessEnabled
         )
         transcriptionTask = Task { [weak self] in
-            await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp)
+            await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp, notesTextView: notesTextView)
         }
     }
 
-    private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?) async {
+    /// `notesTextView`: Tippi's own Notes editor had focus when the hotkey fired.
+    /// The text goes in there natively — before, dictation always targeted the
+    /// last *other* app and wrote into its focused field in the background
+    /// (audit 2026-09-27; trigger and translate already handled Notes).
+    private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) async {
         do {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
-            let final = await postProcessIfEnabled(raw)
+            let (final, cleanupNotice) = await postProcessIfEnabled(raw)
             try Task.checkCancellation()
-            await TextInsertion.replace(with: final, in: targetApp)
+            // Decided BEFORE insertion: the clipboard fallback activates the target
+            // app itself, so "frontmost" afterwards is true by construction.
+            let returnDecision = DictationSettings.autoReturnDecision(
+                raw: raw,
+                inserted: final,
+                // Notes is Tippi's own editor: never a Return target.
+                targetBundleID: notesTextView == nil ? targetApp?.bundleIdentifier : nil,
+                frontmostBundleID: NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+                allowed: DictationSettings.autoReturnBundleIDs
+            )
+            // Shielded from cancellation: the hotkey cancels `transcriptionTask`
+            // while the state is still `.transcribing`, and a cancelled task's
+            // `try? Task.sleep` returns at once — the clipboard was restored
+            // before the app read ⌘V, so the user's OLD clipboard got pasted
+            // (audit 2026-09-27). An unstructured Task does not inherit the
+            // cancellation, so the insertion always runs to completion.
+            // Withholding the synthetic Return is not enough in a terminal: a line
+            // break in the text acts as one without bracketed paste. So in a
+            // command-capable app on the Return list, text always goes in as a
+            // single line (Rafter 2026-09-27). Chat apps keep their paragraphs.
+            let isCommandTarget = targetApp?.bundleIdentifier.map(DictationSettings.commandCapableBundleIDs.contains) ?? false
+            let textToInsert = (returnDecision != .skip && isCommandTarget) ? Self.singleLine(final) : final
+            let copiedInstead = await Task { @MainActor () -> Bool in
+                if let notesTextView {
+                    // The Notes window is kept (not released) when closed, so
+                    // `window != nil` proves nothing — visibility does. Closed
+                    // meanwhile: clipboard, never a background app.
+                    guard notesTextView.window?.isVisible == true else {
+                        TextInsertion.copy(textToInsert)
+                        return true
+                    }
+                    ReplacementWriter.writeNative(textToInsert, in: notesTextView, range: notesTextView.selectedRange())
+                } else {
+                    await TextInsertion.replace(with: textToInsert, in: targetApp)
+                }
+                return false
+            }.value
+            var pressReturn = false
+            // A cancel that arrived during insertion still means "don't send".
+            if returnDecision == .press, !Task.isCancelled {
+                // Let the target app finish handling the insertion before Return,
+                // then re-check right before posting — the HID event goes to
+                // whatever is frontmost at that instant.
+                try? await Task.sleep(nanoseconds: 50_000_000)
+                if !Task.isCancelled,
+                   let target = targetApp?.bundleIdentifier,
+                   NSWorkspace.shared.frontmostApplication?.bundleIdentifier == target {
+                    TextInsertion.pressReturn()
+                    pressReturn = true
+                }
+            }
             RecordingIndicatorWindowController.shared.hide()
             // Engine names are proper nouns — appended unlocalized so the user
             // can verify which engine actually transcribed.
             let engineName = SpeechEngine.current == .parakeet ? "Parakeet v3" : "Whisper"
-            ToastWindowController.shared.show(
-                message: String(localized: "dictation.toast.inserted") + " · " + engineName
-            )
-            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count)) via \(engineName)")
+            // One toast at the end: a toast shown earlier (during cleanup) would be
+            // replaced by this one within milliseconds and never be read.
+            var message = copiedInstead
+                ? String(localized: "dictation.toast.notesClosedCopied")
+                : cleanupNotice ?? String(localized: "dictation.toast.inserted") + " · " + engineName
+            if pressReturn {
+                message += " · " + String(localized: "dictation.toast.returnPressed")
+            } else if returnDecision != .skip {
+                // .blocked, or .press withdrawn because the app lost focus.
+                message += " · " + String(localized: "dictation.toast.returnWithheld")
+            }
+            ToastWindowController.shared.show(message: message)
+            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count)) via \(engineName), return=\(returnDecision) pressed=\(pressReturn)")
         } catch {
             RecordingIndicatorWindowController.shared.hide()
             if error is CancellationError || Task.isCancelled {
@@ -461,18 +524,18 @@ final class DictationController: ObservableObject {
     /// On any failure (no provider, network error, empty input) returns the
     /// raw transcript unchanged so dictation never breaks because of LLM
     /// trouble.
-    private func postProcessIfEnabled(_ raw: String) async -> String {
-        guard DictationSettings.postProcessEnabled else { return raw }
+    private func postProcessIfEnabled(_ raw: String) async -> (text: String, notice: String?) {
+        guard DictationSettings.postProcessEnabled else { return (raw, nil) }
 
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return raw }
+        guard !trimmed.isEmpty else { return (raw, nil) }
 
         // Short-circuit very short utterances ("ja", "ok", "danke") — the
         // LLM round-trip would dominate perceived latency without adding
         // meaningful cleanup.
         guard trimmed.count >= DictationSettings.postProcessMinChars else {
             NSLog("Tippi: dictation post-process skipped — \(trimmed.count) chars < min \(DictationSettings.postProcessMinChars)")
-            return raw
+            return (raw, nil)
         }
 
         let providerOverride = DictationSettings.postProcessProviderOverride
@@ -522,7 +585,7 @@ final class DictationController: ObservableObject {
                 }
                 group.addTask {
                     try await Task.sleep(nanoseconds: 30_000_000_000)
-                    throw LLMError.cancelled
+                    throw CleanupTimeout()
                 }
                 guard let first = try await group.next() else { throw LLMError.cancelled }
                 group.cancelAll()
@@ -531,19 +594,16 @@ final class DictationController: ObservableObject {
             let polished = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !polished.isEmpty else {
                 NSLog("Tippi: dictation post-process returned empty — keeping raw")
-                return raw
+                return (raw, Self.cleanupFailedNotice(String(localized: "dictation.toast.cleanupEmpty")))
             }
             // Hard rule: dictation cleanup must NEVER respond conversationally.
             // Weak local models (llama3.2:3B etc.) tend to treat short inputs
             // as chat prompts and reply instead of cleaning. If the output
             // looks like a chat response, fall back to the raw transcript
-            // and toast the user so the misbehavior is visible, not silent.
+            // and tell the user so the misbehavior is visible, not silent.
             if Self.looksLikeConversationalResponse(input: trimmed, output: polished) {
                 NSLog("Tippi: dictation post-process went conversational — falling back to raw (in=\(trimmed.count), out=\(polished.count))")
-                ToastWindowController.shared.show(
-                    message: String(localized: "dictation.toast.cleanupFallback")
-                )
-                return raw
+                return (raw, String(localized: "dictation.toast.cleanupFallback"))
             }
             NSLog("Tippi: dictation post-processed via \(result.providerDisplay) in \(String(format: "%.2f", result.duration))s")
             do {
@@ -560,11 +620,44 @@ final class DictationController: ObservableObject {
             } catch {
                 NSLog("Tippi: history append failed — \(error.localizedDescription)")
             }
-            return polished
+            return (polished, nil)
         } catch {
-            NSLog("Tippi: dictation post-process failed — \(error.localizedDescription) — keeping raw")
-            return raw
+            // The short reason, never the provider's response body — it is
+            // foreign text, in the log as much as in the toast.
+            let reason = Self.cleanupFailureReason(error)
+            NSLog("Tippi: dictation post-process failed — \(reason) — keeping raw")
+            return (raw, Self.cleanupFailedNotice(reason))
         }
+    }
+
+    nonisolated static func singleLine(_ text: String) -> String {
+        text.split(whereSeparator: \.isNewline).joined(separator: " ")
+    }
+
+    /// Thrown by the 30 s cap — distinct from `CancellationError`, which means
+    /// the user cancelled and must not be reported as a cleanup failure.
+    private struct CleanupTimeout: Error {}
+
+    /// Toast text when cleanup failed and the raw transcript went in instead —
+    /// so an unpolished dictation is explained, not a silent mystery.
+    private static func cleanupFailedNotice(_ reason: String) -> String {
+        String(format: String(localized: "dictation.toast.cleanupFailed"), reason)
+    }
+
+    /// Never the raw provider response body in a toast: it is foreign text on
+    /// screen (screen shares) in a window that looks like Tippi's own. The full
+    /// error stays in the log.
+    private static func cleanupFailureReason(_ error: Error) -> String {
+        if error is CleanupTimeout {
+            return String(localized: "dictation.toast.cleanupTimeout")
+        }
+        if case LLMError.httpError(let status, _) = error {
+            return "HTTP \(status)"
+        }
+        if case LLMError.providerError = error {
+            return String(localized: "dictation.toast.cleanupProviderError")
+        }
+        return error.localizedDescription
     }
 
     /// Detects when the cleanup LLM treated the dictation as a prompt and

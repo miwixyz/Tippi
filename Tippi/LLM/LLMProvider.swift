@@ -89,6 +89,12 @@ enum LLMError: LocalizedError {
     case invalidResponse
     case truncated
     case cancelled
+    /// The provider answered 200 and then reported an error inside the stream
+    /// (OpenRouter documents this form) or refused mid-answer (content filter).
+    case providerError(message: String)
+    /// The answer finished without any text. Never offered as a result: an
+    /// empty "ready" preview let Return delete the selection.
+    case emptyResult
 
     var errorDescription: String? {
         switch self {
@@ -104,7 +110,28 @@ enum LLMError: LocalizedError {
             return "The AI response was cut off (output length limit reached). Try a shorter text."
         case .cancelled:
             return "Cancelled."
+        case .providerError(let message):
+            return "The AI provider stopped with an error: \(message.prefix(240))"
+        case .emptyResult:
+            return String(localized: "llm.error.empty")
         }
+    }
+
+    /// For logs: never the provider's response body (foreign text, unredacted
+    /// in the unified log) — status or error kind only.
+    static func logSummary(_ error: Error) -> String {
+        switch error {
+        case LLMError.httpError(let status, _): return "HTTP \(status)"
+        case LLMError.providerError: return "provider error in stream"
+        default: return error.localizedDescription
+        }
+    }
+
+    /// The trimmed text, or `.emptyResult` — so callers need no branch of their own.
+    static func nonEmpty(_ text: String) throws -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw LLMError.emptyResult }
+        return trimmed
     }
 
     private func provider(forStatus status: Int) -> String {
@@ -334,6 +361,11 @@ func openAIChatComplete(
     // A truncated rewrite must never be inserted — it would silently destroy
     // the tail of the user's text.
     guard choice.finish_reason != "length" else { throw LLMError.truncated }
+    // Same failure forms as the streaming path (`OpenAIStreamLine`): a filtered
+    // or failed answer must not come back as a (partial) success.
+    if let reason = choice.finish_reason, reason == "error" || reason == "content_filter" {
+        throw LLMError.providerError(message: reason)
+    }
     guard let content = choice.message.content else { throw LLMError.invalidResponse }
     return content.trimmingCharacters(in: .whitespacesAndNewlines)
 }
@@ -433,35 +465,65 @@ func openAIChatStream(
                     throw LLMError.httpError(status: http.statusCode, body: errBody)
                 }
 
-                struct Chunk: Decodable {
-                    struct Choice: Decodable {
-                        struct Delta: Decodable { let content: String? }
-                        let delta: Delta
-                        let finish_reason: String?
-                    }
-                    let choices: [Choice]
-                }
-
+                // A 200 stream can still end in failure: an `error` object in a
+                // chunk, a finish_reason of "error"/"content_filter", or no text
+                // at all. Each of these used to finish normally, the Preview
+                // showed the empty or partial text as ready, and Return replaced
+                // the user's selection with it (audit 2026-09-27).
                 var truncated = false
+                var receivedText = false
                 for try await line in bytes.lines {
                     try Task.checkCancellation()
-                    guard line.hasPrefix("data:") else { continue }
-                    let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
-                    if payload == "[DONE]" { break }
-                    guard let data = payload.data(using: .utf8),
-                          let chunk = try? JSONDecoder().decode(Chunk.self, from: data),
-                          let choice = chunk.choices.first else { continue }
-                    if let delta = choice.delta.content, !delta.isEmpty {
-                        continuation.yield(delta)
+                    guard let event = try OpenAIStreamLine.parse(line) else { continue }
+                    if case .done = event { break }
+                    if case .delta(let text, let isTruncated) = event {
+                        if !text.isEmpty { receivedText = true; continuation.yield(text) }
+                        if isTruncated { truncated = true }
                     }
-                    if choice.finish_reason == "length" { truncated = true }
                 }
                 if truncated { throw LLMError.truncated }
+                guard receivedText else { throw LLMError.emptyResult }
                 continuation.finish()
             } catch {
                 continuation.finish(throwing: error)
             }
         }
         continuation.onTermination = { _ in task.cancel() }
+    }
+}
+
+/// One `data:` line of an OpenAI-compatible SSE stream. Pulled out of the
+/// stream loop so the failure forms can be tested without a server.
+enum OpenAIStreamLine: Equatable {
+    case delta(String, truncated: Bool)
+    case done
+
+    private struct Chunk: Decodable {
+        struct Choice: Decodable {
+            struct Delta: Decodable { let content: String? }
+            let delta: Delta
+            let finish_reason: String?
+        }
+        struct StreamError: Decodable { let message: String? }
+        let choices: [Choice]?
+        let error: StreamError?
+    }
+
+    /// `nil` for lines that carry nothing (comments, keep-alives, undecodable
+    /// chunks); throws for errors the provider reports inside the stream.
+    static func parse(_ line: String) throws -> OpenAIStreamLine? {
+        guard line.hasPrefix("data:") else { return nil }
+        let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+        if payload == "[DONE]" { return .done }
+        guard let data = payload.data(using: .utf8),
+              let chunk = try? JSONDecoder().decode(Chunk.self, from: data) else { return nil }
+        if let error = chunk.error {
+            throw LLMError.providerError(message: error.message ?? "unknown")
+        }
+        guard let choice = chunk.choices?.first else { return nil }
+        if let reason = choice.finish_reason, reason == "error" || reason == "content_filter" {
+            throw LLMError.providerError(message: reason)
+        }
+        return .delta(choice.delta.content ?? "", truncated: choice.finish_reason == "length")
     }
 }

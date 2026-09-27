@@ -42,10 +42,14 @@ enum SnippetTextInjector {
         let leftArrow: CGKeyCode = 123 // kVK_LeftArrow
 
         for _ in 0..<count {
-            CGEvent(keyboardEventSource: src, virtualKey: leftArrow, keyDown: true)?
-                .post(tap: .cghidEventTap)
-            CGEvent(keyboardEventSource: src, virtualKey: leftArrow, keyDown: false)?
-                .post(tap: .cghidEventTap)
+            // Flags cleared like the backspaces below: a still-held ⌥ would make
+            // this ⌥← (jump a word) instead of one character.
+            let down = CGEvent(keyboardEventSource: src, virtualKey: leftArrow, keyDown: true)
+            down?.flags = []
+            down?.post(tap: .cghidEventTap)
+            let up = CGEvent(keyboardEventSource: src, virtualKey: leftArrow, keyDown: false)
+            up?.flags = []
+            up?.post(tap: .cghidEventTap)
         }
         injectorLog.notice("moved caret back \(count) character(s) for cursor hint")
     }
@@ -56,9 +60,15 @@ enum SnippetTextInjector {
         let deleteKey: CGKeyCode = 51 // kVK_Delete (Backspace)
 
         for _ in 0..<count {
+            // Explicitly no modifiers: since ⌥ characters count, a trigger can
+            // complete on a keystroke with ⌥ still held (`:-|` on a German
+            // layout) — a `.hidSystemState` event would inherit it and turn ⌫
+            // into ⌥⌫, deleting whole words of the user's text (review 2026-09-27).
             let down = CGEvent(keyboardEventSource: src, virtualKey: deleteKey, keyDown: true)
+            down?.flags = []
             down?.post(tap: .cghidEventTap)
             let up = CGEvent(keyboardEventSource: src, virtualKey: deleteKey, keyDown: false)
+            up?.flags = []
             up?.post(tap: .cghidEventTap)
         }
         injectorLog.notice("sent \(count) synthetic backspace(s) for trigger deletion")

@@ -2232,6 +2232,10 @@ private struct VoiceTab: View {
 
                     Divider().padding(.vertical, 4)
 
+                    DictationAutoReturnSection()
+
+                    Divider().padding(.vertical, 4)
+
                     Toggle(String(localized: "settings.voice.dictation.postProcess.enable"),
                            isOn: $dictationPostProcess)
                         .onChange(of: dictationPostProcess) { _, new in

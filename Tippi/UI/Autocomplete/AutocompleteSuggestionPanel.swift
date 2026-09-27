@@ -12,8 +12,6 @@ import SwiftUI
 final class AutocompleteSuggestionPanel {
     private var panel: NSPanel?
 
-    var isOpen: Bool { panel != nil }
-
     /// `caret` in AppKit-Bildschirmkoordinaten (Ursprung unten links), wie
     /// `TextCapture.boundsForSelection` sie liefert.
     func show(_ suggestion: String, caret: CGRect) {
