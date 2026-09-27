@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.16.3] — 2026-09-27
+
+- _Add release notes here._
+
 ## [2.16.2] — 2026-09-27
 
 Abschluss der Code-Prüfung vom 27.09.: sieben verbleibende Fehler behoben.
