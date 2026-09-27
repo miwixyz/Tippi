@@ -1,5 +1,35 @@
 # Changelog
 
+## [2.16.2] — 2026-09-27
+
+Abschluss der Code-Prüfung vom 27.09.: sieben verbleibende Fehler behoben.
+
+### Behoben
+
+- **KI-Ergebnisse landen nicht in einer inzwischen fremden App.** Ein erfasstes
+  Ziel fällt nicht mehr auf das gerade aktive Fenster zurück. Wechselt die App
+  unmittelbar vor dem Einfügen, bleibt das Ergebnis zum manuellen Einfügen in
+  der Zwischenablage.
+- **Offline-Notizen bleiben bei der Rückkehr zu iCloud erhalten.** Unterscheiden
+  sich lokale und Cloud-Fassung, legt Tippi eine separate Konfliktkopie an —
+  auch wenn die Cloud-Fassung noch nicht heruntergeladen ist. Ein laufendes
+  Neuladen verwirft keine zwischenzeitlichen Änderungen oder neuen Notizen.
+- **Gelöschte Notizen tauchen nicht durch eine ausstehende Speicherung wieder
+  auf.** Speichern und Löschen laufen in derselben Reihenfolge ab.
+- **Eine beschädigte Verlaufsdatenbank bringt Tippi nicht mehr zum Absturz.** Der Fehler
+  wird im Verlauf angezeigt; ein ausgeschalteter Verlauf bleibt ohne Wirkung.
+- **Abgeschnittene Antworten OpenAI-kompatibler Anbieter gelten nicht mehr als
+  fertig.** Ein Transportende allein reicht nicht; Tippi verlangt ein
+  Abschlusszeichen oder einen regulären Stop-Grund.
+- **Die Suche im Bedienungshilfen-Baum ist zeitlich begrenzt**, auch bei sehr
+  breiten Fenstern. Ein einzelner Aufruf hat ebenfalls ein Zeitlimit.
+- **Die Zwischenablage überschreibt keine neuere Kopie mehr.** Tippi stellt den
+  vorherigen Inhalt nur wieder her, solange seine eigene Kopie noch aktuell ist.
+
+### Intern
+
+- 472 Tests, darunter 16 neue Regressionstests für diese Korrekturen.
+
 ## [2.16.1] — 2026-09-27
 
 Zweiter Teil der Code-Prüfung vom 27.09.: die mittleren und kleinen Funde.
