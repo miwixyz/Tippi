@@ -106,6 +106,7 @@ Tippi/
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
 │   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # grauer Vorschlag am Cursor, nie Key, keine Klicks
+│   ├── AppListEditor.swift                # v2.16.3 — App-Liste mit Symbol + Name, „App hinzufügen…“ (Ausschlussliste, Enter nach Diktat)
 │   ├── AutocompleteSettingsSection.swift  # Labs-Abschnitt in Einstellungen → Allgemein
 │   ├── DictationAutoReturnSection.swift   # v2.16 — App-Liste „Nach dem Einfügen Enter drücken“
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
