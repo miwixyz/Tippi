@@ -2,7 +2,57 @@
 
 ## [2.16.0] — 2026-09-27
 
-- _Add release notes here._
+### Neu
+
+- **Nach dem Diktat Enter drücken — pro App.** Einstellungen → Sprache → „Nach dem
+  Einfügen Enter drücken": Apps eintragen (z. B. die Claude-App), und ein Diktat wird
+  dort gleich abgeschickt. Ab Werk ist die Liste leer. Enter fällt nur, wenn die App
+  beim Einfügen noch vorne ist; brichst du das Diktat ab, entfällt es. In Terminals,
+  Code-Editoren und Coding-Agenten (Terminal, iTerm, Ghostty, VS Code, Codex …) drückt
+  Tippi nur Enter, wenn die KI-Bereinigung deinen Text nicht verändert hat, und fügt
+  dort immer einzeilig ein — ein Befehl kann dort nie von der KI stammen.
+- **Tippi sagt, warum ein Diktat unbearbeitet ankommt.** Scheitert die
+  KI-Bereinigung (Zeitlimit, Fehler, leere Antwort), fügt Tippi wie bisher dein
+  Original ein — und sagt jetzt, warum. Der Hinweis zum „KI hat geantwortet statt
+  bereinigt" war bisher sofort überdeckt und ist nun lesbar.
+
+### Behoben
+
+Aus einer Prüfung des gesamten Codes (jeder Fund von zwei unabhängigen Prüfern
+gegengeprüft):
+
+- **Notizen: Änderungen vom anderen Mac gingen verloren.** War das Notizen-Fenster
+  offen, während dieselbe Notiz auf dem anderen Mac bearbeitet wurde, schrieb ein
+  Wechsel der Notiz den alten Stand darüber — auf beiden Macs. Jetzt übernimmt der
+  Editor die neue Fassung und speichert nur, was du wirklich geändert hast.
+- **Notizen: „Titel generieren" verwarf, was du währenddessen getippt hast.**
+- **Eigene Prompts: Der Abgleich zwischen den Macs konnte Prompts löschen.**
+- **Ergebnis gleich Auswahl wurde doppelt eingefügt** („Hallo WeltHallo Welt"), etwa
+  bei Grammatik auf fehlerfreiem Text.
+- **Leere oder abgebrochene KI-Antworten wurden als fertig angezeigt** — Enter auf
+  „Ersetzen" löschte dann deine Auswahl. Jetzt erscheint eine Fehlermeldung, die
+  Auswahl bleibt unangetastet (Vorschau, Kettenschritte, Übersetzung).
+- **Text aus Bildschirmausschnitt stürzte ab**, wenn die Auswahl 1–2 Pixel in einen
+  zweiten Monitor ragte. Der Ausschnitt wird jetzt dem Monitor mit der größten
+  Überdeckung entnommen.
+- **Snippets löschten fremde Zeichen**, wenn zwischen dem Tippen eines Triggers
+  geklickt oder ⌘V/⌘Z/⌥⌫ benutzt wurde. Zeichen, die auf der deutschen Tastatur ⌥
+  brauchen (`@ | \ [ ] { }`), zählen jetzt mit — `:-|` und `\o/` funktionieren.
+- **Diktat im Notizen-Fenster landete in einer anderen App.** Es geht jetzt an die
+  Cursorposition der Notiz.
+- **Diktat-Kurzbefehl blieb nach dem Laden eines Whisper-Modells tot** bis zum
+  Neustart.
+- **Sprach-Eingabe im Prompt-Popup verlangte ein Whisper-Modell**, obwohl Parakeet
+  (Standard) keins braucht.
+- **Emoji-Vorschlag zeigte ⇥**, übernommen wird aber mit der Leertaste (␣).
+
+### Intern
+
+- Toter Code entfernt (Periphery: 31 → 15 Meldungen, der Rest ist bewusst), 29
+  ungenutzte Übersetzungen, `default.profraw` aus Git.
+- `release.sh`: Absturz beim Start gilt nicht mehr als ✓; fehlende Sparkle-Werkzeuge
+  stoppen vor der Veröffentlichung.
+- 440 Tests, flackernder Aktivitäts-Test entschärft.
 
 ## [2.15.0] — 2026-09-25
 
