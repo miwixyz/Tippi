@@ -6,32 +6,40 @@ private let insertLog = Logger(subsystem: "com.tippi.app", category: "insert")
 
 @MainActor
 enum TextInsertion {
+    /// A captured target must not silently fall through to the app that happens
+    /// to be focused after the AI request. `nil` means there was no captured
+    /// target and the current focus is intentionally the destination.
+    nonisolated static func isExpectedFrontmost(targetPID: pid_t?, frontmostPID: pid_t?) -> Bool {
+        guard let targetPID else { return true }
+        return targetPID == frontmostPID
+    }
+
     static func replace(with text: String, in app: NSRunningApplication?) async {
         if let app, replaceSelectionViaAccessibility(with: text, in: app) {
             insertLog.notice("AX replace ok (\(text.count) chars)")
             return
         }
-        if replaceSelectionViaAccessibility(with: text) {
+        if app == nil, replaceSelectionViaAccessibility(with: text) {
             insertLog.notice("AX replace (focused) ok")
             return
         }
 
         insertLog.notice("AX replace failed → clipboard+paste fallback")
         if let app { await TextCapture.activateAndWaitForFocus(app) }
-        await paste(text: text)
-        insertLog.notice("clipboard paste done")
+        await paste(text: text, expectedPID: app?.processIdentifier)
     }
 
     static func replace(with attributedText: NSAttributedString, fallbackPlainText: String, in app: NSRunningApplication?) async {
         if let app, replaceSelectionViaAccessibility(with: fallbackPlainText, in: app) {
             return
         }
-        if replaceSelectionViaAccessibility(with: fallbackPlainText) {
+        if app == nil, replaceSelectionViaAccessibility(with: fallbackPlainText) {
             return
         }
 
         if let app { await TextCapture.activateAndWaitForFocus(app) }
-        await paste(attributedText: attributedText, fallbackPlainText: fallbackPlainText)
+        await paste(attributedText: attributedText, fallbackPlainText: fallbackPlainText,
+                    expectedPID: app?.processIdentifier)
     }
 
     /// Bypasses AX entirely and inserts `text` via clipboard + synthetic ⌘V.
@@ -39,7 +47,7 @@ enum TextInsertion {
     /// (e.g. `.ignored` outcome from `replaceViaElement`).
     static func insertViaClipboard(_ text: String, into app: NSRunningApplication?) async {
         if let app { await TextCapture.activateAndWaitForFocus(app) }
-        await paste(text: text)
+        await paste(text: text, expectedPID: app?.processIdentifier)
     }
 
     static func copy(_ text: String) {
@@ -55,24 +63,33 @@ enum TextInsertion {
     /// transient by nature — the AI result must not end up in their archives.
     private static let concealedType = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
 
-    private static func paste(text: String) async {
+    private static func paste(text: String, expectedPID: pid_t?) async {
         let pb = NSPasteboard.general
-        let snapshot = PasteboardSnapshot.capture()
+        var snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
         pb.setString(text, forType: .string)
         pb.setString("", forType: concealedType)
+        snapshot.markOwnedChange(on: pb)
 
         try? await Task.sleep(nanoseconds: 40_000_000)
+        guard isExpectedFrontmost(targetPID: expectedPID,
+                                  frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier) else {
+            // Do not post ⌘V into a different app. The result stays on the
+            // clipboard for manual recovery instead of replacing unrelated text.
+            insertLog.error("paste withheld: target app is no longer frontmost")
+            return
+        }
         simulatePaste()
         try? await Task.sleep(nanoseconds: 400_000_000)
 
         snapshot.restore()
     }
 
-    private static func paste(attributedText: NSAttributedString, fallbackPlainText: String) async {
+    private static func paste(attributedText: NSAttributedString, fallbackPlainText: String,
+                              expectedPID: pid_t?) async {
         let pb = NSPasteboard.general
-        let snapshot = PasteboardSnapshot.capture()
+        var snapshot = PasteboardSnapshot.capture()
 
         pb.clearContents()
         if let rtf = try? attributedText.data(
@@ -83,8 +100,14 @@ enum TextInsertion {
         }
         pb.setString(fallbackPlainText, forType: .string)
         pb.setString("", forType: concealedType)
+        snapshot.markOwnedChange(on: pb)
 
         try? await Task.sleep(nanoseconds: 40_000_000)
+        guard isExpectedFrontmost(targetPID: expectedPID,
+                                  frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier) else {
+            insertLog.error("rich paste withheld: target app is no longer frontmost")
+            return
+        }
         simulatePaste()
         try? await Task.sleep(nanoseconds: 400_000_000)
 
@@ -247,17 +270,21 @@ enum TextInsertion {
     private static func replaceSelectionViaAccessibility(with text: String, in app: NSRunningApplication) -> Bool {
         guard AXIsProcessTrusted() else { return false }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(appElement, 0.25)
 
         if let focused = focusedElement(in: appElement),
            setSelectedText(text, on: focused) {
             return true
         }
 
+        // Depth alone does not bound a broad Electron/Xcode accessibility tree.
+        // Share one deadline across all windows and cap each synchronous IPC.
+        let deadline = CFAbsoluteTimeGetCurrent() + 0.4
         var windowsRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowsRef) == .success,
            let windows = windowsRef as? [AXUIElement] {
             for window in windows {
-                if let element = findElementWithSelection(in: window, depth: 0),
+                if let element = findElementWithSelection(in: window, depth: 0, deadline: deadline),
                    setSelectedText(text, on: element) {
                     return true
                 }
@@ -271,6 +298,7 @@ enum TextInsertion {
         guard AXIsProcessTrusted() else { return false }
 
         let systemWide = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(systemWide, 0.25)
         var focusedRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(
             systemWide,
@@ -286,6 +314,7 @@ enum TextInsertion {
     }
 
     private static func setSelectedText(_ text: String, on element: AXUIElement) -> Bool {
+        AXUIElementSetMessagingTimeout(element, 0.25)
         let valueBefore = axStringValue(element)
 
         // Secondary capture for apps that don't expose kAXValueAttribute.
@@ -333,8 +362,17 @@ enum TextInsertion {
         return true
     }
 
-    private static func findElementWithSelection(in element: AXUIElement, depth: Int) -> AXUIElement? {
-        guard depth <= 14 else { return nil }
+    nonisolated static func shouldContinueAXWalk(depth: Int, now: CFAbsoluteTime,
+                                                 deadline: CFAbsoluteTime) -> Bool {
+        depth <= 14 && now < deadline
+    }
+
+    private static func findElementWithSelection(in element: AXUIElement, depth: Int,
+                                                 deadline: CFAbsoluteTime) -> AXUIElement? {
+        guard shouldContinueAXWalk(depth: depth, now: CFAbsoluteTimeGetCurrent(), deadline: deadline) else {
+            return nil
+        }
+        AXUIElementSetMessagingTimeout(element, 0.25)
 
         var rangeRef: CFTypeRef?
         let hasRange = AXUIElementCopyAttributeValue(
@@ -361,7 +399,7 @@ enum TextInsertion {
         }
 
         for child in children {
-            if let match = findElementWithSelection(in: child, depth: depth + 1) {
+            if let match = findElementWithSelection(in: child, depth: depth + 1, deadline: deadline) {
                 return match
             }
         }

@@ -9,6 +9,9 @@ struct PasteboardSnapshot {
     /// ⌘C copied nothing; clearing there wiped the user's real clipboard
     /// (review 2026-09-27).
     private let changeCount: Int
+    /// Pasteboard generation after Tippi's own copy/paste write. If another
+    /// process copies later, restoring the old snapshot would erase their copy.
+    private var ownedChangeCount: Int?
 
     static func capture(from pasteboard: NSPasteboard = .general) -> PasteboardSnapshot {
         let items = (pasteboard.pasteboardItems ?? []).map { item -> [NSPasteboard.PasteboardType: Data] in
@@ -23,8 +26,13 @@ struct PasteboardSnapshot {
         return PasteboardSnapshot(items: items, changeCount: pasteboard.changeCount)
     }
 
-    func restore(to pasteboard: NSPasteboard = .general) {
+    mutating func markOwnedChange(on pasteboard: NSPasteboard = .general) {
         guard pasteboard.changeCount != changeCount else { return }
+        ownedChangeCount = pasteboard.changeCount
+    }
+
+    func restore(to pasteboard: NSPasteboard = .general) {
+        guard let ownedChangeCount, pasteboard.changeCount == ownedChangeCount else { return }
         let nsItems = items.compactMap { entries -> NSPasteboardItem? in
             guard !entries.isEmpty else { return nil }
             let item = NSPasteboardItem()

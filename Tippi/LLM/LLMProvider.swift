@@ -491,19 +491,20 @@ func openAIChatStream(
                 // at all. Each of these used to finish normally, the Preview
                 // showed the empty or partial text as ready, and Return replaced
                 // the user's selection with it (audit 2026-09-27).
-                var truncated = false
-                var receivedText = false
-                for try await line in bytes.lines {
+                var completion = OpenAIStreamCompletion()
+                streamLoop: for try await line in bytes.lines {
                     try Task.checkCancellation()
                     guard let event = try OpenAIStreamLine.parse(line) else { continue }
-                    if case .done = event { break }
-                    if case .delta(let text, let isTruncated) = event {
-                        if !text.isEmpty { receivedText = true; continuation.yield(text) }
-                        if isTruncated { truncated = true }
+                    completion.observe(event)
+                    switch event {
+                    case .delta(let text, _), .finished(let text):
+                        if !text.isEmpty { continuation.yield(text) }
+                    case .done:
+                        break streamLoop
                     }
+                    if case .finished = event { break streamLoop }
                 }
-                if truncated { throw LLMError.truncated }
-                guard receivedText else { throw LLMError.emptyResult }
+                try completion.validate()
                 continuation.finish()
             } catch {
                 continuation.finish(throwing: error)
@@ -517,6 +518,7 @@ func openAIChatStream(
 /// stream loop so the failure forms can be tested without a server.
 enum OpenAIStreamLine: Equatable {
     case delta(String, truncated: Bool)
+    case finished(String)
     case done
 
     private struct Chunk: Decodable {
@@ -545,6 +547,37 @@ enum OpenAIStreamLine: Equatable {
         if let reason = choice.finish_reason, reason == "error" || reason == "content_filter" {
             throw LLMError.providerError(message: reason)
         }
+        if choice.finish_reason == "stop" {
+            return .finished(choice.delta.content ?? "")
+        }
         return .delta(choice.delta.content ?? "", truncated: choice.finish_reason == "length")
+    }
+}
+
+/// A transport EOF is not proof that generation finished. A proxy can close a
+/// chunked response cleanly after some deltas; those bytes must not be offered
+/// as a complete replacement without `stop` or `[DONE]`.
+struct OpenAIStreamCompletion {
+    private var receivedText = false
+    private var finished = false
+    private var truncated = false
+
+    mutating func observe(_ event: OpenAIStreamLine) {
+        switch event {
+        case .delta(let text, let isTruncated):
+            receivedText = receivedText || !text.isEmpty
+            truncated = truncated || isTruncated
+        case .finished(let text):
+            receivedText = receivedText || !text.isEmpty
+            finished = true
+        case .done:
+            finished = true
+        }
+    }
+
+    func validate() throws {
+        if truncated { throw LLMError.truncated }
+        guard receivedText else { throw LLMError.emptyResult }
+        guard finished else { throw LLMError.invalidResponse }
     }
 }

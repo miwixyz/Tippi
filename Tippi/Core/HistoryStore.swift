@@ -24,17 +24,12 @@ import Security
 /// the user toggles History on in Settings.
 final class HistoryStore: @unchecked Sendable {
 
-    /// Shared instance. Crashes only if Application Support is unwritable —
-    /// at that point the rest of Tippi is broken anyway.
-    static let shared: HistoryStore = {
-        do {
-            return try HistoryStore()
-        } catch {
-            fatalError("HistoryStore failed to initialize: \(error)")
-        }
-    }()
+    /// A damaged history database must not take the writing assistant down.
+    /// Operations surface the open error in the History tab; disabled history
+    /// remains a no-op even when its database cannot be opened.
+    static let shared = HistoryStore()
 
-    private let dbQueue: DatabaseQueue
+    private let databaseResult: Result<DatabaseQueue, Error>
     private let enabledDefaultsKey = "historyEnabled"
 
     // MARK: - User preference
@@ -47,24 +42,34 @@ final class HistoryStore: @unchecked Sendable {
 
     // MARK: - Init
 
-    init() throws {
-        let supportDir = try FileManager.default.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        ).appendingPathComponent("Tippi", isDirectory: true)
-        try FileManager.default.createDirectory(
-            at: supportDir,
-            withIntermediateDirectories: true
-        )
-        let dbURL = supportDir.appendingPathComponent("history.db")
+    init(databaseURL: URL? = nil) {
+        do {
+            let dbURL: URL
+            if let databaseURL {
+                dbURL = databaseURL
+            } else {
+                let supportDir = try FileManager.default.url(
+                    for: .applicationSupportDirectory,
+                    in: .userDomainMask,
+                    appropriateFor: nil,
+                    create: true
+                ).appendingPathComponent("Tippi", isDirectory: true)
+                try FileManager.default.createDirectory(
+                    at: supportDir,
+                    withIntermediateDirectories: true
+                )
+                dbURL = supportDir.appendingPathComponent("history.db")
+            }
 
-        var config = Configuration()
-        config.label = "Tippi.HistoryStore"
-        self.dbQueue = try DatabaseQueue(path: dbURL.path, configuration: config)
-
-        try Self.migrator.migrate(dbQueue)
+            var config = Configuration()
+            config.label = "Tippi.HistoryStore"
+            let queue = try DatabaseQueue(path: dbURL.path, configuration: config)
+            try Self.migrator.migrate(queue)
+            databaseResult = .success(queue)
+        } catch {
+            databaseResult = .failure(error)
+            NSLog("Tippi: history database unavailable — \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Schema
@@ -111,6 +116,8 @@ final class HistoryStore: @unchecked Sendable {
     ) throws -> Int64? {
         guard isEnabled else { return nil }
 
+        let dbQueue = try databaseResult.get()
+
         let key = try Self.encryptionKey()
         let inputSealed = try Self.seal(input, key: key)
         let outputSealed = try Self.seal(output, key: key)
@@ -142,6 +149,7 @@ final class HistoryStore: @unchecked Sendable {
     private(set) var lastUnreadableCount = 0
 
     func fetch(limit: Int = 100, offset: Int = 0) throws -> [HistoryEntry] {
+        let dbQueue = try databaseResult.get()
         let key = try Self.encryptionKey()
         let (entries, skipped) = try dbQueue.read { db -> ([HistoryEntry], Int) in
             let rows = try Row.fetchAll(db, sql: """
@@ -166,12 +174,14 @@ final class HistoryStore: @unchecked Sendable {
     }
 
     func count() throws -> Int {
-        try dbQueue.read { db in
+        let dbQueue = try databaseResult.get()
+        return try dbQueue.read { db in
             try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM history") ?? 0
         }
     }
 
     func delete(id: Int64) throws {
+        let dbQueue = try databaseResult.get()
         try dbQueue.write { db in
             try db.execute(sql: "DELETE FROM history WHERE id = ?", arguments: [id])
         }
@@ -179,6 +189,7 @@ final class HistoryStore: @unchecked Sendable {
 
     /// Removes every row. The encryption key is preserved — use `purge()` for a full reset.
     func deleteAll() throws {
+        let dbQueue = try databaseResult.get()
         try dbQueue.write { db in
             try db.execute(sql: "DELETE FROM history")
         }

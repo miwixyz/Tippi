@@ -18,9 +18,9 @@ private let notesLog = Logger(subsystem: "com.tippi.app", category: "notes-store
 /// Deliberately simple sync model for v1 (matches the agreed minimal scope):
 /// - Refresh happens when the Notes window opens, not continuously — no
 ///   long-lived `NSMetadataQuery`.
-/// - Conflict handling is last-write-wins by `modifiedAt`. Two Macs editing
-///   the exact same note in the same few seconds is not a realistic scenario
-///   for a single user's quick-notes list.
+/// - iCloud's own same-file conflict handling is outside this store. When a
+///   locally edited note meets a different iCloud version with the same UUID,
+///   migration keeps the local text as a separately identified conflict copy.
 /// - A note just created on another Mac may not have finished downloading
 ///   from iCloud yet when this Mac refreshes; `startDownloadingUbiquitousItem`
 ///   is kicked off for any not-yet-local file, and it simply shows up on the
@@ -67,11 +67,17 @@ final class NotesStore: ObservableObject {
     /// `refresh()` (i.e. next time the Notes window opens) — consistent with
     /// the "refresh on open, not live" model above.
     private var currentDirectory: URL = NotesStore.localFallbackDirectory
+    /// A refresh reads off-actor. Mutations made after it starts must win over
+    /// that older disk snapshot, including deletions (which must not reappear).
+    private var mutationRevision = 0
+    private var noteMutationRevisions: [UUID: Int] = [:]
+    private var refreshRevision = 0
 
     private nonisolated static let fileExtension = "txt"
 
-    private init() {
-        refresh()
+    init(directory: URL? = nil, refreshOnInit: Bool = true) {
+        if let directory { currentDirectory = directory }
+        if refreshOnInit { refresh() }
     }
 
     // MARK: - Public API
@@ -80,12 +86,15 @@ final class NotesStore: ObservableObject {
     /// local notes into iCloud the first time it becomes available, and
     /// reloads the list from disk. Call when the Notes window opens.
     func refresh() {
+        refreshRevision += 1
+        let request = refreshRevision
+        let startedAtMutation = mutationRevision
+        let pending = pendingWrite
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             // Queued writes first: reading the disk while the editor's last
             // save is still in flight would hand back the older version, which
             // the editor now adopts (review 2026-09-27).
-            let pending = await MainActor.run { self.pendingWrite }
             await pending?.value
             let (directory, usingiCloud) = Self.resolveStorageDirectory()
             if usingiCloud {
@@ -93,9 +102,21 @@ final class NotesStore: ObservableObject {
             }
             let loaded = Self.loadAllNotes(from: directory)
             await MainActor.run {
+                guard self.refreshRevision == request else { return }
+                let changed = Set(self.noteMutationRevisions.compactMap { id, revision in
+                    revision > startedAtMutation ? id : nil
+                })
+                let currentIDs = Set(self.notes.map(\.id))
+                let mergeCurrent = Self.currentNotesForRefresh(
+                    self.notes, from: self.currentDirectory, to: directory, mutatedIDs: changed
+                )
                 self.currentDirectory = directory
                 self.isUsingiCloud = usingiCloud
-                self.notes = Self.preferNewer(loaded: loaded, current: self.notes)
+                self.notes = Self.preferNewer(
+                    loaded: loaded, current: mergeCurrent,
+                    preservingIDs: changed.intersection(currentIDs),
+                    deletedIDs: changed.subtracting(currentIDs)
+                )
                     .sorted { $0.modifiedAt > $1.modifiedAt }
                 self.heldBackExternalEdit = false
                 self.startLiveSync(in: directory, enabled: usingiCloud)
@@ -110,46 +131,55 @@ final class NotesStore: ObservableObject {
     func create() -> Note {
         let note = Note()
         notes.insert(note, at: 0)
+        markMutation(note.id)
         persist(note)
         return note
     }
 
-    /// Saves (creates or updates) a note. Bumps `modifiedAt` to now for
+    /// Saves an existing note. Bumps `modifiedAt` to now for
     /// immediate, optimistic list re-sorting — the actual source of truth
     /// after a reload is the file's own modification date (see
     /// `loadAllNotes`), which a coordinated write updates to the same
     /// moment anyway.
     func save(_ note: Note) {
+        guard let index = notes.firstIndex(where: { $0.id == note.id }) else { return }
         if unsavedEdit?.id == note.id { unsavedEdit = nil }
         var updated = note
         updated.modifiedAt = Date()
-        if let index = notes.firstIndex(where: { $0.id == updated.id }) {
-            notes[index] = updated
-        } else {
-            notes.append(updated)
-        }
+        notes[index] = updated
         notes.sort { $0.modifiedAt > $1.modifiedAt }
+        markMutation(updated.id)
         persist(updated)
     }
 
     /// Deletes permanently — no trash/undo in v1. Callers (see
     /// `NotesListView`) are expected to confirm with the user first.
     ///
-    /// Callers that hold a reference to `note` across an async boundary
-    /// (see `NotesEditorView.saveIfStillExists`) must re-check
-    /// `notes.contains` before calling `save` again for this id — otherwise
-    /// a pending autosave/flush can silently resurrect a note that was just
-    /// deleted here.
+    /// A later stale autosave cannot resurrect it: `save` ignores IDs absent
+    /// from the list, and deletion follows every already-queued write.
     func delete(_ note: Note) {
         notes.removeAll { $0.id == note.id }
+        if unsavedEdit?.id == note.id { unsavedEdit = nil }
+        markMutation(note.id)
         let directory = currentDirectory
-        Task.detached(priority: .utility) {
+        let previous = pendingWrite
+        pendingWrite = Task.detached(priority: .userInitiated) { [weak self] in
+            // Deletion is part of the same queue as saves. Otherwise an older
+            // queued save can write this note back after its delete completed.
+            await previous?.value
             do {
                 try Self.deleteNoteFile(id: note.id, in: directory)
             } catch {
                 notesLog.error("delete failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                guard let self else { return }
+                await MainActor.run { self.loadError = error.localizedDescription }
             }
         }
+    }
+
+    private func markMutation(_ id: UUID) {
+        mutationRevision += 1
+        noteMutationRevisions[id] = mutationRevision
     }
 
     // MARK: - Live sync
@@ -191,13 +221,24 @@ final class NotesStore: ObservableObject {
     /// A full reload from disk, except that an in-memory note newer than its
     /// file wins — a save made while the reload ran must not be undone by it.
     /// Notes absent on disk are dropped, as before (deleted on the other Mac).
-    nonisolated static func preferNewer(loaded: [Note], current: [Note]) -> [Note] {
-        loaded.map { disk in
+    nonisolated static func preferNewer(
+        loaded: [Note], current: [Note],
+        preservingIDs: Set<UUID> = [], deletedIDs: Set<UUID> = []
+    ) -> [Note] {
+        var result = loaded.filter { !deletedIDs.contains($0.id) }.map { disk in
             if let mine = current.first(where: { $0.id == disk.id }), mine.modifiedAt > disk.modifiedAt {
                 return mine
             }
             return disk
         }
+        for mine in current where preservingIDs.contains(mine.id) {
+            if let index = result.firstIndex(where: { $0.id == mine.id }) {
+                result[index] = mine
+            } else {
+                result.append(mine)
+            }
+        }
+        return result
     }
 
     /// The merge decision, pulled out of `applyExternalChanges` so it can be
@@ -252,6 +293,11 @@ final class NotesStore: ObservableObject {
     /// cost of nothing measurable — these are single small text files, and the
     /// work still runs off the main actor.
     private var pendingWrite: Task<Void, Never>?
+
+    /// Allows isolated directory tests to observe the whole save/delete queue.
+    func waitForPendingOperations() async {
+        await pendingWrite?.value
+    }
 
     /// Called by the editor on every change until the debounce saves it.
     func noteUnsavedEdit(id: UUID, content: String) {
@@ -321,26 +367,58 @@ final class NotesStore: ObservableObject {
     /// or a note created before the first refresh resolved the container):
     /// invisible in the app, sitting in Application Support (audit
     /// 2026-09-27). Cheap: one directory listing, empty in the normal case.
-    /// A file whose name already exists in iCloud is left in place, never
-    /// overwritten.
+    /// If iCloud already has the same UUID with different content, both
+    /// versions survive: the offline version gets a new UUID as a conflict copy.
     /// The original local file is only ever removed after its copy is
     /// verified to have actually succeeded — never on the strength of a
     /// `try?` alone, which would otherwise delete the only copy of a note
     /// whose copy silently failed.
     private nonisolated static func migrateLocalNotesIfNeeded(into iCloudDirectory: URL) {
-        let localDir = localFallbackDirectory
+        migrateLocalNotesIfNeeded(from: localFallbackDirectory, into: iCloudDirectory)
+    }
+
+    /// Directory-injected seam keeps migration tests away from the real iCloud
+    /// container and the user's actual notes.
+    nonisolated static func migrateLocalNotesIfNeeded(from localDir: URL, into iCloudDirectory: URL) {
         guard let files = try? FileManager.default.contentsOfDirectory(at: localDir, includingPropertiesForKeys: nil) else {
             return  // local directory unreadable or absent — nothing to migrate
         }
+        guard var cloudFiles = try? FileManager.default.contentsOfDirectory(
+            at: iCloudDirectory, includingPropertiesForKeys: nil
+        ) else {
+            notesLog.error("migration cannot list iCloud notes — leaving local copies untouched")
+            return
+        }
 
         for file in files where file.pathExtension == fileExtension {
+            guard let id = uuidSuffix(of: file.deletingPathExtension().lastPathComponent) else { continue }
+            let sameID = cloudFiles.filter { cloudNoteID(in: $0) == id }
+            if !sameID.isEmpty {
+                guard let localContent = try? String(contentsOf: file, encoding: .utf8) else {
+                    notesLog.error("migration cannot read local note \(file.lastPathComponent, privacy: .private)")
+                    continue
+                }
+                if !sameID.contains(where: { $0.pathExtension == "icloud" }),
+                   sameID.contains(where: { $0.pathExtension == fileExtension && readNoteFile(at: $0)?.content == localContent }) {
+                    // Same text already reached iCloud; the local file is only a
+                    // duplicate and can be removed without losing a version.
+                    try? FileManager.default.removeItem(at: file)
+                    continue
+                }
+                let conflict = Note(content: localContent)
+                do {
+                    try writeNoteFile(conflict, to: iCloudDirectory)
+                    cloudFiles.append(iCloudDirectory.appendingPathComponent(filename(for: conflict)))
+                    try FileManager.default.removeItem(at: file)
+                    notesLog.notice("kept offline note as an iCloud conflict copy")
+                } catch {
+                    notesLog.error("migration conflict copy failed — local file retained: \(error.localizedDescription, privacy: .public)")
+                }
+                continue
+            }
+
             let destination = iCloudDirectory.appendingPathComponent(file.lastPathComponent)
             guard !FileManager.default.fileExists(atPath: destination.path) else { continue }
-            // Evicted iCloud files exist only as a `.<name>.icloud` placeholder —
-            // `fileExists` misses them, and a stale local copy would be copied
-            // over the newer cloud version, now on every refresh (Rafter 2026-09-27).
-            let placeholder = iCloudDirectory.appendingPathComponent(".\(file.lastPathComponent).icloud")
-            guard !FileManager.default.fileExists(atPath: placeholder.path) else { continue }
 
             var coordinatorError: NSError?
             var copyError: Error?
@@ -362,9 +440,24 @@ final class NotesStore: ObservableObject {
                 continue
             }
             // Copy verified — safe to remove the local original now.
+            cloudFiles.append(destination)
             try? FileManager.default.removeItem(at: file)
             notesLog.notice("migrated \(file.lastPathComponent, privacy: .private) to iCloud")
         }
+    }
+
+    /// Recognises both downloaded notes and iCloud's `.name.txt.icloud`
+    /// placeholders without reading or downloading the latter. A placeholder
+    /// with the same UUID forces a separate conflict copy so the local text is
+    /// visible immediately without overwriting an unseen cloud version.
+    private nonisolated static func cloudNoteID(in url: URL) -> UUID? {
+        var name = url.lastPathComponent
+        if name.hasPrefix("."), name.hasSuffix(".icloud") {
+            name.removeFirst()
+            name.removeLast(".icloud".count)
+        }
+        guard name.hasSuffix(".txt") else { return nil }
+        return uuidSuffix(of: String(name.dropLast(".txt".count)))
     }
 
     /// Lists every note file in `directory`. Any ubiquitous item not yet
@@ -580,5 +673,19 @@ final class NotesStore: ObservableObject {
             return []
         }
         return entries.filter { $0.lastPathComponent.hasSuffix(suffix) && $0.lastPathComponent != excludedFilename }
+    }
+}
+
+extension NotesStore {
+    /// After switching local → iCloud, the old in-memory note must not win
+    /// over the iCloud original merely because its local mtime is newer: its
+    /// text has already become a separate conflict copy during migration.
+    /// Only edits made while this very refresh was running remain in memory.
+    nonisolated static func currentNotesForRefresh(
+        _ current: [Note], from oldDirectory: URL, to newDirectory: URL,
+        mutatedIDs: Set<UUID>
+    ) -> [Note] {
+        guard oldDirectory.standardizedFileURL != newDirectory.standardizedFileURL else { return current }
+        return current.filter { mutatedIDs.contains($0.id) }
     }
 }

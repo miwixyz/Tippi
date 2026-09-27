@@ -187,7 +187,7 @@ enum TextCapture {
         guard let focused = focusedElement(in: appElement) else { return nil }
 
         let pb = NSPasteboard.general
-        let snapshot = PasteboardSnapshot.capture()
+        var snapshot = PasteboardSnapshot.capture()
         // `AXCopy` returning `.success` only means the app accepted the action,
         // not that it wrote anything. Some apps acknowledge it and copy
         // nothing — then the clipboard still holds whatever the user copied
@@ -208,6 +208,7 @@ enum TextCapture {
             snapshot.restore()
             return nil
         }
+        snapshot.markOwnedChange(on: pb)
         let text = pb.string(forType: .string)
         snapshot.restore()
         guard let text, !text.isEmpty else { return nil }
@@ -357,7 +358,7 @@ enum TextCapture {
 
     private static func readViaPasteboard() async -> String? {
         let pb = NSPasteboard.general
-        let snapshot = PasteboardSnapshot.capture()
+        var snapshot = PasteboardSnapshot.capture()
         let beforeCount = pb.changeCount
         simulateCopy()
         try? await Task.sleep(nanoseconds: 120_000_000)
@@ -370,6 +371,7 @@ enum TextCapture {
             captureLog.notice("pasteboard: changeCount unchanged — synthetic ⌘C produced no copy")
             return nil
         }
+        snapshot.markOwnedChange(on: pb)
 
         let captured = pb.string(forType: .string)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
