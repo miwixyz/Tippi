@@ -153,6 +153,14 @@ Two pre-flight rules since v2.16 (code audit 2026-09-27): the Sparkle
 passes only a clean exit — any crash code (133 trap, 134 abort, 137 SIGKILL)
 stops the release instead of printing ✓.
 
+Since v2.16.1: `make test` runs the real-settings guard and the test-domain
+cleanup **even when a test fails** (exit code of the test run is kept);
+`release.sh` tags the built commit (`--target`), stops on a failed `git fetch`
+or an invalid signature; `prepare-binary.sh` refuses a whisper.cpp checkout that
+is not the pinned, clean version and fails on non-system dylibs;
+`prune-releases.sh` and `docs-drift-check.sh` fail instead of reporting success
+when `gh` or a doc file is missing.
+
 | Step | What happens |
 |------|-------------|
 | 1 | `make prepare-binary` — builds static `whisper-cli` |

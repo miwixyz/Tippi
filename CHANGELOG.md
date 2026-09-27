@@ -2,7 +2,54 @@
 
 ## [2.16.1] — 2026-09-27
 
-- _Add release notes here._
+Zweiter Teil der Code-Prüfung vom 27.09.: die mittleren und kleinen Funde.
+
+### Behoben
+
+- **Diktat-Bereinigung läuft jetzt wirklich mit niedriger Temperatur.** Der Wert kam
+  bei keinem Anbieter an (gemessen) — die Bereinigung lief mit dem Standard und
+  formulierte mehr um als nötig. Neuere Claude-Modelle und Gemini 3 bekommen bewusst
+  keinen Wert (lehnen ihn ab bzw. sollen bei 1.0 bleiben).
+- **Warnung vor abgeschalteten Modellen funktioniert wieder** bei OpenAI, Mistral,
+  Groq, OpenRouter und den übrigen OpenAI-kompatiblen Anbietern.
+- **Eigener Anbieter pro Prompt nutzt dein eingestelltes Modell** (Ollama fragte immer
+  `llama3.3` an).
+- **MLX: ein Modellwechsel startet den Server neu**, statt das alte Modell weiterlaufen
+  zu lassen. Kein kurzes Einfrieren mehr beim Start.
+- **Snippets:** Beim Weitertippen während einer Shell-Variable werden keine falschen
+  Zeichen mehr gelöscht; wechselst du dabei die App, landet die Ausgabe nicht dort.
+  Eine defekte Import-Datei wird angezeigt statt Importe still zu verlieren.
+- **„Kalenderwoche" heißt jetzt „Kinowoche (KW ab Donnerstag)"** — das Snippet
+  lieferte schon immer die Woche ab dem nächsten Donnerstag, nur der Text sagte etwas
+  anderes.
+- **Notizen:** Speicherfehler werden angezeigt; ⌘Q direkt nach dem Tippen verliert
+  nichts mehr; lokal gespeicherte Notizen erscheinen wieder, sobald iCloud da ist;
+  Titel aus vielen Emoji verhindern das Speichern nicht mehr.
+- **Verlauf:** Nicht mehr lesbare ältere Einträge (etwa nach dem Umzug auf einen neuen
+  Mac) blockieren die Liste nicht mehr; „Alle löschen" geht immer.
+- **Vorschau:** Ersetzen/Anhängen/Kopieren erst, wenn die Antwort fertig ist.
+- **Einstellungen:** Ein neuer Haupt-Hotkey gilt sofort; Kombinationen ohne ⌘ oder ⌃
+  und Standardkürzel wie ⌘C werden abgelehnt; ein API-Schlüssel lässt sich entfernen
+  (Feld leeren, Speichern); Download-Fehler von Whisper-Modellen werden angezeigt; es
+  gibt nur noch ein Einstellungsfenster.
+- **Bildschirm-Text:** Esc bricht die Auswahl ab; kein kurzes Einfrieren mehr; Texte auf
+  Englisch übersetzt; kurzer Text in großer Auswahl meldet keine fehlende Berechtigung.
+- **Sprache:** Die Stummschaltung wird am richtigen Gerät aufgehoben (Wechsel auf
+  AirPods während des Diktats); Sprachaufnahmen werden beim Abbrechen sofort gelöscht;
+  Whisper-Fehler zeigen den eigentlichen Fehler.
+- **Einzelne Sondertaste:** Linke und rechte Umschalttaste werden getrennt erkannt.
+- **Kleinigkeiten:** Emoji-Auswahl kapert keine Tasten in anderen Tippi-Fenstern und
+  läuft beim Überfahren nicht mehr weg; Hinweise bleiben auf dem Bildschirm; die
+  Auswahlleiste erscheint auf dem richtigen Monitor; die Zwischenablage bleibt
+  unangetastet, wenn Tippi nichts kopiert hat.
+
+### Intern
+
+- `make test` prüft echte Einstellungen auch bei rotem Test und kennt sechs weitere
+  Schlüssel. `release.sh` taggt den gebauten Commit, bricht bei Netzwerk- und
+  Signaturfehlern ab; `prepare-binary.sh`, `prune-releases.sh` und
+  `docs-drift-check.sh` melden Fehler statt still weiterzulaufen.
+- 456 Tests.
 
 ## [2.16.0] — 2026-09-27
 
