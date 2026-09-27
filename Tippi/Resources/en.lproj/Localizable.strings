@@ -25,9 +25,9 @@
 "settings.autocomplete.openProviders" = "Set up MLX…";
 "settings.autocomplete.excluded" = "Never read in these apps";
 "settings.autocomplete.remove" = "Remove from list";
-"settings.autocomplete.addRunningApp" = "Running app…";
-"settings.autocomplete.bundleIDPlaceholder" = "Bundle ID, e.g. com.example.app";
-"settings.autocomplete.add" = "Add";
+"settings.autocomplete.addRunningApp" = "Add app…";
+"settings.appList.chooseOther" = "Choose another app…";
+"settings.appList.notInstalled" = "not installed";
 "menu.checkForUpdates" = "Check for Updates…";
 "menu.updateReady" = "Update to %@ ready…";
 "update.reminder.title" = "Tippi %@ is available";

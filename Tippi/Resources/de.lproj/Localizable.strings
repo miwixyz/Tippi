@@ -25,9 +25,9 @@
 "settings.autocomplete.openProviders" = "MLX einrichten…";
 "settings.autocomplete.excluded" = "Nie lesen in diesen Apps";
 "settings.autocomplete.remove" = "Aus der Liste entfernen";
-"settings.autocomplete.addRunningApp" = "Laufende App…";
-"settings.autocomplete.bundleIDPlaceholder" = "Bundle-ID, z. B. com.example.app";
-"settings.autocomplete.add" = "Hinzufügen";
+"settings.autocomplete.addRunningApp" = "App hinzufügen…";
+"settings.appList.chooseOther" = "Andere App wählen…";
+"settings.appList.notInstalled" = "nicht installiert";
 "menu.checkForUpdates" = "Nach Updates suchen…";
 "menu.updateReady" = "Update auf %@ bereit …";
 "update.reminder.title" = "Tippi %@ ist da";
