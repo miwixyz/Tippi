@@ -254,7 +254,10 @@ struct LLMRouter {
                 return try await complete(systemPrompt: systemPrompt, userText: userText, temperature: temperature)
             }
         }
-        let modelName = forceModel.isEmpty ? provider.defaultModel : forceModel
+        // Empty override = "this provider, its configured model" — not its
+        // hard-coded default: an Ollama override asked for llama3.3 whatever
+        // was installed (404, audit 2026-09-27).
+        let modelName = forceModel.isEmpty ? model(for: provider.id, fallback: provider.defaultModel) : forceModel
         let start = Date()
         let text = try await provider.complete(
             systemPrompt: systemPrompt,
@@ -290,7 +293,10 @@ struct LLMRouter {
                 return try await completeStream(systemPrompt: systemPrompt, userText: userText)
             }
         }
-        let modelName = forceModel.isEmpty ? provider.defaultModel : forceModel
+        // Empty override = "this provider, its configured model" — not its
+        // hard-coded default: an Ollama override asked for llama3.3 whatever
+        // was installed (404, audit 2026-09-27).
+        let modelName = forceModel.isEmpty ? model(for: provider.id, fallback: provider.defaultModel) : forceModel
         // The two early returns above delegate to the other `completeStream`,
         // which wraps the stream itself — so this is the only spot here that
         // still needs it. Wrapping in both places would double-count.

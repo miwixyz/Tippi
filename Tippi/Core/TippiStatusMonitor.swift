@@ -138,7 +138,7 @@ final class TippiStatusMonitor: ObservableObject {
 
     /// Cheap reachability probe against the local Ollama server.
     private static func pingOllama() async -> Bool {
-        guard let url = URL(string: "http://localhost:11434/api/tags") else { return false }
+        guard let url = URL(string: "http://127.0.0.1:11434/api/tags") else { return false }
         var req = URLRequest(url: url)
         req.timeoutInterval = 1.5
         guard let (_, resp) = try? await URLSession.shared.data(for: req),

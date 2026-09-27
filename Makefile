@@ -1,3 +1,7 @@
+# Alias ohne das woertliche "$(MAKE)": make fuehrt Zeilen mit $(MAKE) auch bei
+# `make -n` wirklich aus — `make -n test` startete sonst den echten Testlauf.
+SUBMAKE := $(MAKE)
+
 .PHONY: help generate open build clean lint icons prepare-binary release release-dry-run bump
 
 TEAM_ID          := LTKJ6Z2VYB
@@ -109,12 +113,17 @@ test: generate
 # bei einem echten Fehlerzustand laeuft.
 	@bash scripts/concurrency-lint.sh
 	@bash scripts/real-defaults-guard.sh snapshot
-	xcodebuild test -project Tippi.xcodeproj -scheme Tippi -destination 'platform=macOS'
-	@$(MAKE) --no-print-directory purge-test-defaults
 # Echte Einstellungen der installierten App: kein Test darf sie aendern. Der Test-Host
 # IST die installierte App (gleiche Bundle-ID). Bis 2026-09-25 loeschte ein Test bei
 # jedem Lauf den Diktat-Modus — nach jedem Update war „Einzelne Sondertaste" weg.
-	@bash scripts/real-defaults-guard.sh compare
+# Aufraeumen und Vergleich laufen AUCH bei rotem Test (Audit 2026-09-27): der
+# wahrscheinlichste Fall eines kaputten Tests, der echte Einstellungen aendert, ist
+# ein roter — make brach dort vorher ab, bevor der Waechter lief. Exit-Code des
+# Testlaufs bleibt erhalten.
+	@rc=0; xcodebuild test -project Tippi.xcodeproj -scheme Tippi -destination 'platform=macOS' || rc=$$?; \
+	$(SUBMAKE) --no-print-directory purge-test-defaults || rc=1; \
+	bash scripts/real-defaults-guard.sh compare || rc=1; \
+	exit $$rc
 
 purge-test-defaults:
 # Wiederholt, nicht einmalig (korrigiert 2026-09-20, nachdem der erste Entwurf

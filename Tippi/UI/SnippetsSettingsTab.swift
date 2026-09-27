@@ -145,28 +145,19 @@ struct SnippetsTab: View {
                 // exactly like the list being empty because nothing was ever
                 // created. Saying which one it is, is the whole point — the
                 // silent version of this cost the file's contents.
+                // The reload button matters: without it the only way out was
+                // relaunching, and the session in between silently dropped
+                // every new snippet.
                 if let loadError = store.appSnippetsLoadError {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(String(localized: "settings.snippets.loadError"))
-                                .font(.caption)
-                            Text(loadError)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .textSelection(.enabled)
-                            // Without this the only way out was relaunching,
-                            // and the session in between silently dropped every
-                            // new snippet: the list accepted them, nothing
-                            // reached disk, all gone after the restart.
-                            Button(String(localized: "settings.snippets.reloadFile")) {
-                                store.reloadAppSnippets()
-                            }
-                            .controlSize(.small)
-                        }
-                    } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                    }
+                    SnippetFileErrorLabel(message: String(localized: "settings.snippets.loadError"),
+                                          detail: loadError) { store.reloadAppSnippets() }
+                }
+                // Same contract for the imported-snippet file. Until 2026-09-27
+                // this error was only logged: imports looked fine, lived only in
+                // memory, and were gone after the next launch.
+                if let importError = store.importedSnippetsLoadError {
+                    SnippetFileErrorLabel(message: String(localized: "settings.snippets.importedLoadError"),
+                                          detail: importError) { store.reloadImportedSnippets() }
                 }
                 if store.appSnippets.isEmpty {
                     Text(String(localized: "settings.snippets.empty"))
@@ -225,6 +216,7 @@ struct SnippetsTab: View {
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
+                            .disabled(store.importedSnippetsLoadError != nil)
                         }
                     }
                     // Files in this directory are no longer read live. Anyone
@@ -693,5 +685,31 @@ private struct ShellSnippetApprovalSheet: View {
         }
         .padding(20)
         .frame(width: 420)
+    }
+}
+
+/// "This snippet file could not be read" with the raw error and a reload
+/// button — shared by the own-snippets and imported-snippets files.
+private struct SnippetFileErrorLabel: View {
+    let message: String
+    let detail: String
+    let onReload: () -> Void
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(message)
+                    .font(.caption)
+                Text(detail)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                Button(String(localized: "settings.snippets.reloadFile"), action: onReload)
+                    .controlSize(.small)
+            }
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+        }
     }
 }

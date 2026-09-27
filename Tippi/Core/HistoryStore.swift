@@ -137,9 +137,13 @@ final class HistoryStore: @unchecked Sendable {
     }
 
     /// Fetches entries newest-first.
+    /// Rows the last `fetch` could not decrypt — shown in the History tab, so
+    /// an empty list next to a non-zero count explains itself (review 2026-09-27).
+    private(set) var lastUnreadableCount = 0
+
     func fetch(limit: Int = 100, offset: Int = 0) throws -> [HistoryEntry] {
         let key = try Self.encryptionKey()
-        return try dbQueue.read { db in
+        let (entries, skipped) = try dbQueue.read { db -> ([HistoryEntry], Int) in
             let rows = try Row.fetchAll(db, sql: """
                 SELECT id, timestamp, app_name, prompt_title, provider, model,
                        language, latency_ms, input_sealed, output_sealed
@@ -147,8 +151,18 @@ final class HistoryStore: @unchecked Sendable {
                 ORDER BY timestamp DESC
                 LIMIT ? OFFSET ?
                 """, arguments: [limit, offset])
-            return try rows.map { try Self.decode(row: $0, key: key) }
+            // One row that no longer decrypts (key replaced — e.g. a restore
+            // onto a new Mac, where the ThisDeviceOnly key does not travel)
+            // used to fail the whole list, and the History tab with it
+            // (audit 2026-09-27). Skip it, say how many.
+            let entries = rows.compactMap { try? Self.decode(row: $0, key: key) }
+            return (entries, rows.count - entries.count)
         }
+        if skipped > 0 {
+            NSLog("Tippi: history — \(skipped) entr(y/ies) not decryptable, skipped")
+        }
+        lastUnreadableCount = skipped
+        return entries
     }
 
     func count() throws -> Int {

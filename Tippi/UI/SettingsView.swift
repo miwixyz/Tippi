@@ -139,10 +139,12 @@ private struct GeneralSettingsTab: View {
             }
 
             Section {
-                Toggle(String(localized: "settings.general.autostart"), isOn: $autostart)
-                    .onChange(of: autostart) { _, new in
-                        toggleAutostart(new)
-                    }
+                // A binding that acts on user clicks only. `onChange` also fired
+                // on the programmatic reset after a failed register (the real
+                // error got overwritten by unregister's message) and on the
+                // refresh in onAppear (audit 2026-09-27).
+                Toggle(String(localized: "settings.general.autostart"),
+                       isOn: Binding(get: { autostart }, set: { toggleAutostart($0) }))
                 if !autostartStatus.isEmpty {
                     Text(autostartStatus)
                         .font(.caption)
@@ -197,17 +199,22 @@ private struct GeneralSettingsTab: View {
         do {
             if enabled {
                 try SMAppService.mainApp.register()
-                autostartStatus = String(localized: "settings.general.autostart.enabled")
             } else {
                 try SMAppService.mainApp.unregister()
-                autostartStatus = String(localized: "settings.general.autostart.disabled")
+            }
+            // From the real status, not the requested one: `.requiresApproval`
+            // left the switch off but the text said "enabled" (review 2026-09-27).
+            switch SMAppService.mainApp.status {
+            case .enabled:          autostartStatus = String(localized: "settings.general.autostart.enabled")
+            case .requiresApproval: autostartStatus = String(localized: "settings.general.autostart.requiresApproval")
+            default:                autostartStatus = String(localized: "settings.general.autostart.disabled")
             }
             autostartIsError = false
         } catch {
             autostartStatus = error.localizedDescription
             autostartIsError = true
-            autostart = SMAppService.mainApp.status == .enabled
         }
+        autostart = SMAppService.mainApp.status == .enabled
     }
 }
 
@@ -274,6 +281,7 @@ private struct HotkeysTab: View {
                             .onChange(of: combo) { _, new in
                                 KeyComboStore.save(new)
                                 keyMonitor.update(combo: new)
+                                AppDelegate.shared?.applyMainHotkeyChange()
                                 savedFlash = true
                                 Task { @MainActor in
                                     try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -428,23 +436,19 @@ private struct HotkeysTab: View {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle(isOn: $screenOCREnabled) {
-                            Text("Text aus Bildschirmausschnitt").font(.headline)
+                            Text(String(localized: "settings.ocr.title")).font(.headline)
                         }
                         .onChange(of: screenOCREnabled) { _, new in
                             ScreenOCRSettings.isEnabled = new
                             AppDelegate.shared?.restartScreenOCRHotkey()
                         }
 
-                        Text("Zieht ein Auswahlrechteck auf und legt den erkannten Text "
-                             + "in die Zwischenablage. Die Erkennung läuft lokal, "
-                             + "Deutsch und Englisch. Nichts wird gespeichert oder gesendet.")
+                        Text(String(localized: "settings.ocr.body"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
-                        Text("Verlangt die Berechtigung „Bildschirmaufnahme\u{201C}. Sie erlaubt "
-                             + "Tippi dauerhaft, den Bildschirm zu lesen — deshalb ist die "
-                             + "Funktion ab Werk aus und fragt erst beim ersten Auslösen.")
+                        Text(String(localized: "settings.ocr.permission"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -465,26 +469,21 @@ private struct HotkeysTab: View {
 
                             Divider()
 
-                            Toggle("Zeilenumbrüche zusammenführen", isOn: $screenOCRJoin)
+                            Toggle(String(localized: "settings.ocr.joinLines"), isOn: $screenOCRJoin)
                                 .onChange(of: screenOCRJoin) { _, new in
                                     ScreenOCRSettings.joinLines = new
                                 }
-                            Text("Die Erkennung liefert jede Bildschirmzeile einzeln — beim "
-                                 + "Einfügen steht sonst mitten im Satz ein Umbruch. Absätze, "
-                                 + "Aufzählungen und Satzenden bleiben erhalten, Trennstriche "
-                                 + "werden zusammengezogen. Für Code oder Tabellen ausschalten.")
+                            Text(String(localized: "settings.ocr.joinLinesHint"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            Toggle("Vor Zwischenablage-Verlauf verbergen",
+                            Toggle(String(localized: "settings.ocr.conceal"),
                                    isOn: $screenOCRConceal)
                                 .onChange(of: screenOCRConceal) { _, new in
                                     ScreenOCRSettings.concealFromClipboardHistory = new
                                 }
-                            Text("Raycast, Alfred und Paste überspringen den Text dann. "
-                                 + "Sinnvoll, wenn du Vertrauliches erfasst — im Alltag "
-                                 + "aus, damit der Text auffindbar bleibt.")
+                            Text(String(localized: "settings.ocr.concealHint"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1112,9 +1111,13 @@ private struct ProviderRow: View {
         .font(.caption)
     }
 
+    /// An emptied field with a key on file is a removal, not "nothing to
+    /// save": `setAPIKey("")` deletes the Keychain entry. Blocking it left no
+    /// way to revoke a key short of Keychain Access (audit 2026-09-27).
     private var saveDisabled: Bool {
         provider.requiresAPIKey
             && apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !hasKey
     }
 
     private func load() {
@@ -1171,13 +1174,17 @@ private struct ProviderRow: View {
         saveError = nil
 
         let trimmedModel = modelName.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Read before the write below: `MLXServerManager.model` IS
+        // `defaultModel.mlx`, so comparing afterwards always said "unchanged"
+        // and a new MLX model never restarted the server (audit 2026-09-27).
+        let previousMLXModel = MLXServerManager.model
         if trimmedModel.isEmpty {
             UserDefaults.standard.removeObject(forKey: "defaultModel.\(provider.id)")
         } else {
             UserDefaults.standard.set(trimmedModel, forKey: "defaultModel.\(provider.id)")
         }
         if isMLX, let p = validatedPort {
-            let modelChanged = !trimmedModel.isEmpty && trimmedModel != MLXServerManager.model
+            let modelChanged = !trimmedModel.isEmpty && trimmedModel != previousMLXModel
             let portChanged  = p != MLXServerManager.port
             let wasRunning   = mlxManager.state.isRunning
             if !trimmedModel.isEmpty { MLXServerManager.model = trimmedModel }
@@ -2420,6 +2427,15 @@ private struct VoiceTab: View {
                 ForEach(WhisperModel.catalog) { model in
                     ModelRow(model: model, manager: modelManager)
                 }
+
+                // Written by the download on every failure but never shown —
+                // the row just flipped back to "Download" (audit 2026-09-27).
+                if let error = modelManager.downloadError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(6)
         }
@@ -2448,7 +2464,11 @@ private struct VoiceTab: View {
                 }
                 .pickerStyle(.menu)
                 .frame(width: 160)
-                .onChange(of: language) { _, new in WhisperConfig.language = new }
+                .onChange(of: language) { _, new in
+                    WhisperConfig.language = new
+                    // The menu-bar submenu showed the old checkmark (audit 2026-09-27).
+                    AppDelegate.shared?.rebuildDictationLanguageMenu()
+                }
             }
             .padding(6)
         }

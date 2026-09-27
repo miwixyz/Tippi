@@ -114,6 +114,13 @@ struct HistoryTab: View {
                 ))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if HistoryStore.shared.lastUnreadableCount > 0 {
+                    Text(String(format: String(localized: "settings.history.unreadable"),
+                                HistoryStore.shared.lastUnreadableCount))
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .help(String(localized: "settings.history.unreadable.help"))
+                }
                 if let err = loadError {
                     Spacer()
                     Text(err)
@@ -128,8 +135,10 @@ struct HistoryTab: View {
 
     private func refresh() {
         do {
-            entries = try HistoryStore.shared.fetch(limit: 200)
+            // Count first: if reading entries fails, "Delete all" must still be
+            // available as the way out (it was disabled at 0, audit 2026-09-27).
             totalCount = try HistoryStore.shared.count()
+            entries = try HistoryStore.shared.fetch(limit: 200)
             loadError = nil
         } catch {
             loadError = error.localizedDescription
@@ -147,7 +156,9 @@ struct HistoryTab: View {
 
     private func deleteAll() {
         do {
-            try HistoryStore.shared.deleteAll()
+            // purge = delete all rows + drop the key; the next entry gets a
+            // fresh one. Also clears rows only the old key could read.
+            try HistoryStore.shared.purge()
             refresh()
         } catch {
             loadError = error.localizedDescription

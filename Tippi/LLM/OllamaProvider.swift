@@ -6,7 +6,7 @@ struct OllamaProvider: LLMProvider {
     let defaultModel = "llama3.3"
     let requiresAPIKey = false
 
-    private let endpoint = URL(string: "http://localhost:11434/api/chat")!
+    private let endpoint = URL(string: "http://127.0.0.1:11434/api/chat")!
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
         try await complete(systemPrompt: systemPrompt, userText: userText, model: model, temperature: nil)

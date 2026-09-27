@@ -334,10 +334,19 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         // emoji list hanging over text that had already been replaced.
         clearSuggestions()
         isInjecting = true
+        SnippetTextInjector.deleteTrigger(length: triggerLength)
+        let targetPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         Task { @MainActor in
             defer { isInjecting = false }
             let text = await resolve()
-            await SnippetTextInjector.replace(triggerLength: triggerLength, with: text)
+            // Resolving a shell var can take seconds. If the user switched
+            // apps meanwhile, its output must not land in the new one
+            // (Rafter 2026-09-27) — drop it instead.
+            guard NSWorkspace.shared.frontmostApplication?.processIdentifier == targetPID else {
+                monitorLog.notice("snippet expansion dropped: frontmost app changed while resolving")
+                return
+            }
+            await SnippetTextInjector.insert(text)
         }
     }
 }

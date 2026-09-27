@@ -48,6 +48,7 @@ ENT="$OUT/effective.entitlements"
 codesign -d --entitlements "$ENT" --xml "$APP_PATH" 2>/dev/null
 test -s "$ENT" || { echo "✗ Entitlements nicht lesbar"; exit 1; }
 codesign --force --options runtime --timestamp --entitlements "$ENT" --sign "$DEVELOPER_ID" "$APP_PATH"
-codesign --verify --deep --strict "$APP_PATH" && echo "✓ Signatur gültig"
+codesign --verify --deep --strict "$APP_PATH" || { echo "✗ Signatur ungültig"; exit 1; }
+echo "✓ Signatur gültig"
 codesign -d -r- "$APP_PATH" 2>&1 | grep designated
 echo "APP=$APP_PATH"

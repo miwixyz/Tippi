@@ -1,3 +1,4 @@
+import CoreAudio
 import AVFoundation
 
 enum AudioRecorderError: LocalizedError {
@@ -55,6 +56,8 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     /// restore, independent of the *current* value of the setting above,
     /// so toggling the setting off mid-recording can't leave audio muted.
     private var mutedSystemAudioPreviousState: Bool?
+    /// The device that was muted — restored explicitly, see `SystemAudioMuter`.
+    private var mutedDevice: AudioDeviceID?
 
     // MARK: - Permission
 
@@ -78,13 +81,15 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     /// Starts recording. Returns the URL of the temp WAV file that will be written.
     @discardableResult
-    func start() throws -> URL {
+    func start(owner: Owner) throws -> URL {
         // Re-entrancy guard: this single instance is shared by dictation, the
         // popup mic and the translate panel, which fire from independent global
         // hotkeys. Starting again while a take is in flight would overwrite
         // recorder/outputURL, orphan the previous WAV (the user's voice) and leak
         // the still-running recorder. Finalize the previous take first.
         if isRecording {
+            // Finalized, not deleted: the other owner still holds this URL and
+            // transcribes what was recorded so far.
             NSLog("Tippi: AudioRecorder.start() called while already recording — finalizing previous take first")
             _ = stop()
         }
@@ -113,6 +118,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             elapsed = 0
             startLevelTimer()
             muteSystemAudioIfEnabled()
+            self.owner = owner
             return url
         } catch let err as AudioRecorderError {
             throw err
@@ -121,9 +127,24 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         }
     }
 
+    /// Who started the current take. The recorder is one shared instance —
+    /// closing the translate panel must not delete a dictation that is
+    /// recording at the same time (review 2026-09-27).
+    enum Owner { case dictation, popup, translate }
+    private(set) var owner: Owner?
+
+    /// Stops and deletes the recording, if `owner` started it — for every path
+    /// that abandons its own take. `_ = stop()` forgot the URL and left the
+    /// user's voice in $TMPDIR until the next launch's sweep (audit 2026-09-27).
+    func discard(ifStartedBy owner: Owner) {
+        guard isRecording, self.owner == owner else { return }
+        if let url = stop() { try? FileManager.default.removeItem(at: url) }
+    }
+
     /// Stops recording and returns the completed WAV file URL.
     @discardableResult
     func stop() -> URL? {
+        owner = nil
         stopLevelTimer()
         recorder?.stop()
         recorder = nil
@@ -172,9 +193,11 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     /// undo, matching the "best-effort, never blocks recording" contract.
     private func muteSystemAudioIfEnabled() {
         guard Self.muteSystemAudioDuringRecording else { return }
-        guard let previous = SystemAudioMuter.isMuted() else { return }
-        guard SystemAudioMuter.setMuted(true) else { return }
+        guard let device = SystemAudioMuter.defaultOutputDevice(),
+              let previous = SystemAudioMuter.isMuted(device: device) else { return }
+        guard SystemAudioMuter.setMuted(true, device: device) else { return }
         mutedSystemAudioPreviousState = previous
+        mutedDevice = device
         UserDefaults.standard.set(previous, forKey: Self.pendingRestoreKey)
     }
 
@@ -185,7 +208,12 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         guard let previous = mutedSystemAudioPreviousState else { return }
         mutedSystemAudioPreviousState = nil
         UserDefaults.standard.removeObject(forKey: Self.pendingRestoreKey)
-        SystemAudioMuter.setMuted(previous)
+        if let device = mutedDevice {
+            SystemAudioMuter.setMuted(previous, device: device)
+        } else {
+            SystemAudioMuter.setMuted(previous)
+        }
+        mutedDevice = nil
     }
 
     // MARK: - Level metering
@@ -217,7 +245,7 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             // for the previous recording.
             guard self.recorder === recorder else { return }
             NSLog("Tippi AudioRecorder encode error: \(error?.localizedDescription ?? "?")")
-            self.stop()
+            if let url = self.stop() { try? FileManager.default.removeItem(at: url) }
         }
     }
 }

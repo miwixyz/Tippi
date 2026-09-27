@@ -13,6 +13,11 @@ struct GeminiProvider: LLMProvider {
     let requiresAPIKey = true
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
+        try await complete(systemPrompt: systemPrompt, userText: userText, model: model, temperature: nil)
+    }
+
+    func complete(systemPrompt: String, userText: String, model: String,
+                  temperature hint: Double?) async throws -> String {
         let apiKey: String? = await MainActor.run {
             try? KeychainStore.getAPIKey(for: id)
         }
@@ -39,13 +44,20 @@ struct GeminiProvider: LLMProvider {
         struct Part: Encodable { let text: String }
         struct Content: Encodable { let parts: [Part] }
         struct SystemInstruction: Encodable { let parts: [Part] }
+        struct GenerationConfig: Encodable { let temperature: Double }
         struct Body: Encodable {
             let system_instruction: SystemInstruction
             let contents: [Content]
+            let generationConfig: GenerationConfig?   // nil → omitted
         }
         let body = Body(
             system_instruction: SystemInstruction(parts: [Part(text: systemPrompt)]),
-            contents: [Content(parts: [Part(text: userText)])]
+            contents: [Content(parts: [Part(text: userText)])],
+            // Gemini 3 (and `-latest`, which points there) should stay at the
+            // default 1.0 — Google warns lower values cause loops and worse
+            // output (review 2026-09-27, Gemini 3 developer guide). The hint
+            // only goes to the 2.x generation.
+            generationConfig: useModel.hasPrefix("gemini-2") ? hint.map { GenerationConfig(temperature: $0) } : nil
         )
         request.httpBody = try JSONEncoder().encode(body)
 

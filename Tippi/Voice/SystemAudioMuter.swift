@@ -16,6 +16,10 @@ enum SystemAudioMuter {
     /// device has no mute control (or none could be resolved).
     static func isMuted() -> Bool? {
         guard let deviceID = defaultOutputDevice() else { return nil }
+        return isMuted(device: deviceID)
+    }
+
+    static func isMuted(device deviceID: AudioDeviceID) -> Bool? {
         var address = muteAddress
         guard AudioObjectHasProperty(deviceID, &address) else { return nil }
 
@@ -33,6 +37,14 @@ enum SystemAudioMuter {
     @discardableResult
     static func setMuted(_ muted: Bool) -> Bool {
         guard let deviceID = defaultOutputDevice() else { return false }
+        return setMuted(muted, device: deviceID)
+    }
+
+    /// For a specific device — restoring must hit the device that was muted,
+    /// not whatever is the default by then: switching to AirPods mid-dictation
+    /// left the built-in speakers muted for good (audit 2026-09-27).
+    @discardableResult
+    static func setMuted(_ muted: Bool, device deviceID: AudioDeviceID) -> Bool {
         var address = muteAddress
         guard AudioObjectHasProperty(deviceID, &address) else { return false }
 
@@ -50,7 +62,7 @@ enum SystemAudioMuter {
         mElement: kAudioObjectPropertyElementMain
     )
 
-    private static func defaultOutputDevice() -> AudioDeviceID? {
+    static func defaultOutputDevice() -> AudioDeviceID? {
         var deviceID = AudioDeviceID(0)
         var size = UInt32(MemoryLayout<AudioDeviceID>.size)
         var address = AudioObjectPropertyAddress(

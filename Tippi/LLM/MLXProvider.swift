@@ -14,7 +14,7 @@ struct MLXProvider: LLMProvider {
                   temperature hint: Double?) async throws -> String {
         // Ensure server is running (starts it if needed)
         let port = try await MLXServerManager.shared.start()
-        let url  = URL(string: "http://localhost:\(port)/v1/chat/completions")!
+        let url  = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions")!
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

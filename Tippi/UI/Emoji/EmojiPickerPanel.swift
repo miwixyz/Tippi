@@ -22,6 +22,7 @@ final class EmojiPickerPanel {
     private var keyMonitor: Any?
     private var globalMouseMonitor: Any?
     private var appearanceObserver: NSObjectProtocol?
+    private var resignKeyObserver: NSObjectProtocol?
 
     /// The app that was frontmost when the picker opened — the emoji goes
     /// back there, not to whatever happens to be frontmost after closing.
@@ -106,6 +107,13 @@ final class EmojiPickerPanel {
         }
 
         panel.makeKeyAndOrderFront(nil)
+        // The global mouse monitor never sees clicks in Tippi's own windows, so
+        // clicking Settings left the picker open behind it. Losing key = done.
+        resignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.close() }
+        }
     }
 
     /// Arrow keys and Return are handled here rather than in SwiftUI because a
@@ -114,7 +122,10 @@ final class EmojiPickerPanel {
     /// Tippi, so unlike a CGEvent tap it cannot affect any other app.
     private func installKeyMonitor(model: EmojiPickerModel) {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self, self.isOpen else { return event }
+            // Only the picker's own keys. A local monitor sees every Tippi
+            // window: with Settings clicked, arrows/Tab were swallowed there
+            // and Return inserted an emoji into the target app (audit 2026-09-27).
+            guard let self, self.isOpen, event.window === self.panel else { return event }
 
             switch event.keyCode {
             case 53: // Escape
@@ -175,6 +186,10 @@ final class EmojiPickerPanel {
         if let observer = appearanceObserver {
             DistributedNotificationCenter.default().removeObserver(observer)
             appearanceObserver = nil
+        }
+        if let observer = resignKeyObserver {
+            NotificationCenter.default.removeObserver(observer)
+            resignKeyObserver = nil
         }
         panel?.orderOut(nil)
         panel = nil

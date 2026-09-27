@@ -47,6 +47,15 @@ struct AutocompleteSettingsSection: View {
             Text(String(localized: "settings.autocomplete.noServer"))
                 .font(.caption)
                 .foregroundStyle(.orange)
+            // `try?` below swallows the start error — the manager keeps it in
+            // `state`, so show it here instead of a button that just re-enables
+            // (audit 2026-09-27).
+            if case .failed(let message) = mlx.state {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 if MLXServerManager.isInstalled {
                     Button(String(localized: "settings.autocomplete.startServer")) {

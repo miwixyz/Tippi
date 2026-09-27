@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// Shared state between the picker panel (which owns keyboard handling) and
@@ -18,6 +19,11 @@ final class EmojiPickerModel: ObservableObject {
 
     @Published private(set) var results: [Emoji] = []
     @Published var selectedIndex: Int = 0
+    /// Bumped only by keyboard navigation — the grid scrolls on this, not on
+    /// every `selectedIndex` change. Hover also sets the selection, and
+    /// scrolling on that moved a new cell under the pointer, which the next
+    /// hover picked up again: the grid "ran away" (audit 2026-09-27).
+    @Published private(set) var keyboardScrollRequest = 0
 
     /// True while the search field is empty and we are showing recents rather
     /// than search results — the view labels the section differently.
@@ -37,7 +43,19 @@ final class EmojiPickerModel: ObservableObject {
     init(database: EmojiDatabase) {
         self.database = database
         refresh()
+        // First open before the database finished loading (inline emoji off,
+        // so nothing preloaded it) showed "no emoji found" until you typed
+        // (audit 2026-09-27). Refresh once when it arrives.
+        if !database.isLoaded {
+            loadObserver = database.$isLoaded
+                .filter { $0 }
+                .first()
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in self?.refresh() }
+        }
     }
+
+    private var loadObserver: AnyCancellable?
 
     var selected: Emoji? {
         results.indices.contains(selectedIndex) ? results[selectedIndex] : nil
@@ -84,5 +102,6 @@ final class EmojiPickerModel: ObservableObject {
         // first makes it easy to lose track of where the cursor is in a grid
         // this dense.
         selectedIndex = min(max(target, 0), results.count - 1)
+        keyboardScrollRequest += 1
     }
 }

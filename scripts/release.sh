@@ -156,11 +156,15 @@ echo "  ✓ v${VERSION} mentioned in README.md + in-app Help (both languages)"
 # and run, just with a database nobody can reproduce from the pinned sources.
 if [ -f scripts/generate-emoji-data.py ]; then
     if command -v python3 >/dev/null 2>&1; then
-        if python3 scripts/generate-emoji-data.py --check >/dev/null 2>&1; then
+        # Output kept and shown on failure: offline, --check fails on the
+        # download and was misreported as "stale or hand-edited" (audit 2026-09-27).
+        if EMOJI_CHECK_OUT=$(python3 scripts/generate-emoji-data.py --check 2>&1); then
             echo "  ✓ emoji-data.json matches generate-emoji-data.py (pinned Unicode sources)"
         else
-            echo "  ✗ emoji-data.json is stale or hand-edited."
-            echo "    Run: python3 scripts/generate-emoji-data.py"
+            echo "  ✗ emoji-data.json check failed:"
+            printf '%s\n' "${EMOJI_CHECK_OUT}" | tail -3 | sed 's/^/      /'
+            echo "    Stale or hand-edited → Run: python3 scripts/generate-emoji-data.py"
+            echo "    Network error above → check the connection and re-run make release"
             exit 1
         fi
     else
@@ -236,7 +240,9 @@ else
 fi
 
 echo "▶ [Pre-flight] Git sync check..."
-git fetch origin --quiet 2>/dev/null || { echo "  ⚠ git fetch failed — check network. Continuing anyway."; }
+# A failed fetch used to continue on stale refs and then report "in sync" —
+# exactly the two-Mac case this check exists for (audit 2026-09-27).
+git fetch origin --quiet || { echo "  ✗ git fetch failed — cannot verify sync with origin."; echo "  → ZU TUN: Netzwerk/SSH prüfen, dann erneut make release"; exit 1; }
 
 # Check branch divergence (ahead/behind/diverged relative to origin).
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -446,7 +452,9 @@ codesign --force --options runtime --timestamp \
     --entitlements "${EFFECTIVE_ENT}" \
     --sign "${DEVELOPER_ID}" \
     "${APP_PATH}"
-codesign --verify --deep --strict "${APP_PATH}" && echo "  ✓ Signature valid"
+# `cmd && echo ✓` never aborts under set -e — a broken signature carried on.
+codesign --verify --deep --strict "${APP_PATH}" || { echo "  ✗ Signature invalid"; exit 1; }
+echo "  ✓ Signature valid"
 
 # Verify the effect, not the step. A bundle can be perfectly signed and still
 # be killed on launch when profile and entitlements disagree — that is exactly
@@ -555,7 +563,11 @@ if gh release view "v${VERSION}" >/dev/null 2>&1; then
     echo "    Then continue with step 9/9 (appcast)."
     exit 1
 else
+    # --target: tag the commit that was BUILT. Without it gh tags the remote
+    # default branch HEAD, which can move during the ~10 min of build and
+    # notarization (other Mac pushes) — audit 2026-09-27.
     gh release create "v${VERSION}" "${DMG_PATH}" \
+        --target "${LOCAL_HEAD}" \
         --title "Tippi ${VERSION}" \
         --notes "${RELEASE_NOTES}"
     echo "  ✓ GitHub Release v${VERSION} erstellt"
@@ -596,7 +608,9 @@ if [ -f "${APPCAST_TOOL}" ]; then
     LIVE=$(env -u GITHUB_TOKEN gh api "gists/${GIST_ID}" \
              --jq '.files["appcast.xml"].content' 2>/dev/null \
            | grep -oE "<title>[0-9.]+</title>" | head -1 \
-           | sed 's/<title>//; s|</title>||')
+           | sed 's/<title>//; s|</title>||' || true)
+    # `|| true`: under pipefail a failed gh/grep aborted right here, silently —
+    # the ❌/ZU TUN block below never showed (audit 2026-09-27).
     if [ "$LIVE" = "${VERSION}" ]; then
         echo "  ✓ appcast.xml generiert, Gist aktualisiert und verifiziert (Gist: ${LIVE})"
         echo "    Hinweis: Die raw-URL hinter dem CDN zieht ein paar Minuten nach." 

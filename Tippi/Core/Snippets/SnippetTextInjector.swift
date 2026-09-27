@@ -10,13 +10,22 @@ private let injectorLog = Logger(subsystem: "com.tippi.app", category: "snippet-
 /// `TextInsertion`'s existing AX/clipboard-fallback path instead of
 /// reinventing it.
 enum SnippetTextInjector {
+    /// Deletes the trigger right away — before the replacement is resolved.
+    /// Resolving a shell variable can take up to its 5 s timeout; keys typed
+    /// meanwhile reached the app, and backspaces sent afterwards deleted those
+    /// instead of the trigger (audit 2026-09-27).
     @MainActor
-    static func replace(triggerLength: Int, with replacement: String) async {
+    static func deleteTrigger(length: Int) {
+        sendBackspaces(count: length)
+    }
+
+    /// Inserts the resolved replacement where the trigger was.
+    @MainActor
+    static func insert(_ replacement: String) async {
         // Espanso's `$|$` marks where the caret belongs. Strip it before typing —
         // otherwise it lands in the user's text verbatim — and remember how far
         // back to move afterwards.
         let (text, caretOffset) = SnippetCursorHint.split(replacement)
-        sendBackspaces(count: triggerLength)
         // Short settle delay before the paste roundtrip — mirrors the 40ms
         // pre-paste delay `TextInsertion.paste` already uses; without it,
         // a fast backspace-then-paste sequence can race ahead of the target

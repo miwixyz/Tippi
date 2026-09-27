@@ -46,7 +46,11 @@ final class NotesWindowController {
     /// Dock icon and a ⌘Tab entry; `FrameSaveDelegate.windowWillClose` flips
     /// back to `.accessory` (the LSUIElement-equivalent Tippi normally runs
     /// as) once Notes closes, so the rest of the app is unaffected.
+    /// Whether Notes was opened this session (see `applicationWillTerminate`).
+    private(set) var wasOpened = false
+
     func show() {
+        wasOpened = true
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
 

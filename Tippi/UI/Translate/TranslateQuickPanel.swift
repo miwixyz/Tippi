@@ -189,7 +189,7 @@ final class TranslateQuickPanel {
         panel = nil
         // Stop any in-flight recording so the shared recorder is free for
         // dictation and doesn't keep the mic hot after the panel closes.
-        if audioRecorder?.isRecording == true { _ = audioRecorder?.stop() }
+        audioRecorder?.discard(ifStartedBy: .translate)
         audioRecorder = nil
         TranslateSpeech.shared.stop()
     }

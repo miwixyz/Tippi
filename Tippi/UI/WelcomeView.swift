@@ -190,6 +190,25 @@ private struct APIKeyStep: View {
     @State private var feedback: String?
     @State private var feedbackIsError: Bool = false
     @State private var hasExistingKey: Bool = false
+    @State private var savedKey: String?
+
+    /// Return in the key field fires "Next" (the window's default button), so
+    /// a pasted key was dropped with the step (audit 2026-09-27). The step now
+    /// also saves an unsaved key when it goes away.
+    private func save() {
+        let trimmed = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != savedKey else { return }
+        do {
+            try KeychainStore.setAPIKey(trimmed, for: "openai")
+            savedKey = trimmed
+            feedback = String(localized: "setup.apiKey.saved")
+            feedbackIsError = false
+            hasExistingKey = true
+        } catch {
+            feedback = error.localizedDescription
+            feedbackIsError = true
+        }
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -216,19 +235,10 @@ private struct APIKeyStep: View {
             SecureField(String(localized: "setup.apiKey.placeholder"), text: $apiKey)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: 360)
+                .onSubmit(save)
 
-            Button(String(localized: "setup.apiKey.save")) {
-                do {
-                    try KeychainStore.setAPIKey(apiKey, for: "openai")
-                    feedback = String(localized: "setup.apiKey.saved")
-                    feedbackIsError = false
-                    hasExistingKey = true
-                } catch {
-                    feedback = error.localizedDescription
-                    feedbackIsError = true
-                }
-            }
-            .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button(String(localized: "setup.apiKey.save"), action: save)
+                .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
             if let feedback {
                 Text(feedback)
@@ -243,6 +253,9 @@ private struct APIKeyStep: View {
         .onAppear {
             hasExistingKey = KeychainStore.hasAPIKey(for: "openai")
         }
+        // Only when no key is stored yet: re-opening onboarding and leaving it
+        // must not overwrite a working key with a half-pasted one (review 2026-09-27).
+        .onDisappear { if !hasExistingKey { save() } }
     }
 }
 

@@ -35,25 +35,12 @@ enum ScreenTextCapture {
 
         var userMessage: String {
             switch self {
-            case .noPermission:
-                return "Tippi darf den Bildschirm nicht lesen.\n\n"
-                     + "→ ZU TUN: Systemeinstellungen → Datenschutz & Sicherheit → "
-                     + "Bildschirmaufnahme → Tippi aktivieren, danach Tippi neu starten."
-            case .blankCapture:
-                return "Der Ausschnitt kam leer zurück.\n\n"
-                     + "Das heißt fast immer: Die Berechtigung Bildschirmaufnahme fehlt "
-                     + "oder ist nach dem Erteilen noch nicht wirksam.\n\n"
-                     + "→ ZU TUN: Systemeinstellungen → Datenschutz & Sicherheit → "
-                     + "Bildschirmaufnahme → Tippi aktivieren, dann Tippi BEENDEN und neu "
-                     + "starten. Ohne Neustart bleibt die Aufnahme schwarz."
-            case .displayUnavailable:
-                return "Der Bildschirm konnte nicht ermittelt werden. Bitte erneut versuchen."
-            case .captureFailed:
-                return "Der Ausschnitt konnte nicht aufgenommen werden. Bitte erneut versuchen."
-            case .recognitionFailed:
-                return "Die Texterkennung ist fehlgeschlagen. Bitte erneut versuchen."
-            case .empty:
-                return "In diesem Ausschnitt wurde kein Text gefunden."
+            case .noPermission:       return String(localized: "ocr.error.noPermission")
+            case .blankCapture:       return String(localized: "ocr.error.blankCapture")
+            case .displayUnavailable: return String(localized: "ocr.error.displayUnavailable")
+            case .captureFailed:      return String(localized: "ocr.error.captureFailed")
+            case .recognitionFailed:  return String(localized: "ocr.error.recognitionFailed")
+            case .empty:              return String(localized: "ocr.error.empty")
             }
         }
     }
@@ -227,24 +214,28 @@ enum ScreenTextCapture {
     /// Betrachtet werden Stichproben der Rohbytes, nur auf Streuung — es geht um
     /// "schwarz oder nicht", nicht um Bildanalyse. Inhalte werden weder
     /// ausgewertet noch protokolliert.
-    private static func isBlank(_ image: CGImage) -> Bool {
-        guard let data = image.dataProvider?.data,
-              let ptr = CFDataGetBytePtr(data) else { return false }
-        let length = CFDataGetLength(data)
-        guard length > 0 else { return true }
-
-        let step = max(1, length / 2000)
-        var minV: UInt8 = 255
-        var maxV: UInt8 = 0
-        var i = 0
-        while i < length {
-            let v = ptr[i]
-            if v < minV { minV = v }
-            if v > maxV { maxV = v }
-            if Int(maxV) - Int(minV) > 12 { return false }
-            i += step
-        }
-        return true
+    /// Drawn into an 8-bit grey buffer with no interpolation (point samples,
+    /// up to 256×256), then min/max. Sampling the raw bytes read the alpha
+    /// channel as a colour, so an opaque black capture — the "no permission"
+    /// case this exists for — was usually NOT detected (audit 2026-09-27,
+    /// measured on BGRA).
+    nonisolated static func isBlank(_ image: CGImage) -> Bool {
+        let width = min(image.width, 256), height = min(image.height, 256)
+        guard width > 0, height > 0,
+              let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
+                                  bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
+                                  bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return false }
+        ctx.interpolationQuality = .none
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let raw = ctx.data else { return false }
+        let pixels = UnsafeBufferPointer(start: raw.bindMemory(to: UInt8.self, capacity: width * height),
+                                         count: width * height)
+        guard let lo = pixels.min(), let hi = pixels.max() else { return true }
+        // Uniform AND dark: a missing permission yields black. A uniform LIGHT
+        // sample is usually a big selection with little text the point samples
+        // missed — Vision decides that one (it says "no text" itself) instead
+        // of a false "permission missing" (review 2026-09-27, measured).
+        return Int(hi) - Int(lo) <= 12 && hi < 24
     }
 
     // MARK: - Texterkennung
@@ -283,13 +274,18 @@ enum ScreenTextCapture {
             request.recognitionLanguages = languages
             request.usesLanguageCorrection = true
 
+            // Off the main thread: `.accurate` takes ~0.5–1 s on a large crop
+            // (measured) and froze the menu bar and every panel meanwhile
+            // (audit 2026-09-27). The continuation may resume from any thread.
             let handler = VNImageRequestHandler(cgImage: image, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                guard once.claim() else { return }
-                ocrLog.error("Texterkennung konnte nicht starten")
-                continuation.resume(throwing: Failure.recognitionFailed)
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    try handler.perform([request])
+                } catch {
+                    guard once.claim() else { return }
+                    ocrLog.error("Texterkennung konnte nicht starten")
+                    continuation.resume(throwing: Failure.recognitionFailed)
+                }
             }
         }
     }

@@ -35,7 +35,20 @@ if [ ! -d "${SRC_DIR}/.git" ]; then
     mkdir -p "${HELPERS}"
     git clone --depth 1 --branch "${WHISPER_VERSION}" "${WHISPER_REPO}" "${SRC_DIR}"
 else
-    echo "▶ Using existing whisper.cpp source in ${SRC_DIR}/"
+    # A reused checkout must be the pinned version — raising WHISPER_VERSION used
+    # to keep building the old source while printing ✓ (audit 2026-09-27).
+    HAVE_VERSION="$(git -C "${SRC_DIR}" describe --tags --exact-match 2>/dev/null || echo "unbekannt")"
+    if [ -n "$(git -C "${SRC_DIR}" status --porcelain)" ]; then
+        echo "✗ ${SRC_DIR} hat lokale Änderungen — gebaut würde nicht ${WHISPER_VERSION}, sondern Unbekanntes."
+        echo "  → ZU TUN: rm -r \"${SRC_DIR}\" (wird neu geklont), dann erneut ausführen"
+        exit 1
+    fi
+    if [ "${HAVE_VERSION}" != "${WHISPER_VERSION}" ]; then
+        echo "✗ ${SRC_DIR} ist ${HAVE_VERSION}, erwartet ${WHISPER_VERSION}."
+        echo "  → ZU TUN: rm -r \"${SRC_DIR}\" (wird neu geklont), dann erneut ausführen"
+        exit 1
+    fi
+    echo "▶ Using existing whisper.cpp ${HAVE_VERSION} in ${SRC_DIR}/"
 fi
 
 # ── Configure ─────────────────────────────────────────────────────────────────
@@ -51,8 +64,7 @@ cmake -S "${SRC_DIR}" -B "${BUILD_DIR}" -Wno-dev \
     -DBUILD_SHARED_LIBS=OFF \
     -DWHISPER_BUILD_TESTS=OFF \
     -DWHISPER_BUILD_EXAMPLES=ON \
-    -DWHISPER_BUILD_SERVER=OFF \
-    2>/dev/null
+    -DWHISPER_BUILD_SERVER=OFF
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
@@ -73,8 +85,17 @@ chmod 755 "${HELPERS}/whisper-cli"
 # ── Verify ─────────────────────────────────────────────────────────────────────
 
 echo ""
-echo "▶ Dependency check (should show only system frameworks):"
-otool -L "${HELPERS}/whisper-cli" | grep -v "^${HELPERS}"
+echo "▶ Dependency check (only system frameworks allowed):"
+DEPS="$(otool -L "${HELPERS}/whisper-cli" | tail -n +2 | awk '{print $1}')"
+printf '%s\n' "${DEPS}" | sed 's/^/    /'
+# Asserted, not just printed: a Homebrew dylib (libomp …) would ship and fail on
+# every Mac without it (audit 2026-09-27).
+FOREIGN="$(printf '%s\n' "${DEPS}" | grep -vE '^(/System/|/usr/lib/)' || true)"
+if [ -n "${FOREIGN}" ]; then
+    echo "✗ whisper-cli links non-system libraries:"
+    printf '%s\n' "${FOREIGN}" | sed 's/^/    /'
+    exit 1
+fi
 echo ""
 BINARY_SIZE="$(du -sh "${HELPERS}/whisper-cli" | cut -f1)"
 echo "✓ whisper-cli (static) ready in ${HELPERS}/  [${BINARY_SIZE}]"

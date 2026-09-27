@@ -75,10 +75,11 @@ struct EmojiPickerView: View {
                 .padding(8)
             }
             .frame(height: 220)
-            .onChange(of: model.selectedIndex) { _, newValue in
-                guard model.results.indices.contains(newValue) else { return }
+            .onChange(of: model.keyboardScrollRequest) { _, _ in
+                let index = model.selectedIndex
+                guard model.results.indices.contains(index) else { return }
                 withAnimation(.easeOut(duration: 0.12)) {
-                    proxy.scrollTo(model.results[newValue].id, anchor: .center)
+                    proxy.scrollTo(model.results[index].id, anchor: .center)
                 }
             }
         }

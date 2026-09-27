@@ -101,6 +101,15 @@ struct NotesEditorView: View {
                 // a version the other Mac has already moved past, and nothing
                 // says so. Silently keeping the stale one is the failure mode
                 // this whole feature exists to remove.
+                if let saveError = store.loadError {
+                    Label(String(format: String(localized: "notes.saveFailed"), saveError),
+                          systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .lineLimit(2)
+                        .help(saveError)
+                }
+
                 if store.heldBackExternalEdit {
                     Label(String(localized: "notes.externalChangeHeld"), systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption)
@@ -186,6 +195,7 @@ struct NotesEditorView: View {
     /// `NotesStore.save` would otherwise happily re-append a note whose id
     /// it no longer recognizes as removed.
     private func scheduleSave(_ newValue: String) {
+        if newValue != lastSavedText { store.noteUnsavedEdit(id: note.id, content: newValue) }
         saveTask?.cancel()
         saveTask = Task {
             try? await Task.sleep(nanoseconds: 600_000_000)

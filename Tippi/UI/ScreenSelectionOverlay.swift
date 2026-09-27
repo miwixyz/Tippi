@@ -47,7 +47,7 @@ final class ScreenSelectionOverlay {
             view.onFinish = { [weak self] rect in self?.finish(rect) }
             view.onCancel = { [weak self] in self?.finish(nil) }
 
-            let window = NSWindow(contentRect: screen.frame,
+            let window = OverlayWindow(contentRect: screen.frame,
                                   styleMask: .borderless,
                                   backing: .buffered,
                                   defer: false)
@@ -66,8 +66,15 @@ final class ScreenSelectionOverlay {
 
         // Nur das Fenster unter dem Mauszeiger nimmt Tasten entgegen; die
         // anderen zeigen bloß die Abdunklung.
+        // A plain borderless NSWindow can never become key (measured:
+        // canBecomeKey == false), so `keyDown` never reached the view and the
+        // documented ESC exit did nothing (audit 2026-09-27). OverlayWindow
+        // allows it; the view must also be first responder.
         NSApp.activate(ignoringOtherApps: true)
-        windows.first?.makeKey()
+        let mouse = NSEvent.mouseLocation
+        let keyWindow = windows.first { $0.frame.contains(mouse) } ?? windows.first
+        keyWindow?.makeKey()
+        if let keyWindow { keyWindow.makeFirstResponder(keyWindow.contentView) }
 
         timeoutTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(Self.timeout * 1_000_000_000))
@@ -101,6 +108,11 @@ final class ScreenSelectionOverlay {
 }
 
 // MARK: - Die zeichnende Ansicht
+
+/// Borderless, but allowed to become key so ESC reaches `SelectionView`.
+private final class OverlayWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+}
 
 private final class SelectionView: NSView {
 

@@ -139,10 +139,12 @@ final class MLXServerManager: ObservableObject {
         // Nothing answered. Before spawning, find out whether the port is even
         // free — a second server cannot bind, and that failure used to surface
         // as a startup timeout that blamed the download.
-        if let found = Self.listener(on: port) {
+        // lsof/ps block (and clearing a stale server can wait seconds) — off
+        // the main actor, which also hosts the autocomplete tap (audit 2026-09-27).
+        if let found = await Task.detached(operation: { Self.listener(on: port) }).value {
             switch Self.occupantVerdict(listenerPID: found.pid, listenerCommand: found.command) {
             case .staleMLXServer:
-                guard Self.clearStaleServer(on: port) else {
+                guard await Task.detached(operation: { Self.clearStaleServer(on: port) }).value else {
                     let msg = String(format: String(localized: "mlx.error.stuckPort"), port)
                     state = .failed(msg)
                     throw MLXError.launchFailed(msg)
@@ -288,7 +290,7 @@ final class MLXServerManager: ObservableObject {
     /// background. Best-effort: all errors are ignored.
     private func warmUpInBackground(port: Int, model: String) {
         Task.detached(priority: .utility) {
-            guard let url = URL(string: "http://localhost:\(port)/v1/chat/completions") else { return }
+            guard let url = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions") else { return }
             var req = URLRequest(url: url)
             req.httpMethod = "POST"
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -627,7 +629,7 @@ final class MLXServerManager: ObservableObject {
     }
 
     private func fetchModels(port: Int) async -> ModelsResponse? {
-        let url = URL(string: "http://localhost:\(port)/v1/models")!
+        let url = URL(string: "http://127.0.0.1:\(port)/v1/models")!
         guard let (data, response) = try? await URLSession.shared.data(from: url),
               let http = response as? HTTPURLResponse,
               (200..<300).contains(http.statusCode),

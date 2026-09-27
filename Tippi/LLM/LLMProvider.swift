@@ -12,6 +12,19 @@ protocol LLMProvider: Sendable {
         model: String
     ) async throws -> String
 
+    /// Same call with a temperature hint (see `TaskTemperature`). A protocol
+    /// **requirement**, not only an extension method: as an extension-only
+    /// method, calls through `any LLMProvider` (the router) were bound
+    /// statically to the default below and every provider's override was
+    /// skipped — the dictation cleanup never ran at 0.1 (measured, audit
+    /// 2026-09-27).
+    func complete(
+        systemPrompt: String,
+        userText: String,
+        model: String,
+        temperature: Double?
+    ) async throws -> String
+
     /// Streams the completion as incremental text deltas. Providers that
     /// support server-sent events override this; the default implementation
     /// falls back to a single `complete()` call emitted as one chunk, so every
@@ -154,9 +167,9 @@ enum LLMError: LocalizedError {
 /// whole job is to change as little as possible — Michael had independently
 /// pinned 0.1 in an Ollama Modelfile for exactly this, and he was right.
 ///
-/// Deliberately **additive**: the existing three-argument `complete` stays the
-/// protocol requirement, so no provider is forced to care. A provider that
-/// cannot honour the hint keeps working by ignoring it, which is the honest
+/// Deliberately **additive**: the four-argument `complete` has a default that
+/// ignores the hint, so no provider is forced to care. A provider that cannot
+/// honour the hint keeps working by ignoring it, which is the honest
 /// behaviour — better than pretending every backend exposes the knob.
 ///
 /// The hint never overrides a `nil`. `temperature(for:)` returning nil means
@@ -214,15 +227,23 @@ extension OpenAICompatibleProvider {
     func temperature(for model: String) -> Double? { 0.3 }
     func reasoningEffort(for model: String) -> String? { nil }
 
+    /// `GET …/v1/models` for an endpoint `…/v1/chat/completions` — two path
+    /// segments up, not one. The old one-segment version produced
+    /// `…/v1/chat/models`, a 404 at every provider, and a `try?` upstream
+    /// turned that into "all models fine" (audit 2026-09-27, measured).
+    var modelsURL: URL {
+        let parent = endpoint.deletingLastPathComponent()          // …/v1/chat
+        let base = parent.lastPathComponent == "chat" ? parent.deletingLastPathComponent() : parent
+        return base.appendingPathComponent("models")
+    }
+
     /// Every OpenAI-compatible provider Tippi uses (OpenAI, Mistral, Scaleway,
-    /// Groq, Kimi, Nebius, OpenRouter) also serves `GET .../models` one path
-    /// segment up from `.../chat/completions`, in the same `{"data":[{"id":…}]}`
-    /// shape as the request body — that's the whole OpenAI-compatibility
-    /// convention these providers opted into. One implementation covers all
-    /// seven instead of one per provider.
+    /// Groq, Kimi, Nebius, OpenRouter) also serves `GET …/v1/models` next to
+    /// `…/v1/chat/completions`, in the same `{"data":[{"id":…}]}` shape — the
+    /// OpenAI-compatibility convention these providers opted into. One
+    /// implementation covers all seven instead of one per provider.
     func fetchModelCatalog() async throws -> ModelCatalog {
         let apiKey = try await keychainAPIKey(id: id, displayName: displayName)
-        let modelsURL = endpoint.deletingLastPathComponent().appendingPathComponent("models")
         var request = URLRequest(url: modelsURL)
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15

@@ -9,6 +9,10 @@ struct PreviewView: View {
 
     @State private var state: ViewState
     @State private var task: Task<Void, Never>?
+    /// Deltas still arriving: Return on "Replace" inserted partial answers (audit
+    /// 2026-09-27). Only the latest run (`streamGeneration`) may clear it.
+    @State private var isStreaming = false
+    @State private var streamGeneration = 0
     @State private var refineInstruction = ""
 
     /// Live progress of a running chain, e.g. "Schritt 2/3: Übersetze → EN".
@@ -314,6 +318,17 @@ struct PreviewView: View {
         }
     }
 
+    private func beginStream() -> Int {
+        streamGeneration += 1
+        isStreaming = true
+        return streamGeneration
+    }
+
+    private func endStream(_ generation: Int) {
+        guard streamGeneration == generation else { return }
+        isStreaming = false
+    }
+
     private var footer: some View {
         HStack(spacing: 8) {
             Button(String(localized: "preview.cancel"), action: cancel)
@@ -331,13 +346,16 @@ struct PreviewView: View {
             if case .ready(let suggestion, _, _, _) = state {
                 Button(String(localized: "preview.copy")) { onCopy(suggestion) }
                     .keyboardShortcut("c", modifiers: .command)
+                    .disabled(isStreaming)
                 Button(String(localized: "preview.append")) { onAppend(suggestion) }
                     .keyboardShortcut(.return, modifiers: .command)
+                    .disabled(isStreaming)
                 Button(String(localized: "preview.regenerate"), action: runCompletion)
                     .keyboardShortcut("r", modifiers: .command)
                 Button(String(localized: "preview.replace")) { onReplace(suggestion) }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.return)
+                    .disabled(isStreaming)
             } else if case .failed = state {
                 Button(String(localized: "preview.retry"), action: runCompletion)
                     .buttonStyle(.borderedProminent)
@@ -467,6 +485,8 @@ struct PreviewView: View {
         do {
             let streaming = try await LLMRouter.shared.completeStream(systemPrompt: resolved, userText: input)
             providerDisplay = streaming.providerDisplay
+            let generation = beginStream()
+            defer { endStream(generation) }
             for try await delta in streaming.stream {
                 guard !Task.isCancelled else { return }
                 accumulated += delta
@@ -597,6 +617,8 @@ struct PreviewView: View {
                 providerDisplay = streaming.providerDisplay
                 // Accumulate deltas and update the view live — the user sees the
                 // result grow token-by-token instead of staring at a spinner.
+                let generation = beginStream()
+                defer { endStream(generation) }
                 for try await delta in streaming.stream {
                     guard !Task.isCancelled else { return }
                     accumulated += delta

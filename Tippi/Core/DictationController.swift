@@ -294,6 +294,11 @@ final class DictationController: ObservableObject {
     /// the mic-permission prompt — `state` is still `.idle` at that point, so
     /// the toggle would start a second recording on the same recorder.
     private var isStarting = false
+    /// The hold key was released while `start()` still awaited the first-use
+    /// microphone dialog. Without this the release hit `.idle` and was dropped;
+    /// recording then started with no key held and ran into the 300 s watchdog,
+    /// inserting whatever it heard (audit 2026-09-27).
+    private var holdReleasedWhileStarting = false
 
     /// In-flight transcription (transcribe → polish → insert); kept so a
     /// hotkey press during `.transcribing` can cancel it.
@@ -324,10 +329,19 @@ final class DictationController: ObservableObject {
     /// audio hardware.
     func beginHoldRecording() async {
         guard case .idle = state else { return }
+        holdReleasedWhileStarting = false
         await start()
         // Only arm the watchdog if recording actually began — `start()` returns
         // without recording when the mic permission is denied.
         guard case .recording = state else { return }
+        if holdReleasedWhileStarting {
+            holdReleasedWhileStarting = false
+            recorder.discard(ifStartedBy: .dictation)
+            state = .idle
+            RecordingIndicatorWindowController.shared.hide()
+            NSLog("Tippi: hold released during mic permission prompt — recording discarded")
+            return
+        }
         holdWatchdog?.invalidate()
         holdWatchdog = Timer.scheduledTimer(
             withTimeInterval: DictationSettings.maxHoldSeconds,
@@ -346,6 +360,7 @@ final class DictationController: ObservableObject {
     /// release without a matching press cannot fire anything.
     func endHoldRecording(targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) {
         guard case .recording(let url) = state else {
+            if isStarting { holdReleasedWhileStarting = true }
             holdWatchdog?.invalidate()
             holdWatchdog = nil
             return
@@ -365,7 +380,7 @@ final class DictationController: ObservableObject {
             return
         }
         do {
-            let url = try recorder.start()
+            let url = try recorder.start(owner: .dictation)
             state = .recording(url)
             RecordingIndicatorWindowController.shared.show(
                 mode: .recording,

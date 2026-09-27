@@ -428,6 +428,13 @@ final class SnippetStore: ObservableObject {
     ///   is the one rule this whole feature exists to enforce; re-import is
     ///   the exact laundering path the design doc calls out.
     func importFile(_ file: LoadedEspansoFile) {
+        // With the imported file unreadable, saving is blocked — an import would
+        // live only in memory while the source file got hidden for good
+        // (`importedFilePaths` is saved separately). Refuse; the UI shows why.
+        guard importedSnippetsLoadError == nil else {
+            storeLog.error("import refused: ImportedSnippets.json is unreadable, saving is blocked")
+            return
+        }
         // First-wins inside one file, matching how the reference path resolves
         // it (`matches.first(where:)` in `action(forTrigger:)`). The previous
         // last-wins behaviour meant a file containing the same trigger twice
@@ -473,6 +480,10 @@ final class SnippetStore: ObservableObject {
     @Published var approvalError: String?
 
     func approveShellSnippet(_ snippet: ImportedSnippet) {
+        guard importedSnippetsLoadError == nil else {
+            storeLog.error("approval refused: ImportedSnippets.json is unreadable, saving is blocked")
+            return
+        }
         guard let idx = importedSnippets.firstIndex(where: { $0.id == snippet.id }) else { return }
         guard let approval = SnippetApprovalSigner.sign(trigger: snippet.trigger,
                                                         command: snippet.shellCommandDigest,

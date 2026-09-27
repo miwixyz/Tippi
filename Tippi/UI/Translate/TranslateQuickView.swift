@@ -40,6 +40,10 @@ struct TranslateQuickView: View {
     @State private var voice: VoiceState = .idle
     @State private var task: Task<Void, Never>?
     @State private var transcriptionTask: Task<Void, Never>?
+    /// The first mic use shows the system permission dialog; clicking "Allow"
+    /// in another process closes this panel. Without cancelling, recording
+    /// then started with no panel left (audit 2026-09-27).
+    @State private var permissionTask: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
     @ObservedObject private var speech = TranslateSpeech.shared
 
@@ -92,7 +96,8 @@ struct TranslateQuickView: View {
         .onDisappear {
             task?.cancel()
             transcriptionTask?.cancel()
-            if audioRecorder?.isRecording == true { _ = audioRecorder?.stop() }
+            permissionTask?.cancel()
+            audioRecorder?.discard(ifStartedBy: .translate)
             speech.stop()
         }
         .onChange(of: sourceLanguage) { _, new in TranslateSettings.sourceLanguage = new }
@@ -327,14 +332,17 @@ struct TranslateQuickView: View {
     }
 
     private func startRecording() {
-        guard let rec = audioRecorder else { return }
-        Task {
-            guard await AudioRecorder.requestPermission() else {
+        guard let rec = audioRecorder, permissionTask == nil else { return }
+        permissionTask = Task {
+            defer { permissionTask = nil }
+            let granted = await AudioRecorder.requestPermission()
+            guard !Task.isCancelled else { return }
+            guard granted else {
                 state = .failed(message: String(localized: "translate.panel.micDenied"))
                 return
             }
             do {
-                _ = try rec.start()
+                _ = try rec.start(owner: .translate)
                 voice = .recording
                 SpeechTranscriber.prewarm()
             } catch {

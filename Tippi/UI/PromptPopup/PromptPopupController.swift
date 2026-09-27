@@ -140,7 +140,7 @@ final class PromptPopupController {
         panel?.orderOut(nil)
         panel = nil
         if audioRecorder?.isRecording == true {
-            _ = audioRecorder?.stop()
+            audioRecorder?.discard(ifStartedBy: .popup)
         }
         audioRecorder = nil
     }

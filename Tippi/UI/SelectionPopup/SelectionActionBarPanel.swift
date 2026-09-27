@@ -48,6 +48,15 @@ final class SelectionActionBarPanel {
 
     var isOpen: Bool { panel != nil }
 
+    /// The screen holding the selection, not `NSScreen.main` (the key
+    /// window's screen): a window spanning two displays, or the mouse
+    /// fallback, put the bar on the wrong monitor (audit 2026-09-27).
+    private static func visibleFrame(containing anchor: CGRect) -> NSRect {
+        let point = NSPoint(x: anchor.midX, y: anchor.midY)
+        let screen = NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) } ?? NSScreen.main
+        return screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+    }
+
     /// Shows the bar next to `snapshot`'s selection. `onAction` fires with
     /// the chosen local action and the (possibly stale, by the time of a
     /// click) snapshot — the caller re-validates before writing anything
@@ -92,7 +101,6 @@ final class SelectionActionBarPanel {
         // ordering this front pull key status onto it either.
         panel.becomesKeyOnlyIfNeeded = true
 
-        let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         // Two cases fall back to the mouse position instead of the AX
         // bounds: (1) no bounds at all — some apps don't implement the AX
         // bounds-for-range attribute; (2) bounds that are implausibly tall
@@ -126,6 +134,8 @@ final class SelectionActionBarPanel {
             anchorBounds = CGRect(origin: NSEvent.mouseLocation, size: .zero)
             hasRealBounds = false
         }
+
+        let screenFrame = Self.visibleFrame(containing: anchorBounds)
 
         // A dismissed selection only comes back when the mouse went up ON it —
         // that is someone selecting it again on purpose. A click anywhere else

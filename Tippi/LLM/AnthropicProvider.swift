@@ -9,6 +9,18 @@ struct AnthropicProvider: LLMProvider {
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
 
     func complete(systemPrompt: String, userText: String, model: String) async throws -> String {
+        try await complete(systemPrompt: systemPrompt, userText: userText, model: model, temperature: nil)
+    }
+
+    /// Claude models from Opus 4.7 / Sonnet 5 on reject `temperature` with a
+    /// 400 — sampling is removed there. Only the older generation takes it.
+    static func acceptsTemperature(_ model: String) -> Bool {
+        ["claude-haiku-4", "claude-sonnet-4", "claude-opus-4-5", "claude-opus-4-6", "claude-opus-4-1", "claude-3"]
+            .contains { model.hasPrefix($0) }
+    }
+
+    func complete(systemPrompt: String, userText: String, model: String,
+                  temperature hint: Double?) async throws -> String {
         let apiKey: String? = await MainActor.run {
             try? KeychainStore.getAPIKey(for: id)
         }
@@ -29,12 +41,15 @@ struct AnthropicProvider: LLMProvider {
             let max_tokens: Int
             let system: String
             let messages: [Message]
+            let temperature: Double?   // nil → omitted from the JSON
         }
+        let useModel = model.isEmpty ? defaultModel : model
         let body = Body(
-            model: model.isEmpty ? defaultModel : model,
+            model: useModel,
             max_tokens: 8192,
             system: systemPrompt,
-            messages: [Message(role: "user", content: userText)]
+            messages: [Message(role: "user", content: userText)],
+            temperature: Self.acceptsTemperature(useModel) ? hint : nil
         )
         request.httpBody = try JSONEncoder().encode(body)
 

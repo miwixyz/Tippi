@@ -51,7 +51,15 @@ final class NotesStore: ObservableObject {
     @Published private(set) var heldBackExternalEdit: Bool = false
 
     private var liveSync: NotesLiveSync?
+    /// Last failed write. Shown in the Notes window; cleared by the next
+    /// successful write, not by a reload — a reload used to wipe it on the
+    /// next window focus, so a failed save was never seen (audit 2026-09-27).
     @Published var loadError: String?
+
+    /// The editor's latest text that the 600 ms debounce has not saved yet.
+    /// Written synchronously on quit — ⌘Q within the debounce window lost
+    /// the last keystrokes (audit 2026-09-27).
+    private var unsavedEdit: (id: UUID, content: String)?
 
     /// Resolved during `refresh()` and reused by `save`/`delete` for the rest
     /// of the session, so every mutation doesn't re-resolve the ubiquity
@@ -60,7 +68,6 @@ final class NotesStore: ObservableObject {
     /// the "refresh on open, not live" model above.
     private var currentDirectory: URL = NotesStore.localFallbackDirectory
 
-    private nonisolated static let migratedDefaultsKey = "tippi.notes.migratedToiCloud.v1"
     private nonisolated static let fileExtension = "txt"
 
     private init() {
@@ -90,7 +97,6 @@ final class NotesStore: ObservableObject {
                 self.isUsingiCloud = usingiCloud
                 self.notes = Self.preferNewer(loaded: loaded, current: self.notes)
                     .sorted { $0.modifiedAt > $1.modifiedAt }
-                self.loadError = nil
                 self.heldBackExternalEdit = false
                 self.startLiveSync(in: directory, enabled: usingiCloud)
             }
@@ -114,6 +120,7 @@ final class NotesStore: ObservableObject {
     /// `loadAllNotes`), which a coordinated write updates to the same
     /// moment anyway.
     func save(_ note: Note) {
+        if unsavedEdit?.id == note.id { unsavedEdit = nil }
         var updated = note
         updated.modifiedAt = Date()
         if let index = notes.firstIndex(where: { $0.id == updated.id }) {
@@ -246,6 +253,31 @@ final class NotesStore: ObservableObject {
     /// work still runs off the main actor.
     private var pendingWrite: Task<Void, Never>?
 
+    /// Called by the editor on every change until the debounce saves it.
+    func noteUnsavedEdit(id: UUID, content: String) {
+        unsavedEdit = (id, content)
+    }
+
+    /// Synchronous last write for `applicationWillTerminate` — an async write
+    /// would not finish before the process exits.
+    func flushUnsavedEditSynchronously() {
+        guard let edit = unsavedEdit,
+              var note = notes.first(where: { $0.id == edit.id }),
+              note.content != edit.content else { return }
+        note.content = edit.content
+        note.modifiedAt = Date()
+        do {
+            // No pruning of other files with this UUID: a queued async write may
+            // still be running, and two interleaved writes with different
+            // titles could each delete the other's file — the note gone
+            // (review 2026-09-27). A duplicate is resolved by `loadAllNotes`.
+            try Self.writeNoteFile(note, to: currentDirectory, pruneStale: false)
+            unsavedEdit = nil
+        } catch {
+            notesLog.error("final save on quit failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     private func persist(_ note: Note) {
         let directory = currentDirectory
         let previous = pendingWrite
@@ -253,6 +285,8 @@ final class NotesStore: ObservableObject {
             await previous?.value
             do {
                 try Self.writeNoteFile(note, to: directory)
+                guard let self else { return }
+                await MainActor.run { self.loadError = nil }
             } catch {
                 notesLog.error("save failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 guard let self else { return }
@@ -281,31 +315,32 @@ final class NotesStore: ObservableObject {
         return dir
     }
 
-    /// One-time move of any locally-fallback-stored notes into the iCloud
-    /// container, the first time iCloud becomes available. Guarded by a
-    /// UserDefaults flag — but only set once every file in this pass either
-    /// migrated successfully or was already present at the destination.
-    /// A partial failure (copy error, coordination error) leaves the flag
-    /// unset so the *next* `refresh()` retries — safe to retry, since
-    /// already-migrated files are skipped via the `fileExists` check below.
+    /// Moves notes from the local fallback folder into the iCloud container on
+    /// **every** refresh with iCloud available — not once. The old one-time
+    /// flag stranded every note written locally later (iCloud off for a while,
+    /// or a note created before the first refresh resolved the container):
+    /// invisible in the app, sitting in Application Support (audit
+    /// 2026-09-27). Cheap: one directory listing, empty in the normal case.
+    /// A file whose name already exists in iCloud is left in place, never
+    /// overwritten.
     /// The original local file is only ever removed after its copy is
     /// verified to have actually succeeded — never on the strength of a
     /// `try?` alone, which would otherwise delete the only copy of a note
     /// whose copy silently failed.
     private nonisolated static func migrateLocalNotesIfNeeded(into iCloudDirectory: URL) {
-        guard !UserDefaults.standard.bool(forKey: migratedDefaultsKey) else { return }
-
         let localDir = localFallbackDirectory
         guard let files = try? FileManager.default.contentsOfDirectory(at: localDir, includingPropertiesForKeys: nil) else {
-            // Local directory unreadable or doesn't exist — nothing pending to migrate.
-            UserDefaults.standard.set(true, forKey: migratedDefaultsKey)
-            return
+            return  // local directory unreadable or absent — nothing to migrate
         }
 
-        var allSucceeded = true
         for file in files where file.pathExtension == fileExtension {
             let destination = iCloudDirectory.appendingPathComponent(file.lastPathComponent)
             guard !FileManager.default.fileExists(atPath: destination.path) else { continue }
+            // Evicted iCloud files exist only as a `.<name>.icloud` placeholder —
+            // `fileExists` misses them, and a stale local copy would be copied
+            // over the newer cloud version, now on every refresh (Rafter 2026-09-27).
+            let placeholder = iCloudDirectory.appendingPathComponent(".\(file.lastPathComponent).icloud")
+            guard !FileManager.default.fileExists(atPath: placeholder.path) else { continue }
 
             var coordinatorError: NSError?
             var copyError: Error?
@@ -319,22 +354,16 @@ final class NotesStore: ObservableObject {
             }
 
             if let coordinatorError {
-                notesLog.error("migration coordination failed for \(file.lastPathComponent, privacy: .public): \(coordinatorError.localizedDescription, privacy: .public)")
-                allSucceeded = false
+                notesLog.error("migration coordination failed for \(file.lastPathComponent, privacy: .private): \(coordinatorError.localizedDescription, privacy: .public)")
                 continue
             }
             if let copyError {
-                notesLog.error("migration copy failed for \(file.lastPathComponent, privacy: .public): \(copyError.localizedDescription, privacy: .public)")
-                allSucceeded = false
+                notesLog.error("migration copy failed for \(file.lastPathComponent, privacy: .private): \(copyError.localizedDescription, privacy: .public)")
                 continue
             }
             // Copy verified — safe to remove the local original now.
             try? FileManager.default.removeItem(at: file)
-            notesLog.notice("migrated \(file.lastPathComponent, privacy: .public) to iCloud")
-        }
-
-        if allSucceeded {
-            UserDefaults.standard.set(true, forKey: migratedDefaultsKey)
+            notesLog.notice("migrated \(file.lastPathComponent, privacy: .private) to iCloud")
         }
     }
 
@@ -433,7 +462,7 @@ final class NotesStore: ObservableObject {
     /// actually renames on disk when it changed since the last save — which
     /// only happens when the first line itself changed, not on every
     /// keystroke elsewhere in the note.
-    private nonisolated static func writeNoteFile(_ note: Note, to directory: URL) throws {
+    private nonisolated static func writeNoteFile(_ note: Note, to directory: URL, pruneStale: Bool = true) throws {
         let newURL = directory.appendingPathComponent(filename(for: note))
         var coordinatorError: NSError?
         var writeError: Error?
@@ -461,7 +490,7 @@ final class NotesStore: ObservableObject {
         // skipped the delete and left the actual old file orphaned on disk
         // forever, later re-appearing as a ghost duplicate of the same note
         // (self-healed for already-affected installs in `loadAllNotes`).
-        for staleURL in staleFileURLs(forID: note.id, in: directory, excluding: newURL.lastPathComponent) {
+        for staleURL in pruneStale ? staleFileURLs(forID: note.id, in: directory, excluding: newURL.lastPathComponent) : [] {
             try? deleteFile(at: staleURL)
         }
     }
@@ -530,9 +559,12 @@ final class NotesStore: ObservableObject {
         guard !sanitized.isEmpty else { return "\(note.id.uuidString).\(fileExtension)" }
 
         // Keep the visible part short — Finder listings with an 80+ char
-        // title are unreadable anyway, and HFS+/APFS's 255-char ceiling is
-        // not the binding constraint here.
-        let truncated = String(sanitized.prefix(80))
+        // title are unreadable anyway. Also bounded in UTF-16 units: APFS
+        // allows 255 of those per name, and 80 *characters* of flag or ZWJ
+        // emoji exceed it — every save of such a note failed (measured,
+        // audit 2026-09-27). 180 leaves room for " — <UUID>.txt" (43).
+        var truncated = String(sanitized.prefix(80))
+        while truncated.utf16.count > 180 { truncated.removeLast() }
         return "\(truncated) — \(note.id.uuidString).\(fileExtension)"
     }
 

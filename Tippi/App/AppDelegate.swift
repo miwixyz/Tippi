@@ -249,6 +249,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The mlx_lm.server child process would otherwise outlive the app,
         // holding the model in RAM and blocking the port.
         MLXServerManager.shared.stop()
+        // Notes typed in the last 600 ms (debounce) — only if Notes was used
+        // this session, so quitting never instantiates the store.
+        if notesWindowController.wasOpened {
+            NotesStore.shared.flushUnsavedEditSynchronously()
+        }
         // Restore system audio if the user quits Tippi mid-recording with
         // "mute system audio" on — a clean quit should never leave the
         // Mac muted. (Crash/force-quit is covered separately at next
@@ -825,6 +830,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return submenu
     }
 
+    func rebuildDictationLanguageMenu() {
+        dictationLanguageMenuItem?.submenu = buildDictationLanguageSubmenu()
+    }
+
     @objc func setDictationLanguage(_ sender: NSMenuItem) {
         guard let code = sender.representedObject as? String else { return }
         WhisperConfig.language = code
@@ -1000,7 +1009,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             } catch {
                 self.screenOCRInProgress = false
-                ToastWindowController.shared.show(message: "Aufnahme fehlgeschlagen")
+                ToastWindowController.shared.show(message: String(localized: "ocr.toast.captureFailed"))
                 return
             }
 
@@ -1023,7 +1032,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         concealed: ScreenOCRSettings.concealFromClipboardHistory
                     )
                     ToastWindowController.shared.show(
-                        message: "Text kopiert — \(text.count) Zeichen"
+                        message: String(format: String(localized: "ocr.toast.copied"), text.count)
                     )
                 } catch let failure as ScreenTextCapture.Failure {
                     // Fehlende Berechtigung braucht einen Dialog mit
@@ -1040,7 +1049,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 } catch {
                     ToastWindowController.shared.show(
-                        message: "Texterkennung fehlgeschlagen. Bitte erneut versuchen."
+                        message: String(localized: "ocr.error.recognitionFailed")
                     )
                 }
             }
@@ -1053,11 +1062,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor
     private func showScreenOCRPermissionAlert(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "Tippi darf den Bildschirm nicht lesen"
+        alert.messageText = String(localized: "ocr.alert.title")
         alert.informativeText = message
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Systemeinstellungen öffnen")
-        alert.addButton(withTitle: "Später")
+        alert.addButton(withTitle: String(localized: "ocr.alert.openSettings"))
+        alert.addButton(withTitle: String(localized: "ocr.alert.later"))
         NSApp.activate(ignoringOtherApps: true)
         if alert.runModal() == .alertFirstButtonReturn {
             let url = "x-apple.systempreferences:com.apple.preference.security"
@@ -1242,6 +1251,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// (Re)registers the Translate Quick Panel hot key. Call after the
     /// setting changes. Simpler than dictation — no model/engine readiness
     /// gate, just the enabled toggle.
+    /// Re-registers the main Carbon hot key after it was changed in Settings.
+    /// Before, only the NSEvent monitor followed: the old combo stayed
+    /// registered (and fired) until a restart, the new one was never swallowed
+    /// (audit 2026-09-27).
+    func applyMainHotkeyChange() {
+        hotkeyManager.update(trigger: loadHotkeyTrigger())
+    }
+
     func restartTranslateHotkey() {
         translateHotkeyManager.stop()
         guard TranslateSettings.isEnabled else {
@@ -1532,7 +1549,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             localActions: localActions,
             localActionsReady: localActionsReady,
             onSelect: { [weak self] prompt in
-                guard let self, let captured else { return }
+                guard let self else { return }
+                // Without a selection the popup closed and nothing happened —
+                // say why instead (audit 2026-09-27).
+                guard let captured else {
+                    ToastWindowController.shared.show(message: String(localized: "local.action.noSelection"))
+                    return
+                }
                 self.showPreview(prompt: prompt, captured: captured)
             },
             onLocalAction: { [weak self] action async in

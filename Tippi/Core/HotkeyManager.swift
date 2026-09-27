@@ -328,12 +328,30 @@ final class HotkeyManager: ObservableObject {
     }
 
     private func isModifierPressed(group: ModifierKey, flags: CGEventFlags) -> Bool {
-        switch group {
-        case .leftShift, .rightShift:     return flags.contains(.maskShift)
-        case .leftControl, .rightControl: return flags.contains(.maskControl)
-        case .leftOption, .rightOption:   return flags.contains(.maskAlternate)
-        case .leftCommand, .rightCommand: return flags.contains(.maskCommand)
+        Self.isModifierPressed(group, flags: flags)
+    }
+
+    /// Left and right are separate keys. The generic flag (`.maskShift`) stays
+    /// set while the OTHER side is held, so releasing right ⇧ with left ⇧ down
+    /// read as "pressed", the release was dropped and the microphone stayed on
+    /// (audit 2026-09-27). The device-dependent bits (IOKit `NX_DEVICE*`) tell
+    /// the sides apart; events without them fall back to the generic flag.
+    nonisolated static func isModifierPressed(_ key: ModifierKey, flags: CGEventFlags) -> Bool {
+        let deviceBits: UInt64 = 0x207F
+        let bit: UInt64
+        let generic: CGEventFlags
+        switch key {
+        case .leftControl:  bit = 0x0001; generic = .maskControl
+        case .leftShift:    bit = 0x0002; generic = .maskShift
+        case .rightShift:   bit = 0x0004; generic = .maskShift
+        case .leftCommand:  bit = 0x0008; generic = .maskCommand
+        case .rightCommand: bit = 0x0010; generic = .maskCommand
+        case .leftOption:   bit = 0x0020; generic = .maskAlternate
+        case .rightOption:  bit = 0x0040; generic = .maskAlternate
+        case .rightControl: bit = 0x2000; generic = .maskControl
         }
+        guard flags.rawValue & deviceBits != 0 else { return flags.contains(generic) }
+        return flags.rawValue & bit != 0
     }
 
     // MARK: - Carbon (Normal Combo)

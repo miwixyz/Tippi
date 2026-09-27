@@ -444,7 +444,7 @@ private struct VoiceSection: View {
             transcriptionTask?.cancel()
             transcriptionTask = nil
             if audioRecorder?.isRecording == true {
-                _ = audioRecorder?.stop()
+                audioRecorder?.discard(ifStartedBy: .popup)
             }
         }
     }
@@ -649,7 +649,7 @@ private struct VoiceSection: View {
     private func startRecording() {
         guard let rec = audioRecorder else { return }
         do {
-            try rec.start()
+            try rec.start(owner: .popup)
             voiceState = .recording
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.

@@ -29,6 +29,11 @@ die() { printf '\n🛑 %s\n' "$*" >&2; exit 2; }
 # CHANGELOG.md and PRD.md are absent on purpose: both are historical documents whose old
 # numbers are correct. PRD.md is explicitly marked as the May scope and is not updated.
 DOCS=(README.md ARCHITECTURE.md CLAUDE.md docs/HANDOVER.md docs/ONE-PAGER.md docs/index.html docs/pitch.html)
+# A renamed or deleted doc used to drop out of every check silently
+# (`grep … 2>/dev/null || true`) — the check shrank without saying so (audit 2026-09-27).
+for d in "${DOCS[@]}"; do
+  [ -f "$d" ] || die "Doc file missing: $d — renamed or deleted? Update DOCS in this script."
+done
 
 # ── 1. Read the truth from the code ───────────────────────────────────────────
 
@@ -235,6 +240,7 @@ for m in re.finditer(r"let ([a-zA-Z]+) = HotkeyManager\(", src):
 print(" ".join(sorted(names)))
 PY
 )
+[ -n "$hotkeys" ] || die "Parser broken: no hotkey feature found in AppDelegate.swift — did the HotkeyManager declarations change?"
 table_checked=0
 for feature in $hotkeys; do
   # Map: code name → the word the tables must contain.
@@ -251,7 +257,7 @@ for feature in $hotkeys; do
       ;;
   esac
   for doc in README.md docs/ONE-PAGER.md; do
-    [ -f "$doc" ] || continue
+    [ -f "$doc" ] || die "Doc file missing: $doc"
     table_checked=$((table_checked + 1))
     # NUR die Vergleichstabelle, erkannt an ihrer Kopfzeile ("In Tippi"), bis
     # zur ersten Leerzeile danach.

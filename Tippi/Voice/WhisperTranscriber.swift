@@ -280,9 +280,11 @@ private final class ProcessRunner: @unchecked Sendable {
     func appendError(_ data: Data) {
         guard !data.isEmpty else { return }
         lock.lock()
-        if errorData.count < 16_384 {
-            errorData.append(data.prefix(16_384 - errorData.count))
-        }
+        // Keep the END of stderr, not the start: whisper-cli writes ~4.6 KB of
+        // init log first and the actual error last. The toast showed the first
+        // line — "loading model from …" — instead of the error (audit 2026-09-27).
+        errorData.append(data)
+        if errorData.count > 16_384 { errorData = errorData.suffix(16_384) }
         lock.unlock()
     }
 
@@ -290,9 +292,10 @@ private final class ProcessRunner: @unchecked Sendable {
         lock.lock()
         let data = errorData
         lock.unlock()
-        let message = String(data: data, encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return message.isEmpty ? fallback : message
+        // The 16 KB cut can land inside a multi-byte character: drop leading
+        // UTF-8 continuation bytes so the rest still decodes.
+        let text = String(bytes: data.drop { $0 & 0xC0 == 0x80 }, encoding: .utf8) ?? ""
+        return WhisperStderr.lastLines(of: text, fallback: fallback)
     }
 
     func terminate() {
@@ -326,5 +329,15 @@ private final class ProcessRunner: @unchecked Sendable {
         } else {
             continuation.resume()
         }
+    }
+}
+
+enum WhisperStderr {
+    /// The last three non-empty lines — where whisper-cli reports what failed.
+    static func lastLines(of stderr: String, fallback: String) -> String {
+        let lines = stderr.split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return lines.isEmpty ? fallback : lines.suffix(3).joined(separator: " · ")
     }
 }

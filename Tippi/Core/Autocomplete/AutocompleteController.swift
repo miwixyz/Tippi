@@ -296,6 +296,17 @@ final class AutocompleteController: ObservableObject {
         let caret: CGRect
     }
 
+    /// Upper bound for reading a field's whole value when it offers no range
+    /// read — enough for a message or a form field, not a long document.
+    private static let fullReadLimitUTF16 = 20_000
+
+    private static func isSmallEnoughForFullRead(_ element: AXUIElement) -> Bool {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXNumberOfCharactersAttribute as CFString, &ref) == .success,
+              let count = ref as? Int else { return false }
+        return count <= fullReadLimitUTF16
+    }
+
     /// Kontext vor dem Cursor und Cursor-Position — oder `nil`, wenn nicht
     /// gelesen werden darf oder kann. Die Ausschlussprüfung läuft, bevor ein
     /// einziges Zeichen Text gelesen wird.
@@ -305,16 +316,22 @@ final class AutocompleteController: ObservableObject {
         // Eine hängende App darf das Tippen nicht einfrieren.
         AXUIElementSetMessagingTimeout(appElement, 0.25)
         let focused = Self.element(appElement, kAXFocusedUIElementAttribute)
+        // Timeout on the element itself, before the first call on it: the
+        // app-level timeout does not cover it, and the ~8 calls below ran with
+        // the global 2 s — on the main thread that also hosts the active tap,
+        // so a busy app stalled typing system-wide (audit 2026-09-27).
+        if let focused { AXUIElementSetMessagingTimeout(focused, 0.25) }
+        let role = focused.flatMap { Self.string($0, kAXRoleAttribute) }
         if let reason = AutocompleteExclusion.reason(
             bundleID: app.bundleIdentifier,
-            role: focused.flatMap { Self.string($0, kAXRoleAttribute) },
+            role: role,
             subrole: focused.flatMap { Self.string($0, kAXSubroleAttribute) },
             secureInputActive: IsSecureEventInputEnabled(),
             excludedBundleIDs: Set(AutocompleteSettings.excludedBundleIDs),
             ownBundleID: Bundle.main.bundleIdentifier,
             isEditable: focused.map(Self.isValueSettable) ?? false
         ) {
-            skip("\(reason.rawValue) bundle=\(app.bundleIdentifier ?? "?") role=\(focused.flatMap { Self.string($0, kAXRoleAttribute) } ?? "?")")
+            skip("\(reason.rawValue) bundle=\(app.bundleIdentifier ?? "?") role=\(role ?? "?")")
             return nil
         }
         guard let focused else { skip("no focused element"); return nil }
@@ -328,7 +345,6 @@ final class AutocompleteController: ObservableObject {
         guard range.length == 0, range.location > 0 else {   // Auswahl aktiv → nichts
             skip("selection len=\(range.length) loc=\(range.location)"); return nil
         }
-        AXUIElementSetMessagingTimeout(focused, 0.25)
         let loc = range.location
         let start = max(0, loc - AutocompleteContext.maxUTF16)
 
@@ -337,7 +353,11 @@ final class AutocompleteController: ObservableObject {
         if let tail = Self.string(focused, forRange: CFRange(location: start, length: loc - start)) {
             context = AutocompleteContext.beforeCursor(in: tail, cursorUTF16: tail.utf16.count)
             next = Self.string(focused, forRange: CFRange(location: loc, length: 1))?.first
-        } else if let full = Self.string(focused, kAXValueAttribute) {
+        } else if Self.isSmallEnoughForFullRead(focused),
+                  let full = Self.string(focused, kAXValueAttribute) {
+            // Fallback for fields without AXStringForRange. Bounded, as
+            // SECURE-DESIGN §3/§9 promise: never copy a whole large document
+            // into Tippi on every pause (audit 2026-09-27).
             context = AutocompleteContext.beforeCursor(in: full, cursorUTF16: loc)
             let cursor = full.utf16.index(full.utf16.startIndex, offsetBy: min(loc, full.utf16.count))
             next = full.unicodeScalars[cursor...].first.map(Character.init)

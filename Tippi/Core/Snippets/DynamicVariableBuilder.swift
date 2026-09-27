@@ -12,10 +12,12 @@ import Foundation
 enum DynamicVariableKind: Equatable {
     case today(format: DateFormatPreset)
     case weekday(Weekday, extraDays: Int, format: DateFormatPreset)
-    /// Fixed pattern matching the already-proven-working command from
-    /// Michael's own kinowoche.yml (`date -v +thu +"%V"`) — ISO week number
-    /// anchored to the week's Thursday, not "whatever weekday today happens
-    /// to be" (which would misreport near week boundaries).
+    /// Fixed pattern from Michael's own kinowoche.yml (`date -v +thu +"%V"`):
+    /// the ISO week number of the **next** Thursday (today, if it is one) —
+    /// the cinema week that starts then. From Friday on that is already the
+    /// following week; this is intended for programme planning, not the plain
+    /// calendar week (the old hint said "this week's Thursday", which was
+    /// wrong Fri–Sun — audit 2026-09-27, measured).
     case calendarWeek
 }
 

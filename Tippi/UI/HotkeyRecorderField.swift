@@ -69,6 +69,15 @@ struct HotkeyRecorderField: View {
         }
     }
 
+    /// Needs ⌘ or ⌃, and must not be one of the everyday ⌘ shortcuts.
+    static func isAcceptableGlobalHotkey(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) -> Bool {
+        guard modifiers.contains(.command) || modifiers.contains(.control) else { return false }
+        // ⌘ alone (or ⌘⇧ for redo) + A C V X Z Q W H M , Tab Space
+        let reservedWithCommand: Set<UInt16> = [0, 8, 9, 7, 6, 12, 13, 4, 46, 43, 48, 49]
+        let plainCommand = modifiers == [.command] || modifiers == [.command, .shift]
+        return !(plainCommand && reservedWithCommand.contains(keyCode))
+    }
+
     private func startRecording() {
         // Force any other recorder (e.g. from an eager-mounted invisible tab)
         // to release its local key monitor first — otherwise its LIFO-priority
@@ -85,6 +94,13 @@ struct HotkeyRecorderField: View {
             }
             guard !mods.isEmpty else {
                 return event
+            }
+            // A global Carbon hot key swallows its combination system-wide.
+            // ⇧A, ⌥L (`@` on a German layout) or ⌘C would take a character or
+            // a standard shortcut away from every app (audit 2026-09-27).
+            guard Self.isAcceptableGlobalHotkey(keyCode: event.keyCode, modifiers: mods) else {
+                NSSound.beep()
+                return nil  // keep recording
             }
             combo = KeyCombo(keyCode: event.keyCode, modifiers: mods)
             // Persistence is the caller's responsibility, propagated via the

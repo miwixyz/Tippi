@@ -189,6 +189,7 @@
 "settings.snippets.appManaged" = "Your snippets";
 "settings.snippets.empty" = "No snippets yet.";
 "settings.snippets.loadError" = "The snippet file could not be read. Saving is disabled so the existing contents are not overwritten. A copy was kept alongside it with a “.unreadable-…” suffix.";
+"settings.snippets.importedLoadError" = "The file with imported Espanso snippets could not be read. Importing and approvals are blocked so nothing gets lost. A copy was kept alongside it with a “.unreadable-…” suffix.";
 "settings.snippets.new" = "New snippet";
 "settings.snippets.reference" = "Espanso files (import candidates)";
 "settings.snippets.importRequiredHint" = "These files are no longer executed directly. Import a file to make its shortcuts work.";
@@ -214,7 +215,7 @@
 "settings.snippets.variable.title" = "Insert Variable";
 "settings.snippets.variable.mode.today" = "Today's date";
 "settings.snippets.variable.mode.weekday" = "Weekday this week";
-"settings.snippets.variable.mode.calendarWeek" = "Calendar week";
+"settings.snippets.variable.mode.calendarWeek" = "Cinema week (starts Thursday)";
 "settings.snippets.variable.format" = "Format";
 "settings.snippets.variable.format.dayDot" = "DD.";
 "settings.snippets.variable.format.dayMonth" = "DD. Month";
@@ -229,7 +230,7 @@
 "settings.snippets.variable.weekday.saturday" = "Saturday";
 "settings.snippets.variable.weekday.sunday" = "Sunday";
 "settings.snippets.variable.extraDays" = "Extra days: %d";
-"settings.snippets.variable.calendarWeekHint" = "Current calendar week, computed from this week's Thursday.";
+"settings.snippets.variable.calendarWeekHint" = "Week number of the cinema week starting next Thursday (today, if it is Thursday). From Friday on this is already the coming week — meant for programme planning.";
 "settings.snippets.variable.insert" = "Insert";
 "settings.snippets.shellApproval.decline" = "Decline";
 "settings.snippets.shellApproval.approve" = "Approve";
@@ -239,6 +240,7 @@
 
 "settings.general.autostart.enabled" = "Tippi will now start at login.";
 "settings.general.autostart.disabled" = "Tippi will no longer start at login.";
+"settings.general.autostart.requiresApproval" = "Needs your approval: System Settings → General → Login Items → turn on Tippi.";
 "settings.general.appearance" = "Appearance";
 "settings.general.appearance.system" = "System";
 "settings.general.appearance.light" = "Light";
@@ -384,7 +386,7 @@
 "settings.providers.mlx.stop" = "Stop server";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
 "settings.about.acknowledgements" = "Speech-to-text by whisper.cpp (MIT). Optional Parakeet engine by FluidAudio (Apache 2.0) and the NVIDIA Parakeet TDT model (CC-BY-4.0). Auto-updates by Sparkle. See NOTICES.md.";
-"settings.hotkeys.restartHint" = "If the new hotkey does not respond immediately, restart Tippi.";
+"settings.hotkeys.restartHint" = "The new combination applies right away. If it does not respond, another app probably already uses it.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
 "settings.about.feature1" = "Works in every app system-wide";
 "settings.about.feature2" = "Bring Your Own Key — 11 AI providers (9 cloud + 2 local)";
@@ -633,6 +635,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "notes.section.favorites" = "Favorites";
 "notes.section.all" = "All Notes";
 "notes.externalChangeHeld" = "Changed on your other Mac — applied once you leave this note";
+"notes.saveFailed" = "Save failed: %@ — the text is still here; Tippi retries on your next edit.";
 
 /* Secondary hot keys (translate/emoji/notes): these use Carbon RegisterEventHotKey,
    which needs no Input Monitoring — so they must not reuse the main trigger's
@@ -662,3 +665,25 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.snippets.diag.received" = "Last keystroke received: %ds ago";
 "settings.snippets.diag.processed" = "processed: %ds ago";
 "settings.snippets.diag.allFiltered" = "⚠︎ all discarded (Tippi itself frontmost?)";
+
+/* Bildschirm-Texterkennung (lokalisiert im Audit 2026-09-27) */
+"ocr.error.noPermission" = "Tippi is not allowed to read the screen.\n\n→ TO DO: System Settings → Privacy & Security → Screen Recording → enable Tippi, then restart Tippi.";
+"ocr.error.blankCapture" = "The capture came back empty.\n\nThis almost always means the Screen Recording permission is missing or not yet in effect after granting it.\n\n→ TO DO: System Settings → Privacy & Security → Screen Recording → enable Tippi, then QUIT and relaunch Tippi. Without a relaunch the capture stays black.";
+"ocr.error.displayUnavailable" = "The display could not be determined. Please try again.";
+"ocr.error.captureFailed" = "The selection could not be captured. Please try again.";
+"ocr.error.recognitionFailed" = "Text recognition failed. Please try again.";
+"ocr.error.empty" = "No text was found in this selection.";
+"ocr.toast.captureFailed" = "Capture failed";
+"ocr.toast.copied" = "Text copied — %d characters";
+"ocr.alert.title" = "Tippi is not allowed to read the screen";
+"ocr.alert.openSettings" = "Open System Settings";
+"ocr.alert.later" = "Later";
+"settings.ocr.title" = "Text from a screen selection";
+"settings.ocr.body" = "Drag a rectangle and the recognised text lands in your clipboard. Recognition runs locally, German and English. Nothing is stored or sent.";
+"settings.ocr.permission" = "Needs the “Screen Recording” permission. It lets Tippi read the screen permanently — that is why the feature ships off and only asks the first time you use it.";
+"settings.ocr.joinLines" = "Join wrapped lines";
+"settings.ocr.joinLinesHint" = "Recognition returns every screen line separately — pasted as is, sentences break mid-way. Paragraphs, bullets and sentence ends are kept, hyphenated breaks are joined. Turn off for code or tables.";
+"settings.ocr.conceal" = "Hide from clipboard history";
+"settings.ocr.concealHint" = "Raycast, Alfred and Paste then skip the text. Useful when you capture something confidential — off for everyday use, so the text stays findable.";
+"settings.history.unreadable" = "%d older entries unreadable";
+"settings.history.unreadable.help" = "Encrypted with a different key, e.g. after moving to a new Mac. “Delete all” removes them and creates a new key.";

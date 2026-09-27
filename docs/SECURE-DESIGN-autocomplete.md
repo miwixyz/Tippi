@@ -153,7 +153,7 @@ Tests in `TippiTests/AutocompleteTests.swift` (48 Fälle).
 | §3 Secure Input, `AXSecureTextField` (Rolle/Subrolle) | `L:AutocompleteExclusion.reason`, aufgerufen in `C:readFocusedField` **vor** jedem Textlesen | `testSecureInput…`, `testSecureTextField…` |
 | §3 Ausschlussliste ab Werk + erweiterbar | `S:defaultExcludedBundleIDs`, `S:add/removeExclusion`; UI `Tippi/UI/AutocompleteSettingsSection.swift` | `testDefaultExclusions…`, `testExclusionsStart…` |
 | §3 nur Text-Rollen, Tippi selbst aus | `L:AutocompleteExclusion.reason` (`textRoles`, `ownBundleID`) | `testNonTextRoles…`, `testTippiItself…` |
-| §3 max. 400 Zeichen, UTF-16-sicher | `L:AutocompleteContext.beforeCursor`; `C:readFocusedField` liest per `AXStringForRange` nur diesen Ausschnitt | `testContextIsCut…`, `testCutNeverSplitsAnEmoji`, `testCursorInsideSurrogatePair…` |
+| §3 max. 400 Zeichen, UTF-16-sicher | `L:AutocompleteContext.beforeCursor`; `C:readFocusedField` liest per `AXStringForRange` nur diesen Ausschnitt; Felder ohne diesen Aufruf nur, wenn `AXNumberOfCharacters` ≤ 20 000 (vorher: ganzer Wert jedes Felds, Audit 2026-09-27) | `testContextIsCut…`, `testCutNeverSplitsAnEmoji`, `testCursorInsideSurrogatePair…` |
 | §3 keine Auswahl aktiv, < 3 Zeichen keine Anfrage | `C:readFocusedField` (`range.length == 0`), `L:isLongEnough` | `testMinimumContextLength` |
 | §3 350 ms Pause, max. 1 Anfrage, neue Taste bricht ab | `C:userTyped` (Pause-Task), `C:cancelPending` (Generation + `cancel()`) | — (manuell) |
 | §3 nur Tippis eigener Server, nie ein übernommener | `MLXServerManager.ownedServerURL` (+ reine Form `ownedServerURL(state:ownsRunningProcess:)`), genutzt in `C:requestSuggestion` | `testAdoptedServerIsNeverUsed`, `testOwnRunningServerIsUsed`, `testServerNotRunning…` |

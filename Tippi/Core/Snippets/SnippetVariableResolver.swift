@@ -81,7 +81,10 @@ enum SnippetVariableResolver {
         ]
         let outPipe = Pipe()
         process.standardOutput = outPipe
-        process.standardError = Pipe() // discard stderr — must never leak into the expanded text
+        // Discard stderr — it must never leak into the expanded text. The null
+        // device, not an unread Pipe: an unread pipe fills at ~64 KB and blocks
+        // the command until the timeout (audit 2026-09-27).
+        process.standardError = FileHandle.nullDevice
 
         let exited = DispatchSemaphore(value: 0)
         process.terminationHandler = { _ in exited.signal() }
@@ -92,17 +95,39 @@ enum SnippetVariableResolver {
             resolverLog.error("snippet shell var failed to launch: \(error.localizedDescription, privacy: .public)")
             return ""
         }
+        // Drain stdout while the command runs. Reading only after exit meant a
+        // command with more than ~64 KB of output blocked on the full pipe,
+        // hit the 5 s timeout and silently expanded to "" (measured 60 KB ok,
+        // 70 KB timed out — audit 2026-09-27).
+        let output = OutputBuffer()
+        let drained = DispatchSemaphore(value: 0)
+        DispatchQueue.global(qos: .userInitiated).async {
+            output.data = outPipe.fileHandleForReading.readDataToEndOfFile()
+            drained.signal()
+        }
 
         if exited.wait(timeout: .now() + shellTimeoutSeconds) == .timedOut {
-            resolverLog.error("snippet shell var timed out after \(shellTimeoutSeconds, privacy: .public)s, killing: \(cmd, privacy: .public)")
+            resolverLog.error("snippet shell var timed out after \(shellTimeoutSeconds, privacy: .public)s, killing: \(cmd, privacy: .private)")
             process.terminate()
             _ = exited.wait(timeout: .now() + 1) // let it die cleanly before reading the pipe
             return ""
         }
 
-        let data = outPipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
-        return output.trimmingCharacters(in: .newlines)
+        // Only touch the buffer once the drain thread is done with it. A command
+        // that leaves a background child holding stdout never closes the pipe —
+        // then there is no result, not a racy half-read (Rafter 2026-09-27).
+        guard drained.wait(timeout: .now() + 1) == .success else {
+            resolverLog.error("snippet shell var: stdout still open after exit — ignoring output")
+            return ""
+        }
+        let text = String(data: output.data, encoding: .utf8) ?? ""
+        return text.trimmingCharacters(in: .newlines)
+    }
+
+    /// Written once by the drain thread, read after `drained` — the semaphore
+    /// orders the two accesses.
+    private final class OutputBuffer: @unchecked Sendable {
+        var data = Data()
     }
 
     /// `format` uses Espanso's strftime-style tokens (`%m/%d/%Y`, `%B`, `%V`,

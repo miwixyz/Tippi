@@ -48,6 +48,17 @@ final class ToastWindowController {
     /// reused the same window, clobbering or hiding its fresh content.
     private var generation = 0
 
+    /// Below the cursor (14 pt gap), above it if there is no room below,
+    /// horizontally centred — always clamped into `visible`.
+    nonisolated static func origin(cursor: NSPoint, size: NSSize, visible: NSRect) -> NSPoint {
+        let gap: CGFloat = 14
+        var y = cursor.y - size.height - gap
+        if y < visible.minY { y = cursor.y + gap }
+        y = min(max(y, visible.minY), visible.maxY - size.height)
+        let x = min(max(cursor.x - size.width / 2, visible.minX), visible.maxX - size.width)
+        return NSPoint(x: x, y: y)
+    }
+
     func show(message: String) {
         generation += 1
         let myGeneration = generation
@@ -59,12 +70,13 @@ final class ToastWindowController {
         hostView.layout()
         let size = hostView.fittingSize
 
-        // Position just below the cursor with a small gap.
+        // Just below the cursor, kept on the visible part of the screen under
+        // it — at the bottom edge or over the Dock the toast used to land
+        // off-screen, hiding exactly the feedback it exists for (audit 2026-09-27).
         let cursor = NSEvent.mouseLocation
-        let origin = NSPoint(
-            x: cursor.x - size.width / 2,
-            y: cursor.y - size.height - 14
-        )
+        let visible = (NSScreen.screens.first { NSMouseInRect(cursor, $0.frame, false) } ?? NSScreen.main)?
+            .visibleFrame ?? .infinite
+        let origin = Self.origin(cursor: cursor, size: size, visible: visible)
 
         if let w = window {
             // Reuse existing window — swap content & reposition.

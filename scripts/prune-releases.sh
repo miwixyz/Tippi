@@ -49,10 +49,17 @@ echo "▶ Release prune (keeping newest ${KEEP})"
 # unless the caller's PATH puts a newer bash first. Real failure, not
 # theoretical: this exact line broke the very first time this script ran
 # for real (2026-09-13, v2.3.0 release) — `mapfile: command not found`.
+# Into a variable first: a failing `gh` inside `< <(…)` escapes set -e, and
+# the script then reported "0 release(s) — nothing to prune" with exit 0
+# (reproduced in the 2026-09-27 audit).
+TAG_LIST=$(gh release list --limit 100 --json tagName --jq '.[].tagName') || {
+    echo "  ✗ gh release list failed — nothing was pruned (auth/network?)"
+    exit 1
+}
 TAGS=()
 while IFS= read -r line; do
-    TAGS+=("${line}")
-done < <(gh release list --limit 100 --json tagName --jq '.[].tagName')
+    [ -n "${line}" ] && TAGS+=("${line}")
+done <<< "${TAG_LIST}"
 TOTAL=${#TAGS[@]}
 
 if [ "${TOTAL}" -le "${KEEP}" ]; then

@@ -15,8 +15,11 @@
 # Exit: 0 = unveraendert · 1 = ein Test hat echte Einstellungen geaendert
 set -euo pipefail
 DOMAIN="${TIPPI_DEFAULTS_DOMAIN:-com.tippi.app}"   # Umgebungsvariable nur fuer den Selbsttest
-SNAP="${TMPDIR:-/tmp}/tippi-real-defaults.json"
-PREFIXES='dictation. voice. screenOCR. appearance. tippi. notes. translate. emoji. snippets. selection. mlx. defaultModel.'
+SNAP="${TMPDIR:-$HOME/Library/Caches}/tippi-real-defaults.json"   # nie das gemeinsame /tmp
+# Gemessen 2026-09-27 an `defaults export com.tippi.app`: sechs echte Einstellungen
+# lagen ausserhalb (`selection.` trifft `selectionPopup.` nicht). Bewusst NICHT
+# drin: lastLaunchedBuild — den setzt jeder Start des Test-Hosts, Fehlalarm.
+PREFIXES='dictation. voice. screenOCR. appearance. tippi. notes. translate. emoji. snippets. selection. selectionPopup. recording. mlx. defaultModel. defaultProvider allowProviderFallback historyEnabled setupCompleted'
 
 auszug() {
     # plistlib statt `plutil -convert json`: Hotkey-Kombinationen sind Binaerdaten, an

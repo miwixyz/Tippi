@@ -189,6 +189,7 @@
 "settings.snippets.appManaged" = "Eigene Kürzel";
 "settings.snippets.empty" = "Noch keine eigenen Kürzel angelegt.";
 "settings.snippets.loadError" = "Die Kürzel-Datei konnte nicht gelesen werden. Speichern ist gesperrt, damit der vorhandene Inhalt nicht überschrieben wird. Eine Kopie liegt daneben mit der Endung „.unreadable-…“.";
+"settings.snippets.importedLoadError" = "Die Datei mit den importierten Espanso-Kürzeln konnte nicht gelesen werden. Import und Freigaben sind gesperrt, damit nichts verloren geht. Eine Kopie liegt daneben mit der Endung „.unreadable-…“.";
 "settings.snippets.new" = "Neues Kürzel";
 "settings.snippets.reference" = "Espanso-Dateien (Import-Kandidaten)";
 "settings.snippets.importRequiredHint" = "Diese Dateien werden nicht mehr direkt ausgeführt. Importiere eine Datei, damit ihre Kürzel wirken.";
@@ -214,7 +215,7 @@
 "settings.snippets.variable.title" = "Variable einfügen";
 "settings.snippets.variable.mode.today" = "Heutiges Datum";
 "settings.snippets.variable.mode.weekday" = "Wochentag dieser Woche";
-"settings.snippets.variable.mode.calendarWeek" = "Kalenderwoche";
+"settings.snippets.variable.mode.calendarWeek" = "Kinowoche (KW ab Donnerstag)";
 "settings.snippets.variable.format" = "Format";
 "settings.snippets.variable.format.dayDot" = "TT.";
 "settings.snippets.variable.format.dayMonth" = "TT. Monat";
@@ -229,7 +230,7 @@
 "settings.snippets.variable.weekday.saturday" = "Samstag";
 "settings.snippets.variable.weekday.sunday" = "Sonntag";
 "settings.snippets.variable.extraDays" = "Zusätzliche Tage: %d";
-"settings.snippets.variable.calendarWeekHint" = "Aktuelle Kalenderwoche, anhand des Donnerstags dieser Woche berechnet.";
+"settings.snippets.variable.calendarWeekHint" = "Nummer der Kinowoche, die am nächsten Donnerstag beginnt (heute, wenn Donnerstag ist). Ab Freitag also schon die kommende Woche — passend für die Programmplanung.";
 "settings.snippets.variable.insert" = "Einfügen";
 "settings.snippets.shellApproval.decline" = "Ablehnen";
 "settings.snippets.shellApproval.approve" = "Freigeben";
@@ -239,6 +240,7 @@
 
 "settings.general.autostart.enabled" = "Tippi startet ab jetzt beim Anmelden.";
 "settings.general.autostart.disabled" = "Tippi startet nicht mehr beim Anmelden.";
+"settings.general.autostart.requiresApproval" = "Muss noch erlaubt werden: Systemeinstellungen → Allgemein → Anmeldeobjekte → Tippi einschalten.";
 "settings.general.appearance" = "Darstellung";
 "settings.general.appearance.system" = "System";
 "settings.general.appearance.light" = "Hell";
@@ -385,7 +387,7 @@
 "settings.providers.mlx.stop" = "Server stoppen";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT-Lizenz";
 "settings.about.acknowledgements" = "Spracherkennung via whisper.cpp (MIT). Optionale Parakeet-Engine via FluidAudio (Apache 2.0) und dem NVIDIA-Parakeet-TDT-Modell (CC-BY-4.0). Auto-Updates via Sparkle. Siehe NOTICES.md.";
-"settings.hotkeys.restartHint" = "Falls der neue Hotkey nicht sofort reagiert, Tippi neu starten.";
+"settings.hotkeys.restartHint" = "Die neue Kombination gilt sofort. Reagiert sie nicht, belegt vermutlich eine andere App sie schon.";
 "settings.tab.help" = "Hilfe";
 "settings.about.description" = "Text in einer beliebigen App markieren, ⌥⌘T drücken — KI transformiert ihn direkt an Ort und Stelle.";
 "settings.about.feature1" = "Funktioniert systemweit in jeder App";
@@ -635,6 +637,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "notes.section.favorites" = "Favoriten";
 "notes.section.all" = "Alle Notizen";
 "notes.externalChangeHeld" = "Auf dem anderen Mac geändert — wird übernommen, sobald du diese Notiz verlässt";
+"notes.saveFailed" = "Speichern fehlgeschlagen: %@ — der Text steht noch hier, Tippi versucht es beim nächsten Tippen erneut.";
 
 /* Secondary hot keys (translate/emoji/notes): these use Carbon RegisterEventHotKey,
    which needs no Input Monitoring — so they must not reuse the main trigger's
@@ -664,3 +667,25 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.snippets.diag.received" = "Letzter Tastendruck empfangen: vor %d s";
 "settings.snippets.diag.processed" = "verarbeitet: vor %d s";
 "settings.snippets.diag.allFiltered" = "⚠︎ alle verworfen (Tippi selbst im Vordergrund?)";
+
+/* Bildschirm-Texterkennung (lokalisiert im Audit 2026-09-27) */
+"ocr.error.noPermission" = "Tippi darf den Bildschirm nicht lesen.\n\n→ ZU TUN: Systemeinstellungen → Datenschutz & Sicherheit → Bildschirmaufnahme → Tippi aktivieren, danach Tippi neu starten.";
+"ocr.error.blankCapture" = "Der Ausschnitt kam leer zurück.\n\nDas heißt fast immer: Die Berechtigung Bildschirmaufnahme fehlt oder ist nach dem Erteilen noch nicht wirksam.\n\n→ ZU TUN: Systemeinstellungen → Datenschutz & Sicherheit → Bildschirmaufnahme → Tippi aktivieren, dann Tippi BEENDEN und neu starten. Ohne Neustart bleibt die Aufnahme schwarz.";
+"ocr.error.displayUnavailable" = "Der Bildschirm konnte nicht ermittelt werden. Bitte erneut versuchen.";
+"ocr.error.captureFailed" = "Der Ausschnitt konnte nicht aufgenommen werden. Bitte erneut versuchen.";
+"ocr.error.recognitionFailed" = "Die Texterkennung ist fehlgeschlagen. Bitte erneut versuchen.";
+"ocr.error.empty" = "In diesem Ausschnitt wurde kein Text gefunden.";
+"ocr.toast.captureFailed" = "Aufnahme fehlgeschlagen";
+"ocr.toast.copied" = "Text kopiert — %d Zeichen";
+"ocr.alert.title" = "Tippi darf den Bildschirm nicht lesen";
+"ocr.alert.openSettings" = "Systemeinstellungen öffnen";
+"ocr.alert.later" = "Später";
+"settings.ocr.title" = "Text aus Bildschirmausschnitt";
+"settings.ocr.body" = "Zieht ein Auswahlrechteck auf und legt den erkannten Text in die Zwischenablage. Die Erkennung läuft lokal, Deutsch und Englisch. Nichts wird gespeichert oder gesendet.";
+"settings.ocr.permission" = "Verlangt die Berechtigung „Bildschirmaufnahme“. Sie erlaubt Tippi dauerhaft, den Bildschirm zu lesen — deshalb ist die Funktion ab Werk aus und fragt erst beim ersten Auslösen.";
+"settings.ocr.joinLines" = "Zeilenumbrüche zusammenführen";
+"settings.ocr.joinLinesHint" = "Die Erkennung liefert jede Bildschirmzeile einzeln — beim Einfügen steht sonst mitten im Satz ein Umbruch. Absätze, Aufzählungen und Satzenden bleiben erhalten, Trennstriche werden zusammengezogen. Für Code oder Tabellen ausschalten.";
+"settings.ocr.conceal" = "Vor Zwischenablage-Verlauf verbergen";
+"settings.ocr.concealHint" = "Raycast, Alfred und Paste überspringen den Text dann. Sinnvoll, wenn du Vertrauliches erfasst — im Alltag aus, damit der Text auffindbar bleibt.";
+"settings.history.unreadable" = "%d ältere Einträge nicht lesbar";
+"settings.history.unreadable.help" = "Mit einem anderen Schlüssel verschlüsselt, etwa nach dem Umzug auf einen neuen Mac. „Alle löschen“ entfernt sie und erzeugt einen neuen Schlüssel.";
