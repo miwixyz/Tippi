@@ -1,5 +1,11 @@
 # Tippi — Übergabe an Claude Code
 
+> **Archiv, nicht die aktuelle Übergabe.** Diese Momentaufnahme beschreibt v1.7.3
+> vom 22. Mai 2026 und enthält überholte Build-, Release- und Testbefehle.
+> Für den aktuellen Stand v2.16.2 zuerst [`HANDOVER.md`](HANDOVER.md),
+> [`../CHANGELOG.md`](../CHANGELOG.md) und [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
+> lesen. Die Checklisten und Copy-Paste-Prompts weiter unten nicht ausführen.
+
 **Stand:** 2026-05-22 · **Version:** 1.7.3 (Build 102) · **Branch:** `main`  
 **Repo:** https://github.com/miwixyz/Tippi · **Lokal:** `~/Coding/Tippi/`
 

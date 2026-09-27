@@ -1,9 +1,17 @@
 # Tippi — Handover-Dokumentation
 
-Stand: September 2026 · Version: **2.16.2** (siehe auch `docs/HANDOFF-CLAUDE.md` für die aktuelle Agenten-Übergabe)
+Stand: 27. September 2026 · Version: **2.16.2** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
-Dieses Dokument ist die **vollständige technische und betriebliche Übergabe** für das Projekt Tippi. Es ist primär für deinen eigenen Vault gedacht und dient als Referenz wenn du nach Monaten zurückkommst oder das Projekt jemandem übergibst.
+Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
+
+### Aktueller Übergabestand nach v2.16.2
+
+- **Veröffentlicht:** [GitHub-Release v2.16.2](https://github.com/miwixyz/Tippi/releases/tag/v2.16.2), signiertes und von Apple notarisiertes DMG, Sparkle-Appcast im Gist auf 2.16.2 verifiziert. Das Tag zeigt auf `6a7b030` (gebauter Stand, Build 427); der nachgelagerte Appcast-/Buildnummer-Commit ist `eec316e` auf `main`. Die Arbeitskopie war nach dem Release sauber und mit `origin/main` synchron.
+- **Letzte Korrekturen:** `0e6a922` behebt sieben Audit-Funde in `TextInsertion`, `TextCapture`, `PasteboardSnapshot`, `NotesStore`, `HistoryStore` und `LLMProvider`; `TippiTests/AuditFollowupTests.swift` enthält 16 neue Regressionstests. Einzelheiten stehen in `CHANGELOG.md` unter 2.16.2.
+- **Geprüft:** `make test` (472 Tests, keine Fehler, echte App-Einstellungen unverändert), `make lint`, `scripts/docs-drift-check.sh`, `scripts/docs-release-gate.sh`, `git diff --check`, Signatur, kurzer App-Start, Apple-Notarisierung, Gatekeeper, GitHub-Asset und Gist-Appcast. `rafter run` prüfte den veröffentlichten Code auf `main` (Scan `89daa0ae-29c1-49ac-a299-738ecb5d04bd`); die drei Meldungen betreffen unveränderte Stellen und sind Fehlalarme: `SelectionSignature` ist keine geheime Signatur, `/api/v1/models` in zwei Kommentaren keine veraltete API.
+- **Nicht manuell nachgewiesen:** ein echter Konflikt zwischen zwei Macs in iCloud, die vollständige App-Matrix für Einfügen/Bedienungshilfen sowie ein Sparkle-Update auf einem zweiten Mac. Die Notiz-Konflikte wurden mit isolierten Testverzeichnissen geprüft. Diese manuellen Prüfungen bleiben für eine spätere Qualitätsrunde offen; sie wurden nicht als bestanden verbucht.
+- **Nächster Einstieg:** erst `git status`, `git log -5 --oneline`, `CHANGELOG.md`, `ARCHITECTURE.md` und dieses Dokument lesen. Für Release-Befehle gilt §7 unten; die alte Datei `docs/HANDOFF-CLAUDE.md` nicht als Runbook verwenden.
 
 ---
 
@@ -156,7 +164,7 @@ Drei parallel registrierte Hotkey-Pfade — jeder hat eigene macOS-Berechtigungs
 | **Safety Hotkey** | Carbon `RegisterEventHotKey` | Keine | Hardcoded ⌃⌥⌘T als Notlösung |
 | **`GlobalKeyMonitor`** (primär) | `NSEvent.addGlobalMonitorForEvents(matching: .keyDown)` | Accessibility | Primärer in-App-Hotkey, lädt Combo aus UserDefaults |
 
-**TCC-Falle:** Selbst-signierte Builds (ad-hoc) haben oft TCC-Probleme — macOS erkennt jeden Build als „andere App" wegen wechselnder Signatur. **Lösung:** Mit Developer ID signiert, bleibt TCC stabil über Rebuilds.
+**TCC-Falle:** Ad-hoc-signierte Builds haben oft TCC-Probleme. `make build` signiert lokale Builds mit **Apple Development**, die veröffentlichte App mit **Developer ID**. Beide nutzen dieselbe Bundle-ID, aber unterschiedliche Signatur-Identitäten und können einander die Bedienungshilfen-Freigabe verdrängen. Für einen Test neben der installierten Release-App `scripts/devid-testbuild.sh` verwenden; Details in `README.md` und `CONTRIBUTING.md`.
 
 **Fallback für Endnutzer:** Settings → Hotkeys → „macOS-Tastatur-Einstellungen öffnen" → bindet eine beliebige Tasten-Kombi an den Menüpunkt „Tippi auslösen…". macOS macht das Routing — funktioniert garantiert.
 
@@ -233,7 +241,7 @@ Voice Input hat zwei Modi, gesteuert durch `VoiceMode` enum in `PromptPopupView.
   - `SUFeedURL`: `https://gist.githubusercontent.com/miwixyz/595ce79e698bb6a98008dc061f1f4a78/raw/appcast.xml`
   - `SUPublicEDKey`: EdDSA Public Key für Update-Signatur-Verifikation
 - **Versionierung:** Sparkle vergleicht `CFBundleVersion` (Build-Nummer), nicht `CFBundleShortVersionString` (Marketing-Version). Build-Nummer wird automatisch berechnet: `git rev-list --count HEAD` → monoton steigend, kein manuelles Tracking nötig
-- **Appcast-Generierung:** `~/Developer/sparkle-tools/bin/generate_appcast` — nach `make release` ausführen, Ergebnis als `appcast.xml` committen + pushen
+- **Appcast-Generierung:** `scripts/release.sh` ruft `~/Developer/sparkle-tools/bin/generate_appcast` auf, aktualisiert den Gist und prüft dessen Inhalt. Danach `appcast.xml` zusammen mit der tatsächlichen Buildnummer in `project.yml` committen und pushen.
 - **DMG-Hosting:** GitHub Releases (Gist kann keine Binaries liefern). `generate_appcast` mit `--download-url-prefix https://github.com/miwixyz/Tippi/releases/download/v<version>/` aufrufen
 - **Signierung der Updates:** `sign_update`-Tool aus sparkle-tools, Output-Key gehört in `SUPublicEDKey`
 
@@ -301,7 +309,7 @@ Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedli
 ### 7.1 Lokal entwickeln
 
 ```bash
-cd ~/-Coding/Tippi
+cd ~/Coding/Tippi
 brew install xcodegen          # einmalig
 make prepare-binary            # einmalig: baut whisper-cli in Tippi/Helpers/
 make open                      # generiert Xcode-Projekt und öffnet
@@ -330,22 +338,26 @@ xcrun notarytool store-credentials tippi-notary \
 # 4. sparkle-tools einrichten (einmalig):
 #    Download: https://github.com/sparkle-project/Sparkle/releases
 #    Entpacken nach ~/Developer/sparkle-tools/
-# 5. release.env vorbereiten:
+# 5. release.env vorbereiten (nur DEVELOPER_ID / NOTARY_PROFILE, nie VERSION):
 cp release.env.example release.env
 # DEVELOPER_ID muss exakt den Namen aus `security find-identity -v -p codesigning` enthalten
-# Sensible Daten (Apple ID, Team ID) nur in release.env — NICHT in Code oder Docs committen!
+# Zugangsdaten nur in Keychain/release.env — NICHT committen!
 ```
 
 **Release ausführen:**
 
 ```bash
-make release
+./scripts/bump-version.sh X.Y.Z   # project.yml + CHANGELOG-Abschnitt vorbereiten
+# Release-Notizen, README, Website und beide In-App-Hilfe-Sprachen aktualisieren;
+# Tests, Lint, Doku-Gates prüfen und alle Vorbereitungen committen + pushen.
+make release                      # Standard: nach dem Appcast alte Releases bereinigen
+# Alternativ ohne Löschung älterer Releases: make lint prepare-binary && ./scripts/release.sh --no-prune
 ```
 
 `scripts/release.sh` macht vollautomatisch:
 1. `prepare-binary` — whisper-cli in `Tippi/Helpers/` bereitstellen
 2. Clean + xcodegen generate
-3. xcodebuild Release mit `MARKETING_VERSION=$VERSION` + `CURRENT_PROJECT_VERSION=$(git rev-list --count HEAD)`
+3. xcodebuild-Archiv und Export mit `MARKETING_VERSION` aus `project.yml` + `CURRENT_PROJECT_VERSION=$(git rev-list --count HEAD)`
 4. whisper-cli in App-Bundle injizieren (`Contents/MacOS/whisper-cli`)
 5. Sparkle Nested-Signing (inside-out): XPC-Binaries → XPC-Bundles → Sparkle.framework → App
 6. DMG erstellen + signieren via `hdiutil`
@@ -354,20 +366,23 @@ make release
 9. `xcrun stapler staple` → Notarisierungs-Ticket ins DMG einbetten
 10. `spctl --assess` zum finalen Gatekeeper-Check
 11. GitHub Release erstellen (`gh release create`, CHANGELOG.md-Extrakt per awk)
-12. `generate_appcast` + Gist-Update
+12. `generate_appcast` + Gist-Update mit API-Rückleseprüfung
 13. Output: `dist/Tippi-<version>.dmg`
 
 **Nach dem Release:**
 
 ```bash
-git add appcast.xml && git commit -m "release: v<version>" && git push
+git add appcast.xml project.yml
+git commit -m "release: v<version> appcast and shipped build"
+git push origin main
 ```
 
 ### 7.4 Versions-Bump
 
-1. In `release.env` `VERSION` setzen (z.B. `VERSION=1.2.0`)
-2. `CHANGELOG.md` updaten — `release.sh` extrahiert den passenden Abschnitt per awk für die GitHub-Release-Notes
-3. `make release` — Build-Nummer (`CFBundleVersion`) wird automatisch per `git rev-list --count HEAD` berechnet, kein manuelles Tracking
+1. `./scripts/bump-version.sh X.Y.Z` ausführen; `project.yml` ist die einzige Versionsquelle. **`release.env` darf kein `VERSION` enthalten** — die Pipeline bricht sonst ab.
+2. Den neuen Abschnitt in `CHANGELOG.md` ausformulieren. `release.sh` nutzt ihn als GitHub-Release-Notes. README, Website, In-App-Hilfe (DE/EN) und Versionsüberschriften mitziehen; die Release-Gates prüfen das.
+3. Vorbereitung committen und nach `origin/main` pushen; `release.sh` verweigert einen lokalen Stand vor oder hinter dem Remote-Branch.
+4. `make release` ausführen. Die Buildnummer (`CFBundleVersion`) wird aus `git rev-list --count HEAD` berechnet und nach dem Build in `project.yml` zurückgeschrieben. `gh release create --target` taggt genau den gebauten Commit. Zum Schluss `appcast.xml` und `project.yml` committen und pushen.
 
 **Wichtig:** Sparkle vergleicht `CFBundleVersion` (Build-Nummer), nicht `CFBundleShortVersionString`. Solange die Build-Nummer monoton steigt, werden Updates korrekt ausgeliefert.
 
@@ -403,9 +418,9 @@ Alte Assets müssen nicht mitwandern: Wer auf einer älteren Version sitzt, beko
 
 Bei jedem `xcodebuild` ohne stabile Code-Signatur ändert sich die Designated Requirement. macOS sieht jeden Build als „neue App" und kann TCC-Einträge für Accessibility / Input Monitoring „verlieren".
 
-**Lösung:** Mit Developer ID signieren. Dann ist die Signatur stabil, TCC-Einträge persistieren über Rebuilds.
+**Aktueller Weg:** `make build` nutzt Apple Development; für einen Test mit derselben Berechtigung wie die installierte Developer-ID-App `scripts/devid-testbuild.sh` verwenden. Nicht annehmen, dass beide Builds gleichzeitig eine stabile TCC-Freigabe haben.
 
-**Symptom, das nicht danach aussieht** (2026-09-09): `xcodebuild test` bricht nach ~5 Minuten mit `The test runner hung before establishing connection` ab, ohne dass ein einziger Test läuft. Ursache ist dieselbe — der Test-Host *ist* die App, und sie registriert beim Start Event-Taps und globale Monitore; fehlt der TCC-Grant für die ad-hoc signierte Debug-Binary, blockiert der Start, bevor der Runner sich verbinden kann. Es sieht aus wie ein kaputter Testfall, ist aber keiner. Vorgehen: erst `git stash` und gegen den zuletzt grünen Stand testen — hängt der auch, liegt es nicht am Code. Am nächsten Tag lief dieselbe Suite unverändert grün durch (121 Tests).
+**Historisches Symptom** (2026-09-09): `xcodebuild test` brach nach ~5 Minuten mit `The test runner hung before establishing connection` ab, bevor ein Test lief. Damals fehlte dem Test-Host ein TCC-Grant; das war kein Beleg für einen fehlerhaften Test. Heute zuerst `make test` und dessen Einstellungs-Wächter verwenden, dann Signatur/TCC des tatsächlich gestarteten Builds prüfen. Die damalige Zahl von 121 Tests ist kein aktueller Sollwert (v2.16.2: 472).
 
 ### 8.2 Diktat-Geste „antippen oder halten" — nur manuell testbar
 
@@ -564,11 +579,12 @@ security delete-generic-password -s com.tippi.app 2>/dev/null
 ### Lokale Tippi-App neu installieren (nach Rebuild)
 
 ```bash
-cd ~/-Coding/Tippi
-make release   # signed + notarisiert (vorausgesetzt Apple-Setup ist da)
+cd ~/Coding/Tippi
+VERSION=$(awk -F'"' '/MARKETING_VERSION:/ { print $2; exit }' project.yml)
+mkdir -p dist
+test -f "dist/Tippi-${VERSION}.dmg" || gh release download "v${VERSION}" -p "Tippi-${VERSION}.dmg" -D dist
 osascript -e 'tell application "Tippi" to quit' 2>/dev/null; sleep 1
 rm -rf /Applications/Tippi.app
-VERSION=$(grep '^VERSION=' release.env | cut -d= -f2)
 hdiutil attach "dist/Tippi-${VERSION}.dmg" -quiet
 cp -R "/Volumes/Tippi ${VERSION}/Tippi.app" /Applications/
 hdiutil detach "/Volumes/Tippi ${VERSION}" -quiet
@@ -590,7 +606,7 @@ open /Applications/Tippi.app
 
 Wenn ich nach 6+ Monaten zurückkomme und Tippi weitermachen will:
 
-- [ ] `cd ~/-Coding/Tippi`
+- [ ] `cd ~/Coding/Tippi`
 - [ ] `git pull` (falls remote Changes da sind)
 - [ ] `brew install xcodegen` falls nicht da
 - [ ] `make prepare-binary` — whisper-cli in `Tippi/Helpers/` bauen (falls nicht vorhanden)
@@ -606,4 +622,4 @@ Wenn ich nach 6+ Monaten zurückkomme und Tippi weitermachen will:
 
 ---
 
-*Stand: 13. Mai 2026 · Aktualisiert auf v1.1.7 mit Claude Code.*
+*Übergabestand aktualisiert am 27. September 2026 für v2.16.2. Ältere Fachabschnitte vor einer Änderung gegen den aktuellen Code prüfen.*
