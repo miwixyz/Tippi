@@ -2,7 +2,23 @@
 
 ## [2.16.3] — 2026-09-27
 
-- _Add release notes here._
+Die App-Listen in den Einstellungen sprechen jetzt Klartext.
+
+### Geändert
+
+- **App-Listen zeigen Symbol und Namen statt interner Kennung.** Betrifft „Nie
+  lesen in diesen Apps" (Autovervollständigung) und „Enter nach Diktat". Statt
+  `com.apple.Terminal` steht dort „Terminal" mit App-Symbol; die Kennung erscheint
+  nur noch als Tooltip. Apps, die auf diesem Mac nicht installiert sind, behalten
+  die Kennung mit dem Zusatz „nicht installiert".
+- **Hinzufügen über ein Menü.** „App hinzufügen…" listet die laufenden Apps mit
+  Symbol, darunter „Andere App wählen…" für Apps, die gerade nicht laufen. Das
+  Eingabefeld für Bundle-IDs entfällt.
+
+### Intern
+
+- Beide Listen nutzen dasselbe Bauteil (`AppListEditor`) statt zweier Kopien.
+- 474 Tests, darunter 2 neue für Namensauflösung und Rückfall.
 
 ## [2.16.2] — 2026-09-27
 

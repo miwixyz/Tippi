@@ -1,11 +1,15 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 27. September 2026 · Version: **2.16.2** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 27. September 2026 · Version: **2.16.3** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
 
-### Aktueller Übergabestand nach v2.16.2
+### Aktueller Übergabestand nach v2.16.3
+
+- **v2.16.3:** `3c0e421` ersetzt die Bundle-ID-Listen in den Einstellungen (Ausschlussliste Autovervollständigung, Enter nach Diktat) durch das gemeinsame `Tippi/UI/AppListEditor.swift`: Symbol + Name, Hinzufügen per Menü (laufende Apps, `NSOpenPanel` für andere). `TippiTests/AppInfoTests.swift` prüft Namensauflösung und Rückfall. 474 Tests.
+
+#### Stand v2.16.2
 
 - **Veröffentlicht:** [GitHub-Release v2.16.2](https://github.com/miwixyz/Tippi/releases/tag/v2.16.2), signiertes und von Apple notarisiertes DMG, Sparkle-Appcast im Gist auf 2.16.2 verifiziert. Das Tag zeigt auf `6a7b030` (gebauter Stand, Build 427); der nachgelagerte Appcast-/Buildnummer-Commit ist `eec316e` auf `main`. Die Arbeitskopie war nach dem Release sauber und mit `origin/main` synchron.
 - **Letzte Korrekturen:** `0e6a922` behebt sieben Audit-Funde in `TextInsertion`, `TextCapture`, `PasteboardSnapshot`, `NotesStore`, `HistoryStore` und `LLMProvider`; `TippiTests/AuditFollowupTests.swift` enthält 16 neue Regressionstests. Einzelheiten stehen in `CHANGELOG.md` unter 2.16.2.
@@ -622,4 +626,4 @@ Wenn ich nach 6+ Monaten zurückkomme und Tippi weitermachen will:
 
 ---
 
-*Übergabestand aktualisiert am 27. September 2026 für v2.16.2. Ältere Fachabschnitte vor einer Änderung gegen den aktuellen Code prüfen.*
+*Übergabestand aktualisiert am 27. September 2026 für v2.16.3. Ältere Fachabschnitte vor einer Änderung gegen den aktuellen Code prüfen.*
