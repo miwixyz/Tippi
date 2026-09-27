@@ -45,6 +45,8 @@ Tippi/
 │   ├── ScreenOCRSettings.swift     # v2.12 — Hotkey + Voreinstellungen (ab Werk AUS)
 │   ├── RecognizedTextJoiner.swift  # v2.12.2 — OCR-Zeilen zu Absätzen, Layout vs. Bedeutung
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
+│   ├── DictationAutoReturn.swift   # v2.16 — Enter nach dem Diktat, pro App. In Terminals /
+│   │                               #   Code-Editoren nur bei von der KI unverändertem Text
 │   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
 │   │                               #   Ergebnis geschrieben wird (Notizfenster /
 │   │                               #   Accessibility / blind) + ReplacementWriter.
@@ -105,6 +107,7 @@ Tippi/
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
 │   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # grauer Vorschlag am Cursor, nie Key, keine Klicks
 │   ├── AutocompleteSettingsSection.swift  # Labs-Abschnitt in Einstellungen → Allgemein
+│   ├── DictationAutoReturnSection.swift   # v2.16 — App-Liste „Nach dem Einfügen Enter drücken“
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
 │   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
 │   ├── ScreenSelectionOverlay.swift # v2.12 — Auswahlrechteck, 3 Abbruchwege

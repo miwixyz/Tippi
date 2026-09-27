@@ -147,6 +147,12 @@ make release
 
 `scripts/release.sh` runs the full pipeline:
 
+Two pre-flight rules since v2.16 (code audit 2026-09-27): the Sparkle
+`generate_appcast` tool must exist **before** anything is built or published
+(checked only when publishing; `--no-publish` skips it), and the launch check
+passes only a clean exit — any crash code (133 trap, 134 abort, 137 SIGKILL)
+stops the release instead of printing ✓.
+
 | Step | What happens |
 |------|-------------|
 | 1 | `make prepare-binary` — builds static `whisper-cli` |
