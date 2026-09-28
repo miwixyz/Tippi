@@ -62,7 +62,7 @@ Tippi/
 │   │                               #   v2.11.5 Ursache UND Handlungsanweisung, nicht nur „Fehler"
 │   ├── ProblemNotifier.swift       # v2.11.5 — meldet Ausfaelle ungefragt, einmal pro neuem
 │   │                               #   Problem (der Monitor rechnet alle 3 s neu)
-│   ├── PermissionsManager.swift    # Accessibility, Input Monitoring
+│   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
 │   ├── Snippets/                   # v2.0 — systemweite Tipp-Expansion
 │   │   ├── SnippetKeystrokeMonitor.swift   # DER Keystroke-Watcher (auch für Emoji)
@@ -77,6 +77,7 @@ Tippi/
 │   ├── Emoji/                      # v2.1
 │   │   ├── EmojiDatabase.swift             # Laden, Alias-Map, EmojiSearch (rein)
 │   │   ├── EmojiInlineMatcher.swift        # `:name:`-Erkennung, rein + unit-getestet
+│   │   ├── InlineSuggestion.swift          # Eintrag der „:“-Liste: Emoji oder eigenes Snippet (v2.18)
 │   │   └── EmojiSettings.swift             # Hotkey, Toggles, Recents
 │   ├── Autocomplete/               # Labs — Autovervollständigung beim Tippen (ab Werk AUS)
 │   │   ├── AutocompleteController.swift    # aktiver CGEvent-Tap (nur wenn an; schluckt NUR die zwei
@@ -128,6 +129,7 @@ Tippi/
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
 │   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck
 │   ├── SettingsView.swift          # Seitenleiste + die meisten der 10 Bereiche (großes File, private structs)
+│   ├── PermissionsSettingsTab.swift # Berechtigungen-Tab: Status + Erteilen je Recht (v2.18)
 │   ├── PromptsSettingsTab.swift    # Prompts-Tab: eine Liste, Ziehen zum Sortieren, Editor für alle
 │   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
 │   └── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
