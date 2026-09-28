@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.17.0] — 2026-09-28
+
+- _Add release notes here._
+
 ## [2.16.3] — 2026-09-27
 
 Die App-Listen in den Einstellungen sprechen jetzt Klartext.
