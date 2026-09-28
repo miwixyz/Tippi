@@ -1,11 +1,15 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 27. September 2026 · Version: **2.16.3** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 27. September 2026 · Version: **2.17.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
 
-### Aktueller Übergabestand nach v2.16.3
+### Aktueller Übergabestand nach v2.17.0
+
+- **v2.17.0:** `8c17672` — eingebaute Prompts bearbeitbar (`Core/PromptLibrary.swift`: `BuiltInPromptEditStore`, `PromptOrderStore`, beide iCloud-synchron), gemeinsame Reihenfolge per Drag & Drop (`UI/PromptsSettingsTab.swift`), importierte Snippets bearbeitbar (`UI/SnippetEditorSheet.swift`, Freigabe fällt bei Änderung weg), zwei frei belegbare Übernahmetasten (`AutocompleteKeyRules`/`AutocompleteKeyBindings` in `AutocompleteLogic.swift`), Kapsel-Pop-up, eigener Bereich `UI/AutocompleteSettingsTab.swift`, Diktat-Hotkey in `UI/DictationHotkeySection.swift`. Prüfstand `scripts/autocomplete-pruefstand.py` (Blindvergleich; Rohfortsetzung mit dem Chat-Modell und die Gemma-Grundmodelle gemessen und verworfen). 516 Tests.
+
+#### Stand v2.16.3
 
 - **v2.16.3:** `3c0e421` ersetzt die Bundle-ID-Listen in den Einstellungen (Ausschlussliste Autovervollständigung, Enter nach Diktat) durch das gemeinsame `Tippi/UI/AppListEditor.swift`: Symbol + Name, Hinzufügen per Menü (laufende Apps, `NSOpenPanel` für andere). `TippiTests/AppInfoTests.swift` prüft Namensauflösung und Rückfall. 474 Tests.
 
@@ -626,4 +630,4 @@ Wenn ich nach 6+ Monaten zurückkomme und Tippi weitermachen will:
 
 ---
 
-*Übergabestand aktualisiert am 27. September 2026 für v2.16.3. Ältere Fachabschnitte vor einer Änderung gegen den aktuellen Code prüfen.*
+*Übergabestand aktualisiert am 28. September 2026 für v2.17.0. Ältere Fachabschnitte vor einer Änderung gegen den aktuellen Code prüfen.*

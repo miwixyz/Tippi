@@ -2,7 +2,47 @@
 
 ## [2.17.0] — 2026-09-28
 
-- _Add release notes here._
+Prompts und Kürzel gehören jetzt dir: bearbeiten, sortieren, Tasten selbst wählen.
+
+### Neu
+
+- **Eingebaute Prompts bearbeiten.** Titel, Symbol und Anweisung jedes eingebauten
+  Prompts lassen sich ändern, bei der Kette auch die Schritte. „Auf Original
+  zurücksetzen" stellt den Auslieferungszustand wieder her. Unveränderte Prompts
+  bleiben in deiner Sprache.
+- **Prompts frei sortieren.** Eingebaute und eigene Prompts stehen in einer Liste
+  und lassen sich per Drag & Drop ordnen. Das Pop-up folgt dieser Reihenfolge, die
+  Zifferntasten 1–9 gelten für die ersten neun — auch für eigene Prompts.
+  Reihenfolge und Änderungen gleichen sich über iCloud zwischen deinen Macs ab.
+- **Importierte Snippets bearbeiten.** Espanso-Snippets lassen sich nach dem Import
+  ändern. Enthält eines einen Shell-Befehl, muss es nach der Änderung neu
+  freigegeben werden. Ein späterer Neuimport überschreibt deine Änderung nicht.
+- **Tasten der Autovervollständigung frei wählen.** Eine Taste übernimmt das nächste
+  Wort (ab Werk ⇥), eine zweite den ganzen Vorschlag (ab Werk ⇧⇥). Tasten, die
+  beim Tippen gebraucht werden, und Tippis eigene Kürzel sind ausgeschlossen; wer
+  die Taste der anderen Aktion wählt, tauscht beide.
+- **Neues Vorschlags-Pop-up.** Eine Glaskapsel direkt am Cursor mit Tastenhinweis
+  („⇥ Wort · ⇧⇥ alles", abschaltbar), weich ein- und ausgeblendet.
+
+### Geändert
+
+- **Einstellungen aufgeräumt.** Autovervollständigung hat einen eigenen Bereich
+  (mit dem verwendeten Modell). Der Diktat-Hotkey steht bei den übrigen Hotkeys.
+  „Sprache" heißt jetzt „Diktat", „Provider" heißt „Anbieter". Anbieter-Karten
+  lassen sich einklappen, MLX-Port und eigenes Modell stehen unter „Erweitert".
+- **Löschen fragt nach** — bei eigenen Prompts und Snippets.
+- Hilfetexte zu Snippets und Autovervollständigung auf den tatsächlichen Stand
+  gebracht.
+
+### Behoben
+
+- Die Umstellung veralteter Modelle erfasst jetzt auch eigene Prompts.
+
+### Intern
+
+- `scripts/autocomplete-pruefstand.py`: Blindvergleich für Anfrage-Varianten der
+  Autovervollständigung (Grundlage für die nächste Verbesserung der Vorschläge).
+- 516 Tests (vorher 474).
 
 ## [2.16.3] — 2026-09-27
 
