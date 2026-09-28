@@ -1,11 +1,15 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 28. September 2026 · Version: **2.18.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 28. September 2026 · Version: **2.19.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
 
-### Aktueller Übergabestand nach v2.18.0
+### Aktueller Übergabestand nach v2.19.0
+
+- **v2.19.0:** Währungsrechner (`Core/CurrencyConversion.swift`: `CurrencyParser`, `ExchangeRateTable`, `ExchangeRateService` mit fester URL, Cache in `Application Support/Tippi/exchange-rates.json`, Abrufregel `decide()`; Favoriten `UI/CurrencyFavoritesSection.swift`), Passwort (`Core/PasswordGenerator.swift`, Einfügen über `TextInsertion.insertSecret`: `.currentHostOnly` + Concealed, 60 s Zwischenablage). Neue Schnellaktionen in `LocalTextAction` (Kategorie `.enclose`), Auswahlleiste zweireihig, Popup-Knöpfe in `UI/PromptPopup/LocalActionButtons.swift`. Markieren = reine Formatänderung → `TextInsertion.pasteFormatting` (Markierung wiederherstellen, dann Rich-Paste, nie vorher AX-Klartext). Leiste ignoriert Neuaufbau, solange der Zeiger auf ihr steht. Design: `docs/SECURE-DESIGN-currency-password.md`. 558 Tests.
+
+#### Stand v2.18.0
 
 - **v2.18.0:** Reiter „Berechtigungen“ (`UI/PermissionsSettingsTab.swift`, Status aus `Core/PermissionsManager.swift` inkl. Bildschirmaufnahme + Mitteilungen). Eigene Snippets in der „:“-Liste (`Core/Emoji/InlineSuggestion.swift`, `SnippetStore.suggestions(forTypedTrigger:limit:)`; importierte Shell-Snippets bewusst ausgenommen, Einfügen geht über `action(forTrigger:)`). Caret in Obsidian/Electron: `TextCapture.boundsForSelectedTextMarkerRange` als dritter Fallback in `AutocompleteController.caretRect`, nur bei Breite ≤ 2 pt (`AutocompleteGeometry.isCollapsedCaret`) — ein leeres Feld liefert sonst die ganze Zeile.
 

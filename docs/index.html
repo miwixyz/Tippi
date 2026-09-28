@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
-<meta name="tippi:documented-version" content="2.18.0">
+<meta name="tippi:documented-version" content="2.19.0">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <title>Tippi — System-wide AI writing assistant for macOS</title>
 <meta name="description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, 11 AI providers, fully local option via MLX. macOS only.">
@@ -421,6 +421,20 @@
 
     <div class="features">
       <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"/><path d="M18.1 10.4a5 5 0 1 1-6.7 6.7"/><path d="M7 6h1.5v4"/><path d="M16 13h.5v3.5"/></svg></div>
+        <h3 data-lang="en">Currency converter (v2.19)</h3>
+        <h3 data-lang="de">Währungsrechner (v2.19)</h3>
+        <p data-lang="en">Select an amount like 23 €, 62,700 円 or USD 1,100, click €→$ and pick one of your favorite currencies. Tippi writes the conversion right after it: 23 € (≈ 26.19 $). It recognizes 28 currencies by symbol or code, and 1,100 and 1.100 both work. Rates are fetched once a day from Exchange Rate API. Your text stays on your Mac.</p>
+        <p data-lang="de">Betrag markieren (23 €, 62,700 円 oder USD 1,100), auf €→$ klicken, eine deiner Lieblingswährungen wählen. Tippi schreibt die Umrechnung gleich dahinter: 23 € (≈ 26,19 $). Erkannt werden 28 Währungen per Symbol oder Code, 1,100 und 1.100 gehen beide. Die Kurse holt Tippi einmal am Tag von Exchange Rate API. Dein Text bleibt auf dem Mac.</p>
+      </div>
+      <div class="feature">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
+        <h3 data-lang="en">Generate a password (v2.19)</h3>
+        <h3 data-lang="de">Passwort erzeugen (v2.19)</h3>
+        <p data-lang="en">Pick it from the menu bar or the popup. You get 12 characters with upper and lower case, a digit and a symbol, and none of the look-alikes like l, 1, O or 0. Tippi inserts it at the cursor and keeps it on the clipboard for 60 seconds, so you can paste it again into "repeat password". It stays on this Mac, is not handed to your iPhone, and clipboard managers skip it.</p>
+        <p data-lang="de">Aus der Menüleiste oder dem Popup. Du bekommst 12 Zeichen mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen, ohne Verwechsler wie l, 1, O oder 0. Tippi setzt es am Cursor ein und lässt es 60 Sekunden in der Zwischenablage, damit du es bei „Passwort wiederholen“ noch einmal einfügen kannst. Es bleibt auf diesem Mac, geht nicht aufs iPhone, und Zwischenablage-Verlaufsprogramme übergehen es.</p>
+      </div>
+      <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
         <h3 data-lang="en">System-wide hotkey</h3>
         <h3 data-lang="de">Systemweiter Hotkey</h3>
@@ -640,6 +654,15 @@
     <p class="lead" data-lang="de">Dein Text erreicht ausschließlich den KI-Anbieter, den du selbst konfiguriert hast.</p>
 
     <div class="privacy-grid">
+      <div class="privacy-item">
+        <div class="check">✓</div>
+        <div>
+          <strong data-lang="en">Currency rates: one fixed request</strong>
+          <strong data-lang="de">Wechselkurse: eine feste Abfrage</strong>
+          <p data-lang="en">Tippi fetches only the daily rate table, always from the same address. Your selection and the amount stay on your Mac. Rates By <a href="https://www.exchangerate-api.com">Exchange Rate API</a>.</p>
+          <p data-lang="de">Tippi holt nur die Tageskurs-Tabelle, immer von derselben Adresse. Deine Markierung und der Betrag bleiben auf dem Mac. Kurse: <a href="https://www.exchangerate-api.com">Exchange Rate API</a>.</p>
+        </div>
+      </div>
       <div class="privacy-item">
         <div class="check">✓</div>
         <div>

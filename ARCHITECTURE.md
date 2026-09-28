@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.18.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.19.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -64,6 +64,8 @@ Tippi/
 │   │                               #   Problem (der Monitor rechnet alle 3 s neu)
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
+│   ├── CurrencyConversion.swift    # v2.19 — Betragserkennung, Kurse open.er-api.com (Cache, Drossel)
+│   ├── PasswordGenerator.swift     # v2.19 — 12 Zeichen, SystemRandomNumberGenerator
 │   ├── Snippets/                   # v2.0 — systemweite Tipp-Expansion
 │   │   ├── SnippetKeystrokeMonitor.swift   # DER Keystroke-Watcher (auch für Emoji)
 │   │   ├── SnippetMatcher.swift            # reine Trigger-Logik, unit-getestet

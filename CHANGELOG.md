@@ -2,34 +2,18 @@
 
 ## [2.19.0] — 2026-09-28
 
-- _Add release notes here._
-
-## [Unreleased]
+Währungsrechner, Passwort erzeugen und neue Schnellaktionen in einer kompakteren Auswahlleiste.
 
 ### Neu
 
-- **Markieren, Aufzählung, Anführungszeichen, eckige und geschweifte Klammern**
-  als Schnellaktionen. Markieren legt eine gelbe Hinterlegung an (nur in Apps
-  mit Formatierung, reine Text-Apps behalten den Text unverändert), Aufzählung
-  setzt „- “ vor jede Zeile und lässt schon aufgezählte Zeilen in Ruhe,
-  Anführungszeichen folgen der Systemsprache („…“ bzw. “…”).
-- **Auswahlleiste in zwei Reihen.** Oben Formatierung, Markieren, Aufzählung,
-  Anführungszeichen, Klammern und Übersetzen, unten Umwandeln und Zählen —
-  488 statt rund 890 Punkte breit.
-- **Zeichenzahl ohne Klick.** Die Auswahlleiste zeigt direkt, wie viele
-  Zeichen markiert sind (statt des #-Knopfs), das Hotkey-Popup nennt sie neben
-  „Schnellaktionen“.
-- **Schnellaktionen im Popup kompakter.** Formatierung und Klammern als
-  Symbolraster mit fünf Spalten, der Rest weiter mit Titel.
-
 - **Währungsrechner.** Markierter Betrag wie `23 €`, `62,700 円` oder
   `USD 1,100` → in der Auswahlleiste `€→$`, dann eine Lieblingswährung wählen:
-  die Umrechnung wird angehängt, `23 € (≈ 26,19 $)`. Erkennt Symbole ($, €, £,
-  ¥, 円, 元, ₡ …) und Codes (USD, EUR, TWD, JPY, AED …) und beide
-  Zahlenschreibweisen (1,100 / 1.100). 28 Währungen, bis zu 5 Favoriten in den
-  Einstellungen. Kurse von Exchange Rate API, einmal täglich abgerufen und
-  zwischengespeichert; gesendet wird nur die Anfrage nach den Tageskursen, nie
-  der markierte Text.
+  die Umrechnung wird angehängt, `23 € (≈ 26,19 $)`. Auch im Hotkey-Popup.
+  Erkennt Symbole ($, €, £, ¥, 円, 元, ₡ …) und Codes (USD, EUR, TWD, JPY,
+  AED …) und beide Zahlenschreibweisen (1,100 / 1.100). 28 Währungen, bis zu
+  5 Favoriten (Einstellungen → Allgemein). Kurse von Exchange Rate API, einmal
+  täglich abgerufen und zwischengespeichert; gesendet wird nur die Anfrage nach
+  den Tageskursen, nie der markierte Text.
 - **Passwort erzeugen** (Menüleiste und Hotkey-Popup). 12 Zeichen, garantiert
   Groß- und Kleinbuchstaben, Ziffer und Sonderzeichen, ohne verwechselbare
   Zeichen (I/l/1, O/0). Wird am Cursor eingefügt und bleibt 60 Sekunden in der
@@ -37,14 +21,34 @@
   per Handoff aufs iPhone, für Verlaufs-Werkzeuge verborgen. Danach kommt die
   vorherige Zwischenablage zurück, außer es wurde inzwischen etwas anderes
   kopiert.
+- **Markieren, Aufzählung, Anführungszeichen, eckige und geschweifte Klammern**
+  als Schnellaktionen. Markieren legt eine gelbe Hinterlegung mit dunkler
+  Schrift an (nur in Apps mit Formatierung; TextEdit mit dunklem
+  Fensterhintergrund hellt die Schrift zur Anzeige auf). Aufzählung setzt „- “
+  vor jede Zeile und lässt schon aufgezählte Zeilen in Ruhe. Anführungszeichen
+  folgen der Systemsprache („…“ bzw. “…”).
+- **Zeichenzahl ohne Klick.** Die Auswahlleiste zeigt direkt, wie viele
+  Zeichen markiert sind, das Hotkey-Popup nennt sie neben „Schnellaktionen“.
+- **Auswahlleiste in zwei Reihen.** Oben Formatierung, Markieren, Aufzählung,
+  Anführungszeichen, Klammern und Übersetzen, unten Umwandeln, Zählen und
+  Währung — 526 statt rund 890 Punkte breit. Im Popup Formatierung und
+  Klammern als Symbolraster. Textsymbole statt missverständlicher Icons für
+  „Zeilen verbinden“ (`¶→␣`) und „Wörter“ (`123w`).
 
 ### Behoben
 
 - **Leere Symbole im Popup.** Die Umwandlungen mit Textsymbol (AA, aa, A_b …)
   zeigten im Hotkey-Popup nur ein leeres Farbkästchen.
-- **Markieren mit fester dunkler Schrift** statt der dynamischen Textfarbe
-  der App. Ausnahme: TextEdit mit „Dunklen Hintergrund für Fenster verwenden“
-  hellt zur Anzeige jede dunkle Textfarbe auf — gespeichert ist sie richtig.
+
+### Intern
+
+- 558 Tests (neu: Betragserkennung und Zahlenformate, Kurs-Antwort und
+  Abrufregel, Passwort-Klassen und -Zeichensatz, Aufzählung, Klammern,
+  Leistenbreite). Sicherheits-Design vorab (`docs/SECURE-DESIGN-currency-password.md`),
+  Rafter-Review + `rafter run` ohne neue Funde, unabhängiger Code-Review.
+- Reine Formatänderungen (Markieren) werden ohne vorherigen
+  Bedienungshilfen-Schreibversuch direkt als Rich-Text über die
+  wiederhergestellte Markierung eingefügt — sonst drohte doppelter Text.
 
 ## [2.18.0] — 2026-09-28
 
