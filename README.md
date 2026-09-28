@@ -440,6 +440,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 | Version | Status | Highlights |
 |---------|--------|------------|
+| v2.17.1 | ✅ Done | **Settings visible again** — fixes the blank Settings window introduced in 2.17.0 (a non-compressible hint text above the prompt list pushed the content far above the window edge) |
 | v2.17.0 | ✅ Done | **Your prompts, your keys** — edit built-in prompts (reset anytime), reorder all prompts by drag & drop (number keys follow), edit imported snippets, choose both autocomplete accept keys (word / whole suggestion), glass-capsule suggestion popup with key hint, tidier settings |
 | v2.16.3 | ✅ Done | **Readable app lists** — the autocomplete exclusion list and dictation auto-return list show app icon and name instead of bundle IDs; add apps from a menu (running apps or “Choose another app…”) instead of typing an ID |
 | v2.16.2 | ✅ Done | **Audit follow-up: safer writing and notes** — AI results no longer fall through to the wrong app; offline and iCloud note edits both survive as separate copies; queued saves cannot resurrect deleted notes; a damaged history database no longer crashes Tippi; incomplete AI streams are rejected; Accessibility searches have a time limit; clipboard restoration never overwrites a newer copy. 472 tests. |

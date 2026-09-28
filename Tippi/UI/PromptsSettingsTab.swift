@@ -37,10 +37,16 @@ struct PromptsTab: View {
         let prompts = DemoPrompt.all
         VStack(alignment: .leading, spacing: 10) {
             header
+            // KEIN `.fixedSize(horizontal: false, vertical: true)` hier (2.17.0-Fehler,
+            // gefunden 2026-09-28): Dieser Bereich scrollt nicht selbst, und alle
+            // Einstellungsbereiche liegen gleichzeitig im ZStack. Mit fixedSize meldete der
+            // Text beim Anordnen eine riesige Höhe; die ganze NavigationSplitView wurde
+            // 2678 pt hoch statt fensterhoch, der Inhalt lag über dem Fensterrand, und das
+            // Einstellungsfenster wirkte LEER (Mac mini + MacBook). Per Ausschlussverfahren
+            // gemessen: ohne diesen Bereich 748 pt, ohne das fixedSize ebenfalls 748 pt.
             Text(String(localized: "settings.prompts.listHint"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
             List {
                 ForEach(Array(prompts.enumerated()), id: \.element.id) { index, prompt in
                     row(prompt, index: index)

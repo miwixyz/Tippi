@@ -2,7 +2,20 @@
 
 ## [2.17.1] — 2026-09-28
 
-- _Add release notes here._
+Die Einstellungen sind wieder sichtbar.
+
+### Behoben
+
+- **Einstellungsfenster war leer.** Seit 2.17.0 blieben Seitenleiste und Inhalt
+  der Einstellungen leer (auf jedem Mac). Ursache war der neue Hinweistext über der
+  Prompt-Liste: Er ließ sich beim Anordnen nicht zusammenstauchen und zog den ganzen
+  Inhalt auf rund 2700 Punkt Höhe — weit über den Fensterrand hinaus. Gemessen und
+  per Ausschlussverfahren auf diese eine Zeile eingegrenzt.
+
+### Intern
+
+- Keine neuen Tests: reiner Layout-Fix, am echten Einstellungsfenster gemessen
+  (Inhaltshöhe 2678 → 748 pt bei 748 pt Fensterhöhe).
 
 ## [2.17.0] — 2026-09-28
 
