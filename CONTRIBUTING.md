@@ -51,7 +51,7 @@ Before changing how autocomplete talks to the model (prompt, context length,
 temperature, model), run the blind comparison bench against the local MLX server:
 
 ```bash
-python3 scripts/autocomplete-pruefstand.py --out /tmp/pruefstand.md
+python3 scripts/autocomplete-pruefstand.py --out ~/Desktop/pruefstand.md
 ```
 
 It sends 20 German sentence starts through today's request and a candidate variant

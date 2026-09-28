@@ -22,7 +22,7 @@ Das Gemma-4-Grundmodell mlx-community/gemma-4-e2b-4bit lädt mit mlx-lm 0.31.3 n
 („Received 140 parameters not in model").
 
 Aufruf:
-  python3 scripts/autocomplete-pruefstand.py --out /tmp/pruefstand.md
+  python3 scripts/autocomplete-pruefstand.py --out pruefstand.md
       [--chat-port 8080 --chat-model mlx-community/gemma-4-e2b-it-4bit]
       [--base-port 8091 --base-model mlx-community/gemma-4-e2b-4bit]   # ohne --base-port: nur A/B
 
@@ -137,7 +137,7 @@ def main():
     ap.add_argument("--chat-model", default="mlx-community/gemma-4-e2b-it-4bit")
     ap.add_argument("--base-port", type=int)
     ap.add_argument("--base-model", default="mlx-community/gemma-3n-E2B-4bit")
-    ap.add_argument("--out", default="/tmp/autocomplete-pruefstand.md")
+    ap.add_argument("--out", default="autocomplete-pruefstand.md")  # aktueller Ordner, nicht /tmp (Rafter R-B8507)
     ap.add_argument("--seed", type=int, default=28)
     a = ap.parse_args()
 
