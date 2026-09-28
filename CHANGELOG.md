@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.18.0] — 2026-09-28
+
+- _Add release notes here._
+
 ## [2.17.1] — 2026-09-28
 
 Die Einstellungen sind wieder sichtbar.
