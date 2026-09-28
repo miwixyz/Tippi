@@ -1,11 +1,15 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 28. September 2026 · Version: **2.17.1** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 28. September 2026 · Version: **2.18.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
 
-### Aktueller Übergabestand nach v2.17.0
+### Aktueller Übergabestand nach v2.18.0
+
+- **v2.18.0:** Reiter „Berechtigungen“ (`UI/PermissionsSettingsTab.swift`, Status aus `Core/PermissionsManager.swift` inkl. Bildschirmaufnahme + Mitteilungen). Eigene Snippets in der „:“-Liste (`Core/Emoji/InlineSuggestion.swift`, `SnippetStore.suggestions(forTypedTrigger:limit:)`; importierte Shell-Snippets bewusst ausgenommen, Einfügen geht über `action(forTrigger:)`). Caret in Obsidian/Electron: `TextCapture.boundsForSelectedTextMarkerRange` als dritter Fallback in `AutocompleteController.caretRect`, nur bei Breite ≤ 2 pt (`AutocompleteGeometry.isCollapsedCaret`) — ein leeres Feld liefert sonst die ganze Zeile.
+
+#### Stand v2.17.0
 
 - **v2.17.0:** `8c17672` — eingebaute Prompts bearbeitbar (`Core/PromptLibrary.swift`: `BuiltInPromptEditStore`, `PromptOrderStore`, beide iCloud-synchron), gemeinsame Reihenfolge per Drag & Drop (`UI/PromptsSettingsTab.swift`), importierte Snippets bearbeitbar (`UI/SnippetEditorSheet.swift`, Freigabe fällt bei Änderung weg), zwei frei belegbare Übernahmetasten (`AutocompleteKeyRules`/`AutocompleteKeyBindings` in `AutocompleteLogic.swift`), Kapsel-Pop-up, eigener Bereich `UI/AutocompleteSettingsTab.swift`, Diktat-Hotkey in `UI/DictationHotkeySection.swift`. Prüfstand `scripts/autocomplete-pruefstand.py` (Blindvergleich; Rohfortsetzung mit dem Chat-Modell und die Gemma-Grundmodelle gemessen und verworfen). 516 Tests.
 

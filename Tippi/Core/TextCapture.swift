@@ -135,6 +135,33 @@ enum TextCapture {
         return CGRect(x: axRect.origin.x, y: flippedY, width: axRect.width, height: axRect.height)
     }
 
+    /// Cursor-/Auswahl-Rechteck über die Chromium-Textmarker statt über
+    /// `AXBoundsForRange` — in AppKit-Bildschirmkoordinaten wie `boundsForSelection`.
+    ///
+    /// Warum (gemessen 2026-09-28 in Obsidian, Electron): `AXBoundsForRange` liefert
+    /// dort ein Nullrechteck bei (0, 1440), `AXBoundsForTextMarkerRange` für die
+    /// aktuelle Auswahl dagegen den echten Cursor (Breite 0, wandert beim Tippen mit).
+    /// In einem leeren Eingabefeld kommt stattdessen die ganze Zeile (887 pt breit) —
+    /// deshalb entscheidet der Aufrufer über die Breite, nicht diese Funktion.
+    static func boundsForSelectedTextMarkerRange(element: AXUIElement) -> CGRect? {
+        guard AXIsProcessTrusted() else { return nil }
+        var markerRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, "AXSelectedTextMarkerRange" as CFString, &markerRef) == .success,
+              let marker = markerRef else { return nil }
+        var boundsRef: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element, "AXBoundsForTextMarkerRange" as CFString, marker, &boundsRef
+        ) == .success, let boundsValue = boundsRef, CFGetTypeID(boundsValue) == AXValueGetTypeID() else {
+            return nil
+        }
+        var axRect = CGRect.zero
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
+        guard AXValueGetValue(boundsValue as! AXValue, .cgRect, &axRect) else { return nil }
+        guard let primaryScreenHeight = NSScreen.screens.first?.frame.height else { return nil }
+        return CGRect(x: axRect.origin.x, y: primaryScreenHeight - axRect.origin.y - axRect.height,
+                      width: axRect.width, height: axRect.height)
+    }
+
     private static func resolvedSourceApp(_ sourceApp: NSRunningApplication?) -> NSRunningApplication? {
         if let sourceApp, sourceApp.bundleIdentifier != Bundle.main.bundleIdentifier {
             return sourceApp

@@ -423,6 +423,15 @@ final class AutocompleteController: ObservableObject {
            AutocompleteGeometry.isPlausibleCaret(rect, screens: screens) {
             return CGRect(x: rect.maxX, y: rect.minY, width: 0, height: rect.height)
         }
+        // Electron/Chromium (Obsidian, Codex, Teams): Beide Wege oben liefern dort ein
+        // Nullrechteck, die Textmarker den echten Cursor (gemessen 2026-09-28 in Obsidian).
+        // Nur ein schmales Rechteck ist ein Cursor — ein leeres Feld meldet die ganze
+        // Zeile (887 pt); dann lieber kein Vorschlag als ein falsch platzierter.
+        if let rect = TextCapture.boundsForSelectedTextMarkerRange(element: element),
+           AutocompleteGeometry.isCollapsedCaret(rect),
+           AutocompleteGeometry.isPlausibleCaret(rect, screens: screens) {
+            return CGRect(x: rect.minX, y: rect.minY, width: 0, height: rect.height)
+        }
         return nil
     }
 

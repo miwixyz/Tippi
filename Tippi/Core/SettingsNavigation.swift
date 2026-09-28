@@ -1,13 +1,14 @@
 import Combine
 
 enum SettingsTab: Hashable, CaseIterable {
-    case general, hotkeys, providers, prompts, snippets, autocomplete, voice, history, help, about
+    case general, permissions, hotkeys, providers, prompts, snippets, autocomplete, voice, history, help, about
 
     /// Title and symbol live on the case rather than at the call site so the
     /// sidebar row and the window title cannot drift apart.
     var title: String {
         switch self {
         case .general:   return String(localized: "settings.tab.general")
+        case .permissions: return String(localized: "settings.tab.permissions")
         case .hotkeys:   return String(localized: "settings.tab.hotkeys")
         case .providers: return String(localized: "settings.tab.providers")
         case .prompts:   return String(localized: "settings.tab.prompts")
@@ -23,6 +24,7 @@ enum SettingsTab: Hashable, CaseIterable {
     var symbol: String {
         switch self {
         case .general:   return "gear"
+        case .permissions: return "lock.shield"
         case .hotkeys:   return "command"
         case .providers: return "key"
         case .prompts:   return "text.bubble"

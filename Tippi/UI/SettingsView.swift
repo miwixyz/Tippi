@@ -21,7 +21,7 @@ struct SettingsView: View {
     /// Groups mirror how the panes are actually used: everyday configuration,
     /// then the text/AI machinery, then things looked at occasionally.
     private static let sidebarGroups: [[SettingsTab]] = [
-        [.general, .hotkeys, .voice],
+        [.general, .permissions, .hotkeys, .voice],
         [.providers, .prompts, .snippets, .autocomplete],
         [.history, .help, .about],
     ]
@@ -105,6 +105,7 @@ struct SettingsView: View {
     private func pane(for tab: SettingsTab) -> some View {
         switch tab {
         case .general:   GeneralSettingsTab()
+        case .permissions: PermissionsTab()
         case .hotkeys:   HotkeysTab()
         case .providers: ProvidersTab()
         case .prompts:   PromptsTab()

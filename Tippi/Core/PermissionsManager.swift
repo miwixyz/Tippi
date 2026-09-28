@@ -3,12 +3,18 @@ import ApplicationServices
 import AVFoundation
 import IOKit
 import IOKit.hid
+import UserNotifications
 
 @MainActor
 final class PermissionsManager: ObservableObject {
     @Published private(set) var accessibilityGranted: Bool = false
     @Published private(set) var inputMonitoringGranted: Bool = false
     @Published private(set) var microphoneGranted: Bool = false
+    /// Bildschirmaufnahme — nur für „Text aus Bildschirmausschnitt“ (ScreenCaptureKit).
+    /// Vorher nirgends geprüft: Die fehlende Berechtigung fiel erst beim Auslösen auf.
+    @Published private(set) var screenRecordingGranted: Bool = false
+    /// Mitteilungen: `nil` = noch nie gefragt, sonst erlaubt/abgelehnt.
+    @Published private(set) var notificationsAllowed: Bool?
 
     init() {
         refresh()
@@ -49,6 +55,44 @@ final class PermissionsManager: ObservableObject {
         accessibilityGranted = AXIsProcessTrusted()
         inputMonitoringGranted = checkInputMonitoring()
         microphoneGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
+        // Preflight fragt nicht nach, es liest nur den Stand.
+        screenRecordingGranted = CGPreflightScreenCaptureAccess()
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            let allowed: Bool? = switch settings.authorizationStatus {
+            case .notDetermined: nil
+            case .denied: false
+            default: true   // authorized, provisional, ephemeral
+            }
+            Task { @MainActor [weak self] in self?.notificationsAllowed = allowed }
+        }
+    }
+
+    /// Erster Aufruf zeigt den Systemdialog; danach öffnet macOS ihn nicht mehr —
+    /// dann führt nur der Weg über die Systemeinstellungen weiter.
+    func requestScreenRecording() {
+        if !CGRequestScreenCaptureAccess() { openScreenRecordingSettings() }
+        refresh()
+    }
+
+    func openScreenRecordingSettings() {
+        NSWorkspace.shared.open(URL(string:
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+    }
+
+    func requestNotifications() {
+        if notificationsAllowed == nil {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in
+                Task { @MainActor [weak self] in self?.refresh() }
+            }
+        } else {
+            openNotificationSettings()
+        }
+    }
+
+    func openNotificationSettings() {
+        let id = Bundle.main.bundleIdentifier ?? "com.tippi.app"
+        NSWorkspace.shared.open(URL(string:
+            "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(id)")!)
     }
 
     func requestMicrophonePermission() {

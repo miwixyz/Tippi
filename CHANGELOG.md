@@ -2,7 +2,36 @@
 
 ## [2.18.0] — 2026-09-28
 
-- _Add release notes here._
+Alle Berechtigungen auf einen Blick, Snippets in der „:“-Liste, Vervollständigung in Obsidian.
+
+### Neu
+
+- **Reiter „Berechtigungen“.** In den Einstellungen direkt unter „Allgemein“:
+  Bedienungshilfen, Eingabeüberwachung, Mikrofon, Bildschirmaufnahme und
+  Mitteilungen mit Status „Erteilt“/„Fehlt“, einem Satz, wofür Tippi das Recht
+  braucht, und einem Knopf, der die passende Stelle in den Systemeinstellungen
+  öffnet. „Erneut prüfen“ liest den Stand frisch ein.
+- **Eigene Snippets in der „:“-Liste.** Wer `:` und ein paar Buchstaben tippt,
+  sieht passende eigene Snippets jetzt vor den Emojis, mit einer kurzen Vorschau
+  des Textes. Leertaste übernimmt den obersten Treffer, ein Klick einen
+  beliebigen. Importierte Snippets mit Shell-Befehl erscheinen bewusst nicht in
+  der Liste — ihre Freigabe gilt dem vollständigen Kürzel, sie laufen weiter,
+  sobald es ausgeschrieben ist. Der Schalter „Vorschläge beim Tippen anzeigen“
+  gilt für Emojis und Snippets gemeinsam.
+
+### Behoben
+
+- **Autovervollständigung in Obsidian.** Obsidian (und andere Electron-Apps)
+  verraten die Cursorposition nicht auf dem üblichen Weg; Tippi fand deshalb
+  „keine plausible Cursorposition“ und zeigte nie einen Vorschlag. Tippi fragt
+  jetzt zusätzlich die Textmarker-Position ab, die in Obsidian gemessen die
+  echte Cursorposition liefert.
+
+### Intern
+
+- 523 Tests (neu: Reiter-Titel und -Symbole, Snippet-Vorschläge inkl. Shell-Ausschluss,
+  Cursor-Erkennung über Textmarker). Rafter-Review vor dem Release, beide
+  Funde zur Snippet-Liste behoben.
 
 ## [2.17.1] — 2026-09-28
 

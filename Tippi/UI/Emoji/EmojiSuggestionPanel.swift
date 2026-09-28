@@ -27,7 +27,7 @@ final class EmojiSuggestionPanel {
 
     private var panel: NSPanel?
     private var model = EmojiSuggestionModel()
-    private var onPick: ((Emoji) -> Void)?
+    private var onPick: ((InlineSuggestion) -> Void)?
 
     var isOpen: Bool { panel != nil }
 
@@ -35,7 +35,7 @@ final class EmojiSuggestionPanel {
     /// coordinates; nil falls back to the mouse location, the same fallback
     /// the selection action bar uses when an app doesn't implement
     /// bounds-for-range.
-    func show(suggestions: [Emoji], anchor: CGRect?, onPick: @escaping (Emoji) -> Void) {
+    func show(suggestions: [InlineSuggestion], anchor: CGRect?, onPick: @escaping (InlineSuggestion) -> Void) {
         guard !suggestions.isEmpty else {
             close()
             return
@@ -128,21 +128,21 @@ final class EmojiSuggestionPanel {
 /// without rebuilding the window on every keystroke.
 @MainActor
 final class EmojiSuggestionModel: ObservableObject {
-    @Published var suggestions: [Emoji] = []
+    @Published var suggestions: [InlineSuggestion] = []
 }
 
 private struct EmojiSuggestionView: View {
     @ObservedObject var model: EmojiSuggestionModel
-    let onPick: (Emoji) -> Void
+    let onPick: (InlineSuggestion) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, emoji in
-                row(for: emoji, isTop: index == 0)
+            ForEach(Array(model.suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                row(for: suggestion, isTop: index == 0)
             }
         }
         .padding(4)
-        .frame(width: 260, alignment: .leading)
+        .frame(width: 300, alignment: .leading)
         .tippiGlass(in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -150,14 +150,34 @@ private struct EmojiSuggestionView: View {
         )
     }
 
-    private func row(for emoji: Emoji, isTop: Bool) -> some View {
+    private func row(for suggestion: InlineSuggestion, isTop: Bool) -> some View {
         HStack(spacing: 8) {
-            Text(emoji.character)
-                .font(.system(size: 17))
-            Text(emoji.nameDE.replacingOccurrences(of: "_", with: " "))
-                .font(.system(size: 12))
-                .foregroundStyle(isTop ? .primary : .secondary)
-                .lineLimit(1)
+            switch suggestion {
+            case .emoji(let emoji):
+                Text(emoji.character)
+                    .font(.system(size: 17))
+                Text(emoji.nameDE.replacingOccurrences(of: "_", with: " "))
+                    .font(.system(size: 12))
+                    .foregroundStyle(isTop ? .primary : .secondary)
+                    .lineLimit(1)
+            case .snippet(let trigger, let preview):
+                // Eigenes Snippet: Kürzel + Vorschau des Texts, damit man sieht,
+                // was eingefügt wird, bevor man die Leertaste drückt.
+                Image(systemName: "text.badge.checkmark")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tint)
+                    .frame(width: 20)
+                Text(trigger)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(isTop ? .primary : .secondary)
+                    .lineLimit(1)
+                    .layoutPriority(1)
+                Text(preview)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
             Spacer(minLength: 4)
             if isTop {
                 // Names the key that inserts it — Space accepts the top entry
@@ -177,6 +197,6 @@ private struct EmojiSuggestionView: View {
                 .fill(isTop ? Color.accentColor.opacity(0.22) : Color.clear)
         )
         .contentShape(Rectangle())
-        .onTapGesture { onPick(emoji) }
+        .onTapGesture { onPick(suggestion) }
     }
 }

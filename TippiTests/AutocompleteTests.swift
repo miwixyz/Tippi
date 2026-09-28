@@ -444,4 +444,19 @@ final class AutocompleteTests: XCTestCase {
         AutocompleteSettings.excludedBundleIDs = []
         XCTAssertEqual(AutocompleteSettings.excludedBundleIDs, [])
     }
+
+    /// Gemessen 2026-09-28 in Obsidian über AXBoundsForTextMarkerRange: Cursor in einer
+    /// Notiz = Breite 0 (x wandert beim Tippen), leeres Eingabefeld = ganze Zeile.
+    func testTextMarkerRectCountsAsCaretOnlyWhenCollapsed() {
+        let screens = [CGRect(x: 0, y: 0, width: 2560, height: 1440)]
+        let noteCaret = CGRect(x: 1011, y: 1171, width: 0, height: 24)
+        let emptyFieldLine = CGRect(x: 1378, y: 217, width: 887, height: 22)
+        let narrowLine = CGRect(x: 100, y: 500, width: 300, height: 20)   // bestünde isPlausibleCaret
+        XCTAssertTrue(AutocompleteGeometry.isCollapsedCaret(noteCaret))
+        XCTAssertTrue(AutocompleteGeometry.isPlausibleCaret(noteCaret, screens: screens))
+        XCTAssertFalse(AutocompleteGeometry.isCollapsedCaret(emptyFieldLine))
+        XCTAssertFalse(AutocompleteGeometry.isCollapsedCaret(narrowLine))
+        XCTAssertTrue(AutocompleteGeometry.isPlausibleCaret(narrowLine, screens: screens),
+                      "zeigt, warum isCollapsedCaret nötig ist")
+    }
 }

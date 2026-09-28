@@ -65,6 +65,56 @@ final class SnippetStoreTests: XCTestCase {
         XCTAssertTrue(store.activeTriggers().isEmpty)
     }
 
+    // MARK: Vorschläge in der „:“-Liste (2.18)
+
+    func testSuggestionsMatchPrefixCaseInsensitiveShortestFirst() {
+        let store = makeStore()
+        store.matchDirectory = tempDir
+        store.isEnabled = true
+        store.defaultPrefix = ":"
+        store.addSnippet(shortcut: "verlauf", replacement: "Zweite Zeile")
+        store.addSnippet(shortcut: "verl", replacement: "Mit freundlichen Grüßen\nMichael")
+        store.addSnippet(shortcut: "date", replacement: "heute")
+
+        let hits = store.suggestions(forTypedTrigger: ":VER", limit: 6)
+        XCTAssertEqual(hits.map(\.trigger), [":verl", ":verlauf"], "nur passende, kürzeste zuerst")
+        XCTAssertEqual(hits.first?.preview, "Mit freundlichen Grüßen ⏎ Michael", "einzeilige Vorschau")
+        XCTAssertEqual(store.suggestions(forTypedTrigger: ":ver", limit: 1).count, 1, "Limit greift")
+        XCTAssertTrue(store.suggestions(forTypedTrigger: ":xyz", limit: 6).isEmpty)
+    }
+
+    func testSuggestionsEmptyWhenSnippetsDisabled() {
+        let store = makeStore()
+        store.matchDirectory = tempDir
+        store.defaultPrefix = ":"
+        store.addSnippet(shortcut: "verl", replacement: "x")
+        store.isEnabled = false
+        XCTAssertTrue(store.suggestions(forTypedTrigger: ":ve", limit: 6).isEmpty)
+    }
+
+    func testUnapprovedShellSnippetIsNeverSuggested() throws {
+        _ = try writeMatchFile(named: "shell.yml", shellCmd: "echo hi")
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+        store.importFile(store.espansoFiles[0])
+        XCTAssertTrue(store.suggestions(forTypedTrigger: ":t", limit: 6).isEmpty,
+                      "nicht freigegebenes Shell-Snippet darf nicht als Vorschlag erscheinen")
+    }
+
+    /// Die Freigabe gilt dem vollständigen Kürzel — über die Liste würde schon „:“ +
+    /// ein Buchstabe + Leertaste den Befehl starten (Rafter-Review 2026-09-28).
+    func testApprovedShellSnippetIsNotSuggestedButStillExpands() throws {
+        _ = try writeMatchFile(named: "shell.yml", shellCmd: "echo hi")
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+        store.importFile(store.espansoFiles[0])
+        store.approveShellSnippet(try XCTUnwrap(store.pendingShellApproval))
+        XCTAssertNotNil(store.action(forTrigger: ":t"), "ausgeschriebenes Kürzel läuft weiter")
+        XCTAssertTrue(store.suggestions(forTypedTrigger: ":t", limit: 6).isEmpty)
+    }
+
     func testAppSnippetPrefixIsAppliedWhenMissing() {
         let store = makeStore()
         store.matchDirectory = tempDir // empty dir, isolates this test from any real Espanso install

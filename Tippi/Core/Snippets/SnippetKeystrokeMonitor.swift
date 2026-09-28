@@ -33,12 +33,12 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     /// Emoji suggestions for the `:prefix` currently being typed, newest first.
     /// Held here (not only in the panel) because the Space shortcut needs to
     /// know the top entry, and the panel is a pure renderer.
-    private var currentSuggestions: [Emoji] = []
+    private var currentSuggestions: [InlineSuggestion] = []
 
     /// Called with the ranked suggestions whenever the typed `:prefix`
     /// changes, and with an empty array when the list should disappear. The
     /// UI layer owns the panel — Core stays free of AppKit windows.
-    var onSuggestionsChanged: (([Emoji]) -> Void)?
+    var onSuggestionsChanged: (([InlineSuggestion]) -> Void)?
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
@@ -265,11 +265,9 @@ final class SnippetKeystrokeMonitor: ObservableObject {
            matcher.buffer.hasSuffix(" "),
            let top = currentSuggestions.first,
            let prefix = EmojiInlineMatcher.openPrefix(in: String(matcher.buffer.dropLast())) {
-            EmojiSettings.rememberUse(of: top.character)
-            clearSuggestions()
             // ":" + prefix + the space just typed. The replacement re-adds the
             // space so the user can keep typing without a missing separator.
-            expand(triggerLength: prefix.count + 2) { top.character + " " }
+            insert(top, replacingLength: prefix.count + 2, trailing: " ")
             return
         }
 
@@ -281,21 +279,46 @@ final class SnippetKeystrokeMonitor: ObservableObject {
     /// database is only searched once a colon-led word is actually in
     /// progress, so ordinary typing never pays for it.
     private func refreshSuggestions() {
-        guard EmojiSettings.isInlineEnabled, EmojiSettings.isSuggestionsEnabled else {
-            clearSuggestions()
-            return
-        }
         guard let prefix = EmojiInlineMatcher.openPrefix(in: matcher.buffer) else {
             clearSuggestions()
             return
         }
-        let matches = EmojiDatabase.shared.search(prefix, limit: EmojiSuggestionPanel.maxSuggestions)
+        let limit = EmojiSuggestionPanel.maxSuggestions
+        // Eigene Snippets zuerst (seit 2.18): gleiche Rangfolge wie beim Ausschreiben —
+        // ein selbst angelegtes Kürzel schlägt ein mitgeliefertes Emoji.
+        // Derselbe Schalter „Vorschläge beim Tippen anzeigen“ gilt für beide: Wer die
+        // Liste abgeschaltet hat, bekommt sie nicht durch die Hintertür der Snippets zurück.
+        guard EmojiSettings.isSuggestionsEnabled else {
+            clearSuggestions()
+            return
+        }
+        var matches: [InlineSuggestion] = store.suggestions(forTypedTrigger: ":" + prefix, limit: limit)
+            .map { .snippet(trigger: $0.trigger, preview: $0.preview) }
+        if EmojiSettings.isInlineEnabled, matches.count < limit {
+            matches += EmojiDatabase.shared.search(prefix, limit: limit - matches.count).map { .emoji($0) }
+        }
         guard !matches.isEmpty else {
             clearSuggestions()
             return
         }
         currentSuggestions = matches
         onSuggestionsChanged?(matches)
+    }
+
+    /// Fügt einen Vorschlag ein und ersetzt dabei `replacingLength` getippte Zeichen.
+    /// Snippets laufen über `action(forTrigger:)` — dieselbe Freigabe-Prüfung wie beim
+    /// Ausschreiben per vollständigem Kürzel, unmittelbar vor der Ausführung.
+    private func insert(_ suggestion: InlineSuggestion, replacingLength: Int, trailing: String) {
+        switch suggestion {
+        case .emoji(let emoji):
+            EmojiSettings.rememberUse(of: emoji.character)
+            clearSuggestions()
+            expand(triggerLength: replacingLength) { emoji.character + trailing }
+        case .snippet(let trigger, _):
+            clearSuggestions()
+            guard let action = store.action(forTrigger: trigger) else { return }
+            expand(triggerLength: replacingLength) { [store] in await store.resolve(action) + trailing }
+        }
     }
 
     private func clearSuggestions() {
@@ -306,14 +329,12 @@ final class SnippetKeystrokeMonitor: ObservableObject {
 
     /// Inserts a suggestion the user clicked, replacing the `:prefix` they had
     /// typed so far. Called from the panel via the UI layer.
-    func acceptSuggestion(_ emoji: Emoji) {
+    func acceptSuggestion(_ suggestion: InlineSuggestion) {
         guard let prefix = EmojiInlineMatcher.openPrefix(in: matcher.buffer) else {
             clearSuggestions()
             return
         }
-        EmojiSettings.rememberUse(of: emoji.character)
-        clearSuggestions()
-        expand(triggerLength: prefix.count + 1) { emoji.character }
+        insert(suggestion, replacingLength: prefix.count + 1, trailing: "")
     }
 
     /// Shared tail of both expansion paths: clear the buffer, block re-entry,

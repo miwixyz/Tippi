@@ -628,6 +628,41 @@ final class SnippetStore: ObservableObject {
         return triggers
     }
 
+    /// Aktive Snippets, deren Kürzel mit `typed` beginnt (Groß/Klein egal) — für die
+    /// Vorschlagsliste nach „:“. Nur `activeTriggers()`: Ein nicht freigegebenes
+    /// Shell-Snippet erscheint so gar nicht erst als Vorschlag. Kürzere Kürzel zuerst,
+    /// damit das naheliegendste oben steht und per Leertaste übernommen wird.
+    ///
+    /// Importierte Shell-Snippets fehlen hier auch dann, wenn sie freigegeben sind:
+    /// Die Freigabe gilt dem vollständigen Kürzel. Über die Liste würde schon „:p“ +
+    /// Leertaste den Befehl starten (Rafter-Review 2026-09-28). Sie laufen weiter,
+    /// sobald das Kürzel ausgeschrieben ist.
+    func suggestions(forTypedTrigger typed: String, limit: Int) -> [(trigger: String, preview: String)] {
+        guard limit > 0, !typed.isEmpty else { return [] }
+        let lowered = typed.lowercased()
+        let importedShell = Set(importedSnippets.filter(\.hasShellVars).flatMap(\.triggers))
+        let matching = Set(activeTriggers().filter {
+            $0.lowercased().hasPrefix(lowered) && !importedShell.contains($0)
+        })
+        return matching
+            .sorted { ($0.count, $0) < ($1.count, $1) }
+            .prefix(limit)
+            .compactMap { trigger in preview(forTrigger: trigger).map { (trigger, $0) } }
+    }
+
+    /// Vorschau aus genau dem Snippet, das `action(forTrigger:)` ausführen würde —
+    /// bei doppelten Kürzeln sonst Text A in der Liste und Text B im Dokument.
+    private func preview(forTrigger trigger: String) -> String? {
+        let raw: String
+        switch action(forTrigger: trigger) {
+        case .staticText(let text): raw = text
+        case .espansoMatch(let match): raw = match.replace
+        case nil: return nil
+        }
+        let oneLine = raw.replacingOccurrences(of: "\n", with: " ⏎ ")
+        return oneLine.count > 60 ? String(oneLine.prefix(60)) + "…" : oneLine
+    }
+
     func action(forTrigger trigger: String) -> SnippetAction? {
         if let snippet = appSnippets.first(where: { $0.trigger == trigger }) {
             // AppSnippets.json is unsigned and writable by any process running

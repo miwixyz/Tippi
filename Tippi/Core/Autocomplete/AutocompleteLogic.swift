@@ -571,6 +571,13 @@ enum AutocompleteGeometry {
         return screens.contains { $0.contains(probe) }
     }
 
+    /// Ein Textmarker-Rechteck ist nur dann ein Cursor, wenn es (fast) keine Breite
+    /// hat. Gemessen 2026-09-28 in Obsidian: Cursor in einer Notiz = Breite 0; leeres
+    /// Eingabefeld = ganze Zeile (887 pt) — das darf nicht als Cursorstelle gelten.
+    static func isCollapsedCaret(_ rect: CGRect) -> Bool {
+        rect.width <= 2
+    }
+
     /// Schriftgröße passend zur Zeilenhöhe des Feldes, im Rahmen des Lesbaren.
     static func fontSize(forCaretHeight height: CGFloat) -> CGFloat {
         min(max(height * 0.8, 11), 28)
