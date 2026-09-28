@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.17.1] — 2026-09-28
+
+- _Add release notes here._
+
 ## [2.17.0] — 2026-09-28
 
 Prompts und Kürzel gehören jetzt dir: bearbeiten, sortieren, Tasten selbst wählen.
