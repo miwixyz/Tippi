@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.19.0] — 2026-09-28
+
+- _Add release notes here._
+
 ## [Unreleased]
 
 ### Neu
