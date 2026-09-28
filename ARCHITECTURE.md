@@ -110,6 +110,7 @@ Tippi/
 │   ├── NonKeyPanelChrome.swift     # NonKeyPanel + ClickableHostingView, geteilt von
 │   │                               #   Aktionsleiste und Emoji-Vorschlagsliste
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
+│   │   └── LocalActionButtons.swift # v2.19 — Schnellaktions-Knöpfe, Währungsreihe, Passwort-Knopf
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
 │   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # Glas-Kapsel am Cursor mit Tastenhinweis, nie Key, keine Klicks
@@ -131,6 +132,7 @@ Tippi/
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
 │   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck
 │   ├── SettingsView.swift          # Seitenleiste + die meisten der 10 Bereiche (großes File, private structs)
+│   ├── CurrencyFavoritesSection.swift # v2.19 — Lieblingswährungen + Quellenhinweis Exchange Rate API
 │   ├── PermissionsSettingsTab.swift # Berechtigungen-Tab: Status + Erteilen je Recht (v2.18)
 │   ├── PromptsSettingsTab.swift    # Prompts-Tab: eine Liste, Ziehen zum Sortieren, Editor für alle
 │   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
