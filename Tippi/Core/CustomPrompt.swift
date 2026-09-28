@@ -38,10 +38,15 @@ struct CustomPrompt: Codable, Identifiable, Equatable {
     /// `true` when this prompt is a multi-step chain rather than a single step.
     var isChain: Bool { !(pipeline?.isEmpty ?? true) }
 
+    /// The id this prompt has as a `DemoPrompt` (chains, order, provider override).
+    var demoID: String { Self.demoID(id) }
+
+    static func demoID(_ id: UUID) -> String { "custom-\(id.uuidString)" }
+
     func asDemoPrompt() -> DemoPrompt {
         let promptTitle = title
         return DemoPrompt(
-            id: "custom-\(id.uuidString)",
+            id: demoID,
             title: title,
             symbol: symbol,
             systemPrompt: systemPrompt,
@@ -61,8 +66,12 @@ final class CustomPromptStore: ObservableObject {
 
     static let storageKey = "tippi.customPrompts.v1"
     private var storageKey: String { Self.storageKey }
+    private let defaults: UserDefaults
 
-    private init() {
+    /// `defaults` is injectable for tests — they must never touch `.standard`,
+    /// which is the installed app's real preferences (CONTRIBUTING.md).
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         load()
     }
 
@@ -89,11 +98,6 @@ final class CustomPromptStore: ObservableObject {
         save()
     }
 
-    func move(fromOffsets source: IndexSet, toOffset destination: Int) {
-        prompts.move(fromOffsets: source, toOffset: destination)
-        save()
-    }
-
     /// Re-reads the list after `SyncedPreferences` wrote a newer version from
     /// the other Mac into defaults.
     func reloadFromDefaults() {
@@ -101,21 +105,21 @@ final class CustomPromptStore: ObservableObject {
     }
 
     private func load() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
+        guard let data = defaults.data(forKey: storageKey) else { return }
         do {
             prompts = try JSONDecoder().decode([CustomPrompt].self, from: data)
         } catch {
             // Don't silently start empty and let the next mutation's save()
             // overwrite recoverable data. Preserve the undecodable blob under a
             // backup key so the user's prompts can be recovered manually.
-            UserDefaults.standard.set(data, forKey: storageKey + ".corrupt")
+            defaults.set(data, forKey: storageKey + ".corrupt")
             NSLog("Tippi: CustomPromptStore load failed — preserved blob at \(storageKey).corrupt: \(error.localizedDescription)")
         }
     }
 
     private func save() {
         guard let data = try? JSONEncoder().encode(prompts) else { return }
-        UserDefaults.standard.set(data, forKey: storageKey)
+        defaults.set(data, forKey: storageKey)
     }
 
     // MARK: - Import / Export

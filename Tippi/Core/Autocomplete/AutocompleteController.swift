@@ -10,7 +10,8 @@ private let autocompleteLog = Logger(subsystem: "com.tippi.app", category: "auto
 /// Ablauf (docs/SECURE-DESIGN-autocomplete.md): Tastendruck → 350 ms Pause →
 /// Kontext per Bedienungshilfen lesen (Ausschlussprüfung zuerst) → eine Anfrage an
 /// Tippis **eigenen** MLX-Server → Antwort bereinigen → grauer Vorschlag am
-/// Cursor → ⇥ übernimmt über `TextInsertion`, alles andere verwirft.
+/// Cursor → eine der zwei frei belegbaren Übernahme-Tasten (ab Werk ⇥ = ein Wort,
+/// ⇧⇥ = alles) fügt über `TextInsertion` ein, alles andere verwirft.
 ///
 /// Die Entscheidungen selbst (was gelesen, geschluckt, angezeigt wird) stehen
 /// rein und getestet in `AutocompleteLogic.swift`; hier wird nur verdrahtet.
@@ -63,7 +64,13 @@ final class AutocompleteController: ObservableObject {
     /// weg, keine Anfragen mehr (Design §4 „Abschalten im Ernstfall").
     func apply() {
         isEnabled = AutocompleteSettings.isEnabled
+        reloadKeyBindings()
         if isEnabled { start() } else { stop() }
+    }
+
+    /// Übernimmt geänderte Übernahme-Tasten sofort in den Tap.
+    func reloadKeyBindings() {
+        bridge.setBindings(AutocompleteSettings.keyBindings)
     }
 
     private func start() {
@@ -77,8 +84,9 @@ final class AutocompleteController: ObservableObject {
             | (1 << CGEventType.leftMouseDown.rawValue)
             | (1 << CGEventType.rightMouseDown.rawValue)
             | (1 << CGEventType.otherMouseDown.rawValue)
-        // `.defaultTap` (aktiv) statt `.listenOnly`: nur so kann ⇥ geschluckt
-        // werden. Existiert ausschließlich, solange die Funktion an ist.
+        // `.defaultTap` (aktiv) statt `.listenOnly`: nur so kann die Übernahme-
+        // Taste geschluckt werden. Existiert ausschließlich, solange die
+        // Funktion an ist.
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -102,7 +110,7 @@ final class AutocompleteController: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor in
                 self?.cancelPending()
-                self?.dismiss()
+                self?.dismiss(animated: true)
             }
         }
 
@@ -151,7 +159,7 @@ final class AutocompleteController: ObservableObject {
             }
         }
         cancelPending()
-        dismiss()
+        dismiss(animated: true)
         guard restartPause else { return }
         pauseTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Self.pauseNanoseconds)
@@ -163,22 +171,23 @@ final class AutocompleteController: ObservableObject {
 
     func userClicked() {
         cancelPending()
-        dismiss()
+        dismiss(animated: true)
     }
 
-    /// ⇥ wurde bereits geschluckt. Kann der Vorschlag nicht mehr eingefügt
-    /// werden, wird das ⇥ nachgereicht — es darf nie verloren gehen (Design §3).
-    func acceptShownSuggestion() {
+    /// Die Übernahme-Taste wurde bereits geschluckt. Kann der Vorschlag nicht
+    /// mehr eingefügt werden, wird genau diese Taste (mit ihren Modifiern)
+    /// nachgereicht — sie darf nie verloren gehen (Design §3).
+    func acceptShownSuggestion(_ action: AutocompleteAcceptAction, keyCode: Int64, flags: CGEventFlags) {
         let front = NSWorkspace.shared.frontmostApplication
         // Passwort-Eingabe erneut prüfen: Der Fokus kann seit dem Anzeigen ohne
         // Taste/Klick gewechselt sein (Seite springt selbst ins Passwortfeld).
         guard let shown, front?.processIdentifier == shown.pid, !IsSecureEventInputEnabled() else {
             dismiss()
-            Self.repostTab()
+            Self.repostKey(keyCode: keyCode, flags: flags)
             return
         }
-        // Wort für Wort: ⇥ nimmt nur das nächste Wort, der Rest bleibt stehen.
-        let split = AutocompleteSuggestion.nextWord(of: shown.text)
+        // Ein Wort (der Rest bleibt stehen) oder der ganze Rest auf einmal.
+        let split = AutocompleteSuggestion.take(action, of: shown.text)
         let pid = shown.pid
         cancelPending()
         dismiss()
@@ -208,8 +217,17 @@ final class AutocompleteController: ObservableObject {
                 self.dismiss()
                 return
             }
-            self.panel.show(text, caret: field.caret)
+            self.showPanel(text, field: field, animated: false)
         }
+    }
+
+    /// Ein Ort für das Anzeigen: Schriftgröße und Tastenhinweis aus den
+    /// aktuellen Einstellungen. `animated` nur für einen frischen Vorschlag —
+    /// beim Weitertippen und Wort-für-Wort bleibt die Kapsel ruhig stehen.
+    private func showPanel(_ text: String, field: Field, animated: Bool) {
+        let fontSize = AutocompleteGeometry.fontSize(reported: field.fontSize, caretHeight: field.caret.height)
+        let hint = AutocompleteSettings.showKeyHint ? AutocompleteSuggestionPanel.keyHint(AutocompleteSettings.keyBindings) : nil
+        panel.show(text, caret: field.caret, fontSize: fontSize, hint: hint, animated: animated)
     }
 
     private func cancelPending() {
@@ -220,9 +238,11 @@ final class AutocompleteController: ObservableObject {
         requestTask = nil
     }
 
-    private func dismiss() {
+    /// `animated` blendet weich aus (verworfen). Beim Übernehmen nicht: Dort
+    /// steht sofort der eingefügte Text an derselben Stelle.
+    private func dismiss(animated: Bool = false) {
         bridge.setVisible(false)
-        panel.close()
+        panel.close(animated: animated)
         shown = nil
     }
 
@@ -258,7 +278,7 @@ final class AutocompleteController: ObservableObject {
                 autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
                 return
             }
-            self.panel.show(suggestion, caret: field.caret)
+            self.showPanel(suggestion, field: field, animated: true)
             self.shown = (suggestion, app.processIdentifier)
             self.bridge.setVisible(true)
             autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
@@ -279,12 +299,14 @@ final class AutocompleteController: ObservableObject {
         NSSpellChecker.shared.checkSpelling(of: word, startingAt: 0).location == NSNotFound
     }
 
-    private static func repostTab() {
+    /// Reicht die geschluckte Taste unverändert nach — dieselbe Taste, dieselben
+    /// Flags, wie sie aus dem Tap kamen (also die konfigurierte Kombination).
+    /// Der Tap erkennt das eigene Ereignis an der PID und lässt es durch.
+    private static func repostKey(keyCode: Int64, flags: CGEventFlags) {
         let source = CGEventSource(stateID: .hidSystemState)
         for keyDown in [true, false] {
-            let event = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(AutocompleteKeyDecision.tabKeyCode),
-                                keyDown: keyDown)
-            event?.flags = []
+            let event = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(keyCode), keyDown: keyDown)
+            event?.flags = flags
             event?.post(tap: .cghidEventTap)
         }
     }
@@ -294,6 +316,8 @@ final class AutocompleteController: ObservableObject {
     private struct Field {
         let context: String
         let caret: CGRect
+        /// Von der App gemeldete Schriftgröße vor dem Cursor, falls vorhanden.
+        let fontSize: CGFloat?
     }
 
     /// Upper bound for reading a field's whole value when it offers no range
@@ -368,7 +392,23 @@ final class AutocompleteController: ObservableObject {
         guard AutocompleteContext.isLongEnough(context) else { skip("context too short"); return nil }
         guard AutocompleteContext.cursorIsAtLineEnd(nextCharacter: next) else { skip("not at line end"); return nil }
         guard let caret = caretRect(focused, location: loc) else { skip("no plausible caret bundle=\(app.bundleIdentifier ?? "?")"); return nil }
-        return Field(context: context, caret: caret)
+        return Field(context: context, caret: caret, fontSize: Self.fontSize(focused, location: loc))
+    }
+
+    /// Schriftgröße des Zeichens vor dem Cursor (`AXFont` im attributierten
+    /// Text) — oder `nil`, wenn die App keine meldet. Liest nur dieses eine
+    /// Zeichen, das ohnehin im Kontext steht.
+    private static func fontSize(_ element: AXUIElement, location: Int) -> CGFloat? {
+        var range = CFRange(location: location - 1, length: 1)
+        guard location > 0, let axRange = AXValueCreate(.cfRange, &range) else { return nil }
+        var ref: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(
+            element, kAXAttributedStringForRangeParameterizedAttribute as CFString, axRange, &ref
+        ) == .success, let attributed = ref as? NSAttributedString, attributed.length > 0 else { return nil }
+        let fontKey = NSAttributedString.Key(kAXFontTextAttribute.takeUnretainedValue() as String)
+        let font = attributed.attribute(fontKey, at: 0, effectiveRange: nil) as? [String: Any]
+        guard let size = font?[kAXFontSizeKey.takeUnretainedValue() as String] as? NSNumber else { return nil }
+        return CGFloat(size.doubleValue)
     }
 
     /// Cursor-Rechteck (Breite 0) oder `nil`, wenn die App keine plausiblen
@@ -450,11 +490,13 @@ final class AutocompleteController: ObservableObject {
 // MARK: - Tap
 
 /// Zustand, den der Tap-Rückruf synchron braucht: „ist gerade ein Vorschlag
-/// sichtbar?". Mit Sperre, damit die Entscheidung „schlucken" und das
-/// Zurücksetzen atomar sind — ein zweites ⇥ direkt danach läuft durch.
+/// sichtbar?" und „welche Tasten übernehmen?". Mit Sperre, damit die
+/// Entscheidung „schlucken" und das Zurücksetzen atomar sind — ein zweiter
+/// Druck direkt danach läuft durch.
 final class AutocompleteTapBridge: @unchecked Sendable {
     private let lock = NSLock()
     private var visible = false
+    private var bindings = AutocompleteKeyBindings.default
     /// Nur vom Main-Thread gesetzt (Start/Stopp).
     var tap: CFMachPort?
     weak var controller: AutocompleteController?
@@ -469,15 +511,21 @@ final class AutocompleteTapBridge: @unchecked Sendable {
         return visible
     }
 
-    /// Schluckt genau dann, wenn `AutocompleteKeyDecision.shouldSwallow` ja
-    /// sagt, und setzt „sichtbar" im selben Schritt zurück.
-    func consumeIfAccepting(keyCode: Int64, flags: CGEventFlags) -> Bool {
+    func setBindings(_ value: AutocompleteKeyBindings) {
         lock.lock(); defer { lock.unlock() }
-        guard AutocompleteKeyDecision.shouldSwallow(keyCode: keyCode, flags: flags, suggestionVisible: visible) else {
-            return false
+        bindings = value
+    }
+
+    /// Schluckt genau dann, wenn `AutocompleteKeyDecision.action` eine
+    /// Übernahme erkennt, und setzt „sichtbar" im selben Schritt zurück.
+    func consumeIfAccepting(keyCode: Int64, flags: CGEventFlags) -> AutocompleteAcceptAction? {
+        lock.lock(); defer { lock.unlock() }
+        guard let action = AutocompleteKeyDecision.action(keyCode: keyCode, flags: flags,
+                                                          suggestionVisible: visible, bindings: bindings) else {
+            return nil
         }
         visible = false
-        return true
+        return action
     }
 }
 
@@ -486,7 +534,7 @@ final class AutocompleteTapBridge: @unchecked Sendable {
 /// Tasteninhalte werden nur gelesen, solange ein Vorschlag sichtbar ist — dann
 /// wird das eine Zeichen mit dem Vorschlag verglichen („weitertippen") und
 /// sofort vergessen; nichts wird gepuffert oder protokolliert.
-/// Eigene Ereignisse (⌘V beim Einfügen, nachgereichtes ⇥) werden übergangen.
+/// Eigene Ereignisse (⌘V beim Einfügen, nachgereichte Taste) werden übergangen.
 private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, userInfo in
     guard let userInfo else { return Unmanaged.passUnretained(event) }
     let bridge = Unmanaged<AutocompleteTapBridge>.fromOpaque(userInfo).takeUnretainedValue()
@@ -500,8 +548,8 @@ private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, user
         }
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
-        if bridge.consumeIfAccepting(keyCode: keyCode, flags: flags) {
-            Task { @MainActor in bridge.controller?.acceptShownSuggestion() }
+        if let action = bridge.consumeIfAccepting(keyCode: keyCode, flags: flags) {
+            Task { @MainActor in bridge.controller?.acceptShownSuggestion(action, keyCode: keyCode, flags: flags) }
             return nil
         }
         let restart = AutocompleteKeyDecision.restartsPause(keyCode: keyCode, flags: flags)

@@ -233,9 +233,12 @@ final class AutocompleteTests: XCTestCase {
         XCTAssertFalse(AutocompleteKeyDecision.shouldSwallow(keyCode: tab, flags: [], suggestionVisible: false))
     }
 
-    func testTabWithModifierIsNeverSwallowed() {
+    /// Seit den frei belegbaren Tasten ist ⇧⇥ ab Werk „ganzer Vorschlag" —
+    /// alle anderen Modifier auf ⇥ laufen weiter unverändert durch.
+    func testTabWithOtherModifiersIsNeverSwallowed() {
         let tab = AutocompleteKeyDecision.tabKeyCode
-        let modifiers: [CGEventFlags] = [.maskShift, .maskCommand, .maskAlternate, .maskControl, .maskSecondaryFn]
+        let modifiers: [CGEventFlags] = [.maskCommand, .maskAlternate, .maskControl, .maskSecondaryFn,
+                                         [.maskShift, .maskCommand], [.maskShift, .maskSecondaryFn]]
         for flags in modifiers {
             XCTAssertFalse(AutocompleteKeyDecision.shouldSwallow(keyCode: tab, flags: flags, suggestionVisible: true))
             XCTAssertFalse(AutocompleteKeyDecision.shouldSwallow(keyCode: tab, flags: flags, suggestionVisible: false))
@@ -323,6 +326,15 @@ final class AutocompleteTests: XCTestCase {
         XCTAssertEqual(split.rest, " es dir")
     }
 
+    func testWholeSuggestionTakesEverything() {
+        let whole = AutocompleteSuggestion.take(.wholeSuggestion, of: " dich vermisse.")
+        XCTAssertEqual(whole.take, " dich vermisse.")
+        XCTAssertNil(whole.rest)
+        let word = AutocompleteSuggestion.take(.nextWord, of: " dich vermisse.")
+        XCTAssertEqual(word.take, " dich")
+        XCTAssertEqual(word.rest, " vermisse.")
+    }
+
     func testTabOnLastWordLeavesNothing() {
         let split = AutocompleteSuggestion.nextWord(of: " gut.")
         XCTAssertEqual(split.take, " gut.")
@@ -396,6 +408,14 @@ final class AutocompleteTests: XCTestCase {
         XCTAssertFalse(AutocompleteGeometry.isPlausibleCaret(CGRect(x: 200, y: 300, width: 0, height: 0), screens: screens))
         XCTAssertFalse(AutocompleteGeometry.isPlausibleCaret(CGRect(x: 200, y: 300, width: 0, height: 600), screens: screens))
         XCTAssertFalse(AutocompleteGeometry.isPlausibleCaret(CGRect(x: 5000, y: 300, width: 0, height: 16), screens: screens))
+    }
+
+    /// Gemeldete Schriftgröße nur, wenn sie zur Zeilenhöhe am Schirm passt.
+    func testFontSizeUsesReportedSizeOnlyWhenPlausible() {
+        XCTAssertEqual(AutocompleteGeometry.fontSize(reported: 13, caretHeight: 17), 13)
+        XCTAssertEqual(AutocompleteGeometry.fontSize(reported: nil, caretHeight: 20), 16)   // 20 × 0,8
+        XCTAssertEqual(AutocompleteGeometry.fontSize(reported: 12, caretHeight: 40), 28)    // Zoom: 40 × 0,8 → 28 (Obergrenze)
+        XCTAssertEqual(AutocompleteGeometry.fontSize(reported: 30, caretHeight: 17), 13.6, accuracy: 0.01)
     }
 
     // MARK: - Einstellungen (über `store`, nie `.standard`)

@@ -15,6 +15,9 @@ private let syncLog = Logger(subsystem: "com.tippi.app", category: "sync")
 /// - **Custom words** — a house spelling is a property of the user's writing,
 ///   not of a machine.
 /// - **Custom prompts** — same reasoning.
+/// - **Edits to built-in prompts and the prompt order** — they belong to the
+///   same prompt list; a prompt renamed or moved on one Mac and not the other
+///   would make the digit keys 1–9 mean different things per machine.
 ///
 /// Excluded on purpose, each for a concrete reason:
 ///
@@ -56,6 +59,8 @@ final class SyncedPreferences {
     private static let syncedKeys = [
         "dictation.customWords.v1",
         "tippi.customPrompts.v1",
+        "tippi.builtInPromptEdits.v1",
+        "tippi.promptOrder.v1",
     ]
 
     private let store: NSUbiquitousKeyValueStore
@@ -70,10 +75,34 @@ final class SyncedPreferences {
     /// at launch (2026-09-24, build without the iCloud entitlement).
     private var isPushing = false
     private var observers: [NSObjectProtocol] = []
+    /// Runs after a newer value from iCloud was written to `defaults`, with its
+    /// key. Injectable so tests can hand in prompt stores on their own defaults
+    /// — the app's `.shared` stores are fixed to `.standard`, so the reload path
+    /// was untested and a dropped `case` would have stayed green (review
+    /// 2026-09-28).
+    private let onRemoteApply: @MainActor (String) -> Void
 
-    init(store: NSUbiquitousKeyValueStore = .default, defaults: UserDefaults = .standard) {
+    init(store: NSUbiquitousKeyValueStore = .default, defaults: UserDefaults = .standard,
+         onRemoteApply: (@MainActor (String) -> Void)? = nil) {
         self.store = store
         self.defaults = defaults
+        self.onRemoteApply = onRemoteApply ?? { key in
+            Self.reloadPromptStore(for: key, customPrompts: .shared, builtInEdits: .shared, order: .shared)
+        }
+    }
+
+    /// Custom words are read from defaults on every use, but the prompt stores
+    /// keep their lists in memory: without a reload the next local edit saved
+    /// the stale list, pushed it as newest, and deleted the other Mac's prompt
+    /// on both (audit 2026-09-27). Every synced prompt key needs its line here.
+    static func reloadPromptStore(for key: String, customPrompts: CustomPromptStore,
+                                  builtInEdits: BuiltInPromptEditStore, order: PromptOrderStore) {
+        switch key {
+        case CustomPromptStore.storageKey: customPrompts.reloadFromDefaults()
+        case BuiltInPromptEditStore.storageKey: builtInEdits.reloadFromDefaults()
+        case PromptOrderStore.storageKey: order.reloadFromDefaults()
+        default: break
+        }
     }
 
     private static func timestampKey(for key: String) -> String { "\(key).syncedAt" }
@@ -127,8 +156,13 @@ final class SyncedPreferences {
     /// `now`, which is newer than the remote stamp and therefore survives the
     /// pull that follows.
     ///
-    /// Only string arrays are merged. Anything else falls through to the normal
-    /// last-write-wins path, because merging is only obviously correct for a set.
+    /// Only the custom words are unioned — merging is only correct for a set.
+    /// The prompt order is also a `[String]`, but a sequence: a union would glue
+    /// the remote order behind the local one. On its first sync the local order
+    /// is kept as it is and stamped `now`, so it wins and is uploaded (review
+    /// 2026-09-28). Other types fall through to last-write-wins.
+    private static let unionOnFirstSyncKeys: Set<String> = ["dictation.customWords.v1"]
+
     private func reconcileFirstSync() {
         for key in Self.syncedKeys {
             // A stamp means this Mac has synced the key before; last-write-wins
@@ -139,14 +173,16 @@ final class SyncedPreferences {
             guard local != remote else { continue }
 
             var merged = local
-            for value in remote where !merged.contains(value) { merged.append(value) }
+            if Self.unionOnFirstSyncKeys.contains(key) {
+                for value in remote where !merged.contains(value) { merged.append(value) }
+            }
 
             let now = Date().timeIntervalSince1970
             isApplyingRemote = true
             defaults.set(merged, forKey: key)
             defaults.set(now, forKey: Self.timestampKey(for: key))
             isApplyingRemote = false
-            syncLog.info("first sync for \(key, privacy: .public): merged \(local.count) local + \(remote.count) remote into \(merged.count)")
+            syncLog.info("first sync for \(key, privacy: .public): \(local.count) local + \(remote.count) remote → \(merged.count)")
         }
     }
 
@@ -190,13 +226,7 @@ final class SyncedPreferences {
             defaults.set(remoteStamp, forKey: Self.timestampKey(for: key))
             isApplyingRemote = false
             syncLog.info("applied newer value for \(key, privacy: .public) from iCloud")
-            // Custom words are read from defaults on every use, but the prompt
-            // store keeps its list in memory: without this reload the next local
-            // edit saved the stale list, pushed it as newest, and deleted the
-            // other Mac's prompt on both (audit 2026-09-27).
-            if key == CustomPromptStore.storageKey {
-                CustomPromptStore.shared.reloadFromDefaults()
-            }
+            onRemoteApply(key)   // in-memory prompt stores, see `reloadPromptStore`
         }
     }
 
@@ -251,6 +281,8 @@ final class SyncedPreferences {
         switch key {
         case "dictation.customWords.v1": return value is [String]
         case "tippi.customPrompts.v1":   return value is Data
+        case "tippi.builtInPromptEdits.v1": return value is Data
+        case "tippi.promptOrder.v1":     return value is [String]
         default:                          return false
         }
     }

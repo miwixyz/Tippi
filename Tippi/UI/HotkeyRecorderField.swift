@@ -3,10 +3,18 @@ import SwiftUI
 
 /// Tap-to-record control for a global key combo.
 /// While recording, the next non-modifier keystroke is captured.
+///
+/// Two rule sets. Without `validator` it records a **global** hot key: ⌘ or ⌃
+/// required, everyday ⌘ shortcuts refused (`isAcceptableGlobalHotkey`). With a
+/// `validator` any key is recorded — including keys without modifiers — and the
+/// validator decides; a non-nil return is the reason, shown under the field
+/// while recording goes on (autocomplete accept keys, `AutocompleteKeyRules`).
 struct HotkeyRecorderField: View {
     @Binding var combo: KeyCombo
+    var validator: ((KeyCombo) -> String?)?
     @State private var recording = false
     @State private var monitor: Any?
+    @State private var rejection: String?
 
     /// Monitor token of whichever recorder most-recently started recording.
     /// SwiftUI `TabView` mounts all tabs eagerly, so an invisible-tab recorder
@@ -27,6 +35,19 @@ struct HotkeyRecorderField: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            recorderButton
+            if let rejection {
+                Text(rejection)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .onDisappear { stopRecording() }
+    }
+
+    private var recorderButton: some View {
         Button(action: toggleRecording) {
             HStack(spacing: 8) {
                 Image(systemName: recording ? "record.circle.fill" : "keyboard")
@@ -58,7 +79,6 @@ struct HotkeyRecorderField: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onDisappear { stopRecording() }
     }
 
     private func toggleRecording() {
@@ -85,10 +105,22 @@ struct HotkeyRecorderField: View {
         Self.releaseActiveMonitor()
 
         recording = true
+        rejection = nil
         let installed = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { event in
             let relevant: NSEvent.ModifierFlags = [.command, .shift, .option, .control]
             let mods = event.modifierFlags.intersection(relevant)
             if event.keyCode == 53 { // Escape — cancel recording
+                stopRecording()
+                return nil
+            }
+            if let validator {
+                let candidate = KeyCombo(keyCode: event.keyCode, modifiers: mods)
+                if let reason = validator(candidate) {
+                    NSSound.beep()
+                    rejection = reason
+                    return nil  // keep recording
+                }
+                combo = candidate
                 stopRecording()
                 return nil
             }
@@ -125,5 +157,6 @@ struct HotkeyRecorderField: View {
         }
         monitor = nil
         recording = false
+        rejection = nil
     }
 }

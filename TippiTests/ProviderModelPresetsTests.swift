@@ -21,6 +21,22 @@ final class ProviderModelPresetsTests: XCTestCase {
         XCTAssertEqual(defaults.string(forKey: "dictation.postProcess.modelOverride"), "anthropic/claude-haiku-4.5")
     }
 
+    /// Custom prompts pin models too (`prompt.providerOverride.custom-<uuid>.model`).
+    /// Until 2026-09-28 only built-in prompt ids were checked, so a custom
+    /// prompt pinned to a retired model kept failing after the migration.
+    func testCustomPromptOverridesAreMigrated() throws {
+        let defaults = suites.make()
+        let prompt = CustomPrompt(title: "Test", symbol: "", systemPrompt: "x")
+        defaults.set(try JSONEncoder().encode([prompt]), forKey: CustomPromptStore.storageKey)
+        let key = "prompt.providerOverride.\(prompt.demoID).model"
+        defaults.set("google/gemini-flash-latest", forKey: key)
+
+        ProviderModelPresets.migrateRetiredModels(defaults: defaults)
+
+        XCTAssertEqual(defaults.string(forKey: key), "~google/gemini-flash-latest")
+        XCTAssertNil(defaults.data(forKey: CustomPromptStore.storageKey + ".corrupt"))
+    }
+
     /// A migration target nobody can pick in the UI is a trap: the user lands on
     /// an id the picker doesn't show. Every replacement must be a current preset
     /// of the same provider.

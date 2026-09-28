@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Settings → Text-Snippets. Two sources shown side by side: app-managed
-/// snippets (full CRUD, no file editing needed — the "easier than Espanso"
-/// path) and imported Espanso YAML files (read-only view; the file stays the
-/// source of truth for anything using shell/date vars).
+/// Settings → Text-Snippets. App-managed snippets (full CRUD, no file editing
+/// needed — the "easier than Espanso" path), Espanso files as import
+/// candidates, and the imported snippets. Imported ones are Tippi's own copy:
+/// triggers and text are editable, an edit drops any shell approval, and a
+/// later re-import of the file leaves an edited entry alone.
 struct SnippetsTab: View {
     @EnvironmentObject var store: SnippetStore
 
@@ -27,6 +28,10 @@ struct SnippetsTab: View {
     @State private var newCustomWord: String = ""
 
     @State private var editingSnippet: AppSnippet?
+    @State private var editingImported: ImportedSnippet?
+    /// Trash used to delete on the first click — one slip cost a snippet, and
+    /// for an imported shell snippet its approval with it.
+    @State private var pendingDeletion: PendingSnippetDeletion?
     @State private var isAddingNew = false
     @State private var emojiInlineEnabled: Bool = EmojiSettings.isInlineEnabled
     @State private var emoticonEnabled: Bool = EmojiSettings.isEmoticonEnabled
@@ -48,20 +53,29 @@ struct SnippetsTab: View {
             }
         }
         .sheet(item: $editingSnippet) { snippet in
-            SnippetEditorSheet(trigger: snippet.trigger, replacement: snippet.replacement,
-                               vars: snippet.vars) { newTrigger, newReplacement, newVars in
+            SnippetEditorSheet(triggers: [snippet.trigger], replacement: snippet.replacement,
+                               vars: snippet.vars) { newTriggers, newReplacement, newVars in
                 var updated = snippet
-                updated.trigger = newTrigger
+                updated.trigger = newTriggers[0]
                 updated.replacement = newReplacement
                 updated.vars = newVars
                 store.updateSnippet(updated)
             }
         }
-        .sheet(isPresented: $isAddingNew) {
-            SnippetEditorSheet(trigger: store.defaultPrefix, replacement: "", vars: []) { trigger, replacement, vars in
-                store.addSnippet(shortcut: trigger, replacement: replacement, vars: vars)
+        .sheet(item: $editingImported) { snippet in
+            SnippetEditorSheet(triggers: snippet.triggers, replacement: snippet.replace, vars: snippet.vars,
+                               allowsVariables: false,
+                               notice: snippet.hasShellVars
+                                   ? String(localized: "settings.snippets.editor.shellNotice") : nil) { triggers, text, _ in
+                store.updateImportedSnippet(snippet, triggers: triggers, replace: text)
             }
         }
+        .sheet(isPresented: $isAddingNew) {
+            SnippetEditorSheet(triggers: [store.defaultPrefix], replacement: "", vars: []) { triggers, replacement, vars in
+                store.addSnippet(shortcut: triggers[0], replacement: replacement, vars: vars)
+            }
+        }
+        .modifier(SnippetDeletionConfirmation(pending: $pendingDeletion))
         .sheet(item: $store.pendingShellApproval) { snippet in
             ShellSnippetApprovalSheet(
                 snippet: snippet,
@@ -178,7 +192,7 @@ struct SnippetsTab: View {
                         }
                         .buttonStyle(.plain)
                         Button(role: .destructive) {
-                            store.removeSnippet(snippet)
+                            pendingDeletion = PendingSnippetDeletion(trigger: snippet.trigger) { store.removeSnippet(snippet) }
                         } label: {
                             Image(systemName: "trash")
                         }
@@ -263,6 +277,12 @@ struct SnippetsTab: View {
                                     .font(.caption)
                                     .foregroundStyle(.tertiary)
                             }
+                            if snippet.isLocallyEdited {
+                                Text(String(localized: "settings.snippets.locallyEdited"))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .help(String(localized: "settings.snippets.locallyEditedHelp"))
+                            }
                             Spacer()
                             if !shadowed.isEmpty {
                                 Label(String(localized: "settings.snippets.triggerShadowed"), systemImage: "arrow.uturn.forward")
@@ -297,8 +317,15 @@ struct SnippetsTab: View {
                                         .onTapGesture { store.pendingShellApproval = snippet }
                                 }
                             }
+                            Button {
+                                editingImported = snippet
+                            } label: {
+                                Image(systemName: "pencil")
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(store.importedSnippetsLoadError != nil)
                             Button(role: .destructive) {
-                                store.removeImportedSnippet(snippet)
+                                pendingDeletion = PendingSnippetDeletion(trigger: snippet.trigger) { store.removeImportedSnippet(snippet) }
                             } label: {
                                 Image(systemName: "trash")
                             }
@@ -474,152 +501,6 @@ struct SnippetsTab: View {
     }
 }
 
-private struct SnippetEditorSheet: View {
-    @State var trigger: String
-    @State var replacement: String
-    @State var vars: [SnippetVar]
-    @Environment(\.dismiss) private var dismiss
-    let onSave: (String, String, [SnippetVar]) -> Void
-
-    @State private var showingVariablePicker = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "settings.snippets.editor.title")).font(.headline)
-            TextField(String(localized: "settings.snippets.editor.trigger"), text: $trigger)
-            TextField(String(localized: "settings.snippets.editor.replacement"), text: $replacement, axis: .vertical)
-                .lineLimit(3...6)
-
-            if !vars.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "settings.snippets.editor.variablesInUse"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    ForEach(vars, id: \.name) { variable in
-                        Text("{{\(variable.name)}}")
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            Button {
-                showingVariablePicker = true
-            } label: {
-                Label(String(localized: "settings.snippets.editor.insertVariable"), systemImage: "calendar.badge.plus")
-            }
-
-            HStack {
-                Spacer()
-                Button(String(localized: "settings.snippets.editor.cancel")) { dismiss() }
-                Button(String(localized: "settings.snippets.editor.save")) {
-                    onSave(trigger, replacement, vars)
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled(trigger.trimmingCharacters(in: .whitespaces).isEmpty || replacement.isEmpty)
-            }
-        }
-        .padding(20)
-        .frame(width: 380)
-        .sheet(isPresented: $showingVariablePicker) {
-            VariablePickerSheet { kind in
-                // Unique per snippet-edit-session — collisions across
-                // different snippets don't matter, `{{name}}` only needs to
-                // be unique within one replacement template.
-                let name = "var\(vars.count + 1)"
-                vars.append(DynamicVariableBuilder.makeVar(name: name, kind: kind))
-                replacement += "{{\(name)}}"
-            }
-        }
-    }
-}
-
-/// The "idiot-proof" alternative to hand-typing a shell command: pick a kind
-/// from a segmented control, fill in the couple of parameters that kind
-/// needs (weekday, extra days, date format), done. Never shows or accepts
-/// raw shell syntax.
-private struct VariablePickerSheet: View {
-    let onInsert: (DynamicVariableKind) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    private enum Mode: CaseIterable {
-        case today, weekday, calendarWeek
-
-        var label: String {
-            switch self {
-            case .today: return String(localized: "settings.snippets.variable.mode.today")
-            case .weekday: return String(localized: "settings.snippets.variable.mode.weekday")
-            case .calendarWeek: return String(localized: "settings.snippets.variable.mode.calendarWeek")
-            }
-        }
-    }
-
-    @State private var mode: Mode = .today
-    @State private var format: DateFormatPreset = .dayMonthYear
-    @State private var weekday: Weekday = .thursday
-    @State private var extraDays: Int = 0
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "settings.snippets.variable.title")).font(.headline)
-
-            // Radio-group, not segmented: segmented control doesn't wrap —
-            // "Wochentag dieser Woche" alone overflowed a 340pt-wide sheet
-            // on both edges. A vertical list has no such width ceiling
-            // regardless of label length or locale.
-            Picker("", selection: $mode) {
-                ForEach(Mode.allCases, id: \.self) { m in Text(m.label).tag(m) }
-            }
-            .pickerStyle(.radioGroup)
-            .labelsHidden()
-
-            switch mode {
-            case .today:
-                Picker(String(localized: "settings.snippets.variable.format"), selection: $format) {
-                    ForEach(DateFormatPreset.allCases, id: \.self) { f in Text(f.displayName).tag(f) }
-                }
-            case .weekday:
-                Picker(String(localized: "settings.snippets.variable.weekday.label"), selection: $weekday) {
-                    ForEach(Weekday.allCases, id: \.self) { w in Text(w.displayName).tag(w) }
-                }
-                // Range comes from the builder, not a literal: it also defines
-                // which commands are considered generatable at expansion time
-                // (DynamicVariableBuilder.generatableCommands). A wider stepper
-                // here than there would produce snippets the store then refuses.
-                Stepper(value: $extraDays, in: DynamicVariableBuilder.extraDaysRange) {
-                    Text(String(format: String(localized: "settings.snippets.variable.extraDays"), extraDays))
-                }
-                Picker(String(localized: "settings.snippets.variable.format"), selection: $format) {
-                    ForEach(DateFormatPreset.allCases, id: \.self) { f in Text(f.displayName).tag(f) }
-                }
-            case .calendarWeek:
-                Text(String(localized: "settings.snippets.variable.calendarWeekHint"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack {
-                Spacer()
-                Button(String(localized: "settings.snippets.editor.cancel")) { dismiss() }
-                Button(String(localized: "settings.snippets.variable.insert")) {
-                    let kind: DynamicVariableKind
-                    switch mode {
-                    case .today: kind = .today(format: format)
-                    case .weekday: kind = .weekday(weekday, extraDays: extraDays, format: format)
-                    case .calendarWeek: kind = .calendarWeek
-                    }
-                    onInsert(kind)
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(20)
-        .frame(width: 380)
-    }
-}
-
 /// Per-snippet consent for one imported shell command — the finer-grained
 /// successor to `FileApprovalSheet` for anything that has actually been
 /// imported into Tippi's own store (see docs/SECURE-DESIGN-espanso-import.md
@@ -685,6 +566,29 @@ private struct ShellSnippetApprovalSheet: View {
         }
         .padding(20)
         .frame(width: 420)
+    }
+}
+
+/// A snippet deletion waiting for confirmation: the trigger to name in the
+/// dialog and the removal to run once confirmed.
+private struct PendingSnippetDeletion {
+    let trigger: String
+    let delete: @MainActor () -> Void
+}
+
+/// Delete confirmation shared by both snippet lists.
+private struct SnippetDeletionConfirmation: ViewModifier {
+    @Binding var pending: PendingSnippetDeletion?
+
+    func body(content: Content) -> some View {
+        content.confirmationDialog(String(localized: "settings.snippets.deleteConfirm.title"),
+                                   isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }),
+                                   presenting: pending) { pending in
+            Button(String(localized: "settings.snippets.deleteConfirm.delete"), role: .destructive) { pending.delete() }
+            Button(String(localized: "settings.snippets.editor.cancel"), role: .cancel) {}
+        } message: { pending in
+            Text(String(format: String(localized: "settings.snippets.deleteConfirm.message"), pending.trigger))
+        }
     }
 }
 

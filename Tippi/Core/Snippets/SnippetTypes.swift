@@ -82,6 +82,9 @@ struct ImportedSnippet: Codable, Equatable, Identifiable {
     let id: UUID
     /// Espanso allows multiple triggers per match; `trigger` (first one) is
     /// what gets signed/verified, `triggers` is what actually gets matched.
+    /// Editing either in Tippi drops `shellApproval` outright
+    /// (`SnippetStore.updateImportedSnippet`) — the MAC alone would not catch
+    /// a change to the second or later trigger.
     var trigger: String
     var triggers: [String]
     var replace: String
@@ -96,6 +99,18 @@ struct ImportedSnippet: Codable, Equatable, Identifiable {
     /// letting two files legitimately define the same trigger, which Espanso
     /// allows and resolves by file precedence.
     var sourcePath: String?
+    /// First trigger as it came from the file, recorded the first time the
+    /// snippet is edited in Tippi. `nil` = never edited, so `trigger` is still
+    /// the original. Optional so stores written before this field still load.
+    ///
+    /// It is the stable key a re-import matches on: once the trigger itself has
+    /// been edited, matching on the current one would miss the entry and
+    /// import the file's version next to it as a duplicate.
+    var originalTrigger: String?
+
+    /// Edited in Tippi since import. A re-import of the source file leaves such
+    /// an entry alone — the local edit wins over the file.
+    var isLocallyEdited: Bool { originalTrigger != nil }
 
     init(id: UUID = UUID(), triggers: [String], replace: String, vars: [SnippetVar],
          shellApproval: SnippetApproval? = nil, sourcePath: String? = nil) {

@@ -66,10 +66,19 @@ struct DemoPrompt: Identifiable, Equatable {
 
     static func == (lhs: DemoPrompt, rhs: DemoPrompt) -> Bool { lhs.id == rhs.id }
 
-    /// Built-in + user-defined prompts.
+    /// The prompt's own instructions without the role-boundary preamble — for
+    /// the editor to show and compare against. Requests use `systemPrompt`.
+    var instructions: String { rawSystemPrompt }
+
+    /// Every prompt, as the user sees it: built-ins with their edits applied,
+    /// custom prompts, in the user's order. The one list popup, digit keys,
+    /// chain editor, welcome screen and Settings all use — no second copy.
     @MainActor
     static var all: [DemoPrompt] {
-        builtIn + CustomPromptStore.shared.prompts.map { $0.asDemoPrompt() }
+        ordered(builtIn: builtIn,
+                custom: CustomPromptStore.shared.prompts,
+                edits: BuiltInPromptEditStore.shared.edits,
+                order: PromptOrderStore.shared.order)
     }
 
     /// 24 built-in prompts grouped by intent. Wording is deliberately rigorous:

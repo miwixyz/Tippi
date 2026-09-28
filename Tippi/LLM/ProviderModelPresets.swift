@@ -297,14 +297,23 @@ enum ProviderModelPresets {
 
     /// Rewrites every persisted model selection that points at a known-dead
     /// id: the provider's own `defaultModel.<id>`, the dictation-polish
-    /// override, and every built-in prompt's per-prompt provider override
-    /// (`prompt.providerOverride.<promptID>.model`). Idempotent — only
-    /// touches values that exactly match a `retiredModels` entry, so it's a
-    /// silent no-op on every launch after the first for a given remap.
-    /// Call once at app launch, before anything reads a persisted model id.
+    /// override, and every prompt's per-prompt provider override
+    /// (`prompt.providerOverride.<promptID>.model`) — built-in and custom
+    /// (`custom-<uuid>`, see `CustomPrompt.demoID`). Custom prompts were
+    /// missed until 2026-09-28, so their pinned dead model kept failing.
+    /// Idempotent — only touches values that exactly match a `retiredModels`
+    /// entry, so it's a silent no-op on every launch after the first for a
+    /// given remap. Call once at app launch, before anything reads a
+    /// persisted model id.
     @MainActor
     static func migrateRetiredModels(defaults: UserDefaults = .standard) {
-        let promptIDs = DemoPrompt.builtIn.map(\.id)
+        // Custom prompts decoded straight from `defaults`, not via
+        // `CustomPromptStore`: that one writes a `.corrupt` backup on a
+        // decoding error — a side effect a migration must not have.
+        let customIDs = defaults.data(forKey: CustomPromptStore.storageKey)
+            .flatMap { try? JSONDecoder().decode([CustomPrompt].self, from: $0) }?
+            .map(\.demoID) ?? []
+        let promptIDs = DemoPrompt.builtIn.map(\.id) + customIDs
         for retired in retiredModels {
             var keysToCheck = [
                 "defaultModel.\(retired.providerID)",

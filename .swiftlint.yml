@@ -64,8 +64,9 @@ line_length:
 # Datei darüber hinaus, ist das der Moment zum Aufteilen — nicht vorher.
 # Ausreißer sind im Code markiert, jeweils mit Begründung „Bestand 2026-09-25":
 # file_length dateiweit in AppDelegate.swift (1969) und SettingsView.swift (2532);
-# type_body_length per `disable:next` an AppDelegate, SettingsView.VoiceTab und
-# PreviewView. Ein globaler Wert auf deren Niveau wäre wertlos.
+# type_body_length per `disable:next` an AppDelegate und PreviewView (VoiceTab fiel
+# 2026-09-28 unter die Grenze, als der Diktat-Hotkey nach Hotkeys zog). Ein
+# globaler Wert auf deren Niveau wäre wertlos.
 file_length:
   warning: 750
   error: 800

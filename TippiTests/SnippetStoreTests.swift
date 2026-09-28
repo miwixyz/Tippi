@@ -490,3 +490,183 @@ final class SnippetStoreTests: XCTestCase {
                       "nothing ahead of it actually wins, so it must not be marked")
     }
 }
+
+// MARK: - Editing imported snippets (2026-09-28)
+
+// An extension rather than more class body: the class sits at the
+// type_body_length ratchet, and these tests share its private fixtures.
+extension SnippetStoreTests {
+
+    /// Re-import of the same source file with `yaml` as its new contents. Uses
+    /// the store's own file id, same reason as `testReimportWithChangedCommandRevokesApproval`.
+    private func reimport(_ store: SnippetStore, sourceID: String, yaml: String) throws {
+        store.importFile(LoadedEspansoFile(
+            id: sourceID, url: URL(fileURLWithPath: sourceID),
+            matchFile: try EspansoYAMLParser.parse(yaml), containsShellVars: yaml.contains("type: shell")
+        ))
+    }
+
+    private func importApprovedShellSnippet() throws -> (SnippetStore, String) {
+        _ = try writeMatchFile(named: "a.yml", shellCmd: "echo hi")
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+        let sourceID = store.espansoFiles[0].id
+        store.importFile(store.espansoFiles[0])
+        store.approveShellSnippet(try XCTUnwrap(store.pendingShellApproval))
+        XCTAssertTrue(store.activeTriggers().contains(":t"), "precondition: approved and active")
+        return (store, sourceID)
+    }
+
+    /// The consent was given for one trigger. Editing it must not carry that
+    /// consent over, and no path — including re-importing the untouched file —
+    /// may bring it back without a new approval.
+    func testEditingTriggerOfApprovedShellSnippetDropsApproval() throws {
+        let (store, sourceID) = try importApprovedShellSnippet()
+
+        store.updateImportedSnippet(store.importedSnippets[0], triggers: [":neu"], replace: "{{x}}")
+
+        let edited = store.importedSnippets[0]
+        XCTAssertNil(edited.shellApproval, "the approval must be gone, so the list shows 'needs approval'")
+        XCTAssertFalse(store.isImportedSnippetActive(edited))
+        XCTAssertFalse(store.activeTriggers().contains(":neu"))
+        XCTAssertFalse(store.activeTriggers().contains(":t"))
+        XCTAssertNil(store.action(forTrigger: ":neu"), "an edited shell snippet must not expand without new consent")
+
+        try reimport(store, sourceID: sourceID, yaml: try String(contentsOf: tempDir.appendingPathComponent("a.yml"), encoding: .utf8))
+        XCTAssertEqual(store.importedSnippets.count, 1)
+        XCTAssertNil(store.action(forTrigger: ":neu"), "re-importing the file must not restore the approval")
+        XCTAssertNil(store.action(forTrigger: ":t"))
+
+        store.approveShellSnippet(store.importedSnippets[0])
+        XCTAssertNotNil(store.action(forTrigger: ":neu"), "a fresh approval of the edited snippet activates it")
+    }
+
+    /// The MAC covers the first trigger only. Adding a second one would still
+    /// verify against the old approval — exactly why an edit clears it outright
+    /// instead of relying on the MAC. The same goes for a text-only edit.
+    func testAddingASecondTriggerOrChangingTextAlsoDropsApproval() throws {
+        let (store, _) = try importApprovedShellSnippet()
+        let before = store.importedSnippets[0]
+        let approval = try XCTUnwrap(before.shellApproval)
+        XCTAssertTrue(SnippetApprovalSigner.verify(approval, trigger: ":t", command: before.shellCommandDigest,
+                                                   service: keychainService),
+                      "precondition: the old MAC would still verify, since the first trigger is unchanged")
+
+        store.updateImportedSnippet(before, triggers: [":t", "x"], replace: "{{x}}")
+        XCTAssertNil(store.importedSnippets[0].shellApproval)
+        XCTAssertFalse(store.activeTriggers().contains("x"), "an added trigger must not run an approved command")
+        XCTAssertNil(store.action(forTrigger: ":t"))
+
+        store.approveShellSnippet(store.importedSnippets[0])
+        XCTAssertNotNil(store.action(forTrigger: ":t"))
+        store.updateImportedSnippet(store.importedSnippets[0], triggers: [":t", "x"], replace: "Datum: {{x}}")
+        XCTAssertNil(store.action(forTrigger: ":t"), "a text-only edit of a shell snippet also needs new consent")
+    }
+
+    /// Opening the editor and saving unchanged must not cost the approval, nor
+    /// mark the entry as edited (which would opt it out of re-imports).
+    func testSavingWithoutChangesKeepsApproval() throws {
+        let (store, _) = try importApprovedShellSnippet()
+        let snippet = store.importedSnippets[0]
+
+        store.updateImportedSnippet(snippet, triggers: snippet.triggers, replace: snippet.replace)
+
+        XCTAssertNotNil(store.action(forTrigger: ":t"))
+        XCTAssertFalse(store.importedSnippets[0].isLocallyEdited)
+    }
+
+    /// No shell, no consent: an edited plain snippet expands under its new
+    /// trigger with its new text right away, and the old trigger is gone.
+    func testEditedPlainImportedSnippetStaysActive() throws {
+        try """
+        matches:
+          - trigger: ":a"
+            replace: "A"
+        """.write(to: tempDir.appendingPathComponent("a.yml"), atomically: true, encoding: .utf8)
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+        store.importFile(store.espansoFiles[0])
+
+        store.updateImportedSnippet(store.importedSnippets[0], triggers: [":b"], replace: "Neu")
+
+        XCTAssertTrue(store.activeTriggers().contains(":b"))
+        XCTAssertFalse(store.activeTriggers().contains(":a"))
+        guard case .espansoMatch(let match)? = store.action(forTrigger: ":b") else {
+            return XCTFail("the edited trigger must expand")
+        }
+        XCTAssertEqual(match.replace, "Neu")
+        XCTAssertTrue(store.importedSnippets[0].isLocallyEdited)
+    }
+
+    /// Stores written before `originalTrigger` existed must keep loading —
+    /// an unreadable ImportedSnippets.json blocks saving and every approval.
+    func testImportedStoreWithoutOriginalTriggerStillLoads() throws {
+        let supportDir = tempDir.appendingPathComponent("Tippi", isDirectory: true)
+        try FileManager.default.createDirectory(at: supportDir, withIntermediateDirectories: true)
+        try """
+        [{"id":"\(UUID().uuidString)","trigger":":a","triggers":[":a"],"replace":"A","vars":[],"sourcePath":"/tmp/a.yml"}]
+        """.write(to: supportDir.appendingPathComponent("ImportedSnippets.json"), atomically: true, encoding: .utf8)
+
+        let store = makeStore()
+
+        XCTAssertNil(store.importedSnippetsLoadError)
+        XCTAssertEqual(store.importedSnippets.first?.trigger, ":a")
+        XCTAssertNil(store.importedSnippets.first?.originalTrigger)
+        XCTAssertEqual(store.importedSnippets.first?.isLocallyEdited, false)
+    }
+
+    /// Michael's edit wins: a re-import of a changed file must not overwrite a
+    /// locally edited entry — also after a relaunch, so the marker must persist.
+    func testReimportDoesNotOverwriteLocallyEditedSnippet() throws {
+        try """
+        matches:
+          - trigger: ":a"
+            replace: "A"
+        """.write(to: tempDir.appendingPathComponent("a.yml"), atomically: true, encoding: .utf8)
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+        let sourceID = store.espansoFiles[0].id
+        store.importFile(store.espansoFiles[0])
+        store.updateImportedSnippet(store.importedSnippets[0], triggers: [":a"], replace: "meins")
+
+        let relaunched = makeStore()
+        XCTAssertEqual(relaunched.importedSnippets.first?.isLocallyEdited, true, "the edited marker must survive a relaunch")
+
+        try reimport(relaunched, sourceID: sourceID, yaml: """
+        matches:
+          - trigger: ":a"
+            replace: "aus der Datei"
+        """)
+        XCTAssertEqual(relaunched.importedSnippets.count, 1)
+        XCTAssertEqual(relaunched.importedSnippets[0].replace, "meins")
+    }
+
+    /// With the trigger itself edited, matching on the current trigger would
+    /// miss the entry and add the file's version next to it.
+    func testReimportAfterTriggerEditCreatesNoDuplicate() throws {
+        try """
+        matches:
+          - trigger: ":a"
+            replace: "A"
+        """.write(to: tempDir.appendingPathComponent("a.yml"), atomically: true, encoding: .utf8)
+        let store = makeStore()
+        store.isEnabled = true
+        store.matchDirectory = tempDir
+        let sourceID = store.espansoFiles[0].id
+        store.importFile(store.espansoFiles[0])
+        store.updateImportedSnippet(store.importedSnippets[0], triggers: [":b"], replace: "A")
+
+        try reimport(store, sourceID: sourceID, yaml: """
+        matches:
+          - trigger: ":a"
+            replace: "A"
+        """)
+
+        XCTAssertEqual(store.importedSnippets.count, 1, "the renamed entry must be recognised, not duplicated")
+        XCTAssertEqual(store.importedSnippets[0].trigger, ":b")
+        XCTAssertFalse(store.activeTriggers().contains(":a"))
+    }
+}

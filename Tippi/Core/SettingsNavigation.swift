@@ -1,7 +1,7 @@
 import Combine
 
 enum SettingsTab: Hashable, CaseIterable {
-    case general, hotkeys, providers, prompts, snippets, voice, history, help, about
+    case general, hotkeys, providers, prompts, snippets, autocomplete, voice, history, help, about
 
     /// Title and symbol live on the case rather than at the call site so the
     /// sidebar row and the window title cannot drift apart.
@@ -12,6 +12,7 @@ enum SettingsTab: Hashable, CaseIterable {
         case .providers: return String(localized: "settings.tab.providers")
         case .prompts:   return String(localized: "settings.tab.prompts")
         case .snippets:  return String(localized: "settings.tab.snippets")
+        case .autocomplete: return String(localized: "settings.tab.autocomplete")
         case .voice:     return String(localized: "settings.tab.voice")
         case .history:   return String(localized: "settings.tab.history")
         case .help:      return String(localized: "settings.tab.help")
@@ -26,6 +27,7 @@ enum SettingsTab: Hashable, CaseIterable {
         case .providers: return "key"
         case .prompts:   return "text.bubble"
         case .snippets:  return "text.badge.checkmark"
+        case .autocomplete: return "text.cursor"
         case .voice:     return "mic"
         case .history:   return "clock.arrow.circlepath"
         case .help:      return "questionmark.circle"
@@ -45,5 +47,13 @@ enum SettingsTab: Hashable, CaseIterable {
 final class SettingsNavigation: ObservableObject {
     static let shared = SettingsNavigation()
     @Published var pendingTab: SettingsTab?
+    /// Anbieter-Karte, die `ProvidersTab` aufklappen und zeigen soll.
+    @Published var pendingProviderID: String?
     private init() {}
+
+    /// Springt zu Anbieter und klappt die Karte `providerID` auf (z. B. „mlx").
+    func openProvider(_ providerID: String) {
+        pendingProviderID = providerID
+        pendingTab = .providers
+    }
 }

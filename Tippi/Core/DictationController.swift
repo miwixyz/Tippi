@@ -14,7 +14,9 @@ enum DictationSettings {
     /// `DictationInputModeTests` deleted it on every `make test` before a release.
     static var store: UserDefaults = .standard
 
-    private static let enabledKey               = "dictation.enabled"
+    /// Not private: the Dictation pane observes it via `@AppStorage` while the
+    /// switch itself lives under Hotkeys (`DictationHotkeySection`).
+    static let enabledKey                       = "dictation.enabled"
     private static let comboKey                 = "dictation.hotkeyCombo.v1"
     private static let postProcessEnabledKey    = "dictation.postProcess.enabled"
     private static let postProcessPromptKey     = "dictation.postProcess.prompt"

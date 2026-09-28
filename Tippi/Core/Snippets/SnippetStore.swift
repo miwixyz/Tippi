@@ -427,6 +427,10 @@ final class SnippetStore: ObservableObject {
     ///   entry. "Matching by trigger is not sufficient to inherit approval"
     ///   is the one rule this whole feature exists to enforce; re-import is
     ///   the exact laundering path the design doc calls out.
+    /// - Existing entry edited in Tippi → left untouched, whatever the file
+    ///   now says. Michael's edit wins over the file. Matched on the trigger
+    ///   it was imported under (`originalTrigger`), so an edited trigger does
+    ///   not bring the file's version back as a second entry.
     func importFile(_ file: LoadedEspansoFile) {
         // With the imported file unreadable, saving is blocked — an import would
         // live only in memory while the source file got hidden for good
@@ -454,8 +458,11 @@ final class SnippetStore: ObservableObject {
             // Matched per source file, not globally: Espanso allows two files
             // to define the same trigger, and silently overwriting one with the
             // other loses a snippet the user never asked to remove.
-            if let idx = importedSnippets.firstIndex(where: { $0.trigger == candidate.trigger && $0.sourcePath == file.id }) {
+            if let idx = importedSnippets.firstIndex(where: {
+                ($0.originalTrigger ?? $0.trigger) == candidate.trigger && $0.sourcePath == file.id
+            }) {
                 let existing = importedSnippets[idx]
+                guard !existing.isLocallyEdited else { continue }
                 if existing.replace != candidate.replace || existing.vars != candidate.vars || existing.triggers != candidate.triggers {
                     importedSnippets[idx] = candidate
                 }
@@ -510,6 +517,40 @@ final class SnippetStore: ObservableObject {
     /// any) surfaces on the next import or when tapped explicitly.
     func declineShellSnippet(_ snippet: ImportedSnippet) {
         if pendingShellApproval?.id == snippet.id { pendingShellApproval = nil }
+    }
+
+    /// Changes an imported snippet's triggers and replacement text. Its vars —
+    /// and with them any shell command — are not editable here, so an edit can
+    /// change *when* a command runs but never *what* runs.
+    ///
+    /// Every actual change drops the shell approval. The MAC covers the first
+    /// trigger and the command only; relying on it would let a second trigger
+    /// be added to an approved snippet without a new prompt. An edit therefore
+    /// never carries consent across — the snippet is inactive until approved
+    /// again, and the badge says so.
+    func updateImportedSnippet(_ snippet: ImportedSnippet, triggers: [String], replace: String) {
+        guard importedSnippetsLoadError == nil else {
+            storeLog.error("edit refused: ImportedSnippets.json is unreadable, saving is blocked")
+            return
+        }
+        guard let idx = importedSnippets.firstIndex(where: { $0.id == snippet.id }),
+              let first = triggers.first,
+              !triggers.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty })
+        else { return }
+        var edited = importedSnippets[idx]
+        // Saving without a change must not cost an approval or mark the entry
+        // as edited — that would also opt it out of future re-imports.
+        guard triggers != edited.triggers || replace != edited.replace else { return }
+        edited.originalTrigger = edited.originalTrigger ?? edited.trigger
+        edited.trigger = first
+        edited.triggers = triggers
+        edited.replace = replace
+        edited.shellApproval = nil
+        importedSnippets[idx] = edited
+        saveImportedSnippets()
+        // A queued consent prompt holds the pre-edit copy and would name a
+        // trigger that no longer exists.
+        if pendingShellApproval?.id == edited.id { pendingShellApproval = nil }
     }
 
     func removeImportedSnippet(_ snippet: ImportedSnippet) {

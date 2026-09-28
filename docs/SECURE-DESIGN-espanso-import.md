@@ -93,6 +93,34 @@ approved state. Rules:
 - If the command changed, the snippet arrives unapproved regardless of history.
 - An import never upgrades an existing snippet's trust level. It may only add
   new unapproved entries or leave approved ones untouched.
+- A snippet edited in Tippi is left untouched by a re-import, whatever the file
+  now says (see next section). That rule can only keep or lower trust: the
+  edit already dropped the approval, and the re-import writes nothing.
+
+### Editing imported snippets — decided 2026-09-28
+
+Imported snippets are Tippi's own copy, so they are editable like app-created
+ones: triggers and replacement text. Three rules keep that from becoming a way
+around consent:
+
+- **The vars are not editable.** The editor changes triggers and text only; it
+  does not offer the variable picker for imported entries. An edit can change
+  *when* a command runs, never *what* runs.
+- **Every actual edit drops the approval** (`shellApproval = nil`). The HMAC
+  covers the first trigger and the command digest — changing the first trigger
+  would break it anyway, but a second or later trigger is not in the signed
+  message, so relying on the MAC would let an extra trigger be added to an
+  approved snippet without a new prompt. Clearing outright closes that. The
+  snippet stays inactive and the list shows "Needs approval" until it is
+  approved again, which signs the new trigger. Saving without a change keeps
+  the approval.
+- **A local edit wins over the file.** The edited entry records the trigger it
+  was imported under (`originalTrigger`, optional — older stores decode without
+  it). A re-import matches on that key, not on the current trigger, and skips
+  the entry: no overwrite, and no duplicate when the trigger itself was
+  changed. The list marks such entries "edited".
+
+Deleting a snippet — imported or app-created — asks for confirmation first.
 
 ### Importing a foreign YAML
 

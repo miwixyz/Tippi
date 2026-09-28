@@ -65,6 +65,7 @@ struct KeyCombo: Codable, Equatable {
         case 7:  return "X"
         case 8:  return "C"
         case 9:  return "V"
+        case 10: return "^"   // ISO-Taste über ⇥ (deutsche Beschriftung)
         case 11: return "B"
         case 12: return "Q"
         case 13: return "W"
@@ -122,6 +123,14 @@ struct KeyCombo: Codable, Equatable {
         case 105: return "F13"
         case 107: return "F14"
         case 113: return "F15"
+        case 106: return "F16"
+        case 64:  return "F17"
+        case 79:  return "F18"
+        case 80:  return "F19"
+        case 123: return "←"
+        case 124: return "→"
+        case 125: return "↓"
+        case 126: return "↑"
         default:  return "Key#\(code)"
         }
     }

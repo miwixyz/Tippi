@@ -249,6 +249,65 @@ extension SyncedPreferencesTests {
         defaults.set(["CINEWEB"], forKey: wordsKey)   // must return, not overflow
         XCTAssertEqual(defaults.stringArray(forKey: wordsKey), ["CINEWEB"])
     }
+
+    // MARK: - Prompt stores follow an incoming value (review 2026-09-28)
+    //
+    // The prompt stores hold their lists in memory. If an incoming value only
+    // reached `defaults`, the next local save wrote the stale list back as the
+    // newest and deleted the other Mac's change on both (audit 2026-09-27).
+    // `.shared` is fixed to `.standard`, so these run the real reload logic
+    // against stores on the test's own defaults.
+
+    func testIncomingValuesUpdateAllThreePromptStores() throws {
+        let custom = CustomPromptStore(defaults: defaults)
+        let edits = BuiltInPromptEditStore(defaults: defaults)
+        let order = PromptOrderStore(defaults: defaults)
+        let sync = SyncedPreferences(store: FakeKeyValueStore.shared.asUbiquitousStore(), defaults: defaults) { key in
+            SyncedPreferences.reloadPromptStore(for: key, customPrompts: custom, builtInEdits: edits, order: order)
+        }
+        XCTAssertTrue(custom.prompts.isEmpty)
+        XCTAssertTrue(edits.edits.isEmpty)
+        XCTAssertTrue(order.order.isEmpty)
+
+        let now = Date().timeIntervalSince1970
+        let prompt = CustomPrompt(title: "Vom anderen Mac", symbol: "", systemPrompt: "x")
+        let remoteEdits = ["improve": BuiltInPromptEdit(title: "Besser")]
+        let remote: [(String, Any)] = [
+            (CustomPromptStore.storageKey, try JSONEncoder().encode([prompt])),
+            (BuiltInPromptEditStore.storageKey, try JSONEncoder().encode(remoteEdits)),
+            (PromptOrderStore.storageKey, ["b", "a"]),
+        ]
+        for (key, value) in remote {
+            FakeKeyValueStore.shared.set(value, forKey: key)
+            FakeKeyValueStore.shared.set(now, forKey: "\(key).syncedAt")
+        }
+
+        sync.pullNowForTesting()
+
+        XCTAssertEqual(custom.prompts.map(\.title), ["Vom anderen Mac"],
+                       "custom prompts in memory must follow the incoming value")
+        XCTAssertEqual(edits.edits["improve"]?.title, "Besser",
+                       "built-in prompt edits in memory must follow the incoming value")
+        XCTAssertEqual(order.order, ["b", "a"],
+                       "the prompt order in memory must follow the incoming value")
+    }
+
+    /// The prompt order is a sequence, not a set: on its first sync the local
+    /// order stays as it is instead of getting the remote one appended.
+    func testFirstSyncKeepsLocalPromptOrderInsteadOfUnion() {
+        let orderKey = PromptOrderStore.storageKey
+        defaults.set(["b", "a"], forKey: orderKey)
+        FakeKeyValueStore.shared.set(["a", "b", "c"], forKey: orderKey)
+        FakeKeyValueStore.shared.set(Date().timeIntervalSince1970 - 10, forKey: "\(orderKey).syncedAt")
+
+        let sync = makeSync()
+        sync.startSequenceForTesting()
+
+        XCTAssertEqual(defaults.stringArray(forKey: orderKey), ["b", "a"],
+                       "a union would have produced [b, a, c] — an order nobody chose")
+        XCTAssertEqual(FakeKeyValueStore.shared.array(forKey: orderKey) as? [String], ["b", "a"],
+                       "the kept order must be uploaded, or the Macs stay apart")
+    }
 }
 
 final class DeafUbiquitousStore: NSUbiquitousKeyValueStore {

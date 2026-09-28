@@ -53,6 +53,8 @@ Tippi/
 │   │                               #   Vorher 3 Kopien in AppDelegate → 2× derselbe Bug
 │   ├── KeychainStore.swift         # API-Keys
 │   ├── SyncedPreferences.swift     # v2.11 — Allow-List, die per iCloud über Macs wandert
+│   ├── PromptLibrary.swift         # Änderungen an eingebauten Prompts + EINE Reihenfolge über
+│   │                               #   eingebaute und eigene (beides per iCloud); DemoPrompt.all nutzt sie
 │   ├── CustomWordVariants.swift    # „Tipi → Tippi“ in Eigene Wörter: deterministische Ersetzung
 │   │                               #   direkt nach der Erkennung (SpeechTranscriber), vor der KI
 │   ├── AppearanceSettings.swift    # System/Hell/Dunkel → NSApp.appearance + die drei Panels
@@ -77,12 +79,14 @@ Tippi/
 │   │   ├── EmojiInlineMatcher.swift        # `:name:`-Erkennung, rein + unit-getestet
 │   │   └── EmojiSettings.swift             # Hotkey, Toggles, Recents
 │   ├── Autocomplete/               # Labs — Autovervollständigung beim Tippen (ab Werk AUS)
-│   │   ├── AutocompleteController.swift    # aktiver CGEvent-Tap (nur wenn an; schluckt NUR ⇥ bei
-│   │   │                                   #   sichtbarem Vorschlag), 350-ms-Pause, AX-Kontext,
-│   │   │                                   #   Anfrage an Tippis EIGENEN MLX-Server, Overlay
+│   │   ├── AutocompleteController.swift    # aktiver CGEvent-Tap (nur wenn an; schluckt NUR die zwei
+│   │   │                                   #   Übernahme-Tasten bei sichtbarem Vorschlag), 350-ms-Pause,
+│   │   │                                   #   AX-Kontext, Anfrage an Tippis EIGENEN MLX-Server, Overlay
 │   │   ├── AutocompleteLogic.swift         # rein + unit-getestet: Kontext-Schnitt, Ausschluss,
-│   │   │                                   #   ⇥-Entscheidung, Bereinigung, Loopback-Anfrage
-│   │   └── AutocompleteSettings.swift      # an/aus + Ausschlussliste, `store` für Tests
+│   │   │                                   #   Übernahme-Tasten (erlaubt? welche Aktion?), Bereinigung,
+│   │   │                                   #   Loopback-Anfrage
+│   │   └── AutocompleteSettings.swift      # an/aus, Ausschlussliste, Übernahme-Tasten (beim Lesen
+│   │                                       #   geprüft), Tastenhinweis; `store` für Tests
 │   │                                       #   Design: docs/SECURE-DESIGN-autocomplete.md
 │   ├── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync
@@ -105,9 +109,13 @@ Tippi/
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
-│   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # grauer Vorschlag am Cursor, nie Key, keine Klicks
+│   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # Glas-Kapsel am Cursor mit Tastenhinweis, nie Key, keine Klicks
 │   ├── AppListEditor.swift                # v2.16.3 — App-Liste mit Symbol + Name, „App hinzufügen…“ (Ausschlussliste, Enter nach Diktat)
-│   ├── AutocompleteSettingsSection.swift  # Labs-Abschnitt in Einstellungen → Allgemein
+│   ├── AutocompleteSettingsTab.swift      # Einstellungen → Autovervollständigung (eigener Bereich seit
+│   │                                      #   2026-09-28): Schalter, Modell, zwei Übernahme-Tasten, Ausschlussliste
+│   ├── DictationHotkeySection.swift       # Diktat-Hotkey, seit 2026-09-28 unter Einstellungen → Hotkeys
+│   ├── HotkeyRecorderField.swift          # Tasten-Recorder; ohne `validator` globale Hotkeys (⌘/⌃ Pflicht),
+│   │                                      #   mit `validator` z. B. die Übernahme-Tasten
 │   ├── DictationAutoReturnSection.swift   # v2.16 — App-Liste „Nach dem Einfügen Enter drücken“
 │   ├── Translate/                  # v1.15 — Spotlight-artiges Übersetzungsfenster
 │   ├── SelectionPopup/             # Aktionsleiste (Panel + View)
@@ -119,8 +127,10 @@ Tippi/
 │   │   ├── NotesListView.swift             # Liste + Neu/Löschen (Bestätigungsdialog)
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
 │   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck
-│   ├── SettingsView.swift          # alle 9 Tabs (großes File, private structs)
-│   └── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
+│   ├── SettingsView.swift          # Seitenleiste + die meisten der 10 Bereiche (großes File, private structs)
+│   ├── PromptsSettingsTab.swift    # Prompts-Tab: eine Liste, Ziehen zum Sortieren, Editor für alle
+│   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
+│   └── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
 ├── Voice/
 │   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate)
 │   ├── WhisperTranscriber.swift    # whisper-cli-Wrapper

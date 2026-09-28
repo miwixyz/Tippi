@@ -22,7 +22,7 @@ struct SettingsView: View {
     /// then the text/AI machinery, then things looked at occasionally.
     private static let sidebarGroups: [[SettingsTab]] = [
         [.general, .hotkeys, .voice],
-        [.providers, .prompts, .snippets],
+        [.providers, .prompts, .snippets, .autocomplete],
         [.history, .help, .about],
     ]
 
@@ -42,7 +42,11 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 240)
+            // Ideal 225, not 190 (2026-09-28): „Wörterbuch & Snippets" is 141 pt
+            // wide at 13 pt, „Autovervollständigung" 135 pt; with icon, spacing
+            // and the list's insets (~65–80 pt) a 190-pt column truncated them.
+            // Calculated, not measured on screen.
+            .navigationSplitViewColumnWidth(min: 170, ideal: 225, max: 260)
         } detail: {
             // Every pane stays alive; only visibility changes.
             //
@@ -105,6 +109,10 @@ struct SettingsView: View {
         case .providers: ProvidersTab()
         case .prompts:   PromptsTab()
         case .snippets:  SnippetsTab()
+        case .autocomplete:
+            if let autocomplete = AppDelegate.shared?.autocomplete {
+                AutocompleteSettingsTab(controller: autocomplete)
+            }
         case .voice:     VoiceTab()
         case .history:   HistoryTab()
         case .help:      HelpTab()
@@ -179,10 +187,6 @@ private struct GeneralSettingsTab: View {
                         SelectionPopupSettings.position = new
                     }
                 }
-            }
-
-            if let autocomplete = AppDelegate.shared?.autocomplete {
-                AutocompleteSettingsSection(controller: autocomplete)
             }
         }
         .padding(24)
@@ -333,6 +337,9 @@ private struct HotkeysTab: View {
                     }
                     .padding(6)
                 }
+
+                // Moved here from the Dictation pane (2026-09-28): every hot key in one place.
+                GroupBox { DictationHotkeySection().padding(6) }
 
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
@@ -611,22 +618,47 @@ private struct ProvidersTab: View {
     @State private var selectedProvider: String = LLMRouter.preferredProviderID
     @State private var refreshTick: Int = 0
     @State private var allowFallback: Bool = UserDefaults.standard.bool(forKey: "allowProviderFallback")
+    @ObservedObject private var navigation = SettingsNavigation.shared
+    /// Open provider cards. Eleven cards fully open made the pane a long
+    /// scroll; at first only the default provider is open. Kept for the
+    /// session — the pane stays mounted for the window's lifetime.
+    @State private var expanded: Set<String> = [LLMRouter.preferredProviderID]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                defaultPickerCard
-                fallbackCard
-                ForEach(LLMRouter.allProviders.indices, id: \.self) { index in
-                    let provider = LLMRouter.allProviders[index]
-                    ProviderRow(provider: provider, refreshTick: refreshTick) {
-                        refreshTick += 1
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    defaultPickerCard
+                    fallbackCard
+                    ForEach(LLMRouter.allProviders.indices, id: \.self) { index in
+                        let provider = LLMRouter.allProviders[index]
+                        ProviderRow(provider: provider, refreshTick: refreshTick,
+                                    isExpanded: isExpanded(provider.id)) {
+                            refreshTick += 1
+                        }
+                        .id(provider.id)
                     }
                 }
+                .padding(20)
             }
-            .padding(20)
+            // "Change model…" in Autocomplete jumps here and opens MLX.
+            .onReceive(navigation.$pendingProviderID.compactMap { $0 }) { id in
+                expanded.insert(id)
+                navigation.pendingProviderID = nil
+                // Next turn: scroll to the opened card, not to its collapsed height.
+                Task { @MainActor in withAnimation { proxy.scrollTo(id, anchor: .top) } }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func isExpanded(_ id: String) -> Binding<Bool> {
+        Binding(
+            get: { expanded.contains(id) },
+            set: { open in
+                if open { expanded.insert(id) } else { expanded.remove(id) }
+            }
+        )
     }
 
     private var fallbackCard: some View {
@@ -664,6 +696,7 @@ private struct ProvidersTab: View {
                     .frame(width: 220)
                     .onChange(of: selectedProvider) { _, new in
                         LLMRouter.setPreferredProvider(new)
+                        expanded.insert(new)
                         // Pre-warm MLX server when user switches to it — avoids
                         // a 30–60s wait on the first transformation.
                         if new == "mlx" {
@@ -683,6 +716,7 @@ private struct ProvidersTab: View {
 private struct ProviderRow: View {
     let provider: LLMProvider
     let refreshTick: Int
+    @Binding var isExpanded: Bool
     let onSaved: () -> Void
 
     @State private var apiKey: String = ""
@@ -708,6 +742,8 @@ private struct ProviderRow: View {
     @State private var mlxPreset: String = "custom"
     @State private var showingMLXSetup: Bool = false
     @State private var mlxIsInstalled: Bool = MLXServerManager.isInstalled
+    /// Port and custom repo ID are jargon most people never need — tucked away.
+    @State private var mlxAdvancedExpanded = false
 
     private var isMLX: Bool { provider.id == "mlx" }
 
@@ -825,142 +861,23 @@ private struct ProviderRow: View {
     ]
     var body: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
+            DisclosureGroup(isExpanded: $isExpanded) {
+                details.padding(.top, 8)
+            } label: {
                 HStack {
                     Text(provider.displayName)
                         .font(.headline)
+                    // Visible while collapsed, so an outdated model is not hidden.
+                    if availabilityChecker.staleDetails[provider.id] != nil {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
                     Spacer()
                     statusBadge
                 }
-
-                Text(hint(for: provider.id))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                if let stale = availabilityChecker.staleDetails[provider.id] {
-                    HStack(spacing: 8) {
-                        Label(String(localized: "settings.providers.modelStale"), systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                            .help(String(localized: "settings.providers.modelStale.help"))
-                        if let suggested = stale.suggested {
-                            Button(String(format: String(localized: "settings.providers.modelStale.fix"), suggested)) {
-                                availabilityChecker.applySuggestion(for: provider.id)
-                                load()
-                                onSaved()
-                            }
-                            .controlSize(.small)
-                        }
-                    }
-                }
-
-                if provider.requiresAPIKey {
-                    SecureField(String(localized: "settings.providers.apiKey"),
-                                text: $apiKey)
-                        .textFieldStyle(.roundedBorder)
-                }
-
-                if isMLX {
-                    mlxModelPicker
-                } else {
-                    curatedModelPicker
-                }
-
-                // ── MLX extras ──────────────────────────────────────────────
-                if isMLX {
-                    if mlxIsInstalled {
-                        HStack {
-                            Text(String(localized: "settings.providers.mlx.port"))
-                                .font(.caption)
-                                .frame(width: 60, alignment: .leading)
-                            TextField("8080", text: $mlxPort)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 80)
-                            Spacer()
-                        }
-
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(mlxStatusColor)
-                                .frame(width: 8, height: 8)
-                            Text(mlxManager.state.displayLabel)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            if mlxManager.state.isRunning {
-                                Button(String(localized: "settings.providers.mlx.stop")) {
-                                    mlxManager.stop()
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            } else {
-                                Button(String(localized: "settings.providers.mlx.start")) {
-                                    Task { try? await mlxManager.start() }
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .disabled(mlxManager.state == .starting)
-                            }
-                        }
-
-                        // First run pulls the weights from HuggingFace through
-                        // mlx_lm.server. Without this row that is several GB of
-                        // silence behind a "Starting…" label.
-                        if let download = mlxManager.downloadStatus {
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .controlSize(.small)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(String(localized: "settings.providers.mlx.downloading"))
-                                        .font(.caption)
-                                    Text(download)
-                                        .font(.system(.caption2, design: .monospaced))
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                }
-                                Spacer()
-                            }
-                        }
-                    } else {
-                        // Not installed → friendly one-click setup card.
-                        HStack(spacing: 12) {
-                            Image(systemName: "shippingbox")
-                                .font(.title2)
-                                .foregroundStyle(.tint)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(String(localized: "mlx.install.notInstalled"))
-                                    .font(.callout)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            Spacer()
-                            Button(String(localized: "mlx.install.button")) {
-                                showingMLXSetup = true
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .padding(8)
-                        .background(.tint.opacity(0.06))
-                        .cornerRadius(6)
-                    }
-                }
-                // ────────────────────────────────────────────────────────────
-
-                HStack {
-                    if let saveError {
-                        Text(saveError)
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                    } else if savedFlash {
-                        Text(String(localized: "settings.providers.savedFlash"))
-                            .font(.caption)
-                            .foregroundStyle(.green)
-                    }
-                    Spacer()
-                    Button(String(localized: "settings.providers.save"), action: save)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(saveDisabled)
-                }
+                .contentShape(Rectangle())
+                .onTapGesture { withAnimation(.snappy(duration: 0.2)) { isExpanded.toggle() } }
             }
             .padding(6)
         }
@@ -979,6 +896,135 @@ private struct ProviderRow: View {
             mlxIsInstalled = MLXServerManager.isInstalled
         }) {
             MLXSetupSheet()
+        }
+    }
+
+    /// Everything below the header. The row's @State (unsaved key, model)
+    /// lives on `ProviderRow`, not in here, so collapsing loses nothing.
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(hint(for: provider.id))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let stale = availabilityChecker.staleDetails[provider.id] {
+                HStack(spacing: 8) {
+                    Label(String(localized: "settings.providers.modelStale"), systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .help(String(localized: "settings.providers.modelStale.help"))
+                    if let suggested = stale.suggested {
+                        Button(String(format: String(localized: "settings.providers.modelStale.fix"), suggested)) {
+                            availabilityChecker.applySuggestion(for: provider.id)
+                            load()
+                            onSaved()
+                        }
+                        .controlSize(.small)
+                    }
+                }
+            }
+
+            if provider.requiresAPIKey {
+                SecureField(String(localized: "settings.providers.apiKey"),
+                            text: $apiKey)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            if isMLX {
+                mlxModelPicker
+            } else {
+                curatedModelPicker
+            }
+
+            // ── MLX extras ──────────────────────────────────────────────
+            if isMLX {
+                if mlxIsInstalled {
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(mlxStatusColor)
+                            .frame(width: 8, height: 8)
+                        Text(mlxManager.state.displayLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if mlxManager.state.isRunning {
+                            Button(String(localized: "settings.providers.mlx.stop")) {
+                                mlxManager.stop()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                        } else {
+                            Button(String(localized: "settings.providers.mlx.start")) {
+                                Task { try? await mlxManager.start() }
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(mlxManager.state == .starting)
+                        }
+                    }
+
+                    // First run pulls the weights from HuggingFace through
+                    // mlx_lm.server. Without this row that is several GB of
+                    // silence behind a "Starting…" label.
+                    if let download = mlxManager.downloadStatus {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(String(localized: "settings.providers.mlx.downloading"))
+                                    .font(.caption)
+                                Text(download)
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                            Spacer()
+                        }
+                    }
+                } else {
+                    // Not installed → friendly one-click setup card.
+                    HStack(spacing: 12) {
+                        Image(systemName: "shippingbox")
+                            .font(.title2)
+                            .foregroundStyle(.tint)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(localized: "mlx.install.notInstalled"))
+                                .font(.callout)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer()
+                        Button(String(localized: "mlx.install.button")) {
+                            showingMLXSetup = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding(8)
+                    .background(.tint.opacity(0.06))
+                    .cornerRadius(6)
+                }
+                if mlxIsInstalled || mlxPreset == "custom" {
+                    MLXAdvancedSettings(isExpanded: $mlxAdvancedExpanded, modelName: $modelName, port: $mlxPort,
+                                        showsCustomModel: mlxPreset == "custom", showsPort: mlxIsInstalled)
+                }
+            }
+            // ────────────────────────────────────────────────────────────
+
+            HStack {
+                if let saveError {
+                    Text(saveError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else if savedFlash {
+                    Text(String(localized: "settings.providers.savedFlash"))
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
+                Spacer()
+                Button(String(localized: "settings.providers.save"), action: save)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(saveDisabled)
+            }
         }
     }
 
@@ -1066,15 +1112,13 @@ private struct ProviderRow: View {
                 .onChange(of: mlxPreset) { _, newPreset in
                     if let preset = Self.mlxPresets.first(where: { $0.id == newPreset }) {
                         modelName = preset.repoID
+                    } else if newPreset == "custom" {
+                        mlxAdvancedExpanded = true   // the field lives under „Erweitert"
                     }
                 }
             }
-            if mlxPreset == "custom" {
-                TextField("mlx-community/…", text: $modelName)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.leading, 60)
-                    .font(.caption)
-            } else {
+            // A custom repo ID is typed under „Erweitert" (`MLXAdvancedSettings`).
+            if mlxPreset != "custom" {
                 Text(modelName)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -1139,6 +1183,7 @@ private struct ProviderRow: View {
                 modelName = match.repoID
             } else {
                 mlxPreset = "custom"
+                mlxAdvancedExpanded = true
                 if modelName.isEmpty { modelName = MLXServerManager.model }
             }
         }
@@ -1222,499 +1267,53 @@ private struct ProviderRow: View {
     }
 }
 
+/// „Erweitert" on the MLX card: the custom Hugging Face repo ID (only when
+/// "Custom…" is picked — choosing it opens this) and the local server port.
+/// Jargon most people never need, so it starts collapsed. Its own view to keep
+/// `ProviderRow` under the type-length limit; the values stay in the row.
+private struct MLXAdvancedSettings: View {
+    @Binding var isExpanded: Bool
+    @Binding var modelName: String
+    @Binding var port: String
+    let showsCustomModel: Bool
+    let showsPort: Bool
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            VStack(alignment: .leading, spacing: 8) {
+                if showsCustomModel {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "settings.providers.mlx.customRepo"))
+                            .font(.caption)
+                        TextField("mlx-community/…", text: $modelName)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.caption)
+                    }
+                }
+                if showsPort {
+                    HStack {
+                        Text(String(localized: "settings.providers.mlx.port"))
+                            .font(.caption)
+                        TextField("8080", text: $port)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 80)
+                        Spacer()
+                    }
+                }
+            }
+            .padding(.top, 4)
+        } label: {
+            Text(String(localized: "settings.providers.advanced"))
+                .font(.caption)
+                .contentShape(Rectangle())
+                .onTapGesture { isExpanded.toggle() }
+        }
+    }
+}
+
 // MARK: - Prompts
 
-private struct PromptsTab: View {
-    @StateObject private var store = CustomPromptStore.shared
-    @State private var editing: CustomPrompt?
-    @State private var creatingNew: Bool = false
-    @State private var pendingImportData: Data?
-    @State private var importMessage: String?
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // ── Built-in prompts ──────────────────────────────────────────
-                GroupBox {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(String(localized: "settings.prompts.builtIn"))
-                            .font(.headline)
-                        Text(String(localized: "settings.prompts.builtIn.overrideHint"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        ForEach(DemoPrompt.builtIn) { p in
-                            BuiltInPromptRow(prompt: p)
-                            Divider()
-                        }
-                    }
-                    .padding(6)
-                }
-
-                // ── Custom prompts ────────────────────────────────────────────
-                GroupBox {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 6) {
-                            Text(String(localized: "settings.prompts.custom"))
-                                .font(.headline)
-                            Spacer()
-                            Button(action: importPrompts) {
-                                Label(String(localized: "prompts.import.button"),
-                                      systemImage: "square.and.arrow.down")
-                            }
-                            .buttonStyle(.borderless)
-                            if !store.prompts.isEmpty {
-                                Button(action: exportAll) {
-                                    Label(String(localized: "prompts.export.all"),
-                                          systemImage: "square.and.arrow.up")
-                                }
-                                .buttonStyle(.borderless)
-                            }
-                            Button(action: { creatingNew = true }) {
-                                Label(String(localized: "settings.prompts.new"),
-                                      systemImage: "plus.circle.fill")
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                        if store.prompts.isEmpty {
-                            Text(String(localized: "settings.prompts.empty"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            List {
-                                ForEach(store.prompts) { p in
-                                    HStack {
-                                        Image(systemName: p.symbol)
-                                            .foregroundStyle(.tint)
-                                            .frame(width: 22)
-                                        Text(p.title)
-                                        Spacer()
-                                        Button(action: { exportSingle(p) }) {
-                                            Image(systemName: "square.and.arrow.up")
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        .buttonStyle(.borderless)
-                                        .help(String(localized: "prompts.export.one"))
-                                        Button(action: { editing = p }) {
-                                            Image(systemName: "pencil")
-                                        }
-                                        .buttonStyle(.borderless)
-                                        Button(action: { store.delete(id: p.id) }) {
-                                            Image(systemName: "trash")
-                                                .foregroundStyle(.red)
-                                        }
-                                        .buttonStyle(.borderless)
-                                    }
-                                }
-                                .onMove { store.move(fromOffsets: $0, toOffset: $1) }
-                            }
-                            .listStyle(.plain)
-                            .frame(minHeight: CGFloat(store.prompts.count) * 36)
-                        }
-                    }
-                    .padding(6)
-                }
-
-                // ── Import status message ─────────────────────────────────────
-                if let msg = importMessage {
-                    Text(msg)
-                        .font(.caption)
-                        .foregroundStyle(msg.hasPrefix("✓") ? Color.secondary : Color.orange)
-                        .padding(.horizontal, 4)
-                }
-            }
-            .padding(20)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        // ── Import merge / replace alert ──────────────────────────────────────
-        .alert(
-            String(localized: "prompts.import.alert.title"),
-            isPresented: Binding(
-                get: { pendingImportData != nil },
-                set: { if !$0 { pendingImportData = nil } }
-            )
-        ) {
-            Button(String(localized: "prompts.import.merge")) { doImport(merge: true) }
-            Button(String(localized: "prompts.import.replace"), role: .destructive) { doImport(merge: false) }
-            Button(String(localized: "prompts.import.cancel"), role: .cancel) { pendingImportData = nil }
-        } message: {
-            Text(String(localized: "prompts.import.alert.message"))
-        }
-        .sheet(item: $editing) { prompt in
-            PromptEditor(existing: prompt) { updated in
-                if let updated { store.update(updated) }
-                editing = nil
-            }
-        }
-        .sheet(isPresented: $creatingNew) {
-            PromptEditor(existing: nil) { newOne in
-                if let newOne {
-                    store.add(newOne)
-                }
-                creatingNew = false
-            }
-        }
-    }
-
-    // MARK: - Export
-
-    private func exportAll() {
-        exportPrompts(store.prompts, suggestedName: "Tippi-Prompts.tippipack")
-    }
-
-    private func exportSingle(_ prompt: CustomPrompt) {
-        let safeName = prompt.title
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "/", with: "-")
-        exportPrompts([prompt], suggestedName: "Tippi-\(safeName).tippipack")
-    }
-
-    private func exportPrompts(_ prompts: [CustomPrompt], suggestedName: String) {
-        guard let data = try? store.packageData(for: prompts) else { return }
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = suggestedName
-        panel.title = String(localized: "prompts.export.panel.title")
-        panel.message = String(localized: "prompts.export.panel.message")
-        panel.begin { response in
-            guard response == .OK, let url = panel.url else { return }
-            do {
-                try data.write(to: url)
-            } catch {
-                showImportMessage(String(localized: "prompts.export.failed"))
-            }
-        }
-    }
-
-    // MARK: - Import
-
-    private func importPrompts() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        panel.title = String(localized: "prompts.import.panel.title")
-        panel.message = String(localized: "prompts.import.panel.message")
-        panel.begin { response in
-            guard response == .OK, let url = panel.url else { return }
-            guard let data = try? Data(contentsOf: url) else {
-                showImportMessage(String(localized: "prompts.import.failed"))
-                return
-            }
-            self.pendingImportData = data
-        }
-    }
-
-    private func doImport(merge: Bool) {
-        guard let data = pendingImportData else { return }
-        pendingImportData = nil
-        do {
-            let count = try store.importPackage(from: data, merge: merge)
-            showImportMessage(String(format: String(localized: "prompts.import.success"), count))
-        } catch {
-            showImportMessage(String(localized: "prompts.import.failed"))
-        }
-    }
-
-    private func showImportMessage(_ msg: String) {
-        importMessage = msg
-        Task {
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            await MainActor.run { importMessage = nil }
-        }
-    }
-}
-
-/// One row in the built-in prompts list: title (read-only, can't edit the
-/// wording of a built-in) plus a per-prompt provider/model override. Exists
-/// because a global default provider that's great for short dictation polish
-/// (small local model, fast) can be hopeless on a long prompt like "Improve"
-/// run against a multi-paragraph business email — reproduced 2026-09-01:
-/// MLX Qwen3.5 2B returned such an email completely unchanged. Rather than
-/// force a bigger/cloud model globally, this pins one prompt to a different
-/// provider without touching everyone else's default.
-private struct BuiltInPromptRow: View {
-    let prompt: DemoPrompt
-
-    @State private var providerOverride: String
-    @State private var modelOverride: String
-
-    init(prompt: DemoPrompt) {
-        self.prompt = prompt
-        _providerOverride = State(initialValue: PromptProviderOverride.providerID(for: prompt.id))
-        _modelOverride = State(initialValue: PromptProviderOverride.modelOverride(for: prompt.id))
-    }
-
-    private static let useActive = "__active__"
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Image(systemName: prompt.symbol)
-                    .foregroundStyle(.tint)
-                    .frame(width: 22)
-                Text(prompt.title)
-                Spacer()
-                Picker("", selection: providerBinding) {
-                    Text(String(localized: "settings.voice.dictation.postProcess.providerActive"))
-                        .tag(Self.useActive)
-                    Divider()
-                    ForEach(LLMRouter.allProviders, id: \.id) { provider in
-                        Text(provider.displayName).tag(provider.id)
-                    }
-                }
-                .labelsHidden()
-                .frame(maxWidth: 200)
-            }
-            if !providerOverride.isEmpty {
-                let modelPresets = ProviderModelPresets.presets(for: providerOverride)
-                if !modelPresets.isEmpty {
-                    HStack {
-                        Spacer().frame(width: 22)
-                        Text(String(localized: "settings.providers.model"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Picker("", selection: modelBinding) {
-                            ForEach(modelPresets) { preset in
-                                Text(preset.label).tag(preset.id)
-                            }
-                        }
-                        .labelsHidden()
-                    }
-                }
-            }
-        }
-    }
-
-    private var providerBinding: Binding<String> {
-        Binding(
-            get: { providerOverride.isEmpty ? Self.useActive : providerOverride },
-            set: { new in
-                let value = (new == Self.useActive) ? "" : new
-                providerOverride = value
-                PromptProviderOverride.setProviderID(value, for: prompt.id)
-                if !value.isEmpty, let fastest = ProviderModelPresets.defaultPolishModel(for: value) {
-                    modelOverride = fastest
-                    PromptProviderOverride.setModelOverride(fastest, for: prompt.id)
-                } else {
-                    modelOverride = ""
-                    PromptProviderOverride.setModelOverride("", for: prompt.id)
-                }
-            }
-        )
-    }
-
-    private var modelBinding: Binding<String> {
-        Binding(
-            get: { modelOverride },
-            set: { new in
-                modelOverride = new
-                PromptProviderOverride.setModelOverride(new, for: prompt.id)
-            }
-        )
-    }
-}
-
-private struct PromptEditor: View {
-    let existing: CustomPrompt?
-    let onSave: (CustomPrompt?) -> Void
-
-    private enum Mode: Hashable { case single, chain }
-
-    @State private var title: String
-    @State private var symbol: String
-    @State private var systemPrompt: String
-    @State private var mode: Mode
-    @State private var pipeline: [String]
-
-    init(existing: CustomPrompt?, onSave: @escaping (CustomPrompt?) -> Void) {
-        self.existing = existing
-        self.onSave = onSave
-        _title = State(initialValue: existing?.title ?? "")
-        _symbol = State(initialValue: existing?.symbol ?? "wand.and.stars")
-        _systemPrompt = State(initialValue: existing?.systemPrompt ?? "")
-        _mode = State(initialValue: (existing?.isChain ?? false) ? .chain : .single)
-        _pipeline = State(initialValue: existing?.pipeline ?? [])
-    }
-
-    /// Prompts that can be used as chain steps: every non-chain prompt except
-    /// the one being edited (a chain can't reference itself, and chain-in-chain
-    /// is out of scope).
-    private var availableSteps: [DemoPrompt] {
-        let selfID = existing.map { "custom-\($0.id.uuidString)" }
-        return DemoPrompt.all.filter { !$0.isChain && $0.id != selfID }
-    }
-
-    private var isValid: Bool {
-        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
-        switch mode {
-        case .single: return !systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case .chain: return pipeline.count >= 2
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(existing == nil
-                 ? String(localized: "settings.prompts.editor.titleNew")
-                 : String(localized: "settings.prompts.editor.titleEdit"))
-                .font(.headline)
-
-            TextField(String(localized: "settings.prompts.editor.titlePlaceholder"),
-                      text: $title)
-                .textFieldStyle(.roundedBorder)
-
-            HStack(spacing: 8) {
-                TextField(String(localized: "settings.prompts.editor.symbolPlaceholder"),
-                          text: $symbol)
-                    .textFieldStyle(.roundedBorder)
-                Image(systemName: symbol.isEmpty ? "wand.and.stars" : symbol)
-                    .foregroundStyle(.tint)
-                    .frame(width: 24, height: 24)
-            }
-
-            Picker(String(localized: "settings.prompts.editor.mode"), selection: $mode) {
-                Text(String(localized: "settings.prompts.editor.mode.single")).tag(Mode.single)
-                Text(String(localized: "settings.prompts.editor.mode.chain")).tag(Mode.chain)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-
-            if mode == .single {
-                singleEditor
-            } else {
-                chainEditor
-            }
-
-            Spacer(minLength: 0)
-
-            HStack {
-                Button(String(localized: "demo.sheet.cancel")) { onSave(nil) }
-                    .keyboardShortcut(.escape)
-                Spacer()
-                Button(String(localized: "settings.providers.save")) {
-                    let trimmed = CustomPrompt(
-                        id: existing?.id ?? UUID(),
-                        title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                        symbol: symbol.trimmingCharacters(in: .whitespacesAndNewlines),
-                        systemPrompt: mode == .single
-                            ? systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
-                            : "",
-                        pipeline: mode == .chain ? pipeline : nil
-                    )
-                    onSave(trimmed)
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.return)
-                .disabled(!isValid)
-            }
-        }
-        .padding(20)
-        .frame(width: 520, height: 520)
-    }
-
-    // MARK: - Single-step editor
-
-    private var singleEditor: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "settings.prompts.editor.symbolHint"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(String(localized: "settings.prompts.editor.systemLabel"))
-                .font(.caption)
-            TextEditor(text: $systemPrompt)
-                .font(.body)
-                .frame(minHeight: 130)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
-                )
-
-            Text(String(localized: "settings.prompts.editor.systemHint"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(String(localized: "settings.prompts.editor.variablesHint"))
-                .font(.caption)
-                .foregroundStyle(.tint)
-        }
-    }
-
-    // MARK: - Chain editor
-
-    private var chainEditor: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "settings.prompts.editor.chainHint"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            if pipeline.isEmpty {
-                Text(String(localized: "settings.prompts.editor.chainEmpty"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
-                    )
-            } else {
-                VStack(spacing: 4) {
-                    ForEach(Array(pipeline.enumerated()), id: \.offset) { index, stepID in
-                        chainRow(index: index, stepID: stepID)
-                    }
-                }
-                .frame(minHeight: 120, alignment: .top)
-            }
-
-            Menu {
-                ForEach(availableSteps) { step in
-                    Button {
-                        pipeline.append(step.id)
-                    } label: {
-                        Label(step.title, systemImage: step.symbol)
-                    }
-                }
-            } label: {
-                Label(String(localized: "settings.prompts.editor.chainAddStep"), systemImage: "plus.circle")
-            }
-            .menuStyle(.borderlessButton)
-            .fixedSize()
-        }
-    }
-
-    private func chainRow(index: Int, stepID: String) -> some View {
-        let step = DemoPrompt.resolve(id: stepID)
-        return HStack(spacing: 8) {
-            Text("\(index + 1).")
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-            Image(systemName: step?.symbol ?? "questionmark.circle")
-                .foregroundStyle(step == nil ? Color.red : Color.accentColor)
-                .frame(width: 20)
-            Text(step?.title ?? String(localized: "settings.prompts.editor.chainMissing"))
-                .foregroundStyle(step == nil ? Color.red : Color.primary)
-            Spacer()
-            Button {
-                guard index > 0 else { return }
-                pipeline.swapAt(index, index - 1)
-            } label: { Image(systemName: "arrow.up") }
-                .buttonStyle(.borderless)
-                .disabled(index == 0)
-            Button {
-                guard index < pipeline.count - 1 else { return }
-                pipeline.swapAt(index, index + 1)
-            } label: { Image(systemName: "arrow.down") }
-                .buttonStyle(.borderless)
-                .disabled(index == pipeline.count - 1)
-            Button {
-                pipeline.remove(at: index)
-            } label: { Image(systemName: "trash").foregroundStyle(.red) }
-                .buttonStyle(.borderless)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(RoundedRectangle(cornerRadius: 5).fill(Color.secondary.opacity(0.08)))
-    }
-}
+// PromptsTab lives in PromptsSettingsTab.swift.
 
 // MARK: - Help
 
@@ -2011,19 +1610,15 @@ private struct AboutTab: View {
 
 // MARK: - Voice
 
-// Bestand 2026-09-25, Sperrklinke: Rumpf 413 Zeilen (Grenze 400).
-// swiftlint:disable:next type_body_length
 private struct VoiceTab: View {
     @EnvironmentObject var permissions: PermissionsManager
     @StateObject private var modelManager = WhisperModelManager()
     @AppStorage("voice.language") private var language: String = "auto"
     @State private var muteSystemAudio: Bool = AudioRecorder.muteSystemAudioDuringRecording
-    @State private var dictationEnabled: Bool = DictationSettings.isEnabled
-    @State private var dictationCombo: KeyCombo = DictationSettings.combo
-    @State private var dictationMode: DictationSettings.InputMode = DictationSettings.mode
-    @State private var dictationTapOrHoldModifier: ModifierKey = DictationSettings.tapOrHoldModifier
+    /// Switched in Hotkeys → Dictation (`DictationHotkeySection`) — observed
+    /// here so the options below appear and disappear with it.
+    @AppStorage(DictationSettings.enabledKey) private var dictationEnabled = false
     @State private var dictationIndicatorPosition: DictationSettings.IndicatorPosition = DictationSettings.indicatorPosition
-    @State private var inputMonitoringGranted: Bool = HotkeyManager.hasInputMonitoringPermission
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
@@ -2138,93 +1733,27 @@ private struct VoiceTab: View {
         }
     }
 
-    // MARK: Dictation hot key
+    // MARK: Dictation
 
     private var dictationSection: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
                 Text(String(localized: "settings.voice.dictation.title"))
                     .font(.headline)
-                Text(String(localized: "settings.voice.dictation.body"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Toggle(String(localized: "settings.voice.dictation.enable"), isOn: $dictationEnabled)
-                    .onChange(of: dictationEnabled) { _, new in
-                        DictationSettings.isEnabled = new
-                        AppDelegate.shared?.restartDictationHotkey()
+                // On/off and the hot key itself live under Hotkeys since 2026-09-28.
+                HStack(spacing: 8) {
+                    Text(String(localized: "settings.voice.dictation.hotkeyMoved"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button(String(localized: "settings.voice.dictation.openHotkeys")) {
+                        SettingsNavigation.shared.pendingTab = .hotkeys
                     }
+                    .controlSize(.small)
+                }
 
                 if dictationEnabled {
-                    if SpeechEngine.current == .whisper && !WhisperConfig.isConfigured {
-                        Label(String(localized: "settings.voice.dictation.needsModel"),
-                              systemImage: "exclamationmark.circle")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                    }
-                    Picker(String(localized: "settings.voice.dictation.mode.label"),
-                           selection: $dictationMode) {
-                        Text(String(localized: "settings.voice.dictation.mode.combo"))
-                            .tag(DictationSettings.InputMode.combo)
-                        Text(String(localized: "settings.voice.dictation.mode.tapOrHold"))
-                            .tag(DictationSettings.InputMode.tapOrHold)
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: dictationMode) { _, new in
-                        DictationSettings.mode = new
-                        inputMonitoringGranted = HotkeyManager.hasInputMonitoringPermission
-                        AppDelegate.shared?.restartDictationHotkey()
-                    }
-
-                    if dictationMode == .combo {
-                        HotkeyRecorderField(combo: $dictationCombo)
-                            .onChange(of: dictationCombo) { _, new in
-                                DictationSettings.combo = new
-                                AppDelegate.shared?.restartDictationHotkey()
-                            }
-                    } else {
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(String(localized: "settings.voice.dictation.mode.modifier"))
-                            ModifierRecorderField(modifier: $dictationTapOrHoldModifier)
-                        }
-                        .onChange(of: dictationTapOrHoldModifier) { _, new in
-                            DictationSettings.tapOrHoldModifier = new
-                            AppDelegate.shared?.restartDictationHotkey()
-                        }
-
-                        Text(String(localized: "settings.voice.dictation.mode.tapOrHold.body"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        // This style listens via a CGEventTap, unlike the key
-                        // combination (Carbon), which needs no permission. Without
-                        // this notice the hot key would simply do nothing and the
-                        // failure would only be visible in the system log.
-                        if !inputMonitoringGranted {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Label(String(localized: "settings.voice.dictation.mode.needsPermission"),
-                                      systemImage: "exclamationmark.triangle.fill")
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(.orange)
-                                HStack(spacing: 8) {
-                                    Button(String(localized: "settings.voice.dictation.mode.grantPermission")) {
-                                        HotkeyManager.requestInputMonitoringPermission()
-                                        NSWorkspace.shared.open(URL(string:
-                                            "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
-                                    }
-                                    Button(String(localized: "settings.voice.dictation.mode.recheckPermission")) {
-                                        inputMonitoringGranted = HotkeyManager.hasInputMonitoringPermission
-                                        AppDelegate.shared?.restartDictationHotkey()
-                                    }
-                                }
-                                .controlSize(.small)
-                            }
-                            .padding(8)
-                            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
-                        }
-                    }
-
                     Picker(String(localized: "settings.voice.dictation.indicator.position"),
                            selection: $dictationIndicatorPosition) {
                         Text(String(localized: "settings.voice.dictation.indicator.bottom"))

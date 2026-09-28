@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import NaturalLanguage
@@ -88,23 +89,175 @@ enum AutocompleteExclusion {
     }
 }
 
+// MARK: - Übernahme-Tasten (frei belegbar)
+
+/// Was eine Übernahme-Taste tut.
+enum AutocompleteAcceptAction: Equatable {
+    /// Nur das nächste Wort — der Rest bleibt stehen.
+    case nextWord
+    /// Den ganzen sichtbaren Rest auf einmal.
+    case wholeSuggestion
+}
+
+/// Welche Tasten als Übernahme-Taste taugen (Design §3 „Tastatur → Tippi").
+///
+/// Der Tap schluckt die Taste, solange ein Vorschlag sichtbar ist — und der ist
+/// nach jeder Tipppause sichtbar. Eine Taste, die beim Schreiben ein Zeichen
+/// erzeugt, wäre dann ständig weg. Deshalb:
+/// - ⇥, →, ↓ und F-Tasten mit jeder Sondertaste oder ohne;
+/// - die Taste über ⇥ nur ganz ohne Sondertaste;
+/// - jede andere Taste nur mit ⌘ oder ⌃ — solche Kombinationen tippen keinen
+///   Text. ⇧ oder ⌥ allein erzeugen Zeichen (⇧A = „A", ⌥L = „@" auf deutscher
+///   Tastatur) und reichen dort nicht;
+/// - Esc nie — Esc verwirft den Vorschlag;
+/// - nie ein Kürzel, das schon etwas anderes tut: ⌃Space/⌃⌥Space (Eingabequelle)
+///   und Tippis eigene globale Hotkeys (`reserved`, kommt aus den Einstellungen).
+/// Gleiche Taste für beide Aktionen wird nicht abgelehnt, sondern getauscht
+/// (`AutocompleteKeyBindings.assigning`).
+enum AutocompleteKeyRules {
+    static let escapeKeyCode: UInt16 = 53
+    static let functionKeyCodes: Set<UInt16> = [
+        122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111,   // F1–F12
+        105, 107, 113, 106, 64, 79, 80,                          // F13–F19
+    ]
+    /// Tippen keinen Text — mit jedem Modifier erlaubt: ⇥, →, ↓, F-Tasten.
+    static let nonTextKeyCodes: Set<UInt16> = functionKeyCodes.union([48, 124, 125])
+    /// Die Taste über ⇥. macOS meldet sie je nach Tastatur als 50 (ANSI „`")
+    /// oder 10 (ISO, deutsch „^"). Erzeugt ein Zeichen — ohne Modifier trotzdem
+    /// erlaubt, weil sie beim Schreiben von Fließtext kaum vorkommt. Auf ISO-
+    /// Tastaturen ist 50 vermutlich „<" neben ⇧ und damit mit erlaubt —
+    /// Restrisiko, siehe docs/SECURE-DESIGN-autocomplete.md §7.
+    static let aboveTabKeyCodes: Set<UInt16> = [50, 10]
+    /// Tasten, die macOS selbst immer mit dem Fn-Flag meldet (Pfeile, F-Tasten,
+    /// Pos1/Ende/Bild/Entf). Bei ihnen ist Fn kein Modifier.
+    static let fnFlagKeyCodes: Set<UInt16> = functionKeyCodes.union([123, 124, 125, 126, 115, 116, 117, 119, 121])
+    /// macOS-Kürzel zum Wechseln der Eingabequelle (vorherige / nächste).
+    static let systemReserved: [KeyCombo] = [
+        KeyCombo(keyCode: 49, modifiers: [.control]),
+        KeyCombo(keyCode: 49, modifiers: [.control, .option]),
+    ]
+
+    enum Problem: Equatable {
+        /// Esc verwirft den Vorschlag.
+        case escape
+        /// Die Taste erzeugt beim Schreiben ein Zeichen (oder wird dafür gebraucht).
+        case typesText
+        /// Schon ein Kürzel von macOS oder ein eigener Tippi-Hotkey.
+        case alreadyShortcut
+    }
+
+    /// `nil` = erlaubt. `reserved` = Tippis eigene globale Hotkeys.
+    static func problem(_ combo: KeyCombo, reserved: [KeyCombo] = []) -> Problem? {
+        if combo.keyCode == escapeKeyCode { return .escape }
+        if systemReserved.contains(combo) || reserved.contains(combo) { return .alreadyShortcut }
+        if nonTextKeyCodes.contains(combo.keyCode) { return nil }
+        let mods = combo.modifiers
+        if mods.contains(.command) || mods.contains(.control) { return nil }
+        if mods.isEmpty && aboveTabKeyCodes.contains(combo.keyCode) { return nil }
+        return .typesText
+    }
+}
+
+/// Die zwei Übernahme-Tasten. Ab Werk ⇥ (ein Wort) und ⇧⇥ (alles) — ⇥ verhält
+/// sich damit genau wie vor der freien Belegung.
+struct AutocompleteKeyBindings: Equatable {
+    var nextWord: KeyCombo
+    var wholeSuggestion: KeyCombo
+
+    static let defaultNextWord = KeyCombo(keyCode: UInt16(AutocompleteKeyDecision.tabKeyCode), modifiers: [])
+    static let defaultWholeSuggestion = KeyCombo(keyCode: UInt16(AutocompleteKeyDecision.tabKeyCode), modifiers: [.shift])
+    static let `default` = AutocompleteKeyBindings(nextWord: defaultNextWord, wholeSuggestion: defaultWholeSuggestion)
+
+    func combo(for action: AutocompleteAcceptAction) -> KeyCombo {
+        action == .nextWord ? nextWord : wholeSuggestion
+    }
+
+    /// Legt `combo` auf `action`. Hat die andere Aktion diese Taste schon,
+    /// bekommt sie die bisherige Taste von `action` — getauscht statt
+    /// abgelehnt, sonst ließen sich die zwei Tasten nie gegeneinander tauschen.
+    /// `swapped` = die andere Aktion hat sich mitgeändert (Hinweis zeigen).
+    func assigning(_ combo: KeyCombo, to action: AutocompleteAcceptAction)
+        -> (bindings: AutocompleteKeyBindings, swapped: Bool) {
+        var result = self
+        let previous = self.combo(for: action)
+        let other = action == .nextWord ? wholeSuggestion : nextWord
+        let swapped = other == combo && previous != combo
+        switch action {
+        case .nextWord:
+            result.nextWord = combo
+            if swapped { result.wholeSuggestion = previous }
+        case .wholeSuggestion:
+            result.wholeSuggestion = combo
+            if swapped { result.nextWord = previous }
+        }
+        return (result, swapped)
+    }
+
+    /// Ein immer gültiges Paar aus gespeicherten Werten: Fehlendes oder
+    /// Unerlaubtes fällt auf den Standard zurück, eine Doppelbelegung ebenso.
+    /// Die Einstellungen lassen nichts anderes zu — das hier schützt vor einer
+    /// von Hand bearbeiteten Plist: Der Tap darf nie z. B. „a" schlucken.
+    static func sanitized(nextWord: KeyCombo?, wholeSuggestion: KeyCombo?) -> AutocompleteKeyBindings {
+        func valid(_ combo: KeyCombo?) -> KeyCombo? {
+            // Neu aufgebaut: Decodable übernimmt `modifiersRaw` ungefiltert, der
+            // Initializer lässt nur ⌘⌃⌥⇧ stehen (Feststell-/Fn-Bits aus einer
+            // bearbeiteten Plist ergäben sonst eine Taste, die nie greift).
+            combo.map { KeyCombo(keyCode: $0.keyCode, modifiers: $0.modifiers) }
+                .flatMap { AutocompleteKeyRules.problem($0) == nil ? $0 : nil }
+        }
+        let next = valid(nextWord) ?? defaultNextWord
+        var whole = valid(wholeSuggestion) ?? defaultWholeSuggestion
+        if whole == next {
+            whole = next == defaultWholeSuggestion ? defaultNextWord : defaultWholeSuggestion
+        }
+        return AutocompleteKeyBindings(nextWord: next, wholeSuggestion: whole)
+    }
+}
+
 // MARK: - Tastatur-Tap (Design §3 „Tastatur → Tippi")
 
 enum AutocompleteKeyDecision {
     static let tabKeyCode: Int64 = 48
     static let escapeKeyCode: Int64 = 53
 
-    /// Was als Modifier zählt. Feststelltaste zählt nicht — mit ihr ist ⇥ immer
+    /// Die vier Modifier, die `KeyCombo` kennt. Feststelltaste, Fn und
+    /// Ziffernblock-Flag gehören nicht dazu — mit Feststelltaste ist ⇥ immer
     /// noch ein schlichtes ⇥.
-    static let modifierMask: CGEventFlags = [
-        .maskCommand, .maskControl, .maskAlternate, .maskShift, .maskSecondaryFn,
-    ]
+    static func modifiers(from flags: CGEventFlags) -> NSEvent.ModifierFlags {
+        var result: NSEvent.ModifierFlags = []
+        if flags.contains(.maskCommand) { result.insert(.command) }
+        if flags.contains(.maskControl) { result.insert(.control) }
+        if flags.contains(.maskAlternate) { result.insert(.option) }
+        if flags.contains(.maskShift) { result.insert(.shift) }
+        return result
+    }
 
-    /// Der einzige Fall, in dem der Tap eine Taste schluckt: ⇥ ohne Modifier,
-    /// während ein Vorschlag sichtbar ist. Alles andere läuft unverändert durch —
-    /// sonst wäre z. B. die Einrückung im Code-Editor kaputt (Design §5).
-    static func shouldSwallow(keyCode: Int64, flags: CGEventFlags, suggestionVisible: Bool) -> Bool {
-        suggestionVisible && keyCode == tabKeyCode && flags.isDisjoint(with: modifierMask)
+    /// Genau diese Taste mit genau diesen Modifiern — ⇧⌘⇥ ist nicht ⇧⇥.
+    /// Fn zählt wie bisher als Modifier (fn-⇥ ist kein ⇥), außer bei Tasten,
+    /// die macOS immer mit Fn meldet (Pfeile, F-Tasten).
+    static func matches(_ combo: KeyCombo, keyCode: Int64, flags: CGEventFlags) -> Bool {
+        guard keyCode == Int64(combo.keyCode) else { return false }
+        if flags.contains(.maskSecondaryFn), !AutocompleteKeyRules.fnFlagKeyCodes.contains(combo.keyCode) {
+            return false
+        }
+        return modifiers(from: flags) == combo.modifiers
+    }
+
+    /// Der einzige Fall, in dem der Tap eine Taste schluckt: eine der zwei
+    /// Übernahme-Tasten, während ein Vorschlag sichtbar ist. Alles andere läuft
+    /// unverändert durch — sonst wäre z. B. die Einrückung im Code-Editor
+    /// kaputt (Design §5).
+    static func action(keyCode: Int64, flags: CGEventFlags, suggestionVisible: Bool,
+                       bindings: AutocompleteKeyBindings) -> AutocompleteAcceptAction? {
+        guard suggestionVisible else { return nil }
+        if matches(bindings.nextWord, keyCode: keyCode, flags: flags) { return .nextWord }
+        if matches(bindings.wholeSuggestion, keyCode: keyCode, flags: flags) { return .wholeSuggestion }
+        return nil
+    }
+
+    static func shouldSwallow(keyCode: Int64, flags: CGEventFlags, suggestionVisible: Bool,
+                              bindings: AutocompleteKeyBindings = .default) -> Bool {
+        action(keyCode: keyCode, flags: flags, suggestionVisible: suggestionVisible, bindings: bindings) != nil
     }
 
     /// Soll nach dieser Taste die Pause neu gemessen werden? Nicht bei Esc (der
@@ -379,6 +532,11 @@ enum AutocompleteSuggestion {
         return (take, rest.trimmingCharacters(in: .whitespaces).isEmpty ? nil : rest)
     }
 
+    /// Was die gedrückte Übernahme-Taste einfügt: ein Wort oder den ganzen Rest.
+    static func take(_ action: AutocompleteAcceptAction, of suggestion: String) -> (take: String, rest: String?) {
+        action == .nextWord ? nextWord(of: suggestion) : (suggestion, nil)
+    }
+
     enum TypeThrough: Equatable {
         /// Getipptes Zeichen passt — Vorschlag um dieses Zeichen kürzen.
         case keep(String)
@@ -416,5 +574,17 @@ enum AutocompleteGeometry {
     /// Schriftgröße passend zur Zeilenhöhe des Feldes, im Rahmen des Lesbaren.
     static func fontSize(forCaretHeight height: CGFloat) -> CGFloat {
         min(max(height * 0.8, 11), 28)
+    }
+
+    /// Schriftgröße für den Vorschlag: die von der App gemeldete Schriftgröße
+    /// des Zeichens vor dem Cursor, wenn es eine gibt und sie zur Zeilenhöhe am
+    /// Bildschirm passt — sonst die Schätzung aus der Zeilenhöhe. Bei Zoom
+    /// (Pages auf 200 %) meldet die App Dokument-Punkte, nicht Bildschirm-Punkte;
+    /// dann passt die Zahl nicht zur Cursorhöhe und wird verworfen.
+    static func fontSize(reported: CGFloat?, caretHeight: CGFloat) -> CGFloat {
+        guard let reported, reported >= caretHeight * 0.5, reported <= caretHeight else {
+            return fontSize(forCaretHeight: caretHeight)
+        }
+        return min(max(reported, 11), 28)
     }
 }
