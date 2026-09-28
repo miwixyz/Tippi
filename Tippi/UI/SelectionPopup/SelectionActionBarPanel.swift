@@ -1,4 +1,7 @@
 import AppKit
+import os
+
+private let selectionBarLog = Logger(subsystem: "com.tippi.app", category: "selection-bar")
 import SwiftUI
 
 // `NonKeyPanel` and `ClickableHostingView` live in `NonKeyPanelChrome.swift`,
@@ -57,6 +60,30 @@ final class SelectionActionBarPanel {
         return screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
     }
 
+    private func makeBarView(
+        snapshot: SelectionSnapshot,
+        onAction: @escaping (LocalTextAction, SelectionSnapshot) -> Void,
+        onTranslate: @escaping (String) -> Void,
+        onConvert: @escaping (String, SelectionSnapshot) -> Void
+    ) -> SelectionActionBarView {
+        SelectionActionBarView(
+            onAction: { [weak self] action in
+                onAction(action, snapshot)
+                self?.close(afterAction: true)
+            },
+            onTranslate: { [weak self] in
+                onTranslate(snapshot.text)
+                self?.close(afterAction: true)
+            },
+            characterCount: snapshot.text.count,
+            currencyTargets: CurrencyParser.parse(snapshot.text).map(CurrencySettings.targets(for:)) ?? [],
+            onConvert: { [weak self] code in
+                onConvert(code, snapshot)
+                self?.close(afterAction: true)
+            }
+        )
+    }
+
     /// Shows the bar next to `snapshot`'s selection. `onAction` fires with
     /// the chosen local action and the (possibly stale, by the time of a
     /// click) snapshot — the caller re-validates before writing anything
@@ -66,20 +93,21 @@ final class SelectionActionBarPanel {
     func show(
         snapshot: SelectionSnapshot,
         onAction: @escaping (LocalTextAction, SelectionSnapshot) -> Void,
-        onTranslate: @escaping (String) -> Void
+        onTranslate: @escaping (String) -> Void,
+        onConvert: @escaping (String, SelectionSnapshot) -> Void
     ) {
+        // A click on the bar itself ends in a mouse-up, and the selection
+        // monitor re-checks the selection on every mouse-up. Rebuilding here
+        // closed the bar, remembered that selection as dismissed and showed
+        // nothing — invisible as long as every button closed the bar anyway;
+        // `€→$` is the first one that must keep it open (2026-09-28).
+        if let panel, NSMouseInRect(NSEvent.mouseLocation, panel.frame, false) {
+            selectionBarLog.notice("show ignored — pointer is on the bar")
+            return
+        }
         close() // replace whatever's showing, if anything — a new selection wins
 
-        let view = SelectionActionBarView(
-            onAction: { [weak self] action in
-                onAction(action, snapshot)
-                self?.close(afterAction: true)
-            },
-            onTranslate: { [weak self] in
-                onTranslate(snapshot.text)
-                self?.close(afterAction: true)
-            }
-        )
+        let view = makeBarView(snapshot: snapshot, onAction: onAction, onTranslate: onTranslate, onConvert: onConvert)
 
         let popupSize = CGSize(width: SelectionActionBarView.width, height: SelectionActionBarView.height)
         let panel = NonKeyPanel(
@@ -163,7 +191,7 @@ final class SelectionActionBarPanel {
         globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
         ) { [weak self] _ in
-            Task { @MainActor in self?.close() }
+            Task { @MainActor in self?.close(reason: "mouse down outside") }
         }
         // The panel is never key, so SwiftUI's `.onExitCommand` (which only
         // fires for a key window) can't be used for Escape-to-dismiss —
@@ -171,7 +199,7 @@ final class SelectionActionBarPanel {
         // pressed in the app the user is actually working in, not in Tippi.
         escapeKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard event.keyCode == 53 else { return } // kVK_Escape
-            Task { @MainActor in self?.close() }
+            Task { @MainActor in self?.close(reason: "escape") }
         }
 
         // Switching to another app (⌘-Tab, Dock, Mission Control) involves no
@@ -184,7 +212,7 @@ final class SelectionActionBarPanel {
         ) { [weak self] note in
             let activated = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
             guard activated?.processIdentifier != sourcePID else { return }
-            Task { @MainActor in self?.close() }
+            Task { @MainActor in self?.close(reason: "app switch to \(activated?.bundleIdentifier ?? "?")") }
         }
 
         // `orderFront`, not `makeKeyAndOrderFront` — the whole point of this
@@ -225,10 +253,10 @@ final class SelectionActionBarPanel {
         // Pointer moved on to something else entirely — no reason to wait
         // out the countdown (2026-09-24: bar stayed over an open Apple menu).
         if SelectionPopupPositioner.pointerHasLeft(pointer, popupFrame: panel.frame, selectionBounds: selectionZone) {
-            return close()
+            return close(reason: "pointer left")
         }
         idleSeconds += Self.autoHideTick
-        if idleSeconds >= Self.autoHideAfter { close() }
+        if idleSeconds >= Self.autoHideAfter { close(reason: "idle timeout") }
     }
 
     private func stopAutoHide() {
@@ -238,7 +266,12 @@ final class SelectionActionBarPanel {
 
     /// `afterAction`: the user used the bar, so there is nothing to remember —
     /// every other close counts as "not wanted for this selection".
-    func close(afterAction: Bool = false) {
+    func close(afterAction: Bool = false, reason: String = "replaced") {
+        if panel != nil {
+            // Measuring point (2026-09-28, "Pop-Up ist zu schnell zu"): which
+            // of the close paths fired.
+            selectionBarLog.notice("closed — \(afterAction ? "action" : reason, privacy: .public)")
+        }
         if !afterAction, let shown = shownSignature {
             dismissedSignature = shown
         }

@@ -42,6 +42,96 @@ enum TextInsertion {
                     expectedPID: app?.processIdentifier)
     }
 
+    /// Re-selects `range` on `element` and reads it back. `nil` means the
+    /// selection is in place; otherwise the outcome explains why not. Shared by
+    /// `replaceViaElement` and `pasteFormatting` — both must never write into a
+    /// selection that did not take (see the comment at the call site).
+    private static func restoreSelection(_ element: AXUIElement, range: CFRange) -> AXReplaceOutcome? {
+        var mutableRange = range
+        guard let axRange = AXValueCreate(.cfRange, &mutableRange) else {
+            insertLog.notice("replaceViaElement → unavailable (could not build AX range)")
+            return .unavailable
+        }
+        let rangeSet = AXUIElementSetAttributeValue(
+            element,
+            kAXSelectedTextRangeAttribute as CFString,
+            axRange
+        )
+        guard rangeSet == .success else {
+            insertLog.notice(
+                "replaceViaElement → ignored (app refused range restore, set=\(rangeSet.rawValue, privacy: .public)) — not writing, a write here would append")
+            return .ignored
+        }
+
+        // Read the range back. A success status only means the app accepted the
+        // message, not that the selection actually moved; Electron-based apps
+        // answer .success and keep a collapsed caret.
+        var verifyRef: CFTypeRef?
+        if AXUIElementCopyAttributeValue(
+            element, kAXSelectedTextRangeAttribute as CFString, &verifyRef) == .success,
+           let verifyValue = verifyRef, CFGetTypeID(verifyValue) == AXValueGetTypeID() {
+            var actual = CFRange()
+            // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
+            if AXValueGetValue(verifyValue as! AXValue, .cfRange, &actual),
+               actual.length != range.length {
+                insertLog.notice(
+                    "replaceViaElement → ignored (selection did not take: asked for len \(range.length, privacy: .public), got \(actual.length, privacy: .public))")
+                return .ignored
+            }
+        }
+        return nil
+    }
+
+    /// Formatting-only change (highlight): same characters, new attributes.
+    ///
+    /// Never writes plain text via Accessibility first. Writing the identical
+    /// text collapses the selection in native apps while the value stays the
+    /// same, the write reads as a no-op, and the paste that follows lands after
+    /// the text as a second copy. Instead: restore the captured range (the
+    /// hotkey popup collapsed the live selection), then paste the rich text
+    /// over it. If the range cannot be restored nothing is written — a missing
+    /// highlight beats a duplicate.
+    static func pasteFormatting(_ attributedText: NSAttributedString, fallbackPlainText: String,
+                                element: AXUIElement?, range: CFRange?,
+                                app: NSRunningApplication?) async {
+        if let element, let range {
+            guard AXIsProcessTrusted(), restoreSelection(element, range: range) == nil else {
+                insertLog.notice("pasteFormatting → skipped (selection could not be restored)")
+                return
+            }
+        }
+        if let app { await TextCapture.activateAndWaitForFocus(app) }
+        await paste(attributedText: attributedText, fallbackPlainText: fallbackPlainText,
+                    expectedPID: app?.processIdentifier)
+    }
+
+    /// Inserts a secret (generated password) at the cursor of `app`.
+    ///
+    /// Paste only, deliberately without the Accessibility write first: in apps
+    /// that do not expose their value that write is "unverifiable", the ladder
+    /// then pastes as well, and a doubled password is not something the user
+    /// would notice. Password fields hide their value anyway. The clipboard
+    /// copy is host-only (no Handoff), concealed from clipboard managers and
+    /// replaced by the previous contents right after the paste.
+    ///
+    /// The secret then stays on the clipboard for `secretClipboardLifetime`
+    /// (Michael, 2026-09-28: "Passwort wiederholen" fields need a second ⌘V),
+    /// after which the previous clipboard comes back — unless something else
+    /// was copied meanwhile, which `PasteboardSnapshot.restore` never overwrites.
+    static func insertSecret(_ text: String, into app: NSRunningApplication?) async {
+        if let app { await TextCapture.activateAndWaitForFocus(app) }
+        let snapshot = await paste(text: text, expectedPID: app?.processIdentifier,
+                                   currentHostOnly: true, restoreClipboard: false)
+        insertLog.notice("secret pasted (\(text.count, privacy: .public) chars), clipboard cleared in \(Int(secretClipboardLifetime), privacy: .public) s")
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(secretClipboardLifetime * 1_000_000_000))
+            snapshot.restore()
+            insertLog.notice("secret clipboard lifetime over — previous clipboard restored if untouched")
+        }
+    }
+
+    static let secretClipboardLifetime: TimeInterval = 60
+
     /// Bypasses AX entirely and inserts `text` via clipboard + synthetic ⌘V.
     /// Use when AX has already been attempted and confirmed to be a no-op
     /// (e.g. `.ignored` outcome from `replaceViaElement`).
@@ -63,11 +153,21 @@ enum TextInsertion {
     /// transient by nature — the AI result must not end up in their archives.
     private static let concealedType = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
 
-    private static func paste(text: String, expectedPID: pid_t?) async {
+    /// Returns the snapshot of the previous clipboard. With `restoreClipboard`
+    /// false the caller decides when to put it back (`insertSecret`).
+    @discardableResult
+    private static func paste(text: String, expectedPID: pid_t?, currentHostOnly: Bool = false,
+                              restoreClipboard: Bool = true) async -> PasteboardSnapshot {
         let pb = NSPasteboard.general
         var snapshot = PasteboardSnapshot.capture()
 
-        pb.clearContents()
+        if currentHostOnly {
+            // Keeps the content off Universal Clipboard (Handoff to iPhone/iPad);
+            // same measure as the screen-OCR result. Also clears the contents.
+            pb.prepareForNewContents(with: .currentHostOnly)
+        } else {
+            pb.clearContents()
+        }
         pb.setString(text, forType: .string)
         pb.setString("", forType: concealedType)
         snapshot.markOwnedChange(on: pb)
@@ -78,12 +178,13 @@ enum TextInsertion {
             // Do not post ⌘V into a different app. The result stays on the
             // clipboard for manual recovery instead of replacing unrelated text.
             insertLog.error("paste withheld: target app is no longer frontmost")
-            return
+            return snapshot
         }
         simulatePaste()
         try? await Task.sleep(nanoseconds: 400_000_000)
 
-        snapshot.restore()
+        if restoreClipboard { snapshot.restore() }
+        return snapshot
     }
 
     private static func paste(attributedText: NSAttributedString, fallbackPlainText: String,
@@ -159,37 +260,8 @@ enum TextInsertion {
         // ("Wichtig ist nurWichtig ist nur"), and the old code could not see it
         // coming because it discarded this result and then judged success by
         // "did the value change at all" — which appending satisfies.
-        var mutableRange = range
-        guard let axRange = AXValueCreate(.cfRange, &mutableRange) else {
-            insertLog.notice("replaceViaElement → unavailable (could not build AX range)")
-            return .unavailable
-        }
-        let rangeSet = AXUIElementSetAttributeValue(
-            element,
-            kAXSelectedTextRangeAttribute as CFString,
-            axRange
-        )
-        guard rangeSet == .success else {
-            insertLog.notice(
-                "replaceViaElement → ignored (app refused range restore, set=\(rangeSet.rawValue, privacy: .public)) — not writing, a write here would append")
-            return .ignored
-        }
-
-        // Read the range back. A success status only means the app accepted the
-        // message, not that the selection actually moved; Electron-based apps
-        // answer .success and keep a collapsed caret.
-        var verifyRef: CFTypeRef?
-        if AXUIElementCopyAttributeValue(
-            element, kAXSelectedTextRangeAttribute as CFString, &verifyRef) == .success,
-           let verifyValue = verifyRef, CFGetTypeID(verifyValue) == AXValueGetTypeID() {
-            var actual = CFRange()
-            // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
-            if AXValueGetValue(verifyValue as! AXValue, .cfRange, &actual),
-               actual.length != range.length {
-                insertLog.notice(
-                    "replaceViaElement → ignored (selection did not take: asked for len \(range.length, privacy: .public), got \(actual.length, privacy: .public))")
-                return .ignored
-            }
+        if let failure = restoreSelection(element, range: range) {
+            return failure
         }
 
         // Capture selectedText *after* the range re-selection, before the write.

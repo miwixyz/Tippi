@@ -102,9 +102,16 @@ enum ReplacementWriter {
             // reads that as "app ignored the write" and the clipboard fallback
             // then pastes a second copy ("Hallo weltHallo welt"). The selection
             // bar had this guard since 2026-09-14; hotkey actions, AI replace
-            // and translate did not (audit 2026-09-27). Rich replacements are
-            // excluded — same plain text, different formatting is the point.
-            if attributed == nil, isUnchanged(plainText, original: originalText) {
+            // and translate did not (audit 2026-09-27).
+            if isUnchanged(plainText, original: originalText) {
+                // Same text, new formatting (highlight): only a rich paste can
+                // carry it, and without any plain-text AX write first — see
+                // `TextInsertion.pasteFormatting`.
+                if let attributed {
+                    await TextInsertion.pasteFormatting(
+                        attributed, fallbackPlainText: plainText, element: element, range: range, app: app)
+                    return
+                }
                 replacementLog.notice("write → skipped (result identical to selection)")
                 return
             }
@@ -121,6 +128,11 @@ enum ReplacementWriter {
             }
 
         case .blind(let app):
+            if let attributed, isUnchanged(plainText, original: originalText) {
+                await TextInsertion.pasteFormatting(
+                    attributed, fallbackPlainText: plainText, element: nil, range: nil, app: app)
+                return
+            }
             await writeFallback(plainText, attributed: attributed, in: app)
         }
     }

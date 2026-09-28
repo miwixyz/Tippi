@@ -10,87 +10,192 @@ import SwiftUI
 struct SelectionActionBarView: View {
     let onAction: (LocalTextAction) -> Void
     let onTranslate: () -> Void
+    /// Length of the selection, shown right in the bar instead of behind a
+    /// click (Michael, 2026-09-28). `nil` keeps the plain `#` button.
+    var characterCount: Int?
+    /// Target currencies when the selection is an amount (`23 €`); empty
+    /// hides the conversion button.
+    var currencyTargets: [String] = []
+    var onConvert: (String) -> Void = { _ in }
+
+    /// The conversion button swaps the bottom row for the favorite
+    /// currencies — no menu, because a menu in this non-activating panel can
+    /// take the selection with it.
+    @State private var showsCurrencies = false
 
     private static let iconSide: CGFloat = 30
     private static let itemSpacing: CGFloat = 8
+    private static let rowSpacing: CGFloat = 4
     private static let horizontalPadding: CGFloat = 10
+    private static let verticalPadding: CGFloat = 7
     private static let dividerWidth: CGFloat = 1
+    /// The character-count readout ("1.234" over "Zeichen") needs more room
+    /// than an icon.
+    private static let countWidth: CGFloat = 52
+
+    /// Two rows instead of one (2026-09-28): with highlight, list, quotes and
+    /// two more bracket pairs the single row reached ~890 pt — most of a
+    /// 13-inch screen. Top row changes how text looks (format + enclose, plus
+    /// Translate), bottom row changes the text itself (case, separators,
+    /// counts). Split by category, so a new action lands in the right row
+    /// without touching this view.
+    static var topRow: [LocalTextAction] {
+        LocalTextAction.all.filter { $0.category == .formatting || $0.category == .enclose }
+    }
+
+    static var bottomRow: [LocalTextAction] {
+        LocalTextAction.all.filter { $0.category == .transform || $0.category == .info }
+    }
 
     /// Matches the width `SelectionActionBarPanel` uses for the panel's
     /// `contentRect` — the position math runs against a known size before the
     /// panel is shown, so intrinsic sizing is not an option here.
     ///
-    /// Derived from `LocalTextAction.all`, not hard-coded. The previous fixed
-    /// 590 was annotated "13 local-action icons"; adding a fourteenth on
-    /// 2026-09-14 clipped the translate button off the trailing edge — the
-    /// second time that exact bug appeared, the earlier one being why the
-    /// constant had padding added instead of being computed. Counting the
-    /// actions makes the next added action correct by construction.
-    /// Headroom on top of the exact arithmetic. The previous fixed constant
-    /// carried the same allowance with the note that a tighter version had
-    /// really clipped the trailing icon: SwiftUI's rendered button and divider
-    /// widths are not exactly the numbers above. Keeping the slack means the
-    /// bar is a few points wider than strictly needed and never one point too
-    /// narrow — which is precisely how the 2026-09-14 clipping happened, the
-    /// computed requirement being 591 against a hard-coded 590.
+    /// Derived from the action lists, not hard-coded: a fixed 590 once clipped
+    /// the translate button when a fourteenth action was added (2026-09-14).
+    /// Headroom on top of the exact arithmetic, because SwiftUI's rendered
+    /// button and divider widths are not exactly the numbers above — a tighter
+    /// version really clipped the trailing icon (591 needed, 590 given).
     private static let trailingSlack: CGFloat = 36
 
+    private static func rowWidth(icons: Int, divider: Bool) -> CGFloat {
+        let count = CGFloat(icons)
+        let gaps = divider ? count : count - 1
+        return count * iconSide + gaps * itemSpacing + (divider ? dividerWidth : 0)
+    }
+
     static var width: CGFloat {
-        let iconCount = CGFloat(LocalTextAction.all.count + 1) // + translate
-        let gapCount = iconCount // one gap after each icon, incl. around the divider
-        return iconCount * iconSide
-            + gapCount * itemSpacing
-            + dividerWidth
+        max(rowWidth(icons: topRow.count + 1, divider: true), // + translate
+            rowWidth(icons: bottomRow.count + 1, divider: false) + (countWidth - iconSide)) // + currency
             + horizontalPadding * 2
             + trailingSlack
     }
 
-    static let height: CGFloat = 44
+    static let height: CGFloat = iconSide * 2 + rowSpacing + verticalPadding * 2
 
     var body: some View {
-        HStack(spacing: Self.itemSpacing) {
-            ForEach(LocalTextAction.all) { action in
-                Button {
-                    onAction(action)
-                } label: {
-                    // Typographic label where the transform is about letter
-                    // shapes, icon otherwise. `underscore` had no valid SF
-                    // Symbol at all and rendered as an invisible button.
-                    if let label = action.label {
-                        Text(label)
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .frame(width: Self.iconSide, height: Self.iconSide)
-                    } else {
-                        Image(systemName: action.symbol)
-                            .font(.system(size: 14))
-                            .frame(width: Self.iconSide, height: Self.iconSide)
-                    }
+        VStack(alignment: .leading, spacing: Self.rowSpacing) {
+            HStack(spacing: Self.itemSpacing) {
+                ForEach(Self.topRow) { actionButton($0) }
+
+                Divider().frame(width: Self.dividerWidth, height: 20)
+
+                Button(action: onTranslate) {
+                    // Same icon Translate already uses elsewhere in Tippi
+                    // (Translate Quick Panel, its Help entry) — one consistent
+                    // symbol for "translate" across the app.
+                    Image(systemName: "character.bubble")
+                        .font(.system(size: 14))
+                        .frame(width: Self.iconSide, height: Self.iconSide)
                 }
                 .buttonStyle(.plain)
-                .help(action.title)
+                .help(String(localized: "selectionPopup.translate"))
             }
-
-            Divider().frame(width: Self.dividerWidth, height: 20)
-
-            Button(action: onTranslate) {
-                // Same icon Translate already uses elsewhere in Tippi
-                // (Translate Quick Panel, its Help entry) — one consistent
-                // symbol for "translate" across the app.
-                Image(systemName: "character.bubble")
-                    .font(.system(size: 14))
-                    .frame(width: Self.iconSide, height: Self.iconSide)
+            if showsCurrencies {
+                currencyRow
+            } else {
+                HStack(spacing: Self.itemSpacing) {
+                    ForEach(Self.bottomRow) { action in
+                        if action.kind == .characterCount, let characterCount {
+                            countReadout(action, count: characterCount)
+                        } else {
+                            actionButton(action)
+                        }
+                    }
+                    if !currencyTargets.isEmpty {
+                        Button {
+                            showsCurrencies = true
+                        } label: {
+                            Text(verbatim: "€→$")
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(width: Self.iconSide, height: Self.iconSide)
+                        }
+                        .buttonStyle(.plain)
+                        .help(String(localized: "currency.convert"))
+                    }
+                }
             }
-            .buttonStyle(.plain)
-            .help(String(localized: "selectionPopup.translate"))
         }
         .padding(.horizontal, Self.horizontalPadding)
-        .frame(width: Self.width, height: Self.height)
+        .padding(.vertical, Self.verticalPadding)
+        .frame(width: Self.width, height: Self.height, alignment: .leading)
         .tippiGlass(in: RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private var currencyRow: some View {
+        HStack(spacing: Self.itemSpacing) {
+            Button {
+                showsCurrencies = false
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 13))
+                    .frame(width: Self.iconSide, height: Self.iconSide)
+            }
+            .buttonStyle(.plain)
+            .help(String(localized: "currency.back"))
+
+            ForEach(currencyTargets, id: \.self) { code in
+                Button {
+                    onConvert(code)
+                } label: {
+                    Text(verbatim: code)
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .frame(height: Self.iconSide)
+                        .padding(.horizontal, 6)
+                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.12)))
+                }
+                .buttonStyle(.plain)
+                .help(String(format: String(localized: "currency.convertTo"), code))
+            }
+        }
+    }
+
+    private func countReadout(_ action: LocalTextAction, count: Int) -> some View {
+        Button {
+            onAction(action)
+        } label: {
+            VStack(spacing: 0) {
+                Text(count.formatted())
+                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Text(action.title)
+                    .font(.system(size: 8))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(width: Self.countWidth, height: Self.iconSide)
+        }
+        .buttonStyle(.plain)
+        .help(String(format: String(localized: "local.action.characterCount.result"), count))
+    }
+
+    private func actionButton(_ action: LocalTextAction) -> some View {
+        Button {
+            onAction(action)
+        } label: {
+            // Typographic label where the transform is about letter
+            // shapes, icon otherwise. `underscore` had no valid SF
+            // Symbol at all and rendered as an invisible button.
+            if let label = action.label {
+                Text(label)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: Self.iconSide, height: Self.iconSide)
+            } else {
+                Image(systemName: action.symbol)
+                    .font(.system(size: 14))
+                    .frame(width: Self.iconSide, height: Self.iconSide)
+            }
+        }
+        .buttonStyle(.plain)
+        .help(action.title)
     }
 }

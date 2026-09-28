@@ -25,6 +25,8 @@ final class PromptPopupController {
         prompts: [DemoPrompt],
         localActions: [LocalTextAction] = [],
         localActionsReady: Bool = true,
+        selectedCharacterCount: Int? = nil,
+        quickTools: PopupQuickTools = PopupQuickTools(),
         onSelect: @escaping (DemoPrompt) -> Void,
         onLocalAction: @escaping (LocalTextAction) async -> String? = { _ in nil },
         onDismiss: @escaping () -> Void,
@@ -40,6 +42,8 @@ final class PromptPopupController {
             prompts: prompts,
             localActions: localActions,
             localActionsReady: localActionsReady,
+            selectedCharacterCount: selectedCharacterCount,
+            quickTools: quickTools,
             onSelect: { [weak self] prompt in
                 self?.close()
                 onSelect(prompt)

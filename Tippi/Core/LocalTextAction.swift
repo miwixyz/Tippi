@@ -14,6 +14,8 @@ enum LocalQuickActionSettings {
 
 enum LocalTextActionCategory {
     case formatting
+    /// Wraps the selection in a pair of delimiters — brackets, quotes.
+    case enclose
     case transform
     case info
 }
@@ -30,6 +32,9 @@ struct LocalTextAction: Identifiable, Equatable {
         case italic
         case underline
         case strikethrough
+        case highlight
+        case bulletList
+        case quotes
         case uppercase
         case lowercase
         case capitalizeWords
@@ -39,6 +44,8 @@ struct LocalTextAction: Identifiable, Equatable {
         case hyphenate
         case transliterateUmlauts
         case brackets
+        case squareBrackets
+        case curlyBraces
         case joinLines
         case characterCount
         case wordCount
@@ -70,6 +77,9 @@ struct LocalTextAction: Identifiable, Equatable {
         self.category = category
     }
 
+    // `text.append` for "join lines" looked like "insert a line break" — the
+    // opposite — and `text.word.spacing` was just stripes; both became text
+    // labels on 2026-09-28 (Michael: "aussagekräftige Icons").
     // Eine Aktion pro Zeile, als Tabelle lesbar — umbrechen würde das zerreißen.
     // swiftlint:disable line_length
     static var all: [LocalTextAction] {
@@ -78,6 +88,14 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .italic, title: String(localized: "local.action.italic"), symbol: "italic", category: .formatting),
             LocalTextAction(kind: .underline, title: String(localized: "local.action.underline"), symbol: "underline", category: .formatting),
             LocalTextAction(kind: .strikethrough, title: String(localized: "local.action.strikethrough"), symbol: "strikethrough", category: .formatting),
+            LocalTextAction(kind: .highlight, title: String(localized: "local.action.highlight"), symbol: "highlighter", category: .formatting),
+            LocalTextAction(kind: .bulletList, title: String(localized: "local.action.bulletList"), symbol: "list.bullet", category: .formatting),
+            // Enclosing pairs show the pair itself: `( ) [ ] { }` say exactly
+            // what will happen, and `square.brackets` is not an SF Symbol.
+            LocalTextAction(kind: .quotes, title: String(localized: "local.action.quotes"), label: LocalTextTransformer.quoteDelimiters.open + " " + LocalTextTransformer.quoteDelimiters.close, category: .enclose),
+            LocalTextAction(kind: .brackets, title: String(localized: "local.action.brackets"), label: "( )", category: .enclose),
+            LocalTextAction(kind: .squareBrackets, title: String(localized: "local.action.squareBrackets"), label: "[ ]", category: .enclose),
+            LocalTextAction(kind: .curlyBraces, title: String(localized: "local.action.curlyBraces"), label: "{ }", category: .enclose),
             LocalTextAction(kind: .uppercase, title: String(localized: "local.action.uppercase"), label: "AA", category: .transform),
             LocalTextAction(kind: .lowercase, title: String(localized: "local.action.lowercase"), label: "aa", category: .transform),
             LocalTextAction(kind: .capitalizeWords, title: String(localized: "local.action.capitalizeWords"), label: "Aa", category: .transform),
@@ -86,10 +104,9 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .splitUnderscore, title: String(localized: "local.action.splitUnderscore"), label: "A b", category: .transform),
             LocalTextAction(kind: .hyphenate, title: String(localized: "local.action.hyphenate"), label: "A-b", category: .transform),
             LocalTextAction(kind: .transliterateUmlauts, title: String(localized: "local.action.transliterateUmlauts"), label: "äöü", category: .transform),
-            LocalTextAction(kind: .brackets, title: String(localized: "local.action.brackets"), symbol: "parentheses", category: .transform),
-            LocalTextAction(kind: .joinLines, title: String(localized: "local.action.joinLines"), symbol: "text.append", category: .transform),
+            LocalTextAction(kind: .joinLines, title: String(localized: "local.action.joinLines"), label: "¶→␣", category: .transform),
             LocalTextAction(kind: .characterCount, title: String(localized: "local.action.characterCount"), symbol: "number", category: .info),
-            LocalTextAction(kind: .wordCount, title: String(localized: "local.action.wordCount"), symbol: "text.word.spacing", category: .info),
+            LocalTextAction(kind: .wordCount, title: String(localized: "local.action.wordCount"), label: "123w", category: .info),
         ]
     }
     // swiftlint:enable line_length
@@ -116,6 +133,20 @@ struct LocalTextAction: Identifiable, Equatable {
                 attributed: RichTextFormatter.apply(.strikethrough, to: text),
                 fallback: "~~\(text)~~"
             )
+        case .highlight:
+            // No plain-text fallback on purpose (Michael, 2026-09-28): an app
+            // without formatting simply gets the text back unchanged.
+            // `ReplacementWriter` routes a formatting-only change straight to
+            // the rich paste, so the unchanged plain text is never mistaken for
+            // an ignored write.
+            return .richReplacement(
+                attributed: RichTextFormatter.apply(.highlight, to: text),
+                fallback: text
+            )
+        case .bulletList:
+            return .plainReplacement(LocalTextTransformer.bulletList(text))
+        case .quotes:
+            return .plainReplacement(LocalTextTransformer.quotes(text))
         case .uppercase:
             return .plainReplacement(LocalTextTransformer.uppercase(text))
         case .lowercase:
@@ -134,6 +165,10 @@ struct LocalTextAction: Identifiable, Equatable {
             return .plainReplacement(LocalTextTransformer.transliterateUmlauts(text))
         case .brackets:
             return .plainReplacement(LocalTextTransformer.brackets(text))
+        case .squareBrackets:
+            return .plainReplacement(LocalTextTransformer.squareBrackets(text))
+        case .curlyBraces:
+            return .plainReplacement(LocalTextTransformer.curlyBraces(text))
         case .joinLines:
             return .plainReplacement(LocalTextTransformer.joinLines(text))
         case .characterCount:
@@ -215,6 +250,43 @@ enum LocalTextTransformer {
         "(\(text))"
     }
 
+    static func squareBrackets(_ text: String) -> String {
+        "[\(text)]"
+    }
+
+    static func curlyBraces(_ text: String) -> String {
+        "{\(text)}"
+    }
+
+    /// The system's quotation marks — „…“ on a German Mac, “…” on an English
+    /// one — so the button matches what the user would type by hand.
+    static var quoteDelimiters: (open: String, close: String) {
+        (Locale.current.quotationBeginDelimiter ?? "\u{201E}",
+         Locale.current.quotationEndDelimiter ?? "\u{201C}")
+    }
+
+    static func quotes(_ text: String) -> String {
+        quoteDelimiters.open + text + quoteDelimiters.close
+    }
+
+    /// Markdown bullet list: `- ` before every non-empty line, after its
+    /// indentation. Lines that already start with `- ` are left alone, so a
+    /// second click does not produce `- - `.
+    static func bulletList(_ text: String) -> String {
+        // Split on `Character.isNewline`: `\r\n` is one Character, so CRLF
+        // text does not gain empty lines the way `components(separatedBy:)`
+        // would produce them.
+        text
+            .split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+            .map { line -> String in
+                let body = line.drop { $0 == " " || $0 == "\t" }
+                guard !body.isEmpty, !body.hasPrefix("- ") else { return String(line) }
+                let indent = line.prefix(line.count - body.count)
+                return indent + "- " + body
+            }
+            .joined(separator: "\n")
+    }
+
     static func joinLines(_ text: String) -> String {
         text
             .components(separatedBy: .newlines)
@@ -248,6 +320,7 @@ enum RichTextFormatter {
         case italic
         case underline
         case strikethrough
+        case highlight
     }
 
     static func apply(_ style: Style, to text: String) -> NSAttributedString {
@@ -264,6 +337,17 @@ enum RichTextFormatter {
             attributed.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
         case .strikethrough:
             attributed.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        case .highlight:
+            // Plain yellow, the colour Mail, Pages and TextEdit use for their
+            // own highlighter — a dynamic system colour would not survive RTF.
+            attributed.addAttribute(.backgroundColor, value: NSColor.yellow, range: range)
+            // Fixed dark text on the yellow, so the text does not inherit a
+            // dynamic white in Dark Mode. Measured 2026-09-28: TextEdit's
+            // "dark background for windows" still lightens *every* dark text
+            // colour (black and #1A1A1A alike) for display only — the stored
+            // colour is right and shows dark as soon as that option is off.
+            // Nothing Tippi can influence; background colours are kept.
+            attributed.addAttribute(.foregroundColor, value: NSColor.black, range: range)
         }
 
         return attributed

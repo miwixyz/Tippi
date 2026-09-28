@@ -50,6 +50,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 },
                 onTranslate: { text in
                     self.translateQuickPanel.toggle(audioRecorder: self.audioRecorder, initialText: text)
+                },
+                onConvert: { code, snap in
+                    self.performCurrencyConversion(to: code, snapshot: snap)
                 }
             )
         },
@@ -435,6 +438,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Currency row and password button of the hotkey popup.
+    private func makePopupQuickTools(captured: CapturedText?, sourceApp: NSRunningApplication?) -> PopupQuickTools {
+        var tools = PopupQuickTools()
+        tools.onGeneratePassword = { [weak self] in
+            self?.popupController.close()
+            self?.insertGeneratedPassword(into: sourceApp)
+        }
+        guard let captured, let amount = CurrencyParser.parse(captured.text) else { return tools }
+        tools.currencyTargets = CurrencySettings.targets(for: amount)
+        tools.onConvert = { [weak self] code in
+            guard let self else { return nil }
+            guard let text = await CurrencyAction.convertedText(captured.text, to: code) else {
+                return String(localized: "currency.unavailable")
+            }
+            self.popupController.close()
+            await self.applyCapturedResult(plainText: text, attributed: nil, expecting: captured.text, sourceApp: captured.sourceApp)
+            ToastWindowController.shared.show(message: String(format: String(localized: "currency.convertTo"), code))
+            return nil
+        }
+        return tools
+    }
+
+    /// The status menu does not activate Tippi, so the frontmost app is still
+    /// the one the user was typing in.
+    @objc private func generatePasswordFromMenu() {
+        let app = NSWorkspace.shared.frontmostApplication
+        guard app?.bundleIdentifier != Bundle.main.bundleIdentifier else {
+            ToastWindowController.shared.show(message: String(localized: "password.noTarget"))
+            return
+        }
+        insertGeneratedPassword(into: app)
+    }
+
+    /// The password never reaches a log, the history or a toast.
+    private func insertGeneratedPassword(into app: NSRunningApplication?) {
+        let password = PasswordGenerator.generate()
+        Task { @MainActor in
+            await TextInsertion.insertSecret(password, into: app)
+            ToastWindowController.shared.show(message: String(localized: "password.inserted"))
+        }
+    }
+
+    private func performCurrencyConversion(to code: String, snapshot: SelectionSnapshot) {
+        Task { @MainActor in
+            guard let text = await CurrencyAction.convertedText(snapshot.text, to: code) else {
+                ToastWindowController.shared.show(message: String(localized: "currency.unavailable"))
+                return
+            }
+            await applySnapshotResult(text, attributed: nil, snapshot: snapshot)
+            ToastWindowController.shared.show(message: String(format: String(localized: "currency.convertTo"), code))
+        }
+    }
+
     /// Auto-popup-on-selection path (`SelectionActionBarPanel`), which captures
     /// everything up front in a `SelectionSnapshot` rather than storing it on
     /// `self`. The ladder itself lives in `ReplacementWriter` — see
@@ -566,6 +622,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         translateItem.image = menuIcon("character.book.closed")
         menu.addItem(translateItem)
+
+        let passwordItem = NSMenuItem(
+            title: String(localized: "password.generate"),
+            action: #selector(generatePasswordFromMenu),
+            keyEquivalent: ""
+        )
+        passwordItem.image = menuIcon("key.fill")
+        menu.addItem(passwordItem)
 
         let notesItem = NSMenuItem(
             title: String(localized: "menu.notes"),
@@ -1548,6 +1612,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             prompts: prompts,
             localActions: localActions,
             localActionsReady: localActionsReady,
+            selectedCharacterCount: captured?.text.count,
+            quickTools: makePopupQuickTools(captured: captured, sourceApp: captureSourceApp),
             onSelect: { [weak self] prompt in
                 guard let self else { return }
                 // Without a selection the popup closed and nothing happened —

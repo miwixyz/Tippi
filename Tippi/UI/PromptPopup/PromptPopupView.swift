@@ -16,6 +16,8 @@ struct PromptPopupView: View {
     let prompts: [DemoPrompt]
     let localActions: [LocalTextAction]
     let localActionsReady: Bool
+    let selectedCharacterCount: Int?
+    let quickTools: PopupQuickTools
     let onSelect: (DemoPrompt) -> Void
     let onLocalAction: (LocalTextAction) async -> String?
     let onDismiss: () -> Void
@@ -41,6 +43,8 @@ struct PromptPopupView: View {
         prompts: [DemoPrompt],
         localActions: [LocalTextAction] = [],
         localActionsReady: Bool = true,
+        selectedCharacterCount: Int? = nil,
+        quickTools: PopupQuickTools = PopupQuickTools(),
         onSelect: @escaping (DemoPrompt) -> Void,
         onLocalAction: @escaping (LocalTextAction) async -> String? = { _ in nil },
         onDismiss: @escaping () -> Void,
@@ -52,6 +56,8 @@ struct PromptPopupView: View {
         self.prompts = prompts
         self.localActions = localActions
         self.localActionsReady = localActionsReady
+        self.selectedCharacterCount = selectedCharacterCount
+        self.quickTools = quickTools
         self.onSelect = onSelect
         self.onLocalAction = onLocalAction
         self.onDismiss = onDismiss
@@ -257,13 +263,30 @@ struct PromptPopupView: View {
         .padding(.vertical, 6)
     }
 
+    private func runLocalAction(_ action: LocalTextAction) {
+        Task { @MainActor in
+            let message = await onLocalAction(action)
+            localActionMessage = message
+            if message == nil {
+                onDismiss()
+            }
+        }
+    }
+
     private var localActionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "local.actions.title"))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.top, 10)
+            HStack {
+                Text(String(localized: "local.actions.title"))
+                    .font(.caption.weight(.semibold))
+                Spacer()
+                if let selectedCharacterCount {
+                    Text(String(format: String(localized: "local.action.characterCount.result"), selectedCharacterCount))
+                        .font(.caption.monospacedDigit())
+                }
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
 
             if !localActionsReady {
                 Text(String(localized: "local.actions.needsSelection"))
@@ -272,21 +295,41 @@ struct PromptPopupView: View {
                     .padding(.horizontal, 12)
             }
 
+            // Format + enclose as a compact icon grid — B, I, U, ( ), [ ] need
+            // no caption, and ten titled rows would push the prompts out of
+            // view (2026-09-28). Everything else keeps its title: "A_b" vs
+            // "a_b" is not self-explanatory.
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5),
+                spacing: 6
+            ) {
+                ForEach(localActions.filter(\.isIconOnly)) { action in
+                    LocalActionIconButton(action: action) { runLocalAction(action) }
+                }
+            }
+            .padding(.horizontal, 10)
+
+            if !quickTools.currencyTargets.isEmpty {
+                CurrencyTargetRow(targets: quickTools.currencyTargets) { code in
+                    Task { @MainActor in
+                        let message = await quickTools.onConvert(code)
+                        localActionMessage = message
+                        if message == nil { onDismiss() }
+                    }
+                }
+                .padding(.horizontal, 10)
+            }
+
             LazyVGrid(
                 columns: [GridItem(.flexible()), GridItem(.flexible())],
                 alignment: .leading,
                 spacing: 6
             ) {
-                ForEach(localActions) { action in
-                    LocalActionButton(action: action) {
-                        Task { @MainActor in
-                            let message = await onLocalAction(action)
-                            localActionMessage = message
-                            if message == nil {
-                                onDismiss()
-                            }
-                        }
-                    }
+                ForEach(localActions.filter { !$0.isIconOnly }) { action in
+                    LocalActionButton(action: action) { runLocalAction(action) }
+                }
+                if let generate = quickTools.onGeneratePassword {
+                    PasswordButton(onTap: generate)
                 }
             }
             .padding(.horizontal, 10)
@@ -301,56 +344,6 @@ struct PromptPopupView: View {
             }
         }
         .padding(.bottom, 8)
-    }
-}
-
-/// Category → accent color for the small icon badge, same idea as macOS
-/// System Settings' own colored row icons — a native reference, not a
-/// borrowed brand color. Kept local to the UI layer so `LocalTextAction`
-/// itself (Core) never needs to import SwiftUI.
-private extension LocalTextActionCategory {
-    var tint: Color {
-        switch self {
-        case .formatting: return .blue
-        case .transform: return .purple
-        case .info: return .teal
-        }
-    }
-}
-
-private struct LocalActionButton: View {
-    let action: LocalTextAction
-    let onTap: () -> Void
-    @State private var isHovering = false
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 7) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(action.category.tint.opacity(0.16))
-                        .frame(width: 20, height: 20)
-                    Image(systemName: action.symbol)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(action.category.tint)
-                }
-                Text(action.title)
-                    .font(.caption)
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 7)
-            .padding(.vertical, 5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .background(
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(Color.secondary.opacity(isHovering ? 0.14 : 0.07))
-        )
-        .onHover { isHovering = $0 }
-        .animation(.easeOut(duration: 0.1), value: isHovering)
     }
 }
 

@@ -1,5 +1,47 @@
 # Changelog
 
+## [Unreleased]
+
+### Neu
+
+- **Markieren, Aufzählung, Anführungszeichen, eckige und geschweifte Klammern**
+  als Schnellaktionen. Markieren legt eine gelbe Hinterlegung an (nur in Apps
+  mit Formatierung, reine Text-Apps behalten den Text unverändert), Aufzählung
+  setzt „- “ vor jede Zeile und lässt schon aufgezählte Zeilen in Ruhe,
+  Anführungszeichen folgen der Systemsprache („…“ bzw. “…”).
+- **Auswahlleiste in zwei Reihen.** Oben Formatierung, Markieren, Aufzählung,
+  Anführungszeichen, Klammern und Übersetzen, unten Umwandeln und Zählen —
+  488 statt rund 890 Punkte breit.
+- **Zeichenzahl ohne Klick.** Die Auswahlleiste zeigt direkt, wie viele
+  Zeichen markiert sind (statt des #-Knopfs), das Hotkey-Popup nennt sie neben
+  „Schnellaktionen“.
+- **Schnellaktionen im Popup kompakter.** Formatierung und Klammern als
+  Symbolraster mit fünf Spalten, der Rest weiter mit Titel.
+
+- **Währungsrechner.** Markierter Betrag wie `23 €`, `62,700 円` oder
+  `USD 1,100` → in der Auswahlleiste `€→$`, dann eine Lieblingswährung wählen:
+  die Umrechnung wird angehängt, `23 € (≈ 26,19 $)`. Erkennt Symbole ($, €, £,
+  ¥, 円, 元, ₡ …) und Codes (USD, EUR, TWD, JPY, AED …) und beide
+  Zahlenschreibweisen (1,100 / 1.100). 28 Währungen, bis zu 5 Favoriten in den
+  Einstellungen. Kurse von Exchange Rate API, einmal täglich abgerufen und
+  zwischengespeichert; gesendet wird nur die Anfrage nach den Tageskursen, nie
+  der markierte Text.
+- **Passwort erzeugen** (Menüleiste und Hotkey-Popup). 12 Zeichen, garantiert
+  Groß- und Kleinbuchstaben, Ziffer und Sonderzeichen, ohne verwechselbare
+  Zeichen (I/l/1, O/0). Wird am Cursor eingefügt und bleibt 60 Sekunden in der
+  Zwischenablage (für „Passwort wiederholen“) — nur auf diesem Mac, **nicht**
+  per Handoff aufs iPhone, für Verlaufs-Werkzeuge verborgen. Danach kommt die
+  vorherige Zwischenablage zurück, außer es wurde inzwischen etwas anderes
+  kopiert.
+
+### Behoben
+
+- **Leere Symbole im Popup.** Die Umwandlungen mit Textsymbol (AA, aa, A_b …)
+  zeigten im Hotkey-Popup nur ein leeres Farbkästchen.
+- **Markieren mit fester dunkler Schrift** statt der dynamischen Textfarbe
+  der App. Ausnahme: TextEdit mit „Dunklen Hintergrund für Fenster verwenden“
+  hellt zur Anzeige jede dunkle Textfarbe auf — gespeichert ist sie richtig.
+
 ## [2.18.0] — 2026-09-28
 
 Alle Berechtigungen auf einen Blick, Snippets in der „:“-Liste, Vervollständigung in Obsidian.

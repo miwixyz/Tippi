@@ -168,6 +168,8 @@ private struct GeneralSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
+            CurrencyFavoritesSection()
+
             Section {
                 Toggle(String(localized: "settings.general.selectionPopup"), isOn: $selectionPopupEnabled)
                     .onChange(of: selectionPopupEnabled) { _, _ in
