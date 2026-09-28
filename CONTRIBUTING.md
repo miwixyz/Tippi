@@ -45,6 +45,21 @@ cleanup after it.
   makes `defaults domains` useless on the machine where you go looking when a
   preference bug is being chased.
 
+### Autocomplete quality bench
+
+Before changing how autocomplete talks to the model (prompt, context length,
+temperature, model), run the blind comparison bench against the local MLX server:
+
+```bash
+python3 scripts/autocomplete-pruefstand.py --out /tmp/pruefstand.md
+```
+
+It sends 20 German sentence starts through today's request and a candidate variant
+and writes a shuffled side-by-side sheet plus a `-zuordnung.json` key to unblind it.
+Decide by the sheet, not by a single example. Variants that were measured and ruled
+out are listed in the script header (raw completion with the chat model; Gemma base
+models that don't load in mlx-lm) — don't retry them without a new reason.
+
 ## Development setup
 
 ```bash
