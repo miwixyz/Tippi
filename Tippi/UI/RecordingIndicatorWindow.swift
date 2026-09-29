@@ -74,14 +74,14 @@ private struct RecordingIndicatorView: View {
                     // tick as glyph widths change, and the window is sized once.
                     .font(.subheadline.weight(.medium).monospacedDigit())
                 Text(String(localized: "dictation.indicator.recording"))
-                    .font(.subheadline.weight(.medium))
+                    .font(FamilyTheme.font(.subheadline, weight: .medium))
             case .transcribing:
                 ProgressView()
                     .controlSize(.small)
                 Text(aiEnabled
                      ? String(localized: "dictation.indicator.aiPolishing")
                      : String(localized: "dictation.indicator.transcribing"))
-                    .font(.subheadline.weight(.medium))
+                    .font(FamilyTheme.font(.subheadline, weight: .medium))
             }
             if aiEnabled {
                 aiBadge
@@ -106,7 +106,7 @@ private struct RecordingIndicatorView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 11, weight: .regular))
             Text(providerName ?? String(localized: "dictation.indicator.aiSuffix"))
-                .font(.subheadline.weight(.regular))
+                .font(FamilyTheme.font(.subheadline, weight: .regular))
         }
         .foregroundStyle(.secondary)
     }

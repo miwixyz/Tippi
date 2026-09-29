@@ -11,13 +11,13 @@ struct CurrencyFavoritesSection: View {
     var body: some View {
         Section(String(localized: "currency.settings.title")) {
             Text(String(localized: "currency.settings.favorites"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             // Spelled out, because a highlighted chip alone did not read as
             // "selected": clicking CRC to add it removed it (2026-09-28).
             Text(String(format: String(localized: "currency.settings.selected"),
                         favorites.isEmpty ? "—" : favorites.joined(separator: " · ")))
-                .font(.callout.weight(.medium))
+                .font(FamilyTheme.font(.callout, weight: .medium))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
                 ForEach(CurrencyCatalog.codes, id: \.self) { code in
                     chip(code)
@@ -25,7 +25,7 @@ struct CurrencyFavoritesSection: View {
             }
             if let url = Self.attributionURL {
                 Link(String(localized: "currency.settings.attribution"), destination: url)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
             }
         }
     }

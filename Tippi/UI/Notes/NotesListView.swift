@@ -79,10 +79,10 @@ struct NotesListView: View {
         HStack(alignment: .top, spacing: 4) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(note.title)
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .lineLimit(1)
                 Text(note.modifiedAt, format: .relative(presentation: .numeric))
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 4)

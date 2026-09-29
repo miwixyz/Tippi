@@ -219,7 +219,7 @@ struct TranslateQuickView: View {
         case .loading:
             HStack {
                 Text(String(localized: "translate.panel.translating"))
-                    .font(.body)
+                    .font(FamilyTheme.font(.body))
                     .foregroundStyle(.secondary)
                 Spacer()
             }
@@ -232,7 +232,7 @@ struct TranslateQuickView: View {
                 // the panel's old fixed height with no way to see the rest.
                 ScrollView {
                     Text(text)
-                        .font(.system(size: 16))
+                        .font(FamilyTheme.font(16))
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -241,7 +241,7 @@ struct TranslateQuickView: View {
 
                 HStack {
                     Text(providerDisplay)
-                        .font(.caption2)
+                        .font(FamilyTheme.font(.caption2))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button {
@@ -275,7 +275,7 @@ struct TranslateQuickView: View {
                             Label(String(localized: "translate.panel.replace"),
                                   systemImage: "arrow.left.arrow.right.square")
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                         .controlSize(.small)
                         .keyboardShortcut(.return, modifiers: .command)
                         .help(String(localized: "translate.panel.replace.help"))
@@ -289,7 +289,7 @@ struct TranslateQuickView: View {
                 Image(systemName: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
                 Text(message)
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .foregroundStyle(.secondary)
                 Spacer()
             }

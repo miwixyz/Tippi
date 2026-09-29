@@ -19,13 +19,13 @@ struct MLXSetupSheet: View {
             // Header
             HStack(spacing: 10) {
                 Image(systemName: "cpu")
-                    .font(.title)
+                    .font(FamilyTheme.font(.title))
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(String(localized: "mlx.install.title"))
-                        .font(.title2).bold()
+                        .font(FamilyTheme.font(.title2)).bold()
                     Text(String(localized: "mlx.install.subtitle"))
-                        .font(.callout)
+                        .font(FamilyTheme.font(.callout))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -73,9 +73,9 @@ struct MLXSetupSheet: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Label(msg, systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.red)
-                        .font(.callout)
+                        .font(FamilyTheme.font(.callout))
                     Text(String(localized: "mlx.install.fallbackHint"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                     HStack {
                         Text(manualCommands)
@@ -97,7 +97,7 @@ struct MLXSetupSheet: View {
                 Label(String(localized: "mlx.install.success"),
                       systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .symbolEffect(.bounce)
             }
 
@@ -108,11 +108,11 @@ struct MLXSetupSheet: View {
                     Button(String(localized: "mlx.install.cancel")) { dismiss() }
                     Button(String(localized: "mlx.install.start")) { startInstall() }
                         .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 } else if running {
                     ProgressView().controlSize(.small)
                     Text(phase.displayLabel)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                     Button(String(localized: "mlx.install.cancel")) {
                         streamTask?.cancel()
@@ -123,7 +123,7 @@ struct MLXSetupSheet: View {
                 } else if finished {
                     Button(String(localized: "mlx.install.close")) { dismiss() }
                         .keyboardShortcut(.defaultAction)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 }
             }
         }
@@ -161,7 +161,7 @@ struct MLXSetupSheet: View {
                     .foregroundStyle(.red)
             }
             Image(systemName: icon).frame(width: 20)
-            Text(label).font(.callout)
+            Text(label).font(FamilyTheme.font(.callout))
             Spacer()
         }
     }

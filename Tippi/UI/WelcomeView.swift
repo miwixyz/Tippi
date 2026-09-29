@@ -43,14 +43,14 @@ struct WelcomeView: View {
                         step += 1
                     }
                     .keyboardShortcut(.return)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 } else {
                     Button(String(localized: "setup.finish")) {
                         UserDefaults.standard.set(true, forKey: "setupCompleted")
                         NSApp.keyWindow?.close()
                     }
                     .keyboardShortcut(.return)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 }
             }
             .padding()
@@ -86,7 +86,7 @@ private struct WelcomeIntroStep: View {
                 .font(.system(size: 72))
                 .foregroundStyle(.tint)
             Text(String(localized: "welcome.title"))
-                .font(.largeTitle)
+                .font(FamilyTheme.font(.largeTitle))
                 .bold()
             Text(String(localized: "welcome.subtitle"))
                 .multilineTextAlignment(.center)
@@ -107,7 +107,7 @@ private struct AccessibilityStep: View {
                 .foregroundStyle(permissions.accessibilityGranted ? Color.green : Color.orange)
 
             Text(String(localized: "setup.accessibility.title"))
-                .font(.title)
+                .font(FamilyTheme.font(.title))
                 .bold()
 
             Text(String(localized: "setup.accessibility.body"))
@@ -142,7 +142,7 @@ private struct InputMonitoringStep: View {
                 .foregroundStyle(permissions.inputMonitoringGranted ? Color.green : Color.orange)
 
             Text(String(localized: "setup.inputMonitoring.title"))
-                .font(.title)
+                .font(FamilyTheme.font(.title))
                 .bold()
 
             Text(String(localized: "setup.inputMonitoring.body"))
@@ -157,11 +157,11 @@ private struct InputMonitoringStep: View {
                     Text(String(localized: "setup.inputMonitoring.manualHeader"))
                         .font(.callout.bold())
                     Text(String(localized: "setup.inputMonitoring.manualStep1"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                     Text(String(localized: "setup.inputMonitoring.manualStep2"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                     Text(String(localized: "setup.inputMonitoring.manualStep3"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -176,7 +176,7 @@ private struct InputMonitoringStep: View {
                     permissions.requestInputMonitoringPrompt()
                     permissions.openInputMonitoringSettings()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 Button(String(localized: "setup.checkAgain")) {
                     permissions.refresh()
                 }
@@ -217,7 +217,7 @@ private struct APIKeyStep: View {
                 .foregroundStyle(.tint)
 
             Text(String(localized: "setup.apiKey.title"))
-                .font(.title)
+                .font(FamilyTheme.font(.title))
                 .bold()
 
             Text(String(localized: "setup.apiKey.body"))
@@ -228,7 +228,7 @@ private struct APIKeyStep: View {
             if hasExistingKey {
                 Label(String(localized: "setup.apiKey.alreadySaved"),
                       systemImage: "checkmark.circle.fill")
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .foregroundStyle(.green)
             }
 
@@ -242,12 +242,12 @@ private struct APIKeyStep: View {
 
             if let feedback {
                 Text(feedback)
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .foregroundStyle(feedbackIsError ? Color.red : Color.green)
             }
 
             Text(String(localized: "setup.apiKey.skip"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
         .onAppear {
@@ -276,15 +276,15 @@ private struct TryItStep: View {
                     .foregroundStyle(.tint)
 
                 Text(String(localized: "setup.tryIt.title"))
-                    .font(.title)
+                    .font(FamilyTheme.font(.title))
                     .bold()
 
                 Text(String(localized: "setup.tryIt.demo.heading"))
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .foregroundStyle(.secondary)
 
                 Text(demoText)
-                    .font(.body)
+                    .font(FamilyTheme.font(.body))
                     .italic()
                     .multilineTextAlignment(.center)
                     .padding(12)
@@ -301,25 +301,25 @@ private struct TryItStep: View {
                           systemImage: "wand.and.stars")
                         .padding(.horizontal, 8)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 .controlSize(.large)
                 .padding(.top, 4)
 
                 if clickCount > 0 {
                     Text(String(format: String(localized: "setup.tryIt.clickCount"), clickCount))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.green)
                 }
 
                 Text(String(localized: "setup.tryIt.testHint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
                 Divider().padding(.vertical, 4)
 
                 Text(String(localized: "setup.tryIt.hotkey.heading"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
 
                 Text(String(localized: "setup.tryIt.hotkey"))
@@ -361,7 +361,7 @@ private struct DemoSheet: View {
                 Image(systemName: "pencil.and.outline")
                     .foregroundStyle(.tint)
                 Text("Tippi — Demo")
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 Spacer()
                 Button(String(localized: "demo.sheet.close"), action: closeSheet)
                     .keyboardShortcut(.escape)
@@ -449,10 +449,10 @@ private struct DemoLoadingView: View {
                 .scaleEffect(1.4)
             HStack(spacing: 8) {
                 Image(systemName: prompt.symbol).foregroundStyle(.tint)
-                Text(prompt.title).font(.headline)
+                Text(prompt.title).font(FamilyTheme.font(.headline))
             }
             Text(String(localized: "demo.sheet.loading"))
-                .font(.callout)
+                .font(FamilyTheme.font(.callout))
                 .foregroundStyle(.secondary)
             Button(String(localized: "demo.sheet.cancel"), role: .cancel, action: onCancel)
                 .keyboardShortcut(.escape)
@@ -474,11 +474,11 @@ private struct DemoFailedView: View {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
-                Text(prompt.title).font(.headline)
+                Text(prompt.title).font(FamilyTheme.font(.headline))
             }
 
             Text(String(localized: "demo.sheet.errorLabel"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             Text(message)
                 .font(.body.monospaced())
@@ -496,7 +496,7 @@ private struct DemoFailedView: View {
                 Button(String(localized: "demo.sheet.tryAnother"), action: onBack)
                 Spacer()
                 Button(String(localized: "demo.sheet.retry"), action: onRetry)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .keyboardShortcut(.return)
                 Button(String(localized: "demo.sheet.close"), action: onClose)
             }
@@ -512,7 +512,7 @@ private struct DemoPromptList: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(String(localized: "demo.sheet.originalLabel"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             Text(original)
                 .padding(10)
@@ -523,7 +523,7 @@ private struct DemoPromptList: View {
                 )
 
             Text(String(localized: "demo.sheet.pickAction"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .padding(.top, 6)
 
@@ -540,7 +540,7 @@ private struct DemoPromptList: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .foregroundStyle(.secondary)
-                                .font(.caption)
+                                .font(FamilyTheme.font(.caption))
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -573,13 +573,13 @@ private struct DemoResultView: View {
                 Image(systemName: prompt.symbol)
                     .foregroundStyle(.tint)
                 Text(prompt.title)
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 Spacer()
                 sourceBadge
             }
 
             Text(String(localized: "demo.sheet.originalLabel"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .padding(.top, 6)
             Text(original)
@@ -591,7 +591,7 @@ private struct DemoResultView: View {
                 )
 
             Text(String(localized: "demo.sheet.resultLabel"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.green)
                 .padding(.top, 6)
             Text(result)
@@ -610,7 +610,7 @@ private struct DemoResultView: View {
                 Spacer()
                 Button(String(localized: "demo.sheet.close"), action: onClose)
                     .keyboardShortcut(.return)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
             }
         }
         .padding()
@@ -621,10 +621,10 @@ private struct DemoResultView: View {
         switch source {
         case .llm(let info):
             HStack(spacing: 4) {
-                Image(systemName: "cloud").font(.caption2)
+                Image(systemName: "cloud").font(FamilyTheme.font(.caption2))
                 Text(info)
             }
-            .font(.caption)
+            .font(FamilyTheme.font(.caption))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(
@@ -633,10 +633,10 @@ private struct DemoResultView: View {
             .foregroundStyle(.tint)
         case .localFallback:
             HStack(spacing: 4) {
-                Image(systemName: "cloud.slash").font(.caption2)
+                Image(systemName: "cloud.slash").font(FamilyTheme.font(.caption2))
                 Text(String(localized: "demo.sheet.localFallbackBadge"))
             }
-            .font(.caption)
+            .font(FamilyTheme.font(.caption))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(
@@ -675,7 +675,7 @@ private struct HotkeyStatusBadge: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .font(.callout)
+        .font(FamilyTheme.font(.callout))
     }
 }
 
@@ -692,7 +692,7 @@ private struct StatusPill: View {
             Text(granted
                  ? String(localized: "setup.granted")
                  : String(localized: "setup.notGranted"))
-                .font(.callout)
+                .font(FamilyTheme.font(.callout))
                 .foregroundStyle(.secondary)
         }
     }

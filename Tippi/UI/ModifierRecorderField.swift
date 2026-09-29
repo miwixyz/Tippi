@@ -49,7 +49,7 @@ struct ModifierRecorderField: View {
                     Text(recording
                          ? String(localized: "hotkey.recorder.cancelHint")
                          : String(localized: "hotkey.recorder.changeHint"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 12)
@@ -69,7 +69,7 @@ struct ModifierRecorderField: View {
 
             if rejected {
                 Text(String(localized: "modifier.recorder.needsModifier"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
             }
         }

@@ -21,7 +21,7 @@ struct SnippetEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "settings.snippets.editor.title")).font(.headline)
+            Text(String(localized: "settings.snippets.editor.title")).font(FamilyTheme.font(.headline))
             ForEach(triggers.indices, id: \.self) { index in
                 TextField(String(localized: "settings.snippets.editor.trigger"), text: $triggers[index])
             }
@@ -31,7 +31,7 @@ struct SnippetEditorSheet: View {
             if !vars.isEmpty {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(String(localized: "settings.snippets.editor.variablesInUse"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                     ForEach(vars, id: \.name) { variable in
                         Text("{{\(variable.name)}}")
@@ -51,7 +51,7 @@ struct SnippetEditorSheet: View {
 
             if let notice {
                 Label(notice, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -109,7 +109,7 @@ private struct VariablePickerSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(String(localized: "settings.snippets.variable.title")).font(.headline)
+            Text(String(localized: "settings.snippets.variable.title")).font(FamilyTheme.font(.headline))
 
             // Radio-group, not segmented: segmented control doesn't wrap —
             // "Wochentag dieser Woche" alone overflowed a 340pt-wide sheet
@@ -142,7 +142,7 @@ private struct VariablePickerSheet: View {
                 }
             case .calendarWeek:
                 Text(String(localized: "settings.snippets.variable.calendarWeekHint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
 

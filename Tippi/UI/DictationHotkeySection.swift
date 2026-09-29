@@ -17,7 +17,7 @@ struct DictationHotkeySection: View {
         VStack(alignment: .leading, spacing: 10) {
             Toggle(isOn: $dictationEnabled) {
                 Text(String(localized: "settings.voice.dictation.enable"))
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
             }
             .onChange(of: dictationEnabled) { _, new in
                 DictationSettings.isEnabled = new
@@ -25,7 +25,7 @@ struct DictationHotkeySection: View {
             }
 
             Text(String(localized: "settings.voice.dictation.body"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -33,7 +33,7 @@ struct DictationHotkeySection: View {
                 if SpeechEngine.current == .whisper && !WhisperConfig.isConfigured {
                     Label(String(localized: "settings.voice.dictation.needsModel"),
                           systemImage: "exclamationmark.circle")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.orange)
                 }
                 Picker(String(localized: "settings.voice.dictation.mode.label"),
@@ -75,7 +75,7 @@ struct DictationHotkeySection: View {
         }
 
         Text(String(localized: "settings.voice.dictation.mode.tapOrHold.body"))
-            .font(.caption)
+            .font(FamilyTheme.font(.caption))
             .foregroundStyle(.secondary)
 
         // This style listens via a CGEventTap, unlike the key
@@ -86,7 +86,7 @@ struct DictationHotkeySection: View {
             VStack(alignment: .leading, spacing: 6) {
                 Label(String(localized: "settings.voice.dictation.mode.needsPermission"),
                       systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption.weight(.medium))
+                    .font(FamilyTheme.font(.caption, weight: .medium))
                     .foregroundStyle(.orange)
                 HStack(spacing: 8) {
                     Button(String(localized: "settings.voice.dictation.mode.grantPermission")) {

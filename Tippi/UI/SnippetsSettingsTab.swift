@@ -105,7 +105,7 @@ struct SnippetsTab: View {
                 Toggle(String(localized: "settings.snippets.enabled"), isOn: $store.isEnabled)
                 if store.isEnabled {
                     Text(String(localized: "settings.snippets.enabledHint"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
                 monitorStatusLine
@@ -128,7 +128,7 @@ struct SnippetsTab: View {
                         AppDelegate.shared?.applyKeystrokeMonitorState()
                     }
                 Text(String(localized: "settings.snippets.emoji.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -138,7 +138,7 @@ struct SnippetsTab: View {
                             EmojiSettings.isSuggestionsEnabled = new
                         }
                     Text(String(localized: "settings.snippets.emojiSuggestions.hint"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -149,7 +149,7 @@ struct SnippetsTab: View {
                         AppDelegate.shared?.applyKeystrokeMonitorState()
                     }
                 Text(String(localized: "settings.snippets.emoticon.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -218,7 +218,7 @@ struct SnippetsTab: View {
                                 Text("\(file.matchFile.matches.count)")
                                     + Text(" \(String(localized: "settings.snippets.matchCount"))")
                             }
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             Spacer()
                             // Import replaces reference for this file — it
                             // works regardless of the file's current
@@ -238,13 +238,13 @@ struct SnippetsTab: View {
                     // file still sits here looking unchanged, with nothing to
                     // suggest that importing is now the step that makes it work.
                     Text(String(localized: "settings.snippets.importRequiredHint"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
                     Text(store.matchDirectory.path)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.head)
@@ -274,12 +274,12 @@ struct SnippetsTab: View {
                             // guesswork.
                             if let source = snippet.sourcePath {
                                 Text(URL(fileURLWithPath: source).lastPathComponent)
-                                    .font(.caption)
+                                    .font(FamilyTheme.font(.caption))
                                     .foregroundStyle(.tertiary)
                             }
                             if snippet.isLocallyEdited {
                                 Text(String(localized: "settings.snippets.locallyEdited"))
-                                    .font(.caption)
+                                    .font(FamilyTheme.font(.caption))
                                     .foregroundStyle(.secondary)
                                     .help(String(localized: "settings.snippets.locallyEditedHelp"))
                             }
@@ -287,7 +287,7 @@ struct SnippetsTab: View {
                             if !shadowed.isEmpty {
                                 Label(String(localized: "settings.snippets.triggerShadowed"), systemImage: "arrow.uturn.forward")
                                     .foregroundStyle(.orange)
-                                    .font(.caption)
+                                    .font(FamilyTheme.font(.caption))
                                     .help(String(localized: "settings.snippets.triggerShadowedHelp"))
                             }
                             // Three states, not two. The badge used to read
@@ -304,16 +304,16 @@ struct SnippetsTab: View {
                                 if snippet.shellApproval == nil {
                                     Label(String(localized: "settings.snippets.shellPending"), systemImage: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
-                                        .font(.caption)
+                                        .font(FamilyTheme.font(.caption))
                                         .onTapGesture { store.pendingShellApproval = snippet }
                                 } else if store.isImportedSnippetActive(snippet) {
                                     Label(String(localized: "settings.snippets.shellApproved"), systemImage: "checkmark.shield.fill")
                                         .foregroundStyle(.green)
-                                        .font(.caption)
+                                        .font(FamilyTheme.font(.caption))
                                 } else {
                                     Label(String(localized: "settings.snippets.shellUnverifiable"), systemImage: "exclamationmark.shield.fill")
                                         .foregroundStyle(.orange)
-                                        .font(.caption)
+                                        .font(FamilyTheme.font(.caption))
                                         .onTapGesture { store.pendingShellApproval = snippet }
                                 }
                             }
@@ -355,15 +355,15 @@ struct SnippetsTab: View {
             // Lesbar statt Fussnote (Michael, 2026-09-25: „extrem klein und kaum zu
             // lesen") — die Erklaerung zum Pfeil-Format muss man wirklich lesen koennen.
             Text(String(localized: "settings.voice.dictation.customWords.label"))
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
             Text(String(localized: "settings.voice.dictation.customWords.hint"))
-                .font(.callout)
+                .font(FamilyTheme.font(.callout))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if dictationCustomWords.isEmpty {
                 Text(String(localized: "settings.voice.dictation.customWords.empty"))
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .foregroundStyle(.tertiary)
             } else {
                 // Same row-with-trash shape the snippet list uses, rather than
@@ -440,7 +440,7 @@ struct SnippetsTab: View {
         if let error = monitor?.lastError {
             VStack(alignment: .leading, spacing: 6) {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                     .textSelection(.enabled)
                 if !AXIsProcessTrusted() {
@@ -454,7 +454,7 @@ struct SnippetsTab: View {
                                 .activate(options: [.activateAllWindows])
                         }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .controlSize(.small)
                 }
             }
@@ -462,14 +462,14 @@ struct SnippetsTab: View {
             VStack(alignment: .leading, spacing: 4) {
                 Label(String(localized: "settings.snippets.monitorActive"),
                       systemImage: "checkmark.circle.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.green)
                 // Diagnostics: "active" alone has proven unreliable. These two
                 // separate "no keystrokes arrive" from "keystrokes arrive but
                 // get filtered out" (e.g. Tippi itself frontmost).
                 Text(diagnosticLine(received: m.lastKeystrokeAt,
                                     processed: m.lastProcessedAt))
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
             }
@@ -477,7 +477,7 @@ struct SnippetsTab: View {
             VStack(alignment: .leading, spacing: 6) {
                 Label(String(localized: "error.accessibility.snippets"),
                       systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                 Button(String(localized: "settings.permissions.grant")) {
                     let url = URL(string: "x-apple.systempreferences:"
@@ -489,13 +489,13 @@ struct SnippetsTab: View {
                             .activate(options: [.activateAllWindows])
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                 .controlSize(.small)
             }
         } else {
             Label(String(localized: "settings.snippets.monitorInactive"),
                   systemImage: "pause.circle")
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
     }
@@ -520,7 +520,7 @@ private struct ShellSnippetApprovalSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(String(localized: "settings.snippets.shellSnippetApproval.title"), systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
                 .foregroundStyle(.orange)
 
             Text(String(format: String(localized: "settings.snippets.shellSnippetApproval.body"), snippet.trigger))
@@ -537,7 +537,7 @@ private struct ShellSnippetApprovalSheet: View {
 
             if let error = store.approvalError {
                 Label(error, systemImage: "xmark.octagon.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -603,9 +603,9 @@ private struct SnippetFileErrorLabel: View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
                 Text(message)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                 Text(detail)
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                 Button(String(localized: "settings.snippets.reloadFile"), action: onReload)

@@ -13,7 +13,7 @@ private struct ToastView: View {
                 .font(.system(size: 13, weight: .medium))
                 .symbolEffect(.bounce)
             Text(message)
-                .font(.subheadline.weight(.medium))
+                .font(FamilyTheme.font(.subheadline, weight: .medium))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
         }

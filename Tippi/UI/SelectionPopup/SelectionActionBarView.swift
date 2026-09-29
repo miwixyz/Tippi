@@ -166,7 +166,7 @@ struct SelectionActionBarView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text(action.title)
-                    .font(.system(size: 8))
+                    .font(FamilyTheme.font(8))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }

@@ -10,15 +10,15 @@ struct DictationAutoReturnSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: "settings.voice.dictation.autoReturn.title"))
-                .font(.subheadline)
+                .font(FamilyTheme.font(.subheadline))
             Text(String(localized: "settings.voice.dictation.autoReturn.body"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if apps.isEmpty {
                 Text(String(localized: "settings.voice.dictation.autoReturn.empty"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
             AppListEditor(

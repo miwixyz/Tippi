@@ -83,10 +83,10 @@ struct PreviewView: View {
             HStack(spacing: 8) {
                 Image(systemName: prompt.symbol).foregroundStyle(.tint)
                 Text(prompt.title)
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 if let sourceAppName {
                     Text("· \(sourceAppName)")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -105,10 +105,10 @@ struct PreviewView: View {
             }
             if let chainError {
                 HStack(spacing: 4) {
-                    Image(systemName: "exclamationmark.triangle.fill").font(.caption2)
+                    Image(systemName: "exclamationmark.triangle.fill").font(FamilyTheme.font(.caption2))
                     Text(chainError)
                 }
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.orange)
             }
         }
@@ -119,10 +119,10 @@ struct PreviewView: View {
     /// Progress pill shown while a chain runs, e.g. "Schritt 2/3: Übersetze".
     private func chainBadge(_ p: ChainProgress) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: "arrow.right.circle").font(.caption2)
+            Image(systemName: "arrow.right.circle").font(FamilyTheme.font(.caption2))
             Text(String(format: String(localized: "preview.chain.step"), p.current, p.total, p.stepTitle))
         }
-        .font(.caption)
+        .font(FamilyTheme.font(.caption))
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
         .background(Capsule().fill(Color.accentColor.opacity(0.15)))
@@ -134,10 +134,10 @@ struct PreviewView: View {
     /// is cut off before replacing.
     private var truncatedBadge: some View {
         HStack(spacing: 4) {
-            Image(systemName: "exclamationmark.triangle").font(.caption2)
+            Image(systemName: "exclamationmark.triangle").font(FamilyTheme.font(.caption2))
             Text(String(localized: "preview.truncated.badge"))
         }
-        .font(.caption)
+        .font(FamilyTheme.font(.caption))
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
         .background(Capsule().fill(Color.orange.opacity(0.18)))
@@ -146,10 +146,10 @@ struct PreviewView: View {
 
     private func providerBadge(_ info: String) -> some View {
         HStack(spacing: 4) {
-            Image(systemName: "cloud").font(.caption2)
+            Image(systemName: "cloud").font(FamilyTheme.font(.caption2))
             Text(info)
         }
-        .font(.caption)
+        .font(FamilyTheme.font(.caption))
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
         .background(Capsule().fill(Color.accentColor.opacity(0.15)))
@@ -165,10 +165,10 @@ struct PreviewView: View {
     /// badge states the fact neutrally rather than calling it an error.
     private var noChangeBadge: some View {
         HStack(spacing: 4) {
-            Image(systemName: "equal.circle").font(.caption2)
+            Image(systemName: "equal.circle").font(FamilyTheme.font(.caption2))
             Text(String(localized: "preview.noChange.badge"))
         }
-        .font(.caption)
+        .font(FamilyTheme.font(.caption))
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
         .background(Capsule().fill(Color.orange.opacity(0.18)))
@@ -178,10 +178,10 @@ struct PreviewView: View {
 
     private var fallbackBadge: some View {
         HStack(spacing: 4) {
-            Image(systemName: "cloud.slash").font(.caption2)
+            Image(systemName: "cloud.slash").font(FamilyTheme.font(.caption2))
             Text(String(localized: "preview.fallback.badge"))
         }
-        .font(.caption)
+        .font(FamilyTheme.font(.caption))
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
         .background(Capsule().fill(Color.orange.opacity(0.18)))
@@ -211,7 +211,7 @@ struct PreviewView: View {
                 Image(systemName: "arrow.triangle.2.circlepath")
                 Text(String(localized: "preview.switchProvider"))
             }
-            .font(.caption)
+            .font(FamilyTheme.font(.caption))
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
@@ -267,7 +267,7 @@ struct PreviewView: View {
                     .font(.system(size: 36))
                     .foregroundStyle(.orange)
                 Text(String(localized: "preview.errorLabel"))
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 Text(message)
                     .font(.callout.monospaced())
                     .multilineTextAlignment(.center)
@@ -282,7 +282,7 @@ struct PreviewView: View {
     private func column(label: String, text: String, tint: Color, background: Color = .clear) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(tint)
             ScrollView {
                 Text(text)
@@ -353,12 +353,12 @@ struct PreviewView: View {
                 Button(String(localized: "preview.regenerate"), action: runCompletion)
                     .keyboardShortcut("r", modifiers: .command)
                 Button(String(localized: "preview.replace")) { onReplace(suggestion) }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .keyboardShortcut(.return)
                     .disabled(isStreaming)
             } else if case .failed = state {
                 Button(String(localized: "preview.retry"), action: runCompletion)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .keyboardShortcut(.return)
             }
         }

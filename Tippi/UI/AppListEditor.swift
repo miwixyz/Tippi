@@ -22,7 +22,7 @@ struct AppListEditor: View {
                     Text(app.name)
                     if !app.isInstalled {
                         Text(String(localized: "settings.appList.notInstalled"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                     }
                     Spacer()

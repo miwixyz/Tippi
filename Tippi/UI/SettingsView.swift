@@ -156,7 +156,7 @@ private struct GeneralSettingsTab: View {
                        isOn: Binding(get: { autostart }, set: { toggleAutostart($0) }))
                 if !autostartStatus.isEmpty {
                     Text(autostartStatus)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(autostartIsError ? Color.orange : Color.secondary)
                 }
             }
@@ -164,7 +164,7 @@ private struct GeneralSettingsTab: View {
             Section {
                 Toggle(String(localized: "settings.general.localActions"), isOn: $showLocalQuickActions)
                 Text(String(localized: "settings.general.localActions.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -176,7 +176,7 @@ private struct GeneralSettingsTab: View {
                         AppDelegate.shared?.restartSelectionPopupEngine()
                     }
                 Text(String(localized: "settings.general.selectionPopup.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
 
                 if selectionPopupEnabled {
@@ -279,9 +279,9 @@ private struct HotkeysTab: View {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(String(localized: "settings.hotkeys.header"))
-                            .font(.headline)
+                            .font(FamilyTheme.font(.headline))
                         Text(String(localized: "settings.hotkeys.intro"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
 
                         HotkeyRecorderField(combo: $combo)
@@ -297,7 +297,7 @@ private struct HotkeysTab: View {
                             }
 
                         Text(String(localized: "settings.hotkeys.restartHint"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
 
                         HStack {
@@ -308,11 +308,11 @@ private struct HotkeysTab: View {
                             Button(String(localized: "settings.hotkeys.testTrigger")) {
                                 AppDelegate.shared?.triggerManually()
                             }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                             Spacer()
                             if savedFlash {
                                 Text(String(localized: "settings.providers.savedFlash"))
-                                    .font(.caption)
+                                    .font(FamilyTheme.font(.caption))
                                     .foregroundStyle(.green)
                             }
                         }
@@ -326,9 +326,9 @@ private struct HotkeysTab: View {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "settings.hotkeys.macOSHeader"))
-                            .font(.headline)
+                            .font(FamilyTheme.font(.headline))
                         Text(String(localized: "settings.hotkeys.macOSBody"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         Button(String(localized: "settings.hotkeys.macOSOpen")) {
@@ -348,7 +348,7 @@ private struct HotkeysTab: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle(isOn: $translateEnabled) {
                             Text(String(localized: "settings.hotkeys.translate.header"))
-                                .font(.headline)
+                                .font(FamilyTheme.font(.headline))
                         }
                         .onChange(of: translateEnabled) { _, new in
                             TranslateSettings.isEnabled = new
@@ -356,7 +356,7 @@ private struct HotkeysTab: View {
                         }
 
                         Text(String(localized: "settings.hotkeys.translate.intro"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -381,7 +381,7 @@ private struct HotkeysTab: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle(isOn: $emojiPickerEnabled) {
                             Text(String(localized: "settings.hotkeys.emoji.header"))
-                                .font(.headline)
+                                .font(FamilyTheme.font(.headline))
                         }
                         .onChange(of: emojiPickerEnabled) { _, new in
                             EmojiSettings.isPickerEnabled = new
@@ -389,7 +389,7 @@ private struct HotkeysTab: View {
                         }
 
                         Text(String(localized: "settings.hotkeys.emoji.intro"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -414,7 +414,7 @@ private struct HotkeysTab: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle(isOn: $notesEnabled) {
                             Text(String(localized: "settings.hotkeys.notes.header"))
-                                .font(.headline)
+                                .font(FamilyTheme.font(.headline))
                         }
                         .onChange(of: notesEnabled) { _, new in
                             NotesSettings.isEnabled = new
@@ -422,7 +422,7 @@ private struct HotkeysTab: View {
                         }
 
                         Text(String(localized: "settings.hotkeys.notes.intro"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -446,7 +446,7 @@ private struct HotkeysTab: View {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle(isOn: $screenOCREnabled) {
-                            Text(String(localized: "settings.ocr.title")).font(.headline)
+                            Text(String(localized: "settings.ocr.title")).font(FamilyTheme.font(.headline))
                         }
                         .onChange(of: screenOCREnabled) { _, new in
                             ScreenOCRSettings.isEnabled = new
@@ -454,12 +454,12 @@ private struct HotkeysTab: View {
                         }
 
                         Text(String(localized: "settings.ocr.body"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Text(String(localized: "settings.ocr.permission"))
-                            .font(.caption2)
+                            .font(FamilyTheme.font(.caption2))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
@@ -484,7 +484,7 @@ private struct HotkeysTab: View {
                                     ScreenOCRSettings.joinLines = new
                                 }
                             Text(String(localized: "settings.ocr.joinLinesHint"))
-                                .font(.caption2)
+                                .font(FamilyTheme.font(.caption2))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
 
@@ -494,7 +494,7 @@ private struct HotkeysTab: View {
                                     ScreenOCRSettings.concealFromClipboardHistory = new
                                 }
                             Text(String(localized: "settings.ocr.concealHint"))
-                                .font(.caption2)
+                                .font(FamilyTheme.font(.caption2))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -505,12 +505,12 @@ private struct HotkeysTab: View {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(String(localized: "settings.hotkeys.tipHeader"))
-                            .font(.headline)
+                            .font(FamilyTheme.font(.headline))
                         Text(String(localized: "settings.hotkeys.tip1"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                         Text(String(localized: "settings.hotkeys.tip2"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                     }
                     .padding(6)
@@ -545,7 +545,7 @@ private struct HotkeysTab: View {
         if let error {
             VStack(alignment: .leading, spacing: 6) {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                     .textSelection(.enabled)
                 // A message telling the user to go grant a permission is not
@@ -567,7 +567,7 @@ private struct HotkeysTab: View {
                                 .activate(options: [.activateAllWindows])
                         }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .controlSize(.small)
                 }
             }
@@ -576,11 +576,11 @@ private struct HotkeysTab: View {
                 String(format: String(localized: "settings.hotkeys.active"), combo),
                 systemImage: "checkmark.circle.fill"
             )
-            .font(.caption)
+            .font(FamilyTheme.font(.caption))
             .foregroundStyle(.green)
         } else {
             Label(inactiveText, systemImage: "pause.circle")
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
     }
@@ -602,7 +602,7 @@ private struct HotkeysTab: View {
             Button(String(localized: "settings.hotkeys.reset.generic"), action: reset)
                 .buttonStyle(.bordered)
             Button(String(localized: "settings.hotkeys.testTrigger"), action: test)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
             Spacer()
         }
         // These three are Carbon hot keys and need no Input Monitoring, so the
@@ -669,13 +669,13 @@ private struct ProvidersTab: View {
             VStack(alignment: .leading, spacing: 8) {
                 Toggle(isOn: $allowFallback) {
                     Text(String(localized: "settings.providers.fallback"))
-                        .font(.headline)
+                        .font(FamilyTheme.font(.headline))
                 }
                 .onChange(of: allowFallback) { _, new in
                     UserDefaults.standard.set(new, forKey: "allowProviderFallback")
                 }
                 Text(String(localized: "settings.providers.fallback.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
             .padding(6)
@@ -687,7 +687,7 @@ private struct ProvidersTab: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(String(localized: "settings.providers.default"))
-                        .font(.headline)
+                        .font(FamilyTheme.font(.headline))
                     Spacer()
                     Picker("", selection: $selectedProvider) {
                         ForEach(LLMRouter.allProviders.indices, id: \.self) { index in
@@ -708,7 +708,7 @@ private struct ProvidersTab: View {
                     }
                 }
                 Text(String(localized: "settings.providers.default.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
             .padding(6)
@@ -869,11 +869,11 @@ private struct ProviderRow: View {
             } label: {
                 HStack {
                     Text(provider.displayName)
-                        .font(.headline)
+                        .font(FamilyTheme.font(.headline))
                     // Visible while collapsed, so an outdated model is not hidden.
                     if availabilityChecker.staleDetails[provider.id] != nil {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.orange)
                     }
                     Spacer()
@@ -907,13 +907,13 @@ private struct ProviderRow: View {
     private var details: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(hint(for: provider.id))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
 
             if let stale = availabilityChecker.staleDetails[provider.id] {
                 HStack(spacing: 8) {
                     Label(String(localized: "settings.providers.modelStale"), systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.orange)
                         .help(String(localized: "settings.providers.modelStale.help"))
                     if let suggested = stale.suggested {
@@ -947,7 +947,7 @@ private struct ProviderRow: View {
                             .fill(mlxStatusColor)
                             .frame(width: 8, height: 8)
                         Text(mlxManager.state.displayLabel)
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                         Spacer()
                         if mlxManager.state.isRunning {
@@ -975,7 +975,7 @@ private struct ProviderRow: View {
                                 .controlSize(.small)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(String(localized: "settings.providers.mlx.downloading"))
-                                    .font(.caption)
+                                    .font(FamilyTheme.font(.caption))
                                 Text(download)
                                     .font(.system(.caption2, design: .monospaced))
                                     .foregroundStyle(.secondary)
@@ -989,18 +989,18 @@ private struct ProviderRow: View {
                     // Not installed → friendly one-click setup card.
                     HStack(spacing: 12) {
                         Image(systemName: "shippingbox")
-                            .font(.title2)
+                            .font(FamilyTheme.font(.title2))
                             .foregroundStyle(.tint)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "mlx.install.notInstalled"))
-                                .font(.callout)
+                                .font(FamilyTheme.font(.callout))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         Button(String(localized: "mlx.install.button")) {
                             showingMLXSetup = true
                         }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     }
                     .padding(8)
                     .background(.tint.opacity(0.06))
@@ -1016,16 +1016,16 @@ private struct ProviderRow: View {
             HStack {
                 if let saveError {
                     Text(saveError)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.red)
                 } else if savedFlash {
                     Text(String(localized: "settings.providers.savedFlash"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.green)
                 }
                 Spacer()
                 Button(String(localized: "settings.providers.save"), action: save)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .disabled(saveDisabled)
             }
         }
@@ -1043,7 +1043,7 @@ private struct ProviderRow: View {
         if presets.isEmpty {
             HStack {
                 Text(String(localized: "settings.providers.model"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .frame(width: 60, alignment: .leading)
                 TextField(provider.defaultModel, text: $modelName)
                     .textFieldStyle(.roundedBorder)
@@ -1074,7 +1074,7 @@ private struct ProviderRow: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(String(localized: "settings.providers.model"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .frame(width: 60, alignment: .leading)
                     Picker("", selection: pickerSelection) {
                         ForEach(presets) { preset in
@@ -1089,7 +1089,7 @@ private struct ProviderRow: View {
                     TextField(provider.defaultModel, text: $modelName)
                         .textFieldStyle(.roundedBorder)
                         .padding(.leading, 60)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                 }
             }
         }
@@ -1099,7 +1099,7 @@ private struct ProviderRow: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(String(localized: "settings.providers.model"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .frame(width: 60, alignment: .leading)
                 Picker("", selection: $mlxPreset) {
                     ForEach(Self.mlxPresets) { preset in
@@ -1123,7 +1123,7 @@ private struct ProviderRow: View {
             // A custom repo ID is typed under „Erweitert" (`MLXAdvancedSettings`).
             if mlxPreset != "custom" {
                 Text(modelName)
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 60)
             }
@@ -1155,7 +1155,7 @@ private struct ProviderRow: View {
                     .foregroundStyle(.orange)
             }
         }
-        .font(.caption)
+        .font(FamilyTheme.font(.caption))
     }
 
     /// An emptied field with a key on file is a removal, not "nothing to
@@ -1287,16 +1287,16 @@ private struct MLXAdvancedSettings: View {
                 if showsCustomModel {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(String(localized: "settings.providers.mlx.customRepo"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                         TextField("mlx-community/…", text: $modelName)
                             .textFieldStyle(.roundedBorder)
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                     }
                 }
                 if showsPort {
                     HStack {
                         Text(String(localized: "settings.providers.mlx.port"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                         TextField("8080", text: $port)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
@@ -1307,7 +1307,7 @@ private struct MLXAdvancedSettings: View {
             .padding(.top, 4)
         } label: {
             Text(String(localized: "settings.providers.advanced"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .contentShape(Rectangle())
                 .onTapGesture { isExpanded.toggle() }
         }
@@ -1474,7 +1474,7 @@ private struct HelpTab: View {
                                 }
                                 .padding(.top, 8)
                             } label: {
-                                Text(group.id.title).font(.title3).fontWeight(.semibold)
+                                Text(group.id.title).font(FamilyTheme.font(.title3)).fontWeight(.semibold)
                             }
                         }
                     }
@@ -1512,16 +1512,16 @@ private struct HelpTab: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: icon)
                     .foregroundStyle(.tint)
-                    .font(.title3)
+                    .font(FamilyTheme.font(.title3))
                     .frame(width: 24)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.headline)
+                    Text(title).font(FamilyTheme.font(.headline))
                     // Parse the body as inline Markdown so [label](url) renders
                     // as a clickable link. Falls back to plain text on parse
                     // failure. `inlineOnlyPreservingWhitespace` keeps paragraph
                     // breaks intact (the bodies use \n\n between paragraphs).
                     Text(markdownAttributedString(from: body))
-                        .font(.callout)
+                        .font(FamilyTheme.font(.callout))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
@@ -1558,7 +1558,7 @@ private struct AboutTab: View {
                     .frame(width: 88, height: 88)
                     .clipShape(Circle())
                 Text("Tippi")
-                    .font(.largeTitle)
+                    .font(FamilyTheme.font(.largeTitle))
                     .bold()
                 Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
                     .foregroundStyle(.secondary)
@@ -1577,17 +1577,17 @@ private struct AboutTab: View {
                     Label(String(localized: "settings.about.feature4"), systemImage: "text.bubble")
                     Label(String(localized: "settings.about.feature5"), systemImage: "mic")
                 }
-                .font(.callout)
+                .font(FamilyTheme.font(.callout))
                 .foregroundStyle(.secondary)
 
                 Divider()
 
                 Text(String(localized: "settings.about.copyright"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
 
                 Text(String(localized: "settings.about.acknowledgements"))
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -1601,7 +1601,7 @@ private struct AboutTab: View {
                     Link(String(localized: "settings.about.onePager"),
                          destination: URL(string: "https://github.com/miwixyz/Tippi/blob/main/docs/ONE-PAGER.md")!)
                 }
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             }
             .padding(24)
@@ -1653,9 +1653,9 @@ private struct VoiceTab: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(String(localized: "settings.voice.engine.title"))
-                            .font(.headline)
+                            .font(FamilyTheme.font(.headline))
                         Text(String(localized: "settings.voice.engine.hint"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -1692,7 +1692,7 @@ private struct VoiceTab: View {
             case .notDownloaded:
                 Label(String(localized: "settings.voice.engine.status.notDownloaded"),
                       systemImage: "exclamationmark.circle")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                 Spacer()
                 Button(String(localized: "settings.voice.engine.download")) {
@@ -1701,7 +1701,7 @@ private struct VoiceTab: View {
                 .controlSize(.small)
             case .downloading(let fraction):
                 Text(String(localized: "settings.voice.engine.status.downloading"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                 ProgressView(value: fraction)
                     .frame(maxWidth: 160)
@@ -1713,18 +1713,18 @@ private struct VoiceTab: View {
                 ProgressView()
                     .controlSize(.small)
                 Text(String(localized: "settings.voice.engine.status.loading"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                 Spacer()
             case .ready:
                 Label(String(localized: "settings.voice.engine.status.ready"),
                       systemImage: "checkmark.circle.fill")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.green)
                 Spacer()
             case .failed(let message):
                 Label(message, systemImage: "xmark.circle")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.red)
                     .lineLimit(2)
                 Spacer()
@@ -1742,11 +1742,11 @@ private struct VoiceTab: View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
                 Text(String(localized: "settings.voice.dictation.title"))
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 // On/off and the hot key itself live under Hotkeys since 2026-09-28.
                 HStack(spacing: 8) {
                     Text(String(localized: "settings.voice.dictation.hotkeyMoved"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer()
@@ -1782,7 +1782,7 @@ private struct VoiceTab: View {
                         }
 
                     Text(String(localized: "settings.voice.dictation.postProcess.body"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -1790,7 +1790,7 @@ private struct VoiceTab: View {
                         polishProviderPicker
 
                         Text(String(localized: "settings.voice.dictation.postProcess.promptLabel"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                         TextEditor(text: $dictationPostProcessPrompt)
                             .font(.system(.body, design: .monospaced))
@@ -1852,7 +1852,7 @@ private struct VoiceTab: View {
         return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text(String(localized: "settings.voice.dictation.postProcess.providerLabel"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                 Picker("", selection: providerBinding) {
                     Text(String(localized: "settings.voice.dictation.postProcess.providerActive"))
@@ -1868,7 +1868,7 @@ private struct VoiceTab: View {
             if !dictationPolishProvider.isEmpty && !modelPresets.isEmpty {
                 HStack {
                     Text(String(localized: "settings.providers.model"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                     Picker("", selection: modelBinding) {
                         ForEach(modelPresets) { preset in
@@ -1887,7 +1887,7 @@ private struct VoiceTab: View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
                 Text(String(localized: "settings.voice.mic.title"))
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 HStack {
                     if permissions.microphoneGranted {
                         Label(String(localized: "setup.granted"), systemImage: "checkmark.circle.fill")
@@ -1919,13 +1919,13 @@ private struct VoiceTab: View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
                 Text(String(localized: "settings.voice.systemAudio.title"))
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 Toggle(String(localized: "settings.voice.systemAudio.enable"), isOn: $muteSystemAudio)
                     .onChange(of: muteSystemAudio) { _, new in
                         AudioRecorder.muteSystemAudioDuringRecording = new
                     }
                 Text(String(localized: "settings.voice.systemAudio.body"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1940,16 +1940,16 @@ private struct VoiceTab: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text(String(localized: "settings.voice.model.title"))
-                        .font(.headline)
+                        .font(FamilyTheme.font(.headline))
                     Spacer()
                     // Overall status pill
                     if WhisperConfig.autoDetectedModelPath != nil {
                         Label(String(localized: "setup.granted"), systemImage: "checkmark.circle.fill")
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.green)
                     } else {
                         Label(String(localized: "voice.model.noModel"), systemImage: "exclamationmark.circle")
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.orange)
                     }
                 }
@@ -1964,7 +1964,7 @@ private struct VoiceTab: View {
                 // the row just flipped back to "Download" (audit 2026-09-27).
                 if let error = modelManager.downloadError {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -1980,9 +1980,9 @@ private struct VoiceTab: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(String(localized: "settings.voice.language.title"))
-                        .font(.headline)
+                        .font(FamilyTheme.font(.headline))
                     Text(String(localized: "settings.voice.language.hint"))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -2012,9 +2012,9 @@ private struct VoiceTab: View {
         GroupBox {
             VStack(alignment: .leading, spacing: 8) {
                 Text(String(localized: "settings.voice.advanced.title"))
-                    .font(.headline)
+                    .font(FamilyTheme.font(.headline))
                 Text(String(localized: "settings.voice.advanced.body"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -2022,7 +2022,7 @@ private struct VoiceTab: View {
                     let status = WhisperConfig.autoDetectedBinaryPath
                     Image(systemName: status != nil ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundStyle(status != nil ? Color.green : Color.orange)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                     Text(status ?? String(localized: "settings.voice.advanced.noBinary"))
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
@@ -2064,16 +2064,16 @@ private struct ModelRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(model.displayName)
-                    .font(.subheadline)
+                    .font(FamilyTheme.font(.subheadline))
                 HStack(spacing: 6) {
                     Text("\(model.sizeMB) MB")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                     Text("·")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                     Text(model.languages)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -2088,7 +2088,7 @@ private struct ModelRow: View {
                     Button(String(localized: "voice.model.cancel")) {
                         manager.cancel()
                     }
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
                 }
@@ -2098,14 +2098,14 @@ private struct ModelRow: View {
                     isDownloaded = false
                 }
                 .buttonStyle(.bordered)
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.red)
             } else {
                 Button(String(localized: "voice.model.download")) {
                     manager.download(model)
                 }
-                .buttonStyle(.borderedProminent)
-                .font(.caption)
+                .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
+                .font(FamilyTheme.font(.caption))
                 .disabled(manager.downloadingModel != nil)
             }
         }

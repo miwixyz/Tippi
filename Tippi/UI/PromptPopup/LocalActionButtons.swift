@@ -83,7 +83,7 @@ struct LocalActionButton: View {
                         .frame(width: 18)
                 }
                 Text(action.title)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }
@@ -153,7 +153,7 @@ struct PasswordButton: View {
                     .frame(width: 20, height: 20)
                     .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.pink.opacity(0.16)))
                 Text(String(localized: "password.generate"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 7)

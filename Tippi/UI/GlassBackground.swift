@@ -13,11 +13,16 @@ import SwiftUI
 struct GlassBackground<S: Shape>: ViewModifier {
     let shape: S
 
+    /// Ab 2.20.0 mit Schiefer-Tönung über Glas bzw. Material (`FamilyTheme.glassTint`).
+    /// Tippis Leisten und Pop-ups schweben über FREMDEN Apps — reines Glas nahm deren
+    /// Farben an; bei Kalli 0.6.0 färbte ein pinkes Schreibtischbild das ganze Popover
+    /// (gemessen 29.09.). Die Tönung macht Text über buntem Inhalt ruhig lesbar.
     func body(content: Content) -> some View {
+        let tinted = content.background(shape.fill(FamilyTheme.glassTint))
         if #available(macOS 26.0, *) {
-            content.glassEffect(.regular, in: shape)
+            tinted.glassEffect(.regular, in: shape)
         } else {
-            content.background(.regularMaterial, in: shape)
+            tinted.background(.regularMaterial, in: shape)
         }
     }
 }

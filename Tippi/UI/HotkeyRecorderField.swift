@@ -39,7 +39,7 @@ struct HotkeyRecorderField: View {
             recorderButton
             if let rejection {
                 Text(rejection)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -60,7 +60,7 @@ struct HotkeyRecorderField: View {
                 Text(recording
                      ? String(localized: "hotkey.recorder.cancelHint")
                      : String(localized: "hotkey.recorder.changeHint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12)

@@ -20,7 +20,7 @@ struct PermissionsTab: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text(String(localized: "settings.permissions.intro"))
-                        .font(.callout)
+                        .font(FamilyTheme.font(.callout))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Button(String(localized: "settings.permissions.recheck")) { permissions.refresh() }
@@ -72,7 +72,7 @@ struct PermissionsTab: View {
                         if permissions.notificationsAllowed != nil { bringSystemSettingsToFront() }
                     })
                 Text(String(localized: "settings.permissions.footer"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
             .padding(20)
@@ -86,24 +86,24 @@ struct PermissionsTab: View {
         GroupBox {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: symbol)
-                    .font(.title3)
+                    .font(FamilyTheme.font(.title3))
                     .foregroundStyle(.tint)
                     .frame(width: 26)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: title)).font(.headline)
+                    Text(String(localized: title)).font(FamilyTheme.font(.headline))
                     Text(String(localized: purpose))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 6) {
                     Label(String(localized: granted ? "settings.permissions.granted" : "settings.permissions.missing"),
                           systemImage: granted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(granted ? Color.green : Color.orange)
                     if !granted {
                         Button(String(localized: "settings.permissions.grant.button"), action: grant)
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                             .controlSize(.small)
                     }
                 }

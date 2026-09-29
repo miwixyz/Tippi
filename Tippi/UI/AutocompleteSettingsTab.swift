@@ -31,20 +31,20 @@ struct AutocompleteSettingsTab: View {
             )) {
                 HStack(spacing: 6) {
                     Text(String(localized: "settings.autocomplete.toggle"))
-                        .font(.headline)
+                        .font(FamilyTheme.font(.headline))
                     Text("Labs")
-                        .font(.caption2.weight(.semibold))
+                        .font(FamilyTheme.font(.caption2, weight: .semibold))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
                         .background(Color.orange.opacity(0.2), in: Capsule())
                 }
             }
             Text(String(localized: "settings.autocomplete.hint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if controller.isEnabled, let error = controller.lastError {
-                Text(error).font(.caption).foregroundStyle(.orange)
+                Text(error).font(FamilyTheme.font(.caption)).foregroundStyle(.orange)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -55,11 +55,11 @@ struct AutocompleteSettingsTab: View {
     private var modelSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "settings.autocomplete.model.title"))
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
             HStack(spacing: 8) {
                 Text(String(format: String(localized: "settings.autocomplete.model.current"),
                             MLXServerManager.activeModel))
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .textSelection(.enabled)
                 Spacer()
                 Button(String(localized: "settings.autocomplete.model.change")) {
@@ -67,7 +67,7 @@ struct AutocompleteSettingsTab: View {
                 }
             }
             Text(String(localized: "settings.autocomplete.model.hint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             if controller.isEnabled, mlx.ownedServerURL == nil {
@@ -81,14 +81,14 @@ struct AutocompleteSettingsTab: View {
     @ViewBuilder private var serverHint: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: "settings.autocomplete.noServer"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.orange)
             // `try?` below swallows the start error — the manager keeps it in
             // `state`, so show it here instead of a button that just re-enables
             // (audit 2026-09-27).
             if case .failed(let message) = mlx.state {
                 Text(message)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -109,7 +109,7 @@ struct AutocompleteSettingsTab: View {
     @ViewBuilder private var exclusionList: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: "settings.autocomplete.excluded"))
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
             AppListEditor(
                 bundleIDs: excluded,
                 onAdd: { bundleID in
@@ -140,9 +140,9 @@ private struct AutocompleteKeysSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(String(localized: "settings.autocomplete.keys.title"))
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
             Text(String(localized: "settings.autocomplete.keys.hint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -151,7 +151,7 @@ private struct AutocompleteKeysSection: View {
 
             if swapNotice {
                 Text(String(localized: "settings.autocomplete.keys.swapped"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -187,7 +187,7 @@ private struct AutocompleteKeysSection: View {
             }
         )
         return VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.subheadline)
+            Text(title).font(FamilyTheme.font(.subheadline))
             HotkeyRecorderField(combo: combo) { candidate in
                 Self.message(for: AutocompleteKeyRules.problem(candidate, reserved: Self.tippiHotkeys()))
             }

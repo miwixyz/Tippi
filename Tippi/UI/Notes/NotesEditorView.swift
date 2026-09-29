@@ -104,7 +104,7 @@ struct NotesEditorView: View {
                 if let saveError = store.loadError {
                     Label(String(format: String(localized: "notes.saveFailed"), saveError),
                           systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.orange)
                         .lineLimit(2)
                         .help(saveError)
@@ -112,7 +112,7 @@ struct NotesEditorView: View {
 
                 if store.heldBackExternalEdit {
                     Label(String(localized: "notes.externalChangeHeld"), systemImage: "arrow.triangle.2.circlepath")
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .help(String(localized: "notes.externalChangeHeld"))
                 }
@@ -120,7 +120,7 @@ struct NotesEditorView: View {
                 Spacer()
 
                 Text(String(format: String(localized: "notes.counter"), wordCount, text.count))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 16)

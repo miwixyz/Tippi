@@ -45,7 +45,7 @@ struct PromptsTab: View {
             // Einstellungsfenster wirkte LEER (Mac mini + MacBook). Per Ausschlussverfahren
             // gemessen: ohne diesen Bereich 748 pt, ohne das fixedSize ebenfalls 748 pt.
             Text(String(localized: "settings.prompts.listHint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             List {
                 ForEach(Array(prompts.enumerated()), id: \.element.id) { index, prompt in
@@ -57,7 +57,7 @@ struct PromptsTab: View {
 
             if let msg = importMessage {
                 Text(msg)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(msg.hasPrefix("✓") ? Color.secondary : Color.orange)
                     .padding(.horizontal, 4)
             }
@@ -110,7 +110,7 @@ struct PromptsTab: View {
     private var header: some View {
         HStack(spacing: 6) {
             Text(String(localized: "settings.tab.prompts"))
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
             Spacer()
             Button(action: importPrompts) {
                 Label(String(localized: "prompts.import.button"), systemImage: "square.and.arrow.down")
@@ -183,7 +183,7 @@ struct PromptsTab: View {
 
     private func badge(_ text: String) -> some View {
         Text(text)
-            .font(.caption2)
+            .font(FamilyTheme.font(.caption2))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 5)
             .padding(.vertical, 1)
@@ -388,10 +388,10 @@ private struct PromptEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(heading)
-                .font(.headline)
+                .font(FamilyTheme.font(.headline))
             if isBuiltIn {
                 Text(String(localized: "settings.prompts.editor.builtInHint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -432,7 +432,7 @@ private struct PromptEditor: View {
                     .keyboardShortcut(.escape)
                 Spacer()
                 Button(String(localized: "settings.providers.save"), action: save)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
                     .keyboardShortcut(.return)
                     .disabled(!isValid)
             }
@@ -459,13 +459,13 @@ private struct PromptEditor: View {
     private var singleEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "settings.prompts.editor.symbolHint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
 
             Text(String(localized: "settings.prompts.editor.systemLabel"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
             TextEditor(text: $systemPrompt)
-                .font(.body)
+                .font(FamilyTheme.font(.body))
                 .frame(minHeight: 130)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
@@ -473,11 +473,11 @@ private struct PromptEditor: View {
                 )
 
             Text(String(localized: "settings.prompts.editor.systemHint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
 
             Text(String(localized: "settings.prompts.editor.variablesHint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.tint)
         }
     }
@@ -487,12 +487,12 @@ private struct PromptEditor: View {
     private var chainEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "settings.prompts.editor.chainHint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
 
             if pipeline.isEmpty {
                 Text(String(localized: "settings.prompts.editor.chainEmpty"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 120, alignment: .center)
                     .overlay(
@@ -577,7 +577,7 @@ private struct PromptProviderPicker: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(String(localized: "settings.prompts.editor.provider"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                 Picker("", selection: providerBinding) {
                     Text(String(localized: "settings.voice.dictation.postProcess.providerActive"))
                         .tag(Self.useActive)
@@ -594,7 +594,7 @@ private struct PromptProviderPicker: View {
                 if !modelPresets.isEmpty {
                     HStack {
                         Text(String(localized: "settings.providers.model"))
-                            .font(.caption)
+                            .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                         Picker("", selection: $model) {
                             ForEach(modelPresets) { preset in
@@ -606,7 +606,7 @@ private struct PromptProviderPicker: View {
                 }
             }
             Text(String(localized: "settings.prompts.editor.providerHint"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
     }

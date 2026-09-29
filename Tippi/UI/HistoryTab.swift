@@ -28,7 +28,7 @@ struct HistoryTab: View {
                 Text(isEnabled
                      ? String(localized: "settings.history.toggle.on.hint")
                      : String(localized: "settings.history.toggle.off.hint"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
 
@@ -112,19 +112,19 @@ struct HistoryTab: View {
                     format: String(localized: "settings.history.count.entries"),
                     totalCount
                 ))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                 if HistoryStore.shared.lastUnreadableCount > 0 {
                     Text(String(format: String(localized: "settings.history.unreadable"),
                                 HistoryStore.shared.lastUnreadableCount))
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.orange)
                         .help(String(localized: "settings.history.unreadable.help"))
                 }
                 if let err = loadError {
                     Spacer()
                     Text(err)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.red)
                 }
             }
@@ -208,10 +208,10 @@ private struct HistoryRow: View {
         HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.promptTitle)
-                    .font(.callout)
+                    .font(FamilyTheme.font(.callout))
                     .bold()
                 Text(entry.input)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -219,9 +219,9 @@ private struct HistoryRow: View {
             Spacer(minLength: 12)
             VStack(alignment: .trailing, spacing: 2) {
                 Text(entry.timestamp, format: .relative(presentation: .numeric))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                 Text("\(entry.appName) · \(entry.provider)")
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
             }
         }
@@ -239,9 +239,9 @@ private struct HistoryDetailView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.promptTitle).font(.headline)
+                    Text(entry.promptTitle).font(FamilyTheme.font(.headline))
                     Text(detailSubtitle)
-                        .font(.caption)
+                        .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -275,7 +275,7 @@ private struct HistoryDetailView: View {
     private var paneInput: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: "settings.history.detail.input"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             ScrollView {
                 Text(entry.input)
@@ -290,7 +290,7 @@ private struct HistoryDetailView: View {
     private var paneOutput: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: "settings.history.detail.output"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
             ScrollView {
                 Text(entry.output)

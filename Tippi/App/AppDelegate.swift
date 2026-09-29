@@ -177,6 +177,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        // Design der App-Familie (2.20.0): Plus Jakarta Sans vor dem ersten Fenster
+        // registrieren. Ohne Registrierung fällt SwiftUI still auf die Systemschrift
+        // zurück — deshalb Ergebnis UND Auflösbarkeit protokollieren (Muster Kalli 0.6.0).
+        FamilyTheme.app = .tippi
+        let fontRegistered = FamilyTheme.registerFonts()
+        let fontResolvable = NSFontManager.shared.availableMembers(ofFontFamily: FamilyTheme.fontFamily) != nil
+        Logger(subsystem: "com.tippi.app", category: "design").notice(
+            "Schrift \(FamilyTheme.fontFamily, privacy: .public): registriert \(fontRegistered, privacy: .public), auflösbar \(fontResolvable, privacy: .public)"
+        )
         if Self.isRunningUnitTests {
             NSLog("Tippi: unit-test host — skipping app startup (no monitors, no network)")
             return

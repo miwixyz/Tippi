@@ -210,19 +210,19 @@ struct PromptPopupView: View {
                 .foregroundStyle(.tint)
             if !searchQuery.isEmpty && !instructionFieldActive {
                 Text(searchQuery)
-                    .font(.subheadline.weight(.semibold))
+                    .font(FamilyTheme.font(.subheadline, weight: .semibold))
                     .lineLimit(1)
                     .truncationMode(.head)
             } else {
                 Text("Tippi")
-                    .font(.subheadline.weight(.semibold))
+                    .font(FamilyTheme.font(.subheadline, weight: .semibold))
             }
             Spacer()
             // Match-count is always shown when a filter is active, regardless
             // of source — visual confirmation that filtering is running.
             if !searchQuery.isEmpty {
                 Text("\(filteredPrompts.count)")
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
@@ -242,7 +242,7 @@ struct PromptPopupView: View {
         VStack(spacing: 0) {
             if filteredPrompts.isEmpty && !searchQuery.isEmpty {
                 Text(String(localized: "prompt.search.noMatch"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -277,7 +277,7 @@ struct PromptPopupView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(String(localized: "local.actions.title"))
-                    .font(.caption.weight(.semibold))
+                    .font(FamilyTheme.font(.caption, weight: .semibold))
                 Spacer()
                 if let selectedCharacterCount {
                     Text(String(format: String(localized: "local.action.characterCount.result"), selectedCharacterCount))
@@ -290,7 +290,7 @@ struct PromptPopupView: View {
 
             if !localActionsReady {
                 Text(String(localized: "local.actions.needsSelection"))
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.orange)
                     .padding(.horizontal, 12)
             }
@@ -336,7 +336,7 @@ struct PromptPopupView: View {
 
             if let localActionMessage {
                 Text(localActionMessage)
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.tint)
                     .padding(.horizontal, 12)
                     .padding(.top, 2)
@@ -451,10 +451,10 @@ private struct VoiceSection: View {
                 .font(.system(size: 14))
             VStack(alignment: .leading, spacing: 2) {
                 Text(String(localized: "voice.setup.banner.title"))
-                    .font(.caption.weight(.medium))
+                    .font(FamilyTheme.font(.caption, weight: .medium))
                     .foregroundStyle(.primary)
                 Text(String(localized: "voice.setup.banner.body"))
-                    .font(.caption2)
+                    .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -499,7 +499,7 @@ private struct VoiceSection: View {
                 text: $typedInstruction
             )
             .textFieldStyle(.plain)
-            .font(.caption)
+            .font(FamilyTheme.font(.caption))
             .focused($fieldFocused)
             .onSubmit { submitTyped() }
             .onChange(of: fieldFocused) { _, focused in
@@ -591,22 +591,22 @@ private struct VoiceSection: View {
             Text(String(localized: mode == .voicePrompt
                         ? "voice.mic.speakInstruction"
                         : "voice.mic.tapToDictate"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.secondary)
         case .recording:
             Text(String(localized: "voice.mic.recording"))
-                .font(.caption)
+                .font(FamilyTheme.font(.caption))
                 .foregroundStyle(.red)
         case .transcribing:
             HStack(spacing: 4) {
                 ProgressView().scaleEffect(0.6)
                 Text(String(localized: "voice.mic.transcribing"))
-                    .font(.caption)
+                    .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
         case .failed(let msg):
             Text(msg)
-                .font(.caption2)
+                .font(FamilyTheme.font(.caption2))
                 .foregroundStyle(.orange)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
