@@ -107,6 +107,8 @@ Tippi/
 │   ├── ModelAvailabilityChecker.swift  # Live-Katalog-Abgleich beim Start
 │   └── {OpenAI,Anthropic,Gemini,Mistral,Groq,Scaleway,Kimi,Nebius,OpenRouter,Ollama,MLX}Provider.swift
 ├── UI/
+│   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):
+│   │                               #   Akzent, accentFill, glassTint, Plus Jakarta Sans, Schrift-Registrierung
 │   ├── NonKeyPanelChrome.swift     # NonKeyPanel + ClickableHostingView, geteilt von
 │   │                               #   Aktionsleiste und Emoji-Vorschlagsliste
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
