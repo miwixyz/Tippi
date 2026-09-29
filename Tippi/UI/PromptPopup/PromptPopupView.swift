@@ -381,7 +381,7 @@ private struct DirectInsertRow: View {
         .buttonStyle(.plain)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.accentColor : Color.clear)
+                .fill(isSelected ? FamilyTheme.accentFill : Color.clear)   // weiße Schrift: Füllung ≥ 4,6 : 1 (2.20.0)
                 .padding(.horizontal, 6)
         )
         .onHover { hovering in
@@ -716,7 +716,7 @@ private struct PromptRow: View {
         .buttonStyle(.plain)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.accentColor : Color.clear)
+                .fill(isSelected ? FamilyTheme.accentFill : Color.clear)   // weiße Schrift: Füllung ≥ 4,6 : 1 (2.20.0)
                 .padding(.horizontal, 6)
         )
         .onHover { hovering in

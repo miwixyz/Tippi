@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 28. September 2026 · Version: **2.19.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 29. September 2026 · Version: **2.20.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
@@ -139,7 +139,7 @@ Tippi/
     ├── Tippi.entitlements          app-sandbox=false, network.client=true
     ├── Assets.xcassets/
     │   ├── AppIcon.appiconset      10 macOS-Größen (CoreGraphics, kein third-party)
-    │   ├── AccentColor.colorset    Signal Blue #3B8CFF — treibt .tint / .accentColor app-weit
+    │   ├── AccentColor.colorset    Schieferblau #3E5998 / dunkel #98AEE1 (ab 2.20.0, Design der App-Familie; vorher stand hier #3B8CFF, das Asset war aber #083077) — treibt .tint / .accentColor app-weit
     │   ├── BrandNavy.colorset      #10192B (fix, kein Dark-Variant — Logo-Farbe)
     │   ├── BrandSurface.colorset   Soft White / Dark Navy (adaptiv Light/Dark)
     │   └── BrandMistBlue.colorset  Mist Blue / Deep Navy-Blue (adaptiv Light/Dark)
@@ -531,7 +531,7 @@ Die App ist vollständig Dark/Light-Mode-konform:
 - `BrandNavy` hat bewusst **keine** Dark-Variante — es ist immer die Marken-Tinte (#10192B). Stand 2026-09-27 nutzt kein Code das Asset (Audit), es bleibt als Palettenreferenz
 - Kein `window.appearance`-Lock irgendwo — alle Fenster übernehmen das System-Appearance
 
-**Stolperstein beim Auswahlzustand im Popup:** Wenn eine Zeile ausgewählt ist (AccentColor-Hintergrund), muss der Text ablesbar bleiben. Statt `Color.white` (hardcoded) wird `Color(nsColor: .selectedMenuItemTextColor)` verwendet — der macOS-Systemtoken für Text auf einem ausgewählten Menüelement. Aktuell weiß, aber semantisch korrekt und zukunftssicher gegen Theme-Änderungen.
+**Stolperstein beim Auswahlzustand im Popup:** Wenn eine Zeile ausgewählt ist (AccentColor-Hintergrund), muss der Text ablesbar bleiben. Statt `Color.white` (hardcoded) wird `Color(nsColor: .selectedMenuItemTextColor)` verwendet — der macOS-Systemtoken für Text auf einem ausgewählten Menüelement. Aktuell weiß, aber semantisch korrekt und zukunftssicher gegen Theme-Änderungen. **Ab 2.20.0** ist der Zeilenhintergrund `FamilyTheme.accentFill` statt `Color.accentColor`: Der helle Dunkelmodus-Akzent `#98AEE1` hätte mit Weiß nur 2,2 : 1, die Füllung hält ≥ 4,6 : 1.
 
 ### 8.10 whisper-cli Ausgabe-Pfad
 

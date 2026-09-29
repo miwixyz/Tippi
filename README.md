@@ -48,6 +48,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **New app-family design (v2.20)** — shared look with Kalli, TippAI and Qotti: the calm "Slate" palette (accent slate blue, light and dark), the typeface **Plus Jakarta Sans** (SIL Open Font License, bundled), and tinted glass so the selection bar and popups no longer take on the colors of the app underneath. Prominent buttons and selected rows stay readable in dark mode (white text ≥ 4.6 : 1)
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
 - **It tells you what broke and what to do (v2.11.5)** — the menu bar used to say only "Fehler". It now names the cause, puts the next step on its own clickable row that opens the right place in Settings, and announces a failure on its own — once per new problem, silently. If notifications are denied the menu still carries everything. A stale local server holding the MLX port is cleared automatically (v2.11.7); a *foreign* program holding it is named with its pid rather than killed
 - **24 built-in prompts** — Improve, Fix Grammar, Shorten, Lengthen, Make Formal, Make Casual, Simplify, Humanize, Add Emojis, Defuse, Summarize, TL;DR, Bullet points, Key points, Action items, Explain like I'm 10, Email reply, LinkedIn post, Instagram caption, Facebook post, Adapt for App, Translate → DE, Translate → EN, Translate → ES; language-aware prompts use `{language}`
@@ -452,6 +453,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | Version | Status | Highlights |
 |---------|--------|------------|
 | v2.19.0 | ✅ Done | **Currency converter, password generator, more quick actions** — select an amount, pick a favorite currency, the conversion is appended (rates by Exchange Rate API; your text never leaves the Mac); 12-character passwords inserted at the cursor, clipboard copy stays on this Mac for 60 s; highlight, bullet list, quotation marks, brackets; two-row selection bar with live character count. 558 tests |
+| v2.20.0 | ✅ Done | **New app-family design** — "Slate" palette, Plus Jakarta Sans, tinted glass for the selection bar and popups, readable prominent buttons in dark mode. 558 tests |
 | v2.18.0 | ✅ Done | **Permissions tab, snippets in the “:” list, autocomplete in Obsidian** — one page with every permission and a grant button; own snippets in the suggestion list (shell snippets excluded); caret found in Obsidian/Electron via the text-marker range |
 | v2.17.1 | ✅ Done | **Settings visible again** — fixes the blank Settings window introduced in 2.17.0 (a non-compressible hint text above the prompt list pushed the content far above the window edge) |
 | v2.17.0 | ✅ Done | **Your prompts, your keys** — edit built-in prompts (reset anytime), reorder all prompts by drag & drop (number keys follow), edit imported snippets, choose both autocomplete accept keys (word / whole suggestion), glass-capsule suggestion popup with key hint, tidier settings |

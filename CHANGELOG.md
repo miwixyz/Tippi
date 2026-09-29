@@ -2,7 +2,34 @@
 
 ## [2.20.0] — 2026-09-29
 
-- _Add release notes here._
+Neues Design: Tippi bekommt das gemeinsame Aussehen der App-Familie (mit Kalli, TippAI und Qotti).
+
+### Neu
+
+- **Farbwelt „Schiefer“.** Tippis Akzent ist jetzt ein ruhiges Schieferblau
+  (hell `#3E5998`, dunkel `#98AEE1`). Auswahl, Hervorhebungen und Knöpfe folgen
+  automatisch, in Hell und Dunkel.
+- **Neue Schrift Plus Jakarta Sans** in Einstellungen, Auswahlleiste, Prompt-Pop-up,
+  Notizen-Fenster und Hinweisen. Symbole und Emojis bleiben Apples Systemschrift,
+  Währungs- und Zähler-Chips bleiben Monospace. Die Autovervollständigung passt sich
+  weiter der Schrift der App an, in der du schreibst.
+- **Ruhigeres Glas:** Auswahlleiste und Pop-ups tragen eine Schiefer-Tönung und nehmen
+  die Farben der App darunter nicht mehr an.
+
+### Behoben
+
+- **Hervorgehobene Knöpfe im Dunkelmodus gut lesbar:** Sie bekommen eine eigene, sattere
+  Füllung, weiße Schrift hat darauf mindestens 4,6 : 1 Kontrast (mit dem hellen
+  Dunkelmodus-Akzent wären es nur 2,2 : 1 gewesen).
+- Drei widersprüchliche Angaben zur Akzentfarbe (Code-Kommentar, HANDOVER, Asset)
+  vereinheitlicht.
+
+### Intern
+
+- `FamilyTheme.swift` aus dem Design-System der App-Familie, Schrift wird beim Start
+  registriert und das Ergebnis protokolliert. Plus Jakarta Sans steht unter der
+  SIL Open Font License 1.1, der Lizenztext liegt als `PlusJakartaSans-OFL.txt` im Bundle.
+- 558 Tests, SwiftLint strict grün.
 
 ## [2.19.0] — 2026-09-28
 
