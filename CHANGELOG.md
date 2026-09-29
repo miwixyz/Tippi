@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.20.0] — 2026-09-29
+
+- _Add release notes here._
+
 ## [2.19.0] — 2026-09-28
 
 Währungsrechner, Passwort erzeugen und neue Schnellaktionen in einer kompakteren Auswahlleiste.
