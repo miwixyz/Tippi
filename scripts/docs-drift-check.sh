@@ -28,7 +28,12 @@ die() { printf '\n🛑 %s\n' "$*" >&2; exit 2; }
 
 # CHANGELOG.md and PRD.md are absent on purpose: both are historical documents whose old
 # numbers are correct. PRD.md is explicitly marked as the May scope and is not updated.
-DOCS=(README.md ARCHITECTURE.md CLAUDE.md docs/HANDOVER.md docs/ONE-PAGER.md docs/index.html)
+#
+# TIPPI_INDEX_HTML points every check at a copy of the website instead of docs/index.html.
+# Exists only for negative tests ("remove a tile — does the gate go red?") without touching
+# the tracked file. Unset in normal runs and in release.sh.
+INDEX_HTML="${TIPPI_INDEX_HTML:-docs/index.html}"
+DOCS=(README.md ARCHITECTURE.md CLAUDE.md docs/HANDOVER.md docs/ONE-PAGER.md "$INDEX_HTML")
 # A renamed or deleted doc used to drop out of every check silently
 # (`grep … 2>/dev/null || true`) — the check shrank without saying so (audit 2026-09-27).
 for d in "${DOCS[@]}"; do
@@ -174,7 +179,7 @@ ANY_PERM='accessibility|bedienungshilfen|input monitoring|eingabeüberwachung|mi
 # of this check used "any document that mentions a permission" to avoid maintaining a list;
 # it promptly flagged both of them. A named list of three is honest; a heuristic that
 # misclassifies is the checker-is-broken case CLAUDE.md warns about.
-USER_DOCS=(README.md docs/ONE-PAGER.md docs/index.html)
+USER_DOCS=(README.md docs/ONE-PAGER.md "$INDEX_HTML")
 
 PERM_DOCS=()
 for d in "${USER_DOCS[@]}"; do
@@ -295,14 +300,14 @@ if [ -f docs/ONE-PAGER.md ]; then
   grep -qF "(v$MINOR)" docs/ONE-PAGER.md \
     || bad "docs/ONE-PAGER.md has no '(v$MINOR)' feature marker — page still describes an older release"
 fi
-if [ -f docs/index.html ]; then
+if [ -f "$INDEX_HTML" ]; then
   marker_checked=$((marker_checked + 1))
-  claimed_html=$(grep -oE 'name="tippi:documented-version" content="[0-9]+\.[0-9]+\.[0-9]+"' docs/index.html \
+  claimed_html=$(grep -oE 'name="tippi:documented-version" content="[0-9]+\.[0-9]+\.[0-9]+"' "$INDEX_HTML" \
                  | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
   if [ -z "$claimed_html" ]; then
-    bad "docs/index.html is missing its <meta name=\"tippi:documented-version\"> marker"
+    bad "$INDEX_HTML is missing its <meta name=\"tippi:documented-version\"> marker"
   elif [ "$claimed_html" != "$VERSION" ]; then
-    bad "docs/index.html documents $claimed_html, project.yml says $VERSION — review the page, then bump the marker"
+    bad "$INDEX_HTML documents $claimed_html, project.yml says $VERSION — review the page, then bump the marker"
   fi
 fi
 ok "$marker_checked marketing surface(s) checked"
@@ -344,6 +349,100 @@ EOF
   done
   ok "$mlx_checked MLX model mention(s) checked against the preset list"
 fi
+
+# ── Website: tiles, visible versions, EN/DE parity, no third-party loads ──────
+# Why this exists (2026-09-30): the website showed 10 of 11 provider tiles, 22 of 24
+# built-in prompt tiles and a hero line saying "v2.18.0" — and this script said
+# "No documentation drift". Dimension 3 only reads number WORDS ("11 providers"); a page
+# that says the right number and then lists fewer tiles passed. Now the tiles themselves
+# are counted, against the same code values as above (PROVIDERS, PROMPTS), never against
+# another document.
+printf '\n▶ Website tiles in %s\n' "$INDEX_HTML"
+provider_tiles=$( { grep -oE 'class="provider( local)?"' "$INDEX_HTML" || true; } | wc -l | tr -d ' ')
+builtin_tiles=$( { grep -oE 'class="builtin"' "$INDEX_HTML" || true; } | wc -l | tr -d ' ')
+[ "$provider_tiles" = "$PROVIDERS" ] \
+  || bad "$INDEX_HTML: $provider_tiles provider tile(s) (class=\"provider\" + class=\"provider local\"), LLMRouter.allProviders has $PROVIDERS"
+[ "$builtin_tiles" = "$PROMPTS" ] \
+  || bad "$INDEX_HTML: $builtin_tiles built-in prompt tile(s) (class=\"builtin\"), DemoPrompt.builtIn has $PROMPTS without chains"
+ok "$provider_tiles provider tile(s), $builtin_tiles built-in tile(s) counted"
+
+# Visible text only. A plain grep for "v3.5" hits SVG path data (`…10.4v3.5…`) — that is
+# an attribute, not a version. python3 parses the HTML and skips attributes, <script>,
+# <style> and <svg>. Rule: "vX.Y.Z" must equal MARKETING_VERSION exactly; "vX.Y" and
+# "Neu in / New in X.Y" must match its major.minor. The page has no roadmap/history section;
+# if one appears, old versions there will be flagged — decide then, not now.
+printf '\n▶ Versions in visible website text (expected: %s)\n' "$VERSION"
+version_mentions=$(python3 - "$INDEX_HTML" <<'PY'
+import bisect, re, sys
+from html.parser import HTMLParser
+
+class Text(HTMLParser):
+    SKIP = {"script", "style", "svg"}
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.skip, self.buf, self.starts, self.lines, self.pos = 0, [], [], [], 0
+    def handle_starttag(self, tag, attrs):
+        if tag in self.SKIP: self.skip += 1
+    def handle_endtag(self, tag):
+        if tag in self.SKIP and self.skip: self.skip -= 1
+    def handle_data(self, data):
+        if self.skip: return
+        self.starts.append(self.pos); self.lines.append(self.getpos()[0])
+        self.buf.append(data); self.pos += len(data) + 1   # +1: the " " joiner below
+
+p = Text()
+p.feed(open(sys.argv[1], encoding="utf-8").read())
+# Joined with a space so text from neighbouring elements cannot fuse into a fake token.
+# The lookbehind guards only the bare "v": "…dark.</span><span>Neu in 2.20" must match.
+text = " ".join(p.buf)
+pattern = re.compile(r"(?:(?<![\w.])v|\b(?:Neu|New) in\s+)(\d+\.\d+(?:\.\d+)?)(?![\w.]*\d)")
+for m in pattern.finditer(text):
+    line = p.lines[bisect.bisect_right(p.starts, m.start()) - 1]
+    print(f"{line}\t{m.group(1)}\t{' '.join(m.group(0).split())}")
+PY
+) || die "Parser broken: python3 could not read the visible text of $INDEX_HTML."
+visible_checked=0
+while IFS=$'\t' read -r lineno claimed shown; do
+  [ -n "$lineno" ] || continue
+  visible_checked=$((visible_checked + 1))
+  if [[ "$claimed" == *.*.* ]]; then
+    [ "$claimed" = "$VERSION" ] \
+      || bad "$INDEX_HTML:$lineno shows \"$shown\", project.yml MARKETING_VERSION is $VERSION"
+  else
+    [ "$claimed" = "$MINOR" ] \
+      || bad "$INDEX_HTML:$lineno shows \"$shown\", expected major.minor $MINOR (MARKETING_VERSION $VERSION)"
+  fi
+done <<< "$version_mentions"
+ok "$visible_checked visible version mention(s) checked (plus the documented-version meta above)"
+
+# Every visible sentence exists twice, once per language. A missing twin shows an empty
+# spot to one half of the readers — nothing else here would notice.
+printf '\n▶ EN/DE parity in %s\n' "$INDEX_HTML"
+lang_en=$( { grep -oE 'data-lang="en"' "$INDEX_HTML" || true; } | wc -l | tr -d ' ')
+lang_de=$( { grep -oE 'data-lang="de"' "$INDEX_HTML" || true; } | wc -l | tr -d ' ')
+[ "$lang_en" -gt 0 ] || bad "$INDEX_HTML: no data-lang=\"en\" element at all — has the language switch changed?"
+[ "$lang_en" = "$lang_de" ] \
+  || bad "$INDEX_HTML: $lang_en data-lang=\"en\" element(s) vs. $lang_de data-lang=\"de\" — every text needs its twin"
+ok "$lang_en EN / $lang_de DE element(s)"
+
+# docs/datenschutz.html promises that the site loads nothing from third parties. One CDN
+# script or Google Fonts link breaks that promise without any visible change.
+printf '\n▶ No third-party scripts or fonts in docs/*.html\n'
+HTML_FILES=()
+for f in docs/*.html; do
+  [ "$f" = docs/index.html ] && f="$INDEX_HTML"
+  HTML_FILES+=("$f")
+done
+ext_checked=0
+for f in "${HTML_FILES[@]}"; do
+  ext_checked=$((ext_checked + 1))
+  while IFS= read -r hit; do
+    [ -n "$hit" ] || continue
+    bad "$f:${hit%%:*} loads from a third party — the privacy policy promises it does not"
+    printf '       %s\n' "$(printf '%s' "${hit#*:}" | sed 's/^[[:space:]]*//' | cut -c1-110)"
+  done < <(grep -niE '<script[^>]*src=["'\'']?(https?:)?//|<link[^>]*href=["'\'']?(https?:)?//[^"'\'' >]*\.(css|woff2?|ttf|otf)|fonts\.googleapis|fonts\.gstatic|cdnjs|@import[[:space:]]+url\(["'\'']?(https?:)?//' "$f" || true)
+done
+ok "$ext_checked HTML file(s) checked"
 
 # ── Result ────────────────────────────────────────────────────────────────────
 printf '\n'
