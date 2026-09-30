@@ -1,92 +1,67 @@
 # Tippi Brand Kit
 
+Since v2.20 Tippi uses the design of the app family (Tippi, Kalli, TippAI, Qotti),
+palette "Schiefer" (slate). **Source of truth for every value below:**
+`Tippi/UI/FamilyTheme.swift` (`FamilyTheme.app = .tippi`, set in `AppDelegate.swift`).
+The website mirrors the same tokens as CSS variables in `docs/style.css`. Change a value
+in FamilyTheme first, then in `style.css` and here. Anything else is drift.
+
 ## Logo
 
-The Tippi wordmark uses the system font (SF Pro Display, bold) — no custom typeface. The icon is a robot mascot rendered in CoreGraphics: dark navy circle, white bot face, Signal Blue speech bubble.
+The mascot (`docs/mascot.png`, 1254 px; `mascot-224.png` for the web, `apple-touch-icon.png`
+180 px) and the wordmark "Tippi" in Plus Jakarta Sans SemiBold. Favicon: white I-beam on the
+Tippi accent `#3E5998` (6.8:1).
 
-## Color Palette
+## Colors
 
-| Name | Hex | Role |
-|------|-----|------|
-| **Signal Blue** | `#3B8CFF` | Primary accent — buttons, links, selection highlights, icon tints |
-| **Tippi Navy** | `#10192B` | Brand ink — logo background, dark header surfaces, deep contrast |
-| **Bubble Cream** | `#FFF8EE` | Warm light surface — welcome screens, onboarding cards (light mode) |
-| **Soft White** | `#F7F2EA` | Secondary light surface — settings panels, general backgrounds (light mode) |
-| **Mist Blue** | `#EAF3FF` | Suggestion column tint, preview accent surfaces (light mode) |
+| Token (Swift / CSS) | Light | Dark | Role |
+|---|---|---|---|
+| `accent` / `--accent` | `#3E5998` | `#98AEE1` | Links, icons, focus ring, active state |
+| `accentFill` / `--accent-fill` | `#3E5998` | `#5172BD` | Filled buttons and capsules with **white** text |
+| (web only) `--accent-fill-hover` | `#354D83` | `#4662A3` | Hover of the above (accentFill 86 % + black) |
+| `backgroundTop/Middle/Bottom` | `#F3F5F9` `#E7E9F1` `#D9DDE8` | `#0D1019` `#161A25` `#1F2433` | Page gradient, top to bottom, solid |
+| `card` / `--card` | `#FFFFFF` | `#1B2130` | Content cards, never transparent |
+| `cardStroke` / `--card-stroke` | `#E2E5EE` | `#2A3142` | Card border |
+| `textPrimary` / `--text` | `#1E2433` | `#ECEFF6` | Text |
+| `textSecondary` / `--text-2` | `#56607E` | `#A3ACC8` | Secondary text |
+| `glassTint` / `--glass-tint` | `#F3F5F9` 78 % | `#161A25` 78 % | Tint under glass. On the web only the sticky nav is glass |
 
-### Web Contrast Variant (intentional, not drift)
+The app asset `AccentColor` carries the same pair (`#3E5998` / `#98AEE1`).
 
-Signal Blue `#3B8CFF` reaches 3.29:1 against white — enough for large text (AA-large,
-≥3:1) but **below WCAG AA** (4.5:1) for white body text on a filled button. The website
-therefore uses a darkened variant **only** where white sits on the accent; everything
-else stays on Signal Blue.
+Contrast (WCAG 2.1, computed 2026-09-30): white on `accentFill` 6.8:1 light, 4.7:1 dark ·
+accent on card 6.8:1 / 7.3:1 · secondary text on card 6.2:1 / 7.1:1, on the lightest
+gradient end `#D9DDE8` 4.6:1. All AA.
 
-| Name | Hex | Role | Contrast on white |
-|------|-----|------|-------------------|
-| **Signal Blue** | `#3B8CFF` | reference — accent, borders, icon tints | 3.29:1 (AA-large only) |
-| **Signal Blue CTA** | `#1565C0` | `--accent-cta` in `docs/index.html` — filled buttons carrying white text | 5.75:1 (AA) |
-| **Signal Blue CTA Hover** | `#0D4FA0` | `--accent-cta-hover` — hover state of the above | 7.95:1 (AAA) |
-
-Values computed with the WCAG 2.1 relative-luminance formula, 2026-09-14.
-
-This is a deliberate accessibility variant, **not** a second brand colour. App and print
-assets use Signal Blue unchanged. Any other deviation from the palette above is drift and
-should be corrected against this file.
-
-### Adaptive Color Mapping
-
-| Asset Name | Light Mode | Dark Mode |
-|------------|------------|-----------|
-| `AccentColor` | Signal Blue `#3B8CFF` | Signal Blue `#3B8CFF` |
-| `BrandNavy` | `#10192B` | `#10192B` |
-| `BrandSurface` | Soft White `#F7F2EA` | Dark Navy `#1C2333` |
-| `BrandMistBlue` | Mist Blue `#EAF3FF` | Deep Navy-Blue `#1E2D4A` |
-
-### Usage in Code
-
-```swift
-// AccentColor drives all .tint / .accentColor / .borderedProminent throughout the app
-// Supporting palette via TippiColors.swift:
-
-Color.tippiMist    // adaptive suggestion column tint (asset BrandMistBlue)
-// BrandNavy (#10192B) and BrandSurface stay in Assets.xcassets as brand palette
-// reference; their unused Swift accessors were removed in the 2026-09-27 audit.
-```
+Rules from the family design system: one accent per app, no second accent color, no
+purple/blue "glow" gradients, glass only for floating elements, color never the only signal.
 
 ## Typography
 
-- **UI font**: SF Pro (system default via SwiftUI `.font(...)`)
-- **Headlines**: `.headline` / `.title` weight `.bold`
-- **Body**: `.body` / `.callout`
-- **Captions**: `.caption` / `.caption2` for metadata, badges, hints
+**Plus Jakarta Sans** (SIL Open Font License 1.1). App: bundled TTF, registered via
+`FamilyTheme.registerFonts()`. Website: self-hosted WOFF2 in `docs/fonts/` with `OFL.txt`,
+no external font server. Weights: Regular and Medium for text, SemiBold (600) at most, only
+for titles. Light for large figures.
+
+## Shapes
+
+Radius 28 for cards, 20 for tiles, 14 for fields. Buttons as circle or capsule. Soft shadow
+only under cards.
 
 ## Iconography
 
-SF Symbols throughout — consistent with macOS HIG. Primary app icon: `pencil.and.outline`.
-
-Key icon mappings:
-
-| Action | Symbol |
-|--------|--------|
-| App icon / header | `pencil.and.outline` |
-| Improve | `sparkles` |
-| Fix Grammar | `checkmark.circle` |
-| Translate | `globe` |
-| Shorten | `arrow.down.right.and.arrow.up.left` |
-| Lengthen | `arrow.up.left.and.arrow.down.right` |
-| Voice | `mic.fill` / `mic` |
-| Settings | `gear` |
-| Providers | `key` |
-| Privacy | `lock.shield` |
+App: SF Symbols. Website: inline SVG line icons, `stroke="currentColor"`, stroke width 2,
+`aria-hidden="true"`. No emojis as icons or decoration. Emojis that show product behaviour
+(`:daumen:` → 👍) are content, not decoration.
 
 ## Motion
 
-- Transitions: SwiftUI defaults (`.easeInOut`, `0.2s`)
-- Voice waveform: `.easeInOut(duration: 0.1)` per bar
-- No decorative animations — functional feedback only
+Functional feedback only, no decorative animation. The website respects
+`prefers-reduced-motion`.
 
 ## Voice of Brand
 
-**Tone**: Precise, calm, slightly playful. Never sales-y.
+**Tone**: precise, calm, slightly playful. Never sales-y.
 **Tagline**: *Mark text anywhere. Hit ⌥⌘T. Let AI do the rest.*
-**Positioning**: Privacy-first system-wide AI writing assistant. BYOK, no telemetry, open source.
+**Positioning**: one app instead of eight. AI writing at the cursor in every app, plus the
+small helpers (emoji, snippets, selection bar, dictation, translation, notes, screen text,
+text tools). BYOK, no telemetry, open source.
