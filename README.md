@@ -432,7 +432,7 @@ Bug reports and pull requests are welcome. For significant changes, please open 
 
 ## Architecture (short version)
 
-- **Swift 5.10 / SwiftUI / AppKit bridges**, native macOS app, no third-party runtime dependencies
+- **Swift 5.10 / SwiftUI / AppKit bridges**, native macOS app with three Swift packages: [Sparkle](https://github.com/sparkle-project/Sparkle) (updates), [GRDB](https://github.com/groue/GRDB.swift) (the opt-in encrypted History) and [FluidAudio](https://github.com/FluidInference/FluidAudio) (on-device Parakeet dictation)
 - **Menu-bar-only** (`LSUIElement = true`), no Dock icon by default, settings + welcome windows shown on demand. While Notes is open Tippi shows a Dock icon; pin it (right-click → Options → Keep in Dock) and a click opens Notes (v2.14)
 - **Hardened Runtime, no Sandbox** — required for cross-app text capture
 - **Text capture**: Accessibility API first (`AXUIElementCopyAttributeValue` on focused element), Pasteboard ⌘C round-trip as fallback (with snapshot/restore to keep clipboard intact)
