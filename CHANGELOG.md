@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.21.0] — 2026-09-30
+
+- _Add release notes here._
+
 ## [2.20.1] — 2026-09-30
 
 Das Prompt-Fenster erscheint dort, wo du schreibst, und die Autovervollständigung hört auf, eigene Wörter in fremde Sätze zu streuen.
