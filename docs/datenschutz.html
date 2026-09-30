@@ -133,6 +133,14 @@
     gilt die Datenschutzerklärung des jeweiligen Anbieters. Eine Datenübertragung an
     GitHub findet erst durch deinen Klick statt, nicht bereits beim Aufruf dieser Seite.
   </p>
+  <p>
+    Außerdem verlinkt die Seite auf die Unterstützer-Seite von Tippi bei Buy Me a Coffee
+    (<a href="https://buymeacoffee.com/tippiapp" target="_blank" rel="noopener">buymeacoffee.com/tippiapp</a>),
+    betrieben von der Publisherr Inc., 2193 Fillmore Street, San Francisco, CA 94115, USA.
+    Die Seite bindet dafür kein Skript und kein Widget ein. Daten gehen erst an Buy Me a
+    Coffee, wenn du den Link anklickst; dann gilt die
+    <a href="https://buymeacoffee.com/privacy-policy" target="_blank" rel="noopener">Datenschutzerklärung von Buy Me a Coffee</a>.
+  </p>
 
   <h2>6. Deine Rechte</h2>
   <p>Dir stehen gegenüber dem Verantwortlichen folgende Rechte zu:</p>
@@ -174,21 +182,33 @@
     <li>Anfragen gehen direkt von deinem Mac an den von dir konfigurierten KI-Anbieter — dessen Datenschutzbestimmungen gelten dann für diesen Vorgang</li>
     <li>Bei den lokalen Engines (MLX, Ollama) verlässt überhaupt nichts dein Gerät</li>
     <li>Die Sprach-Transkription läuft immer lokal; es wird kein Audio übertragen</li>
-    <li>Es wird kein Verlauf der Anfragen auf der Festplatte gespeichert</li>
+    <li>Standardmäßig wird kein Verlauf der Anfragen gespeichert; ein optionaler, verschlüsselter Verlauf liegt nur lokal auf deinem Mac und ist aus, bis du ihn einschaltest</li>
   </ul>
   <p class="small">
     Der Aktualisierungsdienst (Sparkle) ruft in regelmäßigen Abständen eine Datei bei
     GitHub ab, um nach neuen Versionen zu sehen. Dabei wird gegenüber GitHub die
     IP-Adresse deines Geräts sichtbar, wie bei jedem Abruf einer Webadresse.
-    Automatische Updates lassen sich in den Einstellungen abschalten.
+    Diese Prüfung läuft automatisch, ein Schalter dafür ist in Tippi derzeit nicht vorgesehen.
   </p>
+  <p>
+    Weitere Netzwerkzugriffe der App gehen direkt von deinem Mac an den jeweiligen Dienst.
+    Dabei wird dort, wie bei jedem Abruf einer Webadresse, die IP-Adresse deines Geräts sichtbar:
+  </p>
+  <ul>
+    <li>Wechselkurse: Nur wenn du den Währungsrechner benutzt, lädt Tippi die Tageskurs-Tabelle von <code>open.er-api.com</code> (Exchange Rate API), höchstens einmal pro Stunde. Dein markierter Text und der Betrag werden nicht übertragen.</li>
+    <li>Sprachmodelle: Die Modelle für Whisper und Parakeet lädt Tippi beim Einrichten bzw. bei der ersten Nutzung von <code>huggingface.co</code> herunter.</li>
+    <li>Lokale KI (MLX): Richtest du MLX ein, installiert Tippi das Werkzeug <code>uv</code> über Homebrew und das Paket <code>mlx-lm</code> über den Python Package Index (PyPI). Die gewählten MLX-Modelle werden von <code>huggingface.co</code> geladen.</li>
+    <li>Modelllisten: Beim Start fragt Tippi bei jedem Cloud-Anbieter, für den du einen API-Schlüssel hinterlegt hast, die Liste der verfügbaren Modelle ab, um nicht mehr angebotene Modelle zu erkennen. Dein Text wird dabei nicht übertragen.</li>
+    <li>iCloud: Notizen sowie eigene Wörter und eigene Prompts gleicht Tippi über dein iCloud-Konto zwischen deinen Macs ab. Die Übertragung läuft über Apple. Ohne iCloud-Konto bleibt alles lokal.</li>
+  </ul>
 
   <h2>9. Stand</h2>
   <p class="small">Diese Datenschutzerklärung hat den Stand September 2026.</p>
 
   <div class="back">
     <a href="./">← zurück zur Startseite</a> &nbsp;·&nbsp;
-    <a href="impressum.html">Impressum</a>
+    <a href="impressum.html">Impressum</a> &nbsp;·&nbsp;
+    <a href="https://buymeacoffee.com/tippiapp" target="_blank" rel="noopener">Tippi unterstützen</a>
   </div>
 
 </div>

@@ -12,8 +12,8 @@
 <meta property="og:title" content="Tippi — System-wide AI writing assistant for macOS">
 <meta property="og:description" content="Mark text. Hit ⌥⌘T. AI fixes it — right where you are. Open-source, BYOK, fully local option.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://miwixyz.github.io/Tippi/">
-<meta property="og:image" content="https://miwixyz.github.io/Tippi/mascot.png">
+<meta property="og:url" content="https://tippi.mwlr.dev/">
+<meta property="og:image" content="https://tippi.mwlr.dev/mascot.png">
 
 <style>
   :root {
@@ -272,10 +272,11 @@
     <div class="nav-right">
       <div class="nav-links">
         <a href="#how"><span data-lang="en">How it works</span><span data-lang="de">So funktioniert's</span></a>
-        <a href="#features"><span data-lang="en">Features</span><span data-lang="de">Features</span></a>
+        <a href="#features"><span data-lang="en">Features</span><span data-lang="de">Funktionen</span></a>
         <a href="#privacy"><span data-lang="en">Privacy</span><span data-lang="de">Datenschutz</span></a>
         <a href="#faq"><span data-lang="en">FAQ</span><span data-lang="de">FAQ</span></a>
         <a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://buymeacoffee.com/tippiapp" target="_blank" rel="noopener"><span data-lang="en">Support Tippi</span><span data-lang="de">Tippi unterstützen</span></a>
       </div>
       <div class="lang-toggle" role="group" aria-label="Language">
         <button type="button" id="lang-en" onclick="setLang('en')">EN</button>
@@ -296,8 +297,8 @@
 
     <p class="sub" data-lang="en">A system-wide AI writing assistant for macOS that doesn't pull you out of whatever app you're in — plus on-device dictation, autocomplete while you type, translation, text snippets, an emoji picker, and iCloud-synced quick notes, all in the same menu-bar app. Open-source, BYOK, with a fully local option.</p>
     <p class="sub" data-lang="de">Ein systemweiter KI-Schreibassistent für macOS, der dich nicht aus deiner App reißt — dazu lokales Diktat, Autovervollständigung beim Tippen, Übersetzung, Text-Kürzel, eine Emoji-Auswahl und iCloud-synchronisierte Notizen, alles in derselben Menüleisten-App. Open Source, BYOK, mit voll-lokaler Option.</p>
-    <p data-lang="en">v2.18.0: Every permission on one page, with a button to grant it. Your own snippets show up in the “:” list next to the emoji. Autocomplete now works in Obsidian too.</p>
-    <p data-lang="de">v2.18.0: Alle Berechtigungen auf einer Seite, mit Knopf zum Erteilen. Deine eigenen Snippets erscheinen in der „:“-Liste neben den Emojis. Die Autovervollständigung läuft jetzt auch in Obsidian.</p>
+    <p data-lang="en">v2.20.0: A calmer look. A slate-blue accent, the Plus Jakarta Sans typeface, and a selection bar and popups on tinted glass that no longer pick up the colors of the app underneath.</p>
+    <p data-lang="de">v2.20.0: Ruhigeres Aussehen. Ein schieferblauer Akzent, die Schrift Plus Jakarta Sans, dazu Auswahlleiste und Pop-ups auf getöntem Glas, das die Farben der App darunter nicht mehr annimmt.</p>
 
     <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
@@ -357,8 +358,8 @@
         <div class="n">3</div>
         <h3 data-lang="en">Replace in place</h3>
         <h3 data-lang="de">An Ort und Stelle ersetzen</h3>
-        <p data-lang="en">Watch the AI's rewrite stream in side-by-side with the original, refine it in place, then replace, append, copy, or regenerate.</p>
-        <p data-lang="de">KI-Vorschlag streamt live neben dem Original ein, direkt verfeinerbar. Dann ersetzen, anhängen, kopieren oder neu generieren.</p>
+        <p data-lang="en">See the AI's rewrite side-by-side with the original (with most cloud providers it streams in live), refine it in place, then replace, append, copy, or regenerate.</p>
+        <p data-lang="de">Der KI-Vorschlag erscheint neben dem Original, bei den meisten Cloud-Anbietern live Stück für Stück, direkt verfeinerbar. Dann ersetzen, anhängen, kopieren oder neu generieren.</p>
       </div>
     </div>
   </div>
@@ -466,8 +467,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="10" x2="17" y2="10"></line><line x1="7" y1="14" x2="13" y2="14"></line></svg></div>
         <h3 data-lang="en">Text from a screen selection</h3>
         <h3 data-lang="de">Text aus einem Bildschirmausschnitt</h3>
-        <p data-lang="en">Drag a rectangle over anything that can't be copied — a screenshot, an image-only PDF, a video still, or a pop-up that would close the moment you clicked elsewhere — and the text lands in your clipboard. The screen is frozen the instant you press the shortcut, so what you select is what was on screen, not what survived the click. Wrapped paragraphs are reassembled without flattening bullets or sentence breaks. Recognition runs on your Mac; the image never touches disk, and the result is deliberately not handed off to your iPhone. Ships off: it needs the Screen Recording permission, so you only grant it if you want it.</p>
-        <p data-lang="de">Rechteck über alles ziehen, was sich nicht kopieren lässt — Screenshot, Bild-PDF, Videostandbild, oder ein Pop-Up, das beim Klick daneben zugehen würde — und der Text liegt in der Zwischenablage. Der Bildschirm wird im Moment des Tastendrucks eingefroren; du wählst also aus, was zu sehen war, nicht was den Klick überlebt hat. Umbrochene Absätze werden dabei wieder zusammengesetzt, ohne Aufzählungen oder Satzenden zu zerstören. Die Erkennung läuft auf deinem Mac, das Bild berührt nie die Platte, und der Text wandert bewusst nicht aufs iPhone. Ab Werk aus: Die Funktion verlangt die Bildschirmaufnahme-Berechtigung, also erteilst du sie nur, wenn du sie willst.</p>
+        <p data-lang="en">Press ⌥⌘2 and drag a rectangle over anything that can't be copied (a screenshot, an image-only PDF, a video still, or a pop-up that would close the moment you clicked elsewhere), and the text lands in your clipboard. The screen is frozen the instant you press the shortcut, so what you select is what was on screen, not what survived the click. Wrapped paragraphs are reassembled without flattening bullets or sentence breaks. Recognition runs on your Mac; the image never touches disk, and the result is deliberately not handed off to your iPhone. Ships off: it needs the Screen Recording permission, so you only grant it if you want it.</p>
+        <p data-lang="de">⌥⌘2 drücken und ein Rechteck über alles ziehen, was sich nicht kopieren lässt (Screenshot, Bild-PDF, Videostandbild oder ein Pop-Up, das beim Klick daneben zugehen würde), und der Text liegt in der Zwischenablage. Der Bildschirm wird im Moment des Tastendrucks eingefroren; du wählst also aus, was zu sehen war, nicht was den Klick überlebt hat. Umbrochene Absätze werden dabei wieder zusammengesetzt, ohne Aufzählungen oder Satzenden zu zerstören. Die Erkennung läuft auf deinem Mac, das Bild berührt nie die Platte, und der Text wandert bewusst nicht aufs iPhone. Ab Werk aus: Die Funktion verlangt die Bildschirmaufnahme-Berechtigung, also erteilst du sie nur, wenn du sie willst.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="0.5" fill="currentColor"></circle></svg></div>
@@ -487,8 +488,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4"></path><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"></path></svg></div>
         <h3 data-lang="en">Streaming preview &amp; refine</h3>
         <h3 data-lang="de">Live-Vorschau &amp; Verfeinern</h3>
-        <p data-lang="en">The result streams in token by token, then refine it in place ("shorter", "more formal") as many times as you like before replacing.</p>
-        <p data-lang="de">Das Ergebnis streamt Token für Token ein, danach beliebig oft verfeinern („kürzer", „förmlicher"), bevor du ersetzt.</p>
+        <p data-lang="en">With most cloud providers the result streams in token by token. Then refine it in place ("shorter", "more formal") as many times as you like before replacing.</p>
+        <p data-lang="de">Bei den meisten Cloud-Anbietern streamt das Ergebnis Token für Token ein. Danach beliebig oft verfeinern („kürzer", „förmlicher"), bevor du ersetzt.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div>
@@ -508,22 +509,22 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>
         <h3 data-lang="en">Voice input</h3>
         <h3 data-lang="de">Spracheingabe</h3>
-        <p data-lang="en">Dictate on a single key: double-tap it to toggle recording, or hold it to record only while you keep it down. The classic key combination still works. Whisper or Parakeet run fully on-device — no audio leaves your Mac. A running timer shows how long you have been speaking, and the indicator sits at the bottom or the top of the screen, your choice.</p>
-        <p data-lang="de">Diktieren auf einer einzigen Taste: zweimal antippen startet und stoppt die Aufnahme, gedrückt halten nimmt nur so lange auf, wie du die Taste hältst. Die klassische Tastenkombination bleibt daneben bestehen. Whisper oder Parakeet laufen komplett lokal — Audio verlässt deinen Mac nicht. Ein mitlaufender Zähler zeigt, wie lange du schon sprichst, und der Indikator sitzt wahlweise unten oder oben am Bildschirm.</p>
+        <p data-lang="en">Dictate on a single key: double-tap it to toggle recording, or hold it to record only while you keep it down. The classic key combination (⌃⌥⌘M by default) still works. Whisper or Parakeet run fully on-device, so no audio leaves your Mac. A running timer shows how long you have been speaking, and the indicator sits at the bottom or the top of the screen, your choice.</p>
+        <p data-lang="de">Diktieren auf einer einzigen Taste: zweimal antippen startet und stoppt die Aufnahme, gedrückt halten nimmt nur so lange auf, wie du die Taste hältst. Die klassische Tastenkombination (ab Werk ⌃⌥⌘M) bleibt daneben bestehen. Whisper oder Parakeet laufen komplett lokal, Audio verlässt deinen Mac nicht. Ein mitlaufender Zähler zeigt, wie lange du schon sprichst, und der Indikator sitzt wahlweise unten oder oben am Bildschirm.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"></path><path d="M4 21l3-7 3 7"></path><path d="M4.5 19h5"></path></svg></div>
         <h3 data-lang="en">Translate Quick Panel</h3>
         <h3 data-lang="de">Übersetzungs-Fenster</h3>
         <p data-lang="en">Press ⌥⌘L anywhere for a Spotlight-style window: it fills with your selection automatically, or type, paste or speak. Five languages with a swap button, read-aloud, and <strong>Replace (⌘⏎)</strong> to write the translation straight back over your selection. Voice in, speech out, both on-device.</p>
-        <p data-lang="de">⌥⌘L überall drücken für ein Spotlight-artiges Fenster: es übernimmt deine Markierung automatisch, oder tippen, einfügen, sprechen. Fünf Sprachen mit Tausch-Knopf, Vorlesen, und <strong>Ersetzen (⌘⏎)</strong> schreibt die Übersetzung direkt über den markierten Text zurück. Voice rein, Sprache raus, beides lokal.</p>
+        <p data-lang="de">⌥⌘L überall drücken für ein Spotlight-artiges Fenster: es übernimmt deine Markierung automatisch, oder tippen, einfügen, sprechen. Fünf Sprachen mit Tausch-Knopf, Vorlesen, und <strong>Ersetzen (⌘⏎)</strong> schreibt die Übersetzung direkt über den markierten Text zurück. Sprechen und Vorlesen laufen beide lokal.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><line x1="9" y1="9.5" x2="9.01" y2="9.5"></line><line x1="15" y1="9.5" x2="15.01" y2="9.5"></line></svg></div>
         <h3 data-lang="en">Emoji picker &amp; shortcodes</h3>
         <h3 data-lang="de">Emoji-Auswahl &amp; Kürzel</h3>
-        <p data-lang="en">Press ⌥⌘E for a Spotlight-style picker: type to filter, arrows to move, Return inserts at your cursor, recents first. Or skip it and type <code>:rocket:</code> for an instant 🚀, anywhere, no hotkey. German <em>and</em> English names: <code>:rakete:</code> works too, and „kino" finds 🍿. From <code>:e</code> onwards a suggestion list appears next to your cursor — Space takes the top match, a click takes any. Classic emoticons convert as well — <code>:-)</code>, <code>&lt;3</code>, <code>XD</code> — on their own toggle. Unknown names are left exactly as typed.</p>
-        <p data-lang="de">⌥⌘E öffnet eine Spotlight-artige Auswahl: tippen filtert, Pfeiltasten wählen, Return fügt an der Cursor-Position ein, zuletzt genutzte oben. Oder direkt <code>:rakete:</code> tippen für ein sofortiges 🚀, überall, ohne Hotkey. Deutsche <em>und</em> englische Namen: <code>:rocket:</code> geht genauso, und „kino" findet 🍿. Ab <code>:e</code> erscheint eine Vorschlagsliste neben dem Cursor — Leertaste nimmt den obersten, Klick einen beliebigen. Auch klassische Emoticons werden umgewandelt — <code>:-)</code>, <code>&lt;3</code>, <code>XD</code> — mit eigenem Schalter. Unbekannte Namen bleiben unverändert stehen.</p>
+        <p data-lang="en">Press ⌥⌘E for a Spotlight-style picker: type to filter, arrows to move, Return inserts at your cursor, recents first. Or skip it and type <code>:rocket:</code> for an instant 🚀, anywhere, no hotkey. German <em>and</em> English names: <code>:rakete:</code> works too, and <code>:daumen:</code> gives 👍. From <code>:e</code> onwards a suggestion list appears next to your cursor: Space takes the top match, a click takes any. Classic emoticons convert as well (<code>:-)</code>, <code>&lt;3</code>, <code>XD</code>), on their own toggle. Unknown names are left exactly as typed.</p>
+        <p data-lang="de">⌥⌘E öffnet eine Spotlight-artige Auswahl: tippen filtert, Pfeiltasten wählen, Return fügt an der Cursor-Position ein, zuletzt genutzte oben. Oder direkt <code>:rakete:</code> tippen für ein sofortiges 🚀, überall, ohne Hotkey. Deutsche <em>und</em> englische Namen: <code>:rocket:</code> geht genauso, und <code>:daumen:</code> wird zu 👍. Ab <code>:e</code> erscheint eine Vorschlagsliste neben dem Cursor: Leertaste nimmt den obersten, Klick einen beliebigen. Auch klassische Emoticons werden umgewandelt (<code>:-)</code>, <code>&lt;3</code>, <code>XD</code>), mit eigenem Schalter. Unbekannte Namen bleiben unverändert stehen.</p>
       </div>
       <div class="feature">
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v2"></path><path d="M16 3h2a2 2 0 0 1 2 2v2"></path><path d="M8 21H6a2 2 0 0 1-2-2v-2"></path><path d="M16 21h2a2 2 0 0 0 2-2v-2"></path><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg></div>
@@ -592,8 +593,8 @@
         <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="7" x2="16" y2="7"></line><line x1="9" y1="11" x2="14" y2="11"></line></svg></div>
         <h3 data-lang="en">Your own dictionary (v2.10, pronunciation variants v2.14)</h3>
         <h3 data-lang="de">Eigenes Wörterbuch (v2.10, Aussprache-Varianten v2.14)</h3>
-        <p data-lang="en">A list of terms that must keep the spelling you give them — brands, product and proper names, jargon. A model hears a name correctly but normalises its capitalisation to whatever looks like an ordinary word: CINEWEB comes back as CineWeb. A house spelling cannot be guessed, so you state it once. The list never inserts a term that was not spoken, and never bends other words to resemble an entry. When transcription hears a <em>different real word</em> — you say “Tippi”, it writes “Tipi” — an arrow entry <code>Tipi → Tippi</code> swaps exactly that whole word right after transcription, with or without AI cleanup. The AI itself is never allowed to guess such swaps.</p>
-        <p data-lang="de">Eine Liste von Begriffen, die genau so geschrieben bleiben, wie du sie einträgst — Marken, Produkt- und Eigennamen, Fachbegriffe. Ein Modell hört einen Namen korrekt, normalisiert die Schreibweise aber auf das, was wie ein gewöhnliches Wort aussieht: Aus CINEWEB wird CineWeb. Eine Hausschreibweise lässt sich nicht erraten, also gibst du sie einmal an. Die Liste fügt nie ein Wort ein, das nicht gesagt wurde, und verbiegt keine anderen Wörter, damit sie einem Eintrag ähneln. Hört die Erkennung ein <em>anderes echtes Wort</em> — du sagst „Tippi“, sie schreibt „Tipi“ —, tauscht ein Eintrag mit Pfeil <code>Tipi → Tippi</code> genau dieses ganze Wort direkt nach der Erkennung aus, mit oder ohne KI-Nachbearbeitung. Die KI selbst darf solche Tausche nie raten.</p>
+        <p data-lang="en">A list of terms that must keep the spelling you give them: brands, product and proper names, jargon. A model hears a name correctly but normalises its capitalisation to whatever looks like an ordinary word: iPhone comes back as Iphone. A house spelling cannot be guessed, so you state it once. The list never inserts a term that was not spoken, and never bends other words to resemble an entry. When transcription hears a <em>different real word</em> (you say “Tippi”, it writes “Tipi”), an arrow entry <code>Tipi → Tippi</code> swaps exactly that whole word right after transcription, with or without AI cleanup. The AI itself is never allowed to guess such swaps.</p>
+        <p data-lang="de">Eine Liste von Begriffen, die genau so geschrieben bleiben, wie du sie einträgst: Marken, Produkt- und Eigennamen, Fachbegriffe. Ein Modell hört einen Namen korrekt, normalisiert die Schreibweise aber auf das, was wie ein gewöhnliches Wort aussieht: Aus iPhone wird Iphone. Eine Hausschreibweise lässt sich nicht erraten, also gibst du sie einmal an. Die Liste fügt nie ein Wort ein, das nicht gesagt wurde, und verbiegt keine anderen Wörter, damit sie einem Eintrag ähneln. Hört die Erkennung ein <em>anderes echtes Wort</em> (du sagst „Tippi“, sie schreibt „Tipi“), tauscht ein Eintrag mit Pfeil <code>Tipi → Tippi</code> genau dieses ganze Wort direkt nach der Erkennung aus, mit oder ohne KI-Nachbearbeitung. Die KI selbst darf solche Tausche nie raten.</p>
       </div>
     </div>
   </div>
@@ -634,11 +635,15 @@
       </div>
       <div class="provider">
         <div class="pname">Kimi</div>
-        <div class="ptag"><span data-lang="en">cloud · SWE-Bench #1</span><span data-lang="de">Cloud · SWE-Bench #1</span></div>
+        <div class="ptag"><span data-lang="en">cloud · BYOK</span><span data-lang="de">Cloud · BYOK</span></div>
       </div>
       <div class="provider">
         <div class="pname">Nebius</div>
-        <div class="ptag"><span data-lang="en">EU cloud · DSGVO</span><span data-lang="de">EU-Cloud · DSGVO</span></div>
+        <div class="ptag"><span data-lang="en">EU cloud · GDPR</span><span data-lang="de">EU-Cloud · DSGVO</span></div>
+      </div>
+      <div class="provider">
+        <div class="pname">OpenRouter</div>
+        <div class="ptag"><span data-lang="en">cloud · 300+ models, one key</span><span data-lang="de">Cloud · 300+ Modelle, ein Key</span></div>
       </div>
       <div class="provider local">
         <div class="pname">Ollama</div>
@@ -691,10 +696,10 @@
       <div class="privacy-item">
         <div class="check">✓</div>
         <div>
-          <strong data-lang="en">No request history</strong>
-          <strong data-lang="de">Kein Verlauf</strong>
-          <p data-lang="en">Once a response is rendered, neither input nor output is written to disk.</p>
-          <p data-lang="de">Sobald die Antwort angezeigt ist, wird weder Input noch Output gespeichert.</p>
+          <strong data-lang="en">No request history by default</strong>
+          <strong data-lang="de">Standardmäßig kein Verlauf</strong>
+          <p data-lang="en">By default, neither input nor output is written to disk. Optional: an encrypted local history (AES-GCM, key in your Keychain), off until you turn it on.</p>
+          <p data-lang="de">Standardmäßig wird weder Input noch Output gespeichert. Optional gibt es einen verschlüsselten lokalen Verlauf (AES-GCM, Schlüssel im Schlüsselbund), aus, bis du ihn einschaltest.</p>
         </div>
       </div>
       <div class="privacy-item">
@@ -711,8 +716,8 @@
         <div>
           <strong data-lang="en">Voice runs on-device</strong>
           <strong data-lang="de">Sprache läuft lokal</strong>
-          <p data-lang="en">Whisper transcribes audio locally. Nothing is sent to any network endpoint.</p>
-          <p data-lang="de">Whisper transkribiert auf dem Gerät. Nichts geht ins Netz.</p>
+          <p data-lang="en">Whisper or Parakeet transcribe audio locally. Nothing is sent to any network endpoint.</p>
+          <p data-lang="de">Whisper oder Parakeet transkribieren auf dem Gerät. Nichts geht ins Netz.</p>
         </div>
       </div>
       <div class="privacy-item">
@@ -755,11 +760,13 @@
       <div class="builtin"><strong data-lang="en">Simplify</strong><strong data-lang="de">Vereinfachen</strong><span data-lang="en">Short sentences, no jargon</span><span data-lang="de">Kurze Sätze, kein Fachjargon</span></div>
       <div class="builtin"><strong data-lang="en">Explain like I'm 10</strong><strong data-lang="de">Für 10-Jährige</strong><span data-lang="en">Everyday analogy</span><span data-lang="de">Alltagsbeispiel</span></div>
       <div class="builtin"><strong data-lang="en">Humanize</strong><strong data-lang="de">Menschlicher</strong><span data-lang="en">Strip AI tells</span><span data-lang="de">KI-Floskeln raus</span></div>
+      <div class="builtin"><strong data-lang="en">Add emojis</strong><strong data-lang="de">Emojis einfügen</strong><span data-lang="en">Fitting emojis every 1-2 sentences</span><span data-lang="de">Passende Emojis alle 1-2 Sätze</span></div>
       <div class="builtin"><strong data-lang="en">Summarize</strong><strong data-lang="de">Zusammenfassen</strong><span data-lang="en">3 key bullet points</span><span data-lang="de">3 Kern-Bullets</span></div>
       <div class="builtin"><strong>TL;DR</strong><span data-lang="en">1–2 sentences max</span><span data-lang="de">Max. 1–2 Sätze</span></div>
       <div class="builtin"><strong data-lang="en">Bullet points</strong><strong data-lang="de">Bulletpoints</strong><span data-lang="en">Every thought as a bullet</span><span data-lang="de">Jeden Gedanken als Bullet</span></div>
       <div class="builtin"><strong data-lang="en">Key points</strong><strong data-lang="de">Stichpunkte</strong><span data-lang="en">Max 5 essence bullets</span><span data-lang="de">Max. 5 prägnante Bullets</span></div>
       <div class="builtin"><strong data-lang="en">Action items</strong><strong data-lang="de">To-Dos</strong><span data-lang="en">Verb-first to-do list</span><span data-lang="de">Verb-first Aufgabenliste</span></div>
+      <div class="builtin"><strong data-lang="en">Defuse</strong><strong data-lang="de">Dampf ablassen</strong><span data-lang="en">Angry draft, calm message</span><span data-lang="de">Aus Ärger wird eine ruhige Nachricht</span></div>
       <div class="builtin"><strong data-lang="en">Email reply</strong><strong data-lang="de">E-Mail-Antwort</strong><span data-lang="en">Matched formality</span><span data-lang="de">Passende Formalität</span></div>
       <div class="builtin"><strong data-lang="en">Adapt for app</strong><strong data-lang="de">Für App anpassen</strong><span data-lang="en">Tone matches current app</span><span data-lang="de">Ton passt zur App</span></div>
       <div class="builtin"><strong data-lang="en">LinkedIn post</strong><strong data-lang="de">LinkedIn-Post</strong><span data-lang="en">Hook + 2–3 hashtags</span><span data-lang="de">Hook + 2–3 Hashtags</span></div>
@@ -783,8 +790,8 @@
     <div class="faq">
       <details>
         <summary><span data-lang="en">Is Tippi free?</span><span data-lang="de">Ist Tippi kostenlos?</span></summary>
-        <p data-lang="en">Yes. Tippi is open-source (MIT) and free to use. You bring your own API key for cloud providers, or run it fully locally with MLX or Ollama at no cost at all. There is no subscription and no upsell.</p>
-        <p data-lang="de">Ja. Tippi ist Open Source (MIT) und kostenlos. Für Cloud-Anbieter bringst du deinen eigenen API-Key mit, oder du betreibst es komplett lokal mit MLX oder Ollama — dann ganz ohne Kosten. Kein Abo, kein Upselling.</p>
+        <p data-lang="en">Yes. Tippi is open-source (MIT) and free to use. You bring your own API key for cloud providers, or run it fully locally with MLX or Ollama at no cost at all. There is no subscription and no upsell. If you want to give something back, you can <a href="https://buymeacoffee.com/tippiapp" target="_blank" rel="noopener">buy Tippi a coffee</a>.</p>
+        <p data-lang="de">Ja. Tippi ist Open Source (MIT) und kostenlos. Für Cloud-Anbieter bringst du deinen eigenen API-Key mit, oder du betreibst es komplett lokal mit MLX oder Ollama, dann ganz ohne Kosten. Kein Abo, kein Upselling. Wenn du etwas zurückgeben willst, kannst du <a href="https://buymeacoffee.com/tippiapp" target="_blank" rel="noopener">Tippi einen Kaffee spendieren</a>.</p>
       </details>
       <details>
         <summary><span data-lang="en">Does my text get sent to a server?</span><span data-lang="de">Wird mein Text an einen Server geschickt?</span></summary>
@@ -798,8 +805,8 @@
       </details>
       <details>
         <summary><span data-lang="en">Can I dictate and translate by voice?</span><span data-lang="de">Kann ich diktieren und per Sprache übersetzen?</span></summary>
-        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor: either on a key combination, or on a single key you double-tap to toggle and hold to talk. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the German ⇄ Spanish translation read back aloud — voice in, speech out, both on-device.</p>
-        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein: entweder per Tastenkombination oder über eine einzelne Taste, die du zum Umschalten zweimal antippst und zum Sprechen gedrückt hältst. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Deutsch ⇄ Spanisch-Übersetzung vorlesen — Voice rein, Sprache raus, beides lokal.</p>
+        <p data-lang="en">Yes. Dictation mode transcribes speech locally (Whisper or Parakeet) and inserts it at your cursor: either on a key combination, or on a single key you double-tap to toggle and hold to talk. The Translate Quick Panel (⌥⌘L) lets you speak text and hear the translation read back aloud: five languages (German, English, Spanish, French, Japanese), and the source language is detected automatically. Voice in, speech out, both on-device.</p>
+        <p data-lang="de">Ja. Der Diktat-Modus transkribiert Sprache lokal (Whisper oder Parakeet) und fügt sie am Cursor ein: entweder per Tastenkombination oder über eine einzelne Taste, die du zum Umschalten zweimal antippst und zum Sprechen gedrückt hältst. Das Übersetzungs-Fenster (⌥⌘L) lässt dich Text einsprechen und die Übersetzung vorlesen: fünf Sprachen (Deutsch, Englisch, Spanisch, Französisch, Japanisch), die Ausgangssprache erkennt Tippi automatisch. Sprechen und Vorlesen laufen beide lokal.</p>
       </details>
       <details>
         <summary><span data-lang="en">Can I chain prompts together?</span><span data-lang="de">Kann ich Prompts verketten?</span></summary>
@@ -850,7 +857,7 @@
       <span data-lang="de">Open Source · MIT-Lizenz · von</span>
       <a href="https://github.com/miwixyz" target="_blank" rel="noopener">Michael Wlr</a>
     </p>
-    <p style="margin-top:8px"><a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">github.com/miwixyz/Tippi</a></p>
+    <p style="margin-top:8px"><a href="https://github.com/miwixyz/Tippi" target="_blank" rel="noopener">github.com/miwixyz/Tippi</a> &nbsp;·&nbsp; <a href="https://buymeacoffee.com/tippiapp" target="_blank" rel="noopener"><span data-lang="en">Support Tippi</span><span data-lang="de">Tippi unterstützen</span></a></p>
     <p style="margin-top:8px"><a href="impressum.html">Impressum</a> &nbsp;·&nbsp; <a href="datenschutz.html">Datenschutz</a></p>
   </div>
 </footer>

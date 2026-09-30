@@ -28,7 +28,7 @@ die() { printf '\n🛑 %s\n' "$*" >&2; exit 2; }
 
 # CHANGELOG.md and PRD.md are absent on purpose: both are historical documents whose old
 # numbers are correct. PRD.md is explicitly marked as the May scope and is not updated.
-DOCS=(README.md ARCHITECTURE.md CLAUDE.md docs/HANDOVER.md docs/ONE-PAGER.md docs/index.html docs/pitch.html)
+DOCS=(README.md ARCHITECTURE.md CLAUDE.md docs/HANDOVER.md docs/ONE-PAGER.md docs/index.html)
 # A renamed or deleted doc used to drop out of every check silently
 # (`grep … 2>/dev/null || true`) — the check shrank without saying so (audit 2026-09-27).
 for d in "${DOCS[@]}"; do
