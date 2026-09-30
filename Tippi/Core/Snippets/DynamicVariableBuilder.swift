@@ -12,10 +12,10 @@ import Foundation
 enum DynamicVariableKind: Equatable {
     case today(format: DateFormatPreset)
     case weekday(Weekday, extraDays: Int, format: DateFormatPreset)
-    /// Fixed pattern from Michael's own kinowoche.yml (`date -v +thu +"%V"`):
+    /// Fixed pattern from a real-world Espanso snippet (`date -v +thu +"%V"`):
     /// the ISO week number of the **next** Thursday (today, if it is one) —
-    /// the cinema week that starts then. From Friday on that is already the
-    /// following week; this is intended for programme planning, not the plain
+    /// the week that starts then. From Friday on that is already the
+    /// following week; this is intended for Thursday-based weekly plans, not the plain
     /// calendar week (the old hint said "this week's Thursday", which was
     /// wrong Fri–Sun — audit 2026-09-27, measured).
     case calendarWeek
@@ -54,7 +54,7 @@ enum Weekday: CaseIterable, Equatable {
 
     /// BSD `date -v` weekday flags (`+mon`, `+tue`, …) — always English
     /// three-letter abbreviations regardless of system locale, matching
-    /// what the real kinowoche.yml already uses (`-v +thu`).
+    /// what real-world Espanso snippets already use (`-v +thu`).
     var dateFlag: String {
         switch self {
         case .monday: return "mon"
@@ -102,7 +102,7 @@ enum DynamicVariableBuilder {
             // "Juni". `%d`/`%Y` are locale-independent, so the prefix is a
             // harmless no-op for `.dayDot`/`.year`; always including it here
             // avoids relying on the runtime environment being German by
-            // chance. Matches the LC_TIME Michael's own kinowoche.yml already
+            // chance. Matches the LC_TIME the original Espanso snippet already
             // used for the exact same reason.
             var cmd = "\(localePrefix)date -v +\(weekday.dateFlag)"
             if extraDays != 0 {
