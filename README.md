@@ -455,6 +455,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 | Version | Status | Highlights |
 |---------|--------|------------|
+| v2.21.0 | ✅ Done | **Dictation for emails** — a second dictation hotkey (⌃⌥⌘B) that lays text out like an email (greeting line, one sentence per line, sign-off block, colon after "following"); autocomplete continues instead of answering and no longer glues words; currency converter shows and copies the result; Notes sidebar can be hidden (⌃⌘S) |
 | v2.20.1 | ✅ Done | **Popup where you type** — the prompt popup opens at your selection or text cursor instead of at the mouse pointer (multi-display aware); autocomplete sends your custom words only when they fit, so no more stray names in suggestions; neutral name for the Thursday-week snippet option |
 | v2.20.0 | ✅ Done | **New app-family design** — "Slate" palette, Plus Jakarta Sans, tinted glass for the selection bar and popups, readable prominent buttons in dark mode. 558 tests |
 | v2.19.0 | ✅ Done | **Currency converter, password generator, more quick actions** — select an amount, pick a favorite currency, the conversion is appended (rates by Exchange Rate API; your text never leaves the Mac); 12-character passwords inserted at the cursor, clipboard copy stays on this Mac for 60 s; highlight, bullet list, quotation marks, brackets; two-row selection bar with live character count. 558 tests |

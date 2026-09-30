@@ -2,7 +2,40 @@
 
 ## [2.21.0] — 2026-09-30
 
-- _Add release notes here._
+Diktieren wie eine Mail, eine Autovervollständigung, die weiterschreibt statt zu antworten, und ein Währungsrechner, der dir das Ergebnis zeigt.
+
+### Neu
+
+- **Diktat für Mails (⌃⌥⌘B).** Ein zweites Diktat-Kürzel, das immer in Mail-Form
+  schreibt: Anrede in eine eigene Zeile, jeder Satz in eine Zeile, die Grußformel
+  („Vielen Dank und liebe Grüße“) mit Leerzeile abgesetzt, ein Doppelpunkt nach
+  „folgende“. Dein normales Diktat bleibt für Chats ohne Absätze. Das Kürzel lässt
+  sich unter Einstellungen → Hotkeys ändern. Die Aufnahme-Anzeige zeigt dabei einen
+  Umschlag. In Terminals und in Apps mit „Enter nach dem Diktat“ gibt es keine Umbrüche.
+- **Absätze und Satzzeichen auch im normalen Diktat**, als Schalter unter
+  Einstellungen → Diktat (ab Werk aus). Das Layout arbeitet mit festen Regeln, ohne KI,
+  und trennt „am 3. Oktober“, „Dr.“ oder „z. B.“ nicht.
+- **Notizen: Seitenleiste ein- und ausblenden** mit dem Knopf links oben oder ⌃⌘S.
+  Tippi merkt sich die Einstellung.
+- **Währungsrechner zeigt das Ergebnis und kopiert es.** Der Hinweis an der Markierung
+  nennt den Betrag („≈ 26,19 $ · kopiert“), und der Betrag liegt in der Zwischenablage.
+  Neuer Standard ist „anzeigen und kopieren“, der Text bleibt dabei unverändert.
+  An den Text anhängen gibt es weiter als Option.
+
+### Behoben
+
+- **Autovervollständigung (Labs) schreibt weiter, statt zu antworten.** Sie schaut nur
+  noch auf die Zeile, in der du schreibst, meldet sich erst ab ein paar Wörtern, schlägt
+  nach einer fertigen Frage nichts vor und verwirft Vorschläge, die deine Wörter nur
+  wiederholen („Ich kann dir sagen, wie spät es ist“). Vorschläge kleben nicht mehr am
+  letzten Wort („schnelleHilfe“). Gemessen mit dem MLX-Standardmodell: brauchbare
+  Vorschläge 18 → 36 von 63, verklebte 12 → 0.
+- **Notizen: Jeder Symbol-Knopf erklärt sich beim Überfahren**, auch das Funkel-Symbol
+  („Titel von der KI vorschlagen lassen“).
+
+### Intern
+
+- 609 Tests (34 neu seit 2.20.1). Neue Dateien `DictationLayout.swift`, `MailDictation.swift`.
 
 ## [2.20.1] — 2026-09-30
 
