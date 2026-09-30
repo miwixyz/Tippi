@@ -121,6 +121,27 @@ line printed six times, and nothing was confirmed — the in-app Help fell five
 versions behind. Run against those releases afterwards, this gate blocks all
 three of the ones that needed it and names each gap.
 
+`scripts/docs-drift-check.sh` (also part of `make release`) compares hard numbers
+in the docs with the code. Since 2.20.1 it checks the website too: the provider
+and built-in prompt tiles in `docs/index.html` against `LLMRouter.allProviders`
+and the built-in prompts, every visible version number against
+`MARKETING_VERSION`, EN/DE `data-lang` parity, and that no page in `docs/` loads
+external scripts or fonts (the privacy policy promises that). The website once
+showed 10 of 11 providers and 22 of 24 prompts while this script reported no
+drift, because it only read prose. `TIPPI_INDEX_HTML=<file>` checks a copy, for
+negative tests.
+
+## Recording a demo
+
+`scripts/record-demo.sh` records a real demo of the installed app: it opens
+TextEdit with sample text, triggers the prompt popup, runs "Improve", inserts an
+emoji and screen-records the whole thing to `~/Downloads/tippi-demo-<time>.mov`
+(plus a `.json` with the window position for cropping). It reads your actual
+hotkeys and UI language from Tippi's preferences, so a customized hotkey works.
+Terminal needs Screen Recording and Accessibility permission; the script opens
+the right System Settings pane if one is missing. Do not touch mouse or keyboard
+while it runs (~30 s).
+
 ## Building a signed release
 
 A Developer ID–signed and Apple-notarized DMG is required for stable distribution.
