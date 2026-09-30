@@ -2,7 +2,32 @@
 
 ## [2.20.1] — 2026-09-30
 
-- _Add release notes here._
+Das Prompt-Fenster erscheint dort, wo du schreibst, und die Autovervollständigung hört auf, eigene Wörter in fremde Sätze zu streuen.
+
+### Behoben
+
+- **Das Prompt-Fenster öffnet sich an der Eingabe.** Es erscheint direkt unter dem
+  markierten Text bzw. an der Schreibmarke, auch auf einem zweiten Bildschirm, statt
+  dort, wo gerade der Mauszeiger steht. Das gilt auch für das Diktat-Pop-up. Kann eine
+  App ihre Textposition nicht melden, bleibt es wie bisher bei der Maus.
+- **Autovervollständigung (Labs) ohne eingestreute eigene Wörter.** Deine eigenen
+  Wörter gehen nur noch ans lokale Modell, wenn du gerade eines davon tippst oder es
+  schon im Text steht. Vorher tauchte ein Name aus der Liste in fremden Sätzen auf
+  (gemessen mit dem MLX-Standardmodell: 3 von 15 Vorschlägen, jetzt 0 von 15).
+
+### Geändert
+
+- **Snippet-Option „Woche ab Donnerstag (KW)“.** Die Variable für die Kalenderwoche,
+  die donnerstags beginnt, hat einen neutralen Namen, die Hilfe neutrale Beispiele.
+  Bestehende Snippets laufen unverändert weiter.
+
+### Intern
+
+- 575 Tests (17 neu: Pop-up-Position, Wörter-Auswahl der Autovervollständigung).
+- `scripts/record-demo.sh` nimmt ein echtes Demo auf und liest dafür Tastenkürzel
+  und Oberflächensprache aus den Einstellungen.
+- `scripts/docs-drift-check.sh` prüft jetzt auch die Website: Kachelzahlen, sichtbare
+  Versionen, EN/DE-Vollständigkeit, keine fremden Skripte.
 
 ## [2.20.0] — 2026-09-29
 
