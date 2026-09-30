@@ -162,6 +162,57 @@ enum TextCapture {
                       width: axRect.width, height: axRect.height)
     }
 
+    /// Rects to anchor the prompt popup at, best first, unchecked — `InputAnchor`
+    /// drops implausible ones and falls back to the mouse. With a selection: its
+    /// last character, the whole selection; without: the caret (plus the rect
+    /// of the character before it, for apps that report nothing at length 0);
+    /// then the Chromium text-marker rect (Electron answers the others with zeros).
+    ///
+    /// Must not delay the hotkey: a fresh element with a 0.25 s messaging timeout
+    /// (never the stored `lastSelectionElement` the later replacement uses) and a
+    /// 150 ms budget across all calls — later candidates are simply skipped.
+    static func inputAnchorCandidates(in app: NSRunningApplication) -> [CGRect] {
+        guard AXIsProcessTrusted() else { return [] }
+        let deadline = CFAbsoluteTimeGetCurrent() + 0.15
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(appElement, 0.25)
+        guard let focused = focusedElement(in: appElement) else { return [] }
+        AXUIElementSetMessagingTimeout(focused, 0.25)
+
+        var candidates: [CGRect] = []
+        func add(_ rect: () -> CGRect?) {
+            guard CFAbsoluteTimeGetCurrent() < deadline, let found = rect() else { return }
+            candidates.append(found)
+        }
+        if let range = selectedRange(of: focused) {
+            if range.length > 0 {
+                let last = CFRange(location: range.location + range.length - 1, length: 1)
+                add { boundsForSelection(element: focused, range: last) }
+                add { boundsForSelection(element: focused, range: range) }
+            } else {
+                add { boundsForSelection(element: focused, range: CFRange(location: range.location, length: 0)) }
+                if range.location > 0 {
+                    add {
+                        boundsForSelection(element: focused, range: CFRange(location: range.location - 1, length: 1))
+                            .map { CGRect(x: $0.maxX, y: $0.minY, width: 0, height: $0.height) }
+                    }
+                }
+            }
+        }
+        add { boundsForSelectedTextMarkerRange(element: focused) }
+        return candidates
+    }
+
+    private static func selectedRange(of element: AXUIElement) -> CFRange? {
+        var rangeRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, &rangeRef) == .success,
+              let rangeValue = rangeRef, CFGetTypeID(rangeValue) == AXValueGetTypeID() else { return nil }
+        var range = CFRange()
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
+        guard AXValueGetValue(rangeValue as! AXValue, .cfRange, &range), range.location >= 0 else { return nil }
+        return range
+    }
+
     private static func resolvedSourceApp(_ sourceApp: NSRunningApplication?) -> NSRunningApplication? {
         if let sourceApp, sourceApp.bundleIdentifier != Bundle.main.bundleIdentifier {
             return sourceApp

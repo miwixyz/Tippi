@@ -258,7 +258,8 @@ final class AutocompleteController: ObservableObject {
         }
         guard let app = NSWorkspace.shared.frontmostApplication else { return skip("no frontmost app") }
         guard let field = readFocusedField(in: app) else { return }
-        let glossary = CustomWordVariants.glossaryTerms(from: DictationSettings.customWords)
+        let glossary = AutocompleteRequest.relevantGlossary(
+            terms: CustomWordVariants.glossaryTerms(from: DictationSettings.customWords), context: field.context)
         guard let request = AutocompleteRequest.make(server: server, model: MLXServerManager.activeModel,
                                                      context: field.context, glossary: glossary) else {
             return skip("request not built")

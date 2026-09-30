@@ -469,6 +469,36 @@ enum AutocompleteRequest {
     static let maxGlossaryTerms = 40
     static let maxGlossaryTermLength = 40
 
+    /// Nur die eigenen Wörter, die gerade gebraucht werden: das unfertige letzte
+    /// Wort (mind. 2 Zeichen) ist der Anfang des Begriffs oder eines seiner
+    /// Wörter, oder der Begriff steht schon als ganzes Wort im Kontext. Groß/klein
+    /// und Akzente egal. Sonst leer — der Grundprompt bleibt ohne Wörterliste.
+    ///
+    /// Warum (gemessen 2026-09-30): Mit der ganzen Liste in JEDER Anfrage streute
+    /// das kleine lokale Modell die Begriffe in Sätze, die nichts damit zu tun hatten.
+    static func relevantGlossary(terms: [String], context: String) -> [String] {
+        let contextWords = words(of: context)
+        let lastIsOpen = context.last.map { $0.isLetter || $0.isNumber } ?? false
+        let openWord = lastIsOpen ? contextWords.last.flatMap { $0.count >= 2 ? $0 : nil } : nil
+        return terms.filter { term in
+            let termWords = words(of: term)
+            guard !termWords.isEmpty else { return false }
+            if let openWord, termWords.contains(where: { $0.hasPrefix(openWord) }) { return true }
+            guard contextWords.count >= termWords.count else { return false }
+            return (0...(contextWords.count - termWords.count)).contains {
+                Array(contextWords[$0..<($0 + termWords.count)]) == termWords
+            }
+        }
+    }
+
+    /// Wörter in Kleinschreibung ohne Akzente; getrennt wird an allem, was
+    /// kein Buchstabe und keine Ziffer ist.
+    private static func words(of text: String) -> [String] {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            .split { !$0.isLetter && !$0.isNumber }
+            .map(String.init)
+    }
+
     /// Grundprompt plus die eigenen Wörter des Nutzers als Schreibweisen-Liste.
     /// Die Begriffe sind Daten: Steuerzeichen/Zeilenumbrüche werden zu
     /// Leerzeichen, überlange und leere fallen weg.

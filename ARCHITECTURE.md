@@ -39,6 +39,8 @@ Tippi/
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
+│   ├── InputAnchor.swift           # rein + unit-getestet: Prompt-Pop-up an Auswahlende/Cursor,
+│   │                               #   Maus nur als Rückfall; unter dem Anker, sonst darüber, pro Bildschirm
 │   ├── ScreenTextCapture.swift     # v2.12 — ScreenCaptureKit + Vision-OCR, nur RAM
 │   │                                 # v2.12.3 — freeze-first: erst alle Schirme
 │   │                                 # aufnehmen, dann auswählen (Pop-Ups!)
@@ -319,7 +321,7 @@ enum KeychainStore {
 ### 8.1 Popup-Window
 
 - **NSPanel** mit `.borderless`, `.nonactivatingPanel`, level `.statusBar`
-- Positioning: `NSEvent.mouseLocation` oder via AX caret rect
+- Positioning: `InputAnchor` — Ende der Auswahl, sonst Cursor (AX-Bounds, `TextCapture.inputAnchorCandidates`), `NSEvent.mouseLocation` nur als Rückfall
 - Width: 280 pt, Height: dynamisch (~280 pt bei 6 Prompts) <!-- drift-ok: UI-Maß, keine Gesamtzahl -->
 - Translucent background (`.hudWindow`-Style)
 

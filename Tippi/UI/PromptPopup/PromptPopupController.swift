@@ -21,7 +21,7 @@ final class PromptPopupController {
     var isOpen: Bool { panel != nil }
 
     func show(
-        at point: NSPoint,
+        at anchor: CGRect,
         prompts: [DemoPrompt],
         localActions: [LocalTextAction] = [],
         localActionsReady: Bool = true,
@@ -94,7 +94,7 @@ final class PromptPopupController {
             height: max(fittingSize.height, 100)
         )
         panel.setContentSize(panelSize)
-        positionPanel(panel, near: point)
+        positionPanel(panel, near: anchor)
 
         self.panel = panel
 
@@ -149,29 +149,13 @@ final class PromptPopupController {
         audioRecorder = nil
     }
 
-    private func positionPanel(_ panel: NSPanel, near point: NSPoint) {
-        let popupSize = panel.frame.size
-        let screen = NSScreen.screens.first { $0.frame.contains(point) }
-            ?? NSScreen.main
-            ?? NSScreen.screens.first!
-        let visibleFrame = screen.visibleFrame
-
-        var x = point.x
-        var y = point.y - popupSize.height - 12 // below cursor, with gap
-
-        if x + popupSize.width > visibleFrame.maxX - 8 {
-            x = visibleFrame.maxX - popupSize.width - 8
-        }
-        if x < visibleFrame.minX + 8 {
-            x = visibleFrame.minX + 8
-        }
-        if y < visibleFrame.minY + 8 {
-            y = point.y + 12 // flip above cursor
-        }
-        if y + popupSize.height > visibleFrame.maxY - 8 {
-            y = visibleFrame.maxY - popupSize.height - 8
-        }
-
-        panel.setFrameOrigin(NSPoint(x: x, y: y))
+    /// Below the anchor (selection, caret or — as fallback — the mouse), above
+    /// it when there is no room, on the screen holding it. Geometry: `InputAnchor`.
+    private func positionPanel(_ panel: NSPanel, near anchor: CGRect) {
+        panel.setFrameOrigin(InputAnchor.origin(
+            for: anchor,
+            panelSize: panel.frame.size,
+            visibleFrames: NSScreen.screens.map(\.visibleFrame)
+        ))
     }
 }

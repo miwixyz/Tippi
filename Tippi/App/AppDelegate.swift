@@ -1588,6 +1588,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return (sourceApp, captured)
     }
 
+    /// Where the prompt popup opens: at the end of the selection or at the
+    /// caret, the mouse only when the app reports nothing usable (`InputAnchor`).
+    /// Call right after `captureForTrigger`, which set `lastNativeTextView`.
+    private func promptPopupAnchor(sourceApp: NSRunningApplication?) -> CGRect {
+        var candidates: [CGRect] = []
+        if let textView = lastNativeTextView {
+            let range = textView.selectedRange()
+            let end = range.length > 0 ? NSRange(location: NSMaxRange(range) - 1, length: 1) : range
+            candidates = [textView.firstRect(forCharacterRange: end, actualRange: nil)]
+        } else if let sourceApp {
+            candidates = TextCapture.inputAnchorCandidates(in: sourceApp)
+        }
+        let mouse = NSEvent.mouseLocation
+        let anchor = InputAnchor.anchor(candidates: candidates, mouse: mouse, screens: NSScreen.screens.map(\.frame))
+        // Measurement point: tells "app reported nothing" from "reported junk"
+        // from "anchored at the text" when the popup shows up in the wrong place.
+        appDelegateLog.notice(
+            """
+            prompt popup anchor: candidates=\(candidates.count, privacy: .public) \
+            usedMouse=\(anchor == CGRect(origin: mouse, size: .zero), privacy: .public) \
+            anchor=\(anchor.origin.x, privacy: .public),\(anchor.origin.y, privacy: .public) \
+            \(anchor.size.width, privacy: .public)x\(anchor.size.height, privacy: .public)
+            """)
+        return anchor
+    }
+
     private func handleTriggered(from source: TriggerSource) async {
         NSLog("Tippi: handleTriggered from=\(source)")
         guard !isHandlingTrigger,
@@ -1600,11 +1626,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         defer { isHandlingTrigger = false }
 
         let (sourceApp, captured) = await captureForTrigger()
+        // Read while the selection is still live — the popup collapses it.
+        let anchor = promptPopupAnchor(sourceApp: sourceApp)
 
         if source == .hotkey {
             try? await Task.sleep(nanoseconds: 40_000_000)
         }
-        let mouseLocation = NSEvent.mouseLocation
         let prompts = DemoPrompt.all
         let localActions = LocalQuickActionSettings.isEnabled ? LocalTextAction.all : []
         let localActionsReady = captured != nil
@@ -1617,7 +1644,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         popupController.show(
-            at: mouseLocation,
+            at: anchor,
             prompts: prompts,
             localActions: localActions,
             localActionsReady: localActionsReady,
@@ -1675,7 +1702,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         sourceApp: sourceApp,
                         usedClipboardFallback: false
                     )
-                    self.showPopupWithText(voiceCaptured, at: mouseLocation, prompts: prompts)
+                    self.showPopupWithText(voiceCaptured, at: anchor, prompts: prompts)
                 }
             }
         )
@@ -1686,11 +1713,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Offers "Direkt einfügen" at the top (default) plus all AI prompts.
     private func showPopupWithText(
         _ captured: CapturedText,
-        at mouseLocation: NSPoint,
+        at anchor: CGRect,
         prompts: [DemoPrompt]
     ) {
         popupController.show(
-            at: mouseLocation,
+            at: anchor,
             prompts: prompts,
             localActions: LocalQuickActionSettings.isEnabled ? LocalTextAction.all : [],
             localActionsReady: true,

@@ -93,6 +93,10 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
   (lokal/iCloud, von ihm selbst gepflegt) geht als Schreibweisen-Liste mit in den
   System-Prompt — nur Zielwörter, höchstens 40 Begriffe à 40 Zeichen, Steuerzeichen
   und Umbrüche entfernt. Bleibt wie alles andere auf dem eigenen Loopback-Server.
+  Seit 2026-09-30 nur die gerade passenden Begriffe (`AutocompleteRequest.relevantGlossary`):
+  das unfertige letzte Wort beginnt wie der Begriff, oder er steht schon im Text. Mit der
+  ganzen Liste in jeder Anfrage gab das 2B-Modell bei einem von fünf neutralen Sätzen
+  nur die Wörterliste selbst zurück (3/3 Wiederholungen); ohne sie 0 von 15 Antworten.
 
 ### Tastatur → Tippi (aktiver Tap)
 - **Elevation/Tampering — Tasten schlucken:** Der Tap wird **nur erzeugt, wenn die
