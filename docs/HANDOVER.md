@@ -163,8 +163,8 @@ scripts/
 docs/
 ├── HANDOVER.md                     Dieses Dokument
 ├── BRANDKIT.md                     Farbpalette, adaptive Mappings, Typografie, Ikonografie
-├── demo.gif                        Demo-GIF für README (EN, 44 s, 30.09.2026)
-├── tippi-demo-{de,en}.mp4          Demo-Video für die Website (selbst gehostet), Poster tippi-demo-poster-{de,en}.png
+├── demo.gif                        Demo-GIF für README (DE/EN zweisprachig, 65 s, 30.09.2026)
+├── tippi-demo.mp4                  Demo-Video für die Website (DE/EN zweisprachig, mit Ton, selbst gehostet), Poster tippi-demo-poster.png
 └── mascot.png                      Tippi-Maskottchen (Navy-Kreis, weißer Bot, Signal-Blue-Blase)
 ```
 
