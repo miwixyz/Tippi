@@ -15,7 +15,9 @@
 
 > Mark text anywhere. Hit ⌥⌘T. Let AI do the rest.
 
-![Tippi in action](docs/demo.gif)
+![Tippi in action: quick actions, the AI prompt popup, emoji, currency converter, dictation, translation and dictation for emails](docs/demo.gif)
+
+[Watch the demo in full quality on tippi.mwlr.dev](https://tippi.mwlr.dev/#demo)
 
 ---
 

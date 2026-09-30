@@ -382,3 +382,7 @@ footer a:hover { color: var(--text); }
     transition-duration: .01ms !important;
   }
 }
+
+/* Demo video (self-hosted) */
+.demo { padding-top: 8px; }
+.demo video { display: block; width: 100%; max-width: 1100px; height: auto; aspect-ratio: 16 / 9; margin: 0 auto; border-radius: var(--radius-tile); box-shadow: var(--shadow); background: #0D1019; }

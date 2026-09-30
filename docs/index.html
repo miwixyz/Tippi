@@ -103,6 +103,14 @@
   </div>
 </header>
 
+<!-- ── Demo video (self-hosted, no third party) ──────────────────────────── -->
+<section id="demo" class="demo">
+  <div class="wrap">
+    <video data-lang="en" data-src="tippi-demo-en.mp4" poster="tippi-demo-poster-en.png" muted loop playsinline controls preload="none" width="1600" height="900" aria-label="Tippi in action: quick actions, the AI prompt popup, emoji, currency converter, dictation, translation and dictation for emails"></video>
+    <video data-lang="de" data-src="tippi-demo-de.mp4" poster="tippi-demo-poster-de.png" muted loop playsinline controls preload="none" width="1600" height="900" aria-label="Tippi in Aktion: Schnellaktionen, KI-Pop-up, Emoji, Währungsrechner, Diktat, Übersetzen und Diktat für Mails"></video>
+  </div>
+</section>
+
 <!-- ── One app instead of eight ──────────────────────────────────────────── -->
 <section id="one-app">
   <div class="wrap">
@@ -746,6 +754,17 @@
     document.getElementById('lang-en').setAttribute('aria-pressed', String(lang === 'en'));
     document.getElementById('lang-de').setAttribute('aria-pressed', String(lang === 'de'));
     try { localStorage.setItem('tippi-lang', lang); } catch (e) {}
+    // Only the video in the current language gets a source and plays, so the
+    // hidden one is never downloaded. Reduced motion: poster + controls only.
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('#demo video').forEach(function (v) {
+      if (v.dataset.lang === lang) {
+        if (!v.getAttribute('src')) v.src = v.dataset.src;
+        if (!calm) { const p = v.play(); if (p) p.catch(function () {}); }
+      } else {
+        v.pause();
+      }
+    });
   }
 
   // Init: saved preference > browser default > 'en'
