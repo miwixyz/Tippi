@@ -1,3 +1,4 @@
+import SwiftUI
 import XCTest
 @testable import Tippi
 
@@ -157,6 +158,71 @@ final class CurrencyFormatterTests: XCTestCase {
     func testTargetsExcludeSourceCurrency() {
         let targets = CurrencySettings.targets(for: MoneyAmount(value: 1, code: CurrencySettings.favorites.first ?? "USD"))
         XCTAssertFalse(targets.contains(CurrencySettings.favorites.first ?? "USD"))
+    }
+}
+
+/// Ergebnis anzeigen + kopieren (Standard) oder zusätzlich anhängen. Über `store`, nie `.standard`.
+@MainActor
+final class CurrencyResultModeTests: XCTestCase {
+    private let german = Locale(identifier: "de_DE")
+    private let suites = ThrowawayDefaults()
+
+    override func setUp() {
+        super.setUp()
+        CurrencySettings.store = suites.make()
+    }
+
+    override func tearDown() {
+        CurrencySettings.store = .standard
+        suites.removeAll()
+        super.tearDown()
+    }
+
+    /// Seit 2.21: anzeigen und kopieren. Michael lief ohne gespeicherten Wert im alten
+    /// Standard und sah nur „In USD umrechnen".
+    func testCopyIsTheDefault() {
+        XCTAssertEqual(CurrencySettings.resultMode, .copy)
+    }
+
+    func testModeRoundTripAndUnknownValueFallsBack() {
+        CurrencySettings.resultMode = .append
+        XCTAssertEqual(CurrencySettings.resultMode, .append)
+        CurrencySettings.store.set("irgendwas", forKey: CurrencySettings.resultModeKey)
+        XCTAssertEqual(CurrencySettings.resultMode, .copy)
+    }
+
+    /// Die Bindung, die der Picker benutzt, schreibt den Schlüssel sofort.
+    func testPickerBindingWritesTheKey() {
+        var shown = CurrencyResultMode.copy
+        let binding = CurrencyFavoritesSection.modeBinding(Binding(get: { shown }, set: { shown = $0 }))
+        binding.wrappedValue = .append
+        XCTAssertEqual(shown, .append)
+        XCTAssertEqual(CurrencySettings.store.string(forKey: CurrencySettings.resultModeKey), "append")
+        binding.wrappedValue = .copy
+        XCTAssertEqual(CurrencySettings.store.string(forKey: CurrencySettings.resultModeKey), "copy")
+    }
+
+    /// Beide Modi kopieren den Betrag (nur Zahl + Währung); nur „anhängen" ändert den Text.
+    func testAppendModeReplacesTextAndCopiesAmount() {
+        let outcome = CurrencyOutcome.make(text: "23 €", converted: 26.1855, code: "USD", mode: .append, locale: german)
+        XCTAssertEqual(outcome.replacement, "23 € (≈ 26,19\u{00A0}$)")
+        XCTAssertEqual(outcome.amount, "26,19\u{00A0}$")
+    }
+
+    func testCopyModeLeavesTextAndCopiesAmount() {
+        let outcome = CurrencyOutcome.make(text: "23 € ", converted: 26.1855, code: "USD", mode: .copy, locale: german)
+        XCTAssertNil(outcome.replacement)
+        XCTAssertEqual(outcome.amount, "26,19\u{00A0}$")
+    }
+
+    /// Der Hinweis nennt das Ergebnis, nie den Aktionsnamen.
+    func testHintShowsTheResultInBothModes() {
+        let copy = CurrencyOutcome.make(text: "23 €", converted: 26.1855, code: "USD", mode: .copy, locale: german)
+        let append = CurrencyOutcome.make(text: "23 €", converted: 26.1855, code: "USD", mode: .append, locale: german)
+        XCTAssertTrue(copy.hint.contains("26,19"))
+        XCTAssertTrue(append.hint.contains("26,19"))
+        XCTAssertNotEqual(copy.hint, append.hint)
+        XCTAssertFalse(append.hint.contains("USD"))
     }
 }
 

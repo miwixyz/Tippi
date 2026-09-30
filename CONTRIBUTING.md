@@ -129,7 +129,9 @@ and the built-in prompts, every visible version number against
 external scripts or fonts (the privacy policy promises that). The website once
 showed 10 of 11 providers and 22 of 24 prompts while this script reported no
 drift, because it only read prose. `TIPPI_INDEX_HTML=<file>` checks a copy, for
-negative tests.
+negative tests. Every `HotkeyManager` in `AppDelegate` must map to a word in the
+comparison tables of README and ONE-PAGER; the mail dictation hot key (2.21) maps
+to "email" in the dictation row.
 
 ## Recording a demo
 

@@ -39,7 +39,7 @@ covers that whole row:
 | Emoji without the system palette | Rocket | **⌥⌘E picker + `:name:` shortcodes** |
 | Text shortcuts while typing | Espanso · TextExpander | **Text Snippets** (imports Espanso files) |
 | Action bar at your text selection | PopClip | **Selection action bar** |
-| On-device dictation | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode** (Whisper / Parakeet) — on your Mac, no account, audio stays local |
+| On-device dictation | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode** (Whisper / Parakeet) — on your Mac, no account, audio stays local; a second hot key lays out emails |
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
 | Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |

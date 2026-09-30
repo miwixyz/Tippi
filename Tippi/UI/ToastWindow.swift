@@ -28,7 +28,7 @@ private struct ToastView: View {
 // MARK: - Controller
 
 /// Lightweight floating toast. Call `ToastWindowController.shared.show(message:)`.
-/// - Appears just below the cursor, auto-dismisses after 1.5 s with a 0.3 s fade.
+/// - Appears just below the cursor (or an `anchor`), auto-dismisses after 1.5 s with a 0.3 s fade.
 /// - Non-activating, mouse-transparent — the user's workflow is never interrupted.
 @MainActor
 final class ToastWindowController {
@@ -59,7 +59,9 @@ final class ToastWindowController {
         return NSPoint(x: x, y: y)
     }
 
-    func show(message: String) {
+    /// `anchor` (AppKit screen coordinates, e.g. the selection) places the toast
+    /// under that rect via `InputAnchor` instead of under the mouse pointer.
+    func show(message: String, anchor: CGRect? = nil, seconds: Double = 1.5) {
         generation += 1
         let myGeneration = generation
         // Cancel any in-flight dismiss so rapid consecutive toasts don't flicker.
@@ -73,10 +75,15 @@ final class ToastWindowController {
         // Just below the cursor, kept on the visible part of the screen under
         // it — at the bottom edge or over the Dock the toast used to land
         // off-screen, hiding exactly the feedback it exists for (audit 2026-09-27).
-        let cursor = NSEvent.mouseLocation
-        let visible = (NSScreen.screens.first { NSMouseInRect(cursor, $0.frame, false) } ?? NSScreen.main)?
-            .visibleFrame ?? .infinite
-        let origin = Self.origin(cursor: cursor, size: size, visible: visible)
+        let origin: NSPoint
+        if let anchor {
+            origin = InputAnchor.origin(for: anchor, panelSize: size, visibleFrames: NSScreen.screens.map(\.visibleFrame))
+        } else {
+            let cursor = NSEvent.mouseLocation
+            let visible = (NSScreen.screens.first { NSMouseInRect(cursor, $0.frame, false) } ?? NSScreen.main)?
+                .visibleFrame ?? .infinite
+            origin = Self.origin(cursor: cursor, size: size, visible: visible)
+        }
 
         if let w = window {
             // Reuse existing window — swap content & reposition.
@@ -102,9 +109,9 @@ final class ToastWindowController {
             window = w
         }
 
-        // Auto-dismiss after 1.5 s, then fade out over 0.3 s.
+        // Auto-dismiss after `seconds` (1.5 s by default), then fade out over 0.3 s.
         dismissTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 guard let self, self.generation == myGeneration else { return }

@@ -59,6 +59,9 @@ struct DictationHotkeySection: View {
                 } else {
                     tapOrHoldControls
                 }
+
+                Divider().padding(.vertical, 4)
+                MailDictationHotkeyControls()
             }
         }
     }
@@ -103,6 +106,67 @@ struct DictationHotkeySection: View {
             }
             .padding(8)
             .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+        }
+    }
+}
+
+/// „Diktat für Mails": eigener Hotkey (ab Werk ⌃⌥⌘B), Layout immer an. Zeigt, ob der
+/// Hotkey wirklich registriert ist, und nennt ein schon belegtes Kürzel beim Namen.
+private struct MailDictationHotkeyControls: View {
+    @State private var enabled = MailDictationSettings.isEnabled
+    @State private var combo = MailDictationSettings.combo
+    @ObservedObject private var manager: HotkeyManager
+
+    init() {
+        _manager = ObservedObject(wrappedValue: AppDelegate.shared?.mailDictationHotkeyManager ?? HotkeyManager(id: 907))
+    }
+
+    private var conflict: String? {
+        MailDictationSettings.conflict(of: combo, in: MailDictationSettings.takenCombos())
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(String(localized: "settings.voice.dictation.mail.enable"), isOn: $enabled)
+                .onChange(of: enabled) { _, new in
+                    MailDictationSettings.isEnabled = new
+                    AppDelegate.shared?.restartMailDictationHotkey()
+                }
+            Text(String(localized: "settings.voice.dictation.mail.body"))
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if enabled {
+                HotkeyRecorderField(combo: $combo)
+                    .onChange(of: combo) { _, new in
+                        MailDictationSettings.combo = new
+                        AppDelegate.shared?.restartMailDictationHotkey()
+                    }
+                status
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var status: some View {
+        if let conflict {
+            Label(String(format: String(localized: "settings.voice.dictation.mail.conflict"), conflict),
+                  systemImage: "exclamationmark.triangle.fill")
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.orange)
+        } else if let error = manager.lastError {
+            Label(error, systemImage: "exclamationmark.triangle.fill")
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.orange)
+        } else if manager.isActive {
+            Label(String(format: String(localized: "settings.hotkeys.active"), combo.displayString),
+                  systemImage: "checkmark.circle.fill")
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.green)
+        } else {
+            Label(String(localized: "settings.hotkeys.inactive.combo"), systemImage: "pause.circle")
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.secondary)
         }
     }
 }

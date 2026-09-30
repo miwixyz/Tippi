@@ -145,12 +145,6 @@ final class AutocompleteTests: XCTestCase {
         XCTAssertEqual(AutocompleteContext.beforeCursor(in: "\u{FFFD}abc", cursorUTF16: 4), "abc")
     }
 
-    func testMinimumContextLength() {
-        XCTAssertFalse(AutocompleteContext.isLongEnough("ab"))
-        XCTAssertFalse(AutocompleteContext.isLongEnough("  ab \n"))
-        XCTAssertTrue(AutocompleteContext.isLongEnough("abc"))
-    }
-
     func testOnlySuggestsAtLineEnd() {
         XCTAssertTrue(AutocompleteContext.cursorIsAtLineEnd(nextCharacter: nil))
         XCTAssertTrue(AutocompleteContext.cursorIsAtLineEnd(nextCharacter: "\n"))
@@ -500,5 +494,168 @@ final class AutocompleteTests: XCTestCase {
         XCTAssertFalse(AutocompleteGeometry.isCollapsedCaret(narrowLine))
         XCTAssertTrue(AutocompleteGeometry.isPlausibleCaret(narrowLine, screens: screens),
                       "zeigt, warum isCollapsedCaret nötig ist")
+    }
+}
+
+/// Zeile, Mindestkontext, fertige Frage und Klebe-Regel (gemessen 2026-09-30).
+/// Eigene Klasse, weil `AutocompleteTests` an die Längengrenze des Linters stößt.
+/// Rein logisch — keine Einstellungen, kein Server.
+final class AutocompleteLineTests: XCTestCase {
+
+    /// Schwellen festgenagelt (gemessen 2026-09-30, Idee wie Cotypist: in fast
+    /// leeren Zeilen warten, bis ein paar Wörter dastehen).
+    func testMinimumContextThresholds() {
+        XCTAssertEqual(AutocompleteContext.minCharacters, 10)
+        XCTAssertEqual(AutocompleteContext.minCompleteWords, 2)
+    }
+
+    func testMinimumContextLength() {
+        XCTAssertFalse(AutocompleteContext.isLongEnough("ab"))
+        XCTAssertFalse(AutocompleteContext.isLongEnough("Ein"))
+        XCTAssertFalse(AutocompleteContext.isLongEnough("Ein klein"))          // 1 fertiges Wort
+        XCTAssertFalse(AutocompleteContext.isLongEnough("Ein kleiner"))        // 1 fertiges Wort, „kleiner" offen
+        XCTAssertFalse(AutocompleteContext.isLongEnough("Ja ok da "))          // 3 Wörter, aber 8 Zeichen
+        XCTAssertFalse(AutocompleteContext.isLongEnough("  Ein   \n"))         // Rand zählt nicht mit
+        XCTAssertTrue(AutocompleteContext.isLongEnough("Ein kleiner "))        // Leerzeichen: „kleiner" ist fertig
+        XCTAssertTrue(AutocompleteContext.isLongEnough("Hast du schon"))
+        XCTAssertTrue(AutocompleteContext.isLongEnough("Das Meeting morgen"))
+    }
+
+    func testCompleteWordsCountOnlyFinishedWords() {
+        XCTAssertEqual(AutocompleteContext.completeWordCount(""), 0)
+        XCTAssertEqual(AutocompleteContext.completeWordCount("Ein"), 0)
+        XCTAssertEqual(AutocompleteContext.completeWordCount("Ein "), 1)
+        XCTAssertEqual(AutocompleteContext.completeWordCount("Hallo Welt,"), 2)
+        XCTAssertEqual(AutocompleteContext.completeWordCount("Hallo – "), 1)       // Gedankenstrich ist kein Wort
+    }
+
+    /// Nur die Zeile ab dem letzten Umbruch — gemessen 2026-09-30 setzte das
+    /// Modell sonst die Liste darüber fort („Test 3:").
+    func testOnlyCurrentLineIsUsed() {
+        XCTAssertEqual(AutocompleteContext.currentLine("Test 1: passt\nTest 2: gut\nEin kleiner Mensch"), "Ein kleiner Mensch")
+        XCTAssertEqual(AutocompleteContext.currentLine("Zeile\r\nWeiter geht"), "Weiter geht")
+        XCTAssertEqual(AutocompleteContext.currentLine("Absatz\u{2029}Neu hier"), "Neu hier")
+        XCTAssertEqual(AutocompleteContext.currentLine("Oben\n"), "")
+        XCTAssertEqual(AutocompleteContext.currentLine("Keine Umbrüche"), "Keine Umbrüche")
+    }
+
+    func testFinishedQuestionGetsNoRequest() {
+        XCTAssertTrue(AutocompleteContext.endsWithQuestion("Was ist die Hauptstadt von Frankreich?"))
+        XCTAssertTrue(AutocompleteContext.endsWithQuestion("Kannst du mir helfen?  "))
+        XCTAssertTrue(AutocompleteContext.endsWithQuestion("東京はどこですか？"))
+        XCTAssertFalse(AutocompleteContext.endsWithQuestion("Kannst du mir sagen, wann"))
+        XCTAssertFalse(AutocompleteContext.endsWithQuestion("Wie spät ist es"))
+        XCTAssertFalse(AutocompleteContext.endsWithQuestion(""))
+    }
+
+    func testRequestLineDecision() {
+        let previous = "Test 1: passt\nTest 2: wenn ich Fragen tippe, antwortet die KI\n"
+        XCTAssertEqual(AutocompleteContext.requestLine(from: previous + "Ein kleiner Mensch ist"),
+                       .request("Ein kleiner Mensch ist"))
+        XCTAssertEqual(AutocompleteContext.requestLine(from: previous + "Ein"), .skip("context too short"))
+        XCTAssertEqual(AutocompleteContext.requestLine(from: previous + "Wie spät ist es?"), .skip("finished question"))
+        // Die Frage in der Zeile darüber zählt nicht.
+        XCTAssertEqual(AutocompleteContext.requestLine(from: "Wie spät ist es?\nIch wollte fragen, ob"),
+                       .request("Ich wollte fragen, ob"))
+    }
+
+    /// Das Glossar sieht nur die aktuelle Zeile: ein Begriff aus der Zeile
+    /// darüber wird nicht mitgeschickt.
+    func testGlossaryOnlyChecksCurrentLine() {
+        guard case .request(let line) = AutocompleteContext.requestLine(from: "Heute Tippi getestet\nDas Meeting morgen ist") else {
+            return XCTFail("keine Anfrage")
+        }
+        XCTAssertEqual(AutocompleteRequest.relevantGlossary(terms: ["Tippi"], context: line), [])
+    }
+
+    /// Gemessen 2026-09-30: Die Rechtschreibprüfung nimmt Zusammensetzungen und
+    /// Binnenmajuskeln an. Das Wörterbuch hier bildet genau das nach.
+    private static let permissiveSpelling: Set<String> = [
+        "schnelle", "schnelleHilfe", "ob", "obSie", "kleiner", "kleinerTest",
+        "klein", "in", "indem", "schon", "schongesehen",
+    ]
+
+    /// Ist das letzte Wort schon für sich ein Wort, beginnt die Antwort ein
+    /// neues — auch wenn die Rechtschreibprüfung das Zusammengeklebte annimmt.
+    func testFinishedWordIsNeverGluedToTheAnswer() {
+        let known: (String) -> Bool = { Self.permissiveSpelling.contains($0) }
+        XCTAssertEqual(AutocompleteSanitizer.clean("Hilfe und Unterstützung.", context: "Vielen Dank für deine schnelle",
+                                                   isKnownWord: known), " Hilfe und Unterstützung.")
+        XCTAssertEqual(AutocompleteSanitizer.clean("Sie mir helfen können", context: "Ich wollte kurz nachfragen, ob",
+                                                   isKnownWord: known), " Sie mir helfen können")
+        XCTAssertEqual(AutocompleteSanitizer.clean("Test 3:", context: "Ein kleiner", isKnownWord: known), " Test 3:")
+        XCTAssertEqual(AutocompleteSanitizer.clean("dem Kino", context: "Der Film läuft ab Donnerstag in",
+                                                   isKnownWord: known), " dem Kino")
+        XCTAssertEqual(AutocompleteSanitizer.clean("gesehen, wie", context: "Hast du schon", isKnownWord: known),
+                       " gesehen, wie")
+    }
+
+    /// Bewusster Verlierer der Regel: Vervollständigt das Modell ein schon
+    /// gültiges Wort nur mit der Endung („klein" + „er"), steht ein Leerzeichen
+    /// dazwischen. Wiederholt es das Wort („kleiner Gedanke"), bleibt es richtig —
+    /// das war 2026-09-30 der gemessene Weg des Modells.
+    func testSuffixOnKnownWordIsTheAcceptedLoss() {
+        let known: (String) -> Bool = { Self.permissiveSpelling.contains($0) }
+        XCTAssertEqual(AutocompleteSanitizer.clean("er Gedanke", context: "Ein klein", isKnownWord: known), " er Gedanke")
+        XCTAssertEqual(AutocompleteSanitizer.clean("kleiner Gedanke", context: "Ein klein", isKnownWord: known), "er Gedanke")
+    }
+}
+
+/// Wiederholungs-/Antwortfilter (`AutocompleteSanitizer.repeatsContext`). Rein, ohne Einstellungen.
+final class AutocompleteRepeatFilterTests: XCTestCase {
+    /// Real 2026-09-30 (Michael): Frage ohne „?" wurde beantwortet.
+    func testAnswerRepeatingThreeWordsOfTheLineIsDropped() {
+        let line = "Kannst du mir sagen wie spät es ist"
+        XCTAssertTrue(AutocompleteSanitizer.repeatsContext(suggestion: " Ich kann dir sagen wie spät es ist", line: line))
+        XCTAssertNil(AutocompleteSanitizer.clean("Ich kann dir sagen wie spät es ist", context: line))
+    }
+
+    func testRepeatIgnoresCaseAccentsAndPunctuation() {
+        XCTAssertTrue(AutocompleteSanitizer.repeatsContext(suggestion: " – SAGEN, wie spat!", line: "Kannst du mir sagen wie spät"))
+    }
+
+    func testFirstWordRepeatingLastTypedWordIsDropped() {
+        XCTAssertTrue(AutocompleteSanitizer.repeatsContext(suggestion: " kleiner Hund bellt", line: "Ein kleiner"))
+        XCTAssertTrue(AutocompleteSanitizer.repeatsContext(suggestion: " Kleiner Hund", line: "Ein kleiner,"))
+        XCTAssertNil(AutocompleteSanitizer.clean(" kleiner Hund bellt", context: "Ein kleiner,"))
+    }
+
+    /// Negativfälle: echte Fortsetzungen bleiben.
+    func testGenuineContinuationsAreKept() {
+        XCTAssertEqual(AutocompleteSanitizer.clean("Gespräch?", context: "Hast du morgen Zeit für ein kurzes"), " Gespräch?")
+        // Zwei gemeinsame Wörter sind noch keine Wiederholung.
+        XCTAssertFalse(AutocompleteSanitizer.repeatsContext(suggestion: " wie es dir geht", line: "Sag mir wie du"))
+        // Vervollständigt das angefangene Wort, ist also kein neues Wort.
+        XCTAssertFalse(AutocompleteSanitizer.repeatsContext(suggestion: "er Gedanke", line: "Ein klein"))
+        // Das letzte Wort weiter hinten im Vorschlag ist erlaubt.
+        XCTAssertFalse(AutocompleteSanitizer.repeatsContext(suggestion: " oder bis morgen", line: "Wir sehen uns bis"))
+        XCTAssertFalse(AutocompleteSanitizer.repeatsContext(suggestion: "", line: "Hallo du da"))
+    }
+
+    /// Echte Modellantworten der Messung 2026-09-30 (Gemma 4 E2B) — gleicher
+    /// Ausgang wie der unabhängige Python-Nachbau, mit dem gemessen wurde.
+    func testMeasuredSuggestionsKeepGoodOnesAndDropAnswers() {
+        let cases: [(line: String, suggestion: String, repeats: Bool)] = [
+            ("Ein kleiner Mensch ist", " ein kleines Wunderwerk", false),
+            ("Ein kleiner ", "Hund bellte laut", false),
+            ("Vielen Dank für deine schnelle", " Hilfe und die Antwort", false),
+            ("Ich wollte kurz nachfragen, ob", " Sie mir die Informationen zukommen lassen", false),
+            ("Das Meeting morgen verschiebt sich auf", " den nächsten Dienstag", false),
+            ("Liebe Grüße und bis", " bald wiedersehen", false),
+            ("Wir haben gestern beschlossen, dass", " wir die Strategie ändern müssen", false),
+            ("Wie spät ist es", " gerade", false),
+            ("Kannst du mir sagen, wann", " genau das beginnt", false),
+            ("Hast du schon", " gesehen, wie ich es mache", false),
+            ("Thanks for getting back to me so", "on as possible", false),
+            ("I was wondering if you could", " help me with", false),
+            ("Kannst du mir bitte die Unterlagen", " für die Anmeldung", false),
+            ("Wie funktioniert eigentlich die neue", " Funktion der KI", false),
+            ("Kannst du mir sagen wie spät es ist", " Ich kann dir sagen wie spät es ist", true),
+            ("Hast du schon mit ihm gesprochen", " Ich habe noch nicht mit ihm gesprochen", true),
+        ]
+        for item in cases {
+            XCTAssertEqual(AutocompleteSanitizer.repeatsContext(suggestion: item.suggestion, line: item.line),
+                           item.repeats, "\(item.line) → \(item.suggestion)")
+        }
     }
 }

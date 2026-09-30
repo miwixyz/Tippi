@@ -35,7 +35,7 @@ Stand v2.20.1. Nur die tragenden Dateien — die vollständige Liste liefert
 Tippi/
 ├── App/
 │   ├── TippiApp.swift              # @main, NSApplication-Setup
-│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (5 Hotkeys)
+│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (6 Hotkeys + Sicherheits-Hotkey)
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
@@ -49,6 +49,11 @@ Tippi/
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
 │   ├── DictationAutoReturn.swift   # v2.16 — Enter nach dem Diktat, pro App. In Terminals /
 │   │                               #   Code-Editoren nur bei von der KI unverändertem Text
+│   ├── DictationLayout.swift       # 2.21 — „Absätze und Satzzeichen" im Diktat, rein regelbasiert
+│   │                               #   (Anrede, Satz je Zeile, Gruß, Doppelpunkt; NLTokenizer) + Weiche
+│   │                               #   `layoutWanted` (nie in Terminals/Enter-Apps), rein + getestet
+│   ├── MailDictation.swift         # 2.21 — Hotkey „Diktat für Mails" (⌃⌥⌘B, id 7): Einstellungen,
+│   │                               #   Konfliktprüfung gegen alle Tippi-Kürzel
 │   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
 │   │                               #   Ergebnis geschrieben wird (Notizfenster /
 │   │                               #   Accessibility / blind) + ReplacementWriter.
@@ -88,7 +93,8 @@ Tippi/
 │   │   │                                   #   Übernahme-Tasten bei sichtbarem Vorschlag), 350-ms-Pause,
 │   │   │                                   #   AX-Kontext, Anfrage an Tippis EIGENEN MLX-Server, Overlay
 │   │   ├── AutocompleteLogic.swift         # rein + unit-getestet: Kontext-Schnitt, Ausschluss,
-│   │   │                                   #   Übernahme-Tasten (erlaubt? welche Aktion?), Bereinigung,
+│   │   │                                   #   Übernahme-Tasten (erlaubt? welche Aktion?), Bereinigung
+│   │   │                                   #   samt Wiederholungsfilter (Antwort statt Fortsetzung),
 │   │   │                                   #   Loopback-Anfrage
 │   │   └── AutocompleteSettings.swift      # an/aus, Ausschlussliste, Übernahme-Tasten (beim Lesen
 │   │                                       #   geprüft), Tastenhinweis; `store` für Tests
@@ -101,7 +107,8 @@ Tippi/
 │       ├── NotesLiveSync.swift             # v2.11.6 — NSMetadataQuery auf den Notes-Ordner.
 │       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
-│       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings)
+│       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
+│                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
 ├── LLM/                            # 11 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
 │   ├── LLMRouter.swift             # Registry, Routing, Fallback

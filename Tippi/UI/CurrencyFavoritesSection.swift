@@ -5,6 +5,7 @@ import SwiftUI
 /// provider requires ("Rates By Exchange Rate API" with a link).
 struct CurrencyFavoritesSection: View {
     @State private var favorites = CurrencySettings.favorites
+    @State private var resultMode = CurrencySettings.resultMode
 
     private static let attributionURL = URL(string: "https://www.exchangerate-api.com")
 
@@ -23,11 +24,24 @@ struct CurrencyFavoritesSection: View {
                     chip(code)
                 }
             }
+            Picker(String(localized: "currency.settings.resultMode"), selection: Self.modeBinding($resultMode)) {
+                Text(String(localized: "currency.settings.resultMode.copy")).tag(CurrencyResultMode.copy)
+                Text(String(localized: "currency.settings.resultMode.append")).tag(CurrencyResultMode.append)
+            }
             if let url = Self.attributionURL {
                 Link(String(localized: "currency.settings.attribution"), destination: url)
                     .font(FamilyTheme.font(.caption))
             }
         }
+    }
+
+    /// The picker's binding: every choice is written to `CurrencySettings` at once,
+    /// not via `onChange` (which never fires for re-picking the shown value). Tested.
+    static func modeBinding(_ state: Binding<CurrencyResultMode>) -> Binding<CurrencyResultMode> {
+        Binding(get: { state.wrappedValue }, set: { mode in
+            state.wrappedValue = mode
+            CurrencySettings.resultMode = mode
+        })
     }
 
     private func chip(_ code: String) -> some View {

@@ -315,6 +315,8 @@ final class AutocompleteController: ObservableObject {
     // MARK: - Fokussiertes Feld lesen
 
     private struct Field {
+        /// Nur die aktuelle Zeile vor dem Cursor — geht ans Modell, an das
+        /// Glossar und an die Bereinigung.
         let context: String
         let caret: CGRect
         /// Von der App gemeldete Schriftgröße vor dem Cursor, falls vorhanden.
@@ -390,10 +392,15 @@ final class AutocompleteController: ObservableObject {
             skip("text not readable role=\(Self.string(focused, kAXRoleAttribute) ?? "?")")
             return nil
         }
-        guard AutocompleteContext.isLongEnough(context) else { skip("context too short"); return nil }
+        // Ans Modell geht nur die aktuelle Zeile (Design §3).
+        let line: String
+        switch AutocompleteContext.requestLine(from: context) {
+        case .request(let text): line = text
+        case .skip(let why): skip(why); return nil
+        }
         guard AutocompleteContext.cursorIsAtLineEnd(nextCharacter: next) else { skip("not at line end"); return nil }
         guard let caret = caretRect(focused, location: loc) else { skip("no plausible caret bundle=\(app.bundleIdentifier ?? "?")"); return nil }
-        return Field(context: context, caret: caret, fontSize: Self.fontSize(focused, location: loc))
+        return Field(context: line, caret: caret, fontSize: Self.fontSize(focused, location: loc))
     }
 
     /// Schriftgröße des Zeichens vor dem Cursor (`AXFont` im attributierten

@@ -34,19 +34,40 @@ enum CurrencyCatalog {
     static let defaultFavorites = ["USD", "CRC", "GBP", "CHF"]
 }
 
+/// What a conversion does with its result (Settings → Currency converter).
+/// In both modes the converted amount goes to the clipboard and a hint at the
+/// selection shows it — the result is always visible (Michael's test, 2026-09-30:
+/// the old toast only said „In USD umrechnen").
+enum CurrencyResultMode: String, CaseIterable {
+    /// Additionally `23 €` → `23 € (≈ 26,19 $)` in the text — the behaviour of 2.19/2.20.
+    case append
+    /// Text stays as it is. Default since 2.21.
+    case copy
+}
+
 enum CurrencySettings {
+    /// See `DictationSettings.store`: `.standard` in the app, a throwaway suite in
+    /// tests — the test host shares the installed app's preferences file.
+    static var store: UserDefaults = .standard
     static let favoritesKey = "currency.favorites"
+    static let resultModeKey = "currency.resultMode"
     static let maxFavorites = 5
+
+    /// `.copy` unless the user chose otherwise; unknown values fall back too.
+    static var resultMode: CurrencyResultMode {
+        get { store.string(forKey: resultModeKey).flatMap(CurrencyResultMode.init(rawValue:)) ?? .copy }
+        set { store.set(newValue.rawValue, forKey: resultModeKey) }
+    }
 
     static var favorites: [String] {
         get {
-            let stored = UserDefaults.standard.stringArray(forKey: favoritesKey) ?? CurrencyCatalog.defaultFavorites
+            let stored = store.stringArray(forKey: favoritesKey) ?? CurrencyCatalog.defaultFavorites
             let valid = stored.filter(CurrencyCatalog.codes.contains)
             return Array(valid.prefix(maxFavorites))
         }
         set {
             let valid = newValue.filter(CurrencyCatalog.codes.contains)
-            UserDefaults.standard.set(Array(valid.prefix(maxFavorites)), forKey: favoritesKey)
+            store.set(Array(valid.prefix(maxFavorites)), forKey: favoritesKey)
         }
     }
 
@@ -178,11 +199,33 @@ enum CurrencyFormatter {
     }
 }
 
+/// What happens with a finished conversion — pure, so the mode choice is testable.
+struct CurrencyOutcome: Equatable {
+    /// Replace the selection with this text (conversion appended), or `nil` = leave it.
+    let replacement: String?
+    /// Only number + currency, as formatted everywhere else — goes to the clipboard.
+    let amount: String
+
+    static func make(text: String, converted: Double, code: String, mode: CurrencyResultMode,
+                     locale: Locale = .current) -> CurrencyOutcome {
+        let amount = CurrencyFormatter.string(converted, code: code, locale: locale)
+        let replacement = mode == .append
+            ? CurrencyFormatter.appending(converted, code: code, to: text, locale: locale) : nil
+        return CurrencyOutcome(replacement: replacement, amount: amount)
+    }
+
+    /// The hint at the selection: „≈ 26,19 $ · kopiert" or „≈ 26,19 $ eingefügt · kopiert".
+    var hint: String {
+        String(format: String(localized: replacement == nil ? "currency.copied" : "currency.insertedCopied"), amount)
+    }
+}
+
 @MainActor
 enum CurrencyAction {
-    /// The selection with the conversion appended, or `nil` when the text is
-    /// no amount or no usable rates exist — then nothing is written.
-    static func convertedText(_ text: String, to code: String) async -> String? {
+    /// What to do with the selection, or `nil` when the text is no amount or
+    /// no usable rates exist — then nothing is written and nothing copied.
+    static func outcome(_ text: String, to code: String,
+                        mode: CurrencyResultMode = CurrencySettings.resultMode) async -> CurrencyOutcome? {
         currencyLog.notice("convert → requested \(code, privacy: .public)")
         // Every exit is logged: the first field test failed without a single
         // trace (2026-09-28). Lengths and codes only — never the text itself.
@@ -198,8 +241,8 @@ enum CurrencyAction {
             currencyLog.notice("convert → no rate for \(amount.code, privacy: .public)→\(code, privacy: .public)")
             return nil
         }
-        currencyLog.notice("convert → \(amount.code, privacy: .public)→\(code, privacy: .public) ok")
-        return CurrencyFormatter.appending(converted, code: code, to: text)
+        currencyLog.notice("convert → \(amount.code, privacy: .public)→\(code, privacy: .public) ok mode=\(mode.rawValue, privacy: .public)")
+        return CurrencyOutcome.make(text: text, converted: converted, code: code, mode: mode)
     }
 }
 

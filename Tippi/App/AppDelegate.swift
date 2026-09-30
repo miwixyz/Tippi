@@ -64,6 +64,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Second Carbon hot key (id 2) for dictation mode. Distinct from the main
     /// trigger (id 1) and the safety hot key (id 99).
     let dictationHotkeyManager = HotkeyManager(id: 2)
+    /// Siebter Carbon-Hotkey (id 7): „Diktat für Mails" — gleiches Diktat, Layout immer an.
+    let mailDictationHotkeyManager = HotkeyManager(id: 7)
     /// Shares the single `audioRecorder` instance — two separate recorders on
     /// the same audio hardware/temp file could otherwise collide (dictation
     /// hotkey vs. popup mic). `lazy` so it can reference `audioRecorder`.
@@ -448,7 +450,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Currency row and password button of the hotkey popup.
-    private func makePopupQuickTools(captured: CapturedText?, sourceApp: NSRunningApplication?) -> PopupQuickTools {
+    private func makePopupQuickTools(captured: CapturedText?, sourceApp: NSRunningApplication?,
+                                     anchor: CGRect) -> PopupQuickTools {
         var tools = PopupQuickTools()
         tools.onGeneratePassword = { [weak self] in
             self?.popupController.close()
@@ -458,12 +461,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         tools.currencyTargets = CurrencySettings.targets(for: amount)
         tools.onConvert = { [weak self] code in
             guard let self else { return nil }
-            guard let text = await CurrencyAction.convertedText(captured.text, to: code) else {
+            guard let outcome = await CurrencyAction.outcome(captured.text, to: code) else {
                 return String(localized: "currency.unavailable")
             }
             self.popupController.close()
-            await self.applyCapturedResult(plainText: text, attributed: nil, expecting: captured.text, sourceApp: captured.sourceApp)
-            ToastWindowController.shared.show(message: String(format: String(localized: "currency.convertTo"), code))
+            if let text = outcome.replacement {
+                await self.applyCapturedResult(plainText: text, attributed: nil, expecting: captured.text,
+                                               sourceApp: captured.sourceApp)
+            }
+            Self.showCurrencyResult(outcome, anchor: anchor)
             return nil
         }
         return tools
@@ -491,13 +497,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func performCurrencyConversion(to code: String, snapshot: SelectionSnapshot) {
         Task { @MainActor in
-            guard let text = await CurrencyAction.convertedText(snapshot.text, to: code) else {
+            guard let outcome = await CurrencyAction.outcome(snapshot.text, to: code) else {
                 ToastWindowController.shared.show(message: String(localized: "currency.unavailable"))
                 return
             }
-            await applySnapshotResult(text, attributed: nil, snapshot: snapshot)
-            ToastWindowController.shared.show(message: String(format: String(localized: "currency.convertTo"), code))
+            if let text = outcome.replacement {
+                await applySnapshotResult(text, attributed: nil, snapshot: snapshot)
+            }
+            Self.showCurrencyResult(outcome, anchor: snapshot.bounds)
         }
+    }
+
+    /// Both entry points (prompt popup, selection bar), both modes: the amount goes
+    /// to the clipboard — after any insertion, which borrows the clipboard itself —
+    /// and a hint with the result appears at the selection (mouse if no usable rect).
+    private static func showCurrencyResult(_ outcome: CurrencyOutcome, anchor: CGRect?) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(outcome.amount, forType: .string)
+        let plausible = anchor.flatMap { rect in
+            InputAnchor.isPlausible(rect, screens: NSScreen.screens.map(\.frame)) ? rect : nil
+        }
+        ToastWindowController.shared.show(message: outcome.hint, anchor: plausible, seconds: 3)
     }
 
     /// Auto-popup-on-selection path (`SelectionActionBarPanel`), which captures
@@ -1261,6 +1281,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// state changes. No-op (and stops any prior registration) when dictation
     /// is disabled or the selected speech engine isn't ready.
     func restartDictationHotkey() {
+        // Same preconditions as the mail hot key — every path that changes them lands here.
+        defer { restartMailDictationHotkey() }
         dictationHotkeyManager.stop()
         guard DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady else {
             NSLog("Tippi: dictation hot key inactive (enabled=\(DictationSettings.isEnabled), engineReady=\(SpeechEngine.isCurrentEngineReady))")
@@ -1319,6 +1341,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             NSLog("Tippi: dictation hot key registered (tap or hold \(modifier.displayName))")
         }
+    }
+
+    /// „Diktat für Mails" (⌃⌥⌘B ab Werk). Nur mit eingeschaltetem Diktat und bereiter
+    /// Engine, und nie auf einem Kürzel, das ein anderer Tippi-Hotkey schon belegt.
+    func restartMailDictationHotkey() {
+        mailDictationHotkeyManager.stop()
+        guard DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady, MailDictationSettings.isEnabled else {
+            NSLog("Tippi: mail dictation hot key inactive")
+            return
+        }
+        let combo = MailDictationSettings.combo
+        if let taken = MailDictationSettings.conflict(of: combo, in: MailDictationSettings.takenCombos()) {
+            NSLog("Tippi: mail dictation hot key not registered — \(combo.displayString) already used by \(taken)")
+            return
+        }
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
+        mailDictationHotkeyManager.update(trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags))
+        mailDictationHotkeyManager.start { [weak self] in
+            guard let self else { return }
+            Task { @MainActor in
+                await self.dictationController.toggle(targetApp: self.resolvedSourceAppForCapture(),
+                                                      notesTextView: Self.focusedNotesTextView(), source: .mail)
+            }
+        }
+        NSLog("Tippi: mail dictation hot key registered (\(combo.displayString))")
     }
 
     /// (Re)registers the Translate Quick Panel hot key. Call after the
@@ -1649,7 +1701,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             localActions: localActions,
             localActionsReady: localActionsReady,
             selectedCharacterCount: captured?.text.count,
-            quickTools: makePopupQuickTools(captured: captured, sourceApp: captureSourceApp),
+            quickTools: makePopupQuickTools(captured: captured, sourceApp: captureSourceApp, anchor: anchor),
             onSelect: { [weak self] prompt in
                 guard let self else { return }
                 // Without a selection the popup closed and nothing happened —

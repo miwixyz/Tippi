@@ -8,13 +8,15 @@ struct NotesRootView: View {
     @ObservedObject private var store = NotesStore.shared
     @State private var selectedNoteID: UUID?
     @State private var isPinned: Bool = NotesPreferences.isPinned
+    @State private var columnVisibility: NavigationSplitViewVisibility =
+        NotesSettings.isSidebarVisible ? .all : .detailOnly
 
     /// Applies the actual AppKit-level pin (window level + collection
     /// behavior) — this view only owns the toolbar icon's on/off state.
     var onTogglePin: () -> Void = {}
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             NotesListView(store: store, selectedNoteID: $selectedNoteID)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
         } detail: {
@@ -36,6 +38,15 @@ struct NotesRootView: View {
             }
         }
         .frame(minWidth: 480, minHeight: 320)
+        // Also catches collapsing the list by dragging the divider.
+        .onChange(of: columnVisibility) { _, visibility in
+            NotesSettings.isSidebarVisible = visibility != .detailOnly
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleNotesSidebar)) { _ in
+            toggleSidebar()
+        }
+        // Our own button below carries the tooltip; the automatic one would be a second.
+        .toolbar(removing: .sidebarToggle)
         // Without this the toolbar paints its own opaque strip across the full
         // window width, which sits visibly on top of the glass below it — the
         // "seam" seen on 2026-09-13. Hiding the titlebar chrome alone (see
@@ -43,6 +54,14 @@ struct NotesRootView: View {
         // to go with it, otherwise the edge just moves down a few points.
         .toolbarBackground(.hidden, for: .windowToolbar)
         .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    toggleSidebar()
+                } label: {
+                    Label(String(localized: "notes.sidebar.toggle"), systemImage: "sidebar.left")
+                }
+                .help(String(localized: "notes.sidebar.toggle.help"))
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     // `changeFont(_:)` only reaches the text view via the
@@ -75,6 +94,12 @@ struct NotesRootView: View {
                 }
                 .help(pinLabel)
             }
+        }
+    }
+
+    private func toggleSidebar() {
+        withAnimation {
+            columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
         }
     }
 

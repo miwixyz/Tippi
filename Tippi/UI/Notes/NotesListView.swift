@@ -49,6 +49,7 @@ struct NotesListView: View {
                 } label: {
                     Label(String(localized: "notes.new"), systemImage: "square.and.pencil")
                 }
+                .help(String(localized: "notes.new.help"))
             }
         }
         .alert(

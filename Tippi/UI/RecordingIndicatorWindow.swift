@@ -60,12 +60,14 @@ private struct RecordingIndicatorView: View {
     /// Display name of the AI provider handling cleanup (e.g. "Groq", "Claude").
     /// nil = generic AI badge. Shown only when aiEnabled is true.
     let providerName: String?
+    /// Started with the mail dictation hot key: envelope instead of microphone.
+    let isMail: Bool
 
     var body: some View {
         HStack(spacing: 8) {
             switch mode {
             case .recording:
-                Image(systemName: "mic.fill")
+                Image(systemName: isMail ? "envelope.fill" : "mic.fill")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
                 WaveformBars(level: recorder.level)
@@ -73,7 +75,7 @@ private struct RecordingIndicatorView: View {
                     // Monospaced digits: without them the pill twitches on every
                     // tick as glyph widths change, and the window is sized once.
                     .font(.subheadline.weight(.medium).monospacedDigit())
-                Text(String(localized: "dictation.indicator.recording"))
+                Text(String(localized: isMail ? "dictation.indicator.recordingMail" : "dictation.indicator.recording"))
                     .font(FamilyTheme.font(.subheadline, weight: .medium))
             case .transcribing:
                 ProgressView()
@@ -130,10 +132,11 @@ final class RecordingIndicatorWindowController {
     /// freshly-shown window.
     private var generation = 0
 
-    func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false, providerName: String? = nil) {
+    func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false, providerName: String? = nil,
+              isMail: Bool = false) {
         generation &+= 1
         let hostView = NSHostingView(rootView: RecordingIndicatorView(
-            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName))
+            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail))
         hostView.layout()
         let size = hostView.fittingSize
 

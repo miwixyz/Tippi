@@ -27,7 +27,7 @@ Text wie eine Zugangsinformation behandelt — gleiche Regel wie bei der Bildsch
 
 | Artefakt | Wo | Lebensdauer |
 |---|---|---|
-| Kontext vor dem Cursor (max. 400 Zeichen) | RAM → lokaler Modellserver | bis die Antwort da ist |
+| Aktuelle Zeile vor dem Cursor (max. 400 Zeichen; seit 2026-09-30 ohne die Zeilen darüber) | RAM → lokaler Modellserver | bis die Antwort da ist |
 | Vorschlag | RAM → Overlay | bis angenommen/verworfen |
 | Einstellungen (an/aus, Ausnahmen, zwei Übernahme-Tasten, Tastenhinweis an/aus) | UserDefaults | dauerhaft |
 
@@ -66,7 +66,13 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
   über dieselben begrenzten Bereichs-Aufrufe (400 Zeichen) wie überall. Passwort-Signale
   werden weiterhin vorher geprüft.
 - **Denial of service:** Anfrage erst nach 350 ms Pause, höchstens eine gleichzeitig,
-  eine neue Taste bricht die laufende ab. Unter 3 Zeichen Kontext keine Anfrage.
+  eine neue Taste bricht die laufende ab. **Seit 2026-09-30:** Ans Modell geht nur die
+  aktuelle Zeile (Text seit dem letzten Zeilenumbruch, innerhalb der 400 gelesenen
+  Zeichen) — die Zeilen darüber verlassen Tippi nicht mehr, auch nicht fürs Glossar.
+  Keine Anfrage, solange diese Zeile unter 10 Zeichen oder unter 2 fertigen Wörtern
+  liegt, und keine, wenn sie auf „?"/„？" endet (fertige Frage — das Modell würde sie
+  beantworten). Vorher: unter 3 Zeichen keine Anfrage, voller Kontext mit Vorzeilen.
+  Gemessen: Vorzeilen ließen das Modell deren Muster fortsetzen („Test 3:").
 
 ### Tippi → Modellserver
 - **Spoofing — fremder Prozess auf dem Port:** Tippi schickt Getipptes **nur** an einen
@@ -87,7 +93,14 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
 - **Tampering der Ausgabe:** Vor der Anzeige bereinigt: Steuerzeichen und
   Zeilenumbrüche raus, auf 8 Wörter / 80 Zeichen gekürzt (bis 2026-09-25: 3 / 40 —
   angehoben mit Wort-für-Wort-⇥, gemessen gleich schnell), Wiederholung des bereits
-  Getippten entfernt, leere Antwort → nichts anzeigen. „Nächstes Wort" fügt nur das
+  Getippten entfernt, leere Antwort → nichts anzeigen. Seit 2026-09-30 zusätzlich
+  verworfen (`AutocompleteSanitizer.repeatsContext`): ein Vorschlag, der 3 Wörter am
+  Stück aus der Zeile wiederholt oder dessen erstes neues Wort das letzte getippte ist
+  (Groß/klein, Akzente, Satzzeichen egal). Das fängt Antworten auf Fragen ohne „?"
+  („Kannst du mir sagen wie spät es ist" → „Ich kann dir sagen wie spät es ist"),
+  ohne Liste von Antwortfloskeln; gemessen 2 von 3 solchen Antworten weg, 0 gute
+  Vorschläge verloren (20 Eingaben × 3). Der Filter verwirft nur, er verändert nichts.
+  „Nächstes Wort" fügt nur das
   nächste Wort ein, „ganzer Vorschlag" den bereinigten Rest (höchstens 8 Wörter / 80 Zeichen).
 - **Eigene Wörter im Prompt (ab 2026-09-25):** Die Liste „Eigene Wörter" des Nutzers
   (lokal/iCloud, von ihm selbst gepflegt) geht als Schreibweisen-Liste mit in den
@@ -199,7 +212,7 @@ Tests in `TippiTests/AutocompleteTests.swift` (64 Fälle) und `TippiTests/Autoco
 | §3 Ausschlussliste ab Werk + erweiterbar | `S:defaultExcludedBundleIDs`, `S:add/removeExclusion`; UI `Tippi/UI/AutocompleteSettingsTab.swift` (eigener Bereich seit 2026-09-28) | `testDefaultExclusions…`, `testExclusionsStart…` |
 | §3 nur Text-Rollen, Tippi selbst aus | `L:AutocompleteExclusion.reason` (`textRoles`, `ownBundleID`) | `testNonTextRoles…`, `testTippiItself…` |
 | §3 max. 400 Zeichen, UTF-16-sicher | `L:AutocompleteContext.beforeCursor`; `C:readFocusedField` liest per `AXStringForRange` nur diesen Ausschnitt; Felder ohne diesen Aufruf nur, wenn `AXNumberOfCharacters` ≤ 20 000 (vorher: ganzer Wert jedes Felds, Audit 2026-09-27) | `testContextIsCut…`, `testCutNeverSplitsAnEmoji`, `testCursorInsideSurrogatePair…` |
-| §3 keine Auswahl aktiv, < 3 Zeichen keine Anfrage | `C:readFocusedField` (`range.length == 0`), `L:isLongEnough` | `testMinimumContextLength` |
+| §3 keine Auswahl aktiv; nur aktuelle Zeile; < 10 Zeichen oder < 2 fertige Wörter oder fertige Frage → keine Anfrage | `C:readFocusedField` (`range.length == 0`), `L:AutocompleteContext.requestLine` (`currentLine`, `isLongEnough`, `endsWithQuestion`) | `testMinimumContext…`, `testOnlyCurrentLineIsUsed`, `testFinishedQuestionGetsNoRequest`, `testRequestLineDecision`, `testGlossaryOnlyChecksCurrentLine` |
 | §3 350 ms Pause, max. 1 Anfrage, neue Taste bricht ab | `C:userTyped` (Pause-Task), `C:cancelPending` (Generation + `cancel()`) | — (manuell) |
 | §3 nur Tippis eigener Server, nie ein übernommener | `MLXServerManager.ownedServerURL` (+ reine Form `ownedServerURL(state:ownsRunningProcess:)`), genutzt in `C:requestSuggestion` | `testAdoptedServerIsNeverUsed`, `testOwnRunningServerIsUsed`, `testServerNotRunning…` |
 | §3 nur `http://127.0.0.1:<port>`, Bereichsprüfung, kein Cloud-Anbieter | `L:AutocompleteRequest.loopbackURL/isLoopback/make`; `C` benutzt nie `LLMRouter` | `testRequestRefusesAnythingButLoopback`, `testPortRangeIsChecked` |
@@ -223,6 +236,9 @@ Tests in `TippiTests/AutocompleteTests.swift` (64 Fälle) und `TippiTests/Autoco
 - Beim Einschalten startet Tippi seinen MLX-Server, falls installiert und gestoppt — sonst gäbe es
   nach jedem Neustart keine Vorschläge, solange MLX nicht Standard-Anbieter ist.
 - Wortanschluss: ob ein Vorschlag mit Leerzeichen beginnt, entscheidet bei „Buchstabe trifft
-  Buchstabe" die Rechtschreibprüfung (`NSSpellChecker`) — ungemessen, siehe Restrisiko.
+  Buchstabe" die Rechtschreibprüfung (`NSSpellChecker`). **Gemessen 2026-09-30:** Sie nimmt
+  deutsche Zusammensetzungen und Binnenmajuskeln an („schnelleHilfe", „obSie"), deshalb
+  wird nur noch geklebt, wenn das letzte Wort für sich unbekannt ist (`L:join`,
+  `testFinishedWordIsNeverGluedToTheAnswer`).
 - Bidi-Steuerzeichen (U+202E u. a.) werden entfernt: Anzeige und Eingefügtes dürfen nicht
   auseinanderlaufen.

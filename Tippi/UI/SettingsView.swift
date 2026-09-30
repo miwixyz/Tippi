@@ -1623,6 +1623,7 @@ private struct VoiceTab: View {
     @AppStorage(DictationSettings.enabledKey) private var dictationEnabled = false
     @State private var dictationIndicatorPosition: DictationSettings.IndicatorPosition = DictationSettings.indicatorPosition
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
+    @State private var dictationLayout: Bool = DictationSettings.layoutEnabled
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
     @State private var dictationPolishModel: String = DictationSettings.postProcessModelOverride
@@ -1782,6 +1783,14 @@ private struct VoiceTab: View {
                         }
 
                     Text(String(localized: "settings.voice.dictation.postProcess.body"))
+                        .font(FamilyTheme.font(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    // Outside the polish block: the closing rule works without AI.
+                    Toggle(String(localized: "settings.voice.dictation.layout.enable"), isOn: $dictationLayout)
+                        .onChange(of: dictationLayout) { _, new in DictationSettings.layoutEnabled = new }
+                    Text(String(localized: "settings.voice.dictation.layout.body"))
                         .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

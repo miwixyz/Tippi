@@ -26,6 +26,7 @@ enum DictationSettings {
     private static let modeKey                   = "dictation.inputMode.v1"
     private static let tapOrHoldModifierKey      = "dictation.tapOrHold.modifier.v1"
     private static let indicatorPositionKey      = "dictation.indicator.position.v1"
+    private static let layoutKey                 = "dictation.layout.enabled.v1"
 
     /// Below this many characters Tippi skips the LLM polish entirely —
     /// short utterances ("ja", "ok", "Hallo, wie geht's?") don't benefit
@@ -165,6 +166,12 @@ enum DictationSettings {
     static var postProcessEnabled: Bool {
         get { store.bool(forKey: postProcessEnabledKey) }
         set { store.set(newValue, forKey: postProcessEnabledKey) }
+    }
+
+    /// „Absätze und Satzzeichen setzen (z. B. für Mails)" — `DictationLayout`. Default: OFF.
+    static var layoutEnabled: Bool {
+        get { store.bool(forKey: layoutKey) }
+        set { store.set(newValue, forKey: layoutKey) }
     }
 
     /// User-supplied terms that transcription reliably gets wrong: brand names,
@@ -311,12 +318,18 @@ final class DictationController: ObservableObject {
     /// while held" can mean "record until the disk is full".
     private var holdWatchdog: Timer?
 
+    /// Which hot key started the running recording — the mail hot key always lays
+    /// the text out (`DictationLayout.layoutWanted`). Set at start, not at stop.
+    private var source: DictationSource = .standard
+
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion. A press while
     /// transcription is running cancels it.
-    func toggle(targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) async {
+    func toggle(targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil,
+                source: DictationSource = .standard) async {
         switch state {
         case .idle:
+            self.source = source
             await start()
         case .recording(let url):
             beginTranscription(wavURL: url, targetApp: targetApp, notesTextView: notesTextView)
@@ -331,6 +344,7 @@ final class DictationController: ObservableObject {
     /// audio hardware.
     func beginHoldRecording() async {
         guard case .idle = state else { return }
+        source = .standard
         holdReleasedWhileStarting = false
         await start()
         // Only arm the watchdog if recording actually began — `start()` returns
@@ -387,9 +401,10 @@ final class DictationController: ObservableObject {
             RecordingIndicatorWindowController.shared.show(
                 mode: .recording,
                 recorder: recorder,
-                aiEnabled: DictationSettings.postProcessEnabled
+                aiEnabled: DictationSettings.postProcessEnabled,
+                isMail: source == .mail
             )
-            NSLog("Tippi: dictation recording started")
+            NSLog("Tippi: dictation recording started (\(self.source))")
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.
             SpeechTranscriber.prewarm()
@@ -419,7 +434,8 @@ final class DictationController: ObservableObject {
         RecordingIndicatorWindowController.shared.show(
             mode: .transcribing,
             recorder: recorder,
-            aiEnabled: DictationSettings.postProcessEnabled
+            aiEnabled: DictationSettings.postProcessEnabled,
+            isMail: source == .mail
         )
         transcriptionTask = Task { [weak self] in
             await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp, notesTextView: notesTextView)
@@ -434,11 +450,21 @@ final class DictationController: ObservableObject {
         do {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
-            let (final, cleanupNotice) = await postProcessIfEnabled(raw)
+            let (polished, cleanupNotice) = await postProcessIfEnabled(raw)
+            // Layout is a rule, after the polish or alone. Never in terminals or apps
+            // on the Return list: a line break there can send a command or a message.
+            let targetID = notesTextView == nil ? targetApp?.bundleIdentifier : nil
+            let layoutExcluded = targetID.map {
+                DictationSettings.commandCapableBundleIDs.contains($0) || DictationSettings.autoReturnBundleIDs.contains($0)
+            } ?? false
+            let final = DictationLayout.layoutWanted(source: source, toggle: DictationSettings.layoutEnabled,
+                                                     targetIsTerminal: layoutExcluded)
+                ? DictationLayout.format(polished) : polished
             try Task.checkCancellation()
             // Decided BEFORE insertion: the clipboard fallback activates the target
             // app itself, so "frontmost" afterwards is true by construction.
-            let returnDecision = DictationSettings.autoReturnDecision(
+            // Mail dictation never presses Return — it writes a mail, it sends nothing.
+            let returnDecision = source == .mail ? .skip : DictationSettings.autoReturnDecision(
                 raw: raw,
                 inserted: final,
                 // Notes is Tippi's own editor: never a Return target.
@@ -569,7 +595,8 @@ final class DictationController: ObservableObject {
             mode: .transcribing,
             recorder: recorder,
             aiEnabled: true,
-            providerName: resolvedProviderName
+            providerName: resolvedProviderName,
+            isMail: source == .mail
         )
 
         do {

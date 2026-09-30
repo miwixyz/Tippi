@@ -21,6 +21,14 @@ struct TippiApp: App {
                 }
                 .keyboardShortcut(",", modifiers: .command)
             }
+            // Darstellung → Notizen-Seitenleiste, ⌃⌘S wie in Apple Notizen. Die
+            // Menüleiste gibt es nur, solange das Notizen-Fenster offen ist.
+            CommandGroup(before: .sidebar) {
+                Button(String(localized: "notes.sidebar.toggle")) {
+                    NotificationCenter.default.post(name: .toggleNotesSidebar, object: nil)
+                }
+                .keyboardShortcut("s", modifiers: [.control, .command])
+            }
         }
     }
 }

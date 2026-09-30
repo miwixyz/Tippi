@@ -251,6 +251,7 @@ for feature in $hotkeys; do
   # Map: code name → the word the tables must contain.
   case "$feature" in
     dictation) needle="Dictation" ;;
+    mailDictation) needle="email" ;;    # zweiter Diktat-Hotkey (2.21), steht in der Diktat-Zeile
     translate) needle="translat" ;;     # deckt "translation" und "Translate"
     emoji)     needle="emoji" ;;
     notes)     needle="Notes" ;;

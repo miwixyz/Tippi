@@ -13,8 +13,12 @@ import NaturalLanguage
 enum AutocompleteContext {
     /// Design §1/§3: höchstens 400 Zeichen (UTF-16-Einheiten) vor dem Cursor.
     static let maxUTF16 = 400
-    /// Design §3: unter 3 Zeichen Kontext keine Anfrage.
-    static let minCharacters = 3
+    /// Design §3: keine Anfrage, solange die aktuelle Zeile weniger als 10
+    /// Zeichen (ohne Leerraum am Rand) oder weniger als 2 fertige Wörter hat.
+    /// Gemessen 2026-09-30: Nach „Ein" oder „Ein klein" riet das Modell ins
+    /// Blaue oder setzte die Zeile darüber fort („Test 3:").
+    static let minCharacters = 10
+    static let minCompleteWords = 2
 
     /// Text vor `cursorUTF16`, auf `limit` UTF-16-Einheiten gekürzt.
     ///
@@ -40,9 +44,53 @@ enum AutocompleteContext {
         return result
     }
 
-    /// Genug Kontext für eine Anfrage? (Design §3: mindestens 3 Zeichen.)
-    static func isLongEnough(_ context: String) -> Bool {
-        context.trimmingCharacters(in: .whitespacesAndNewlines).count >= minCharacters
+    /// Nur die aktuelle Zeile: der Text seit dem letzten Zeilenumbruch.
+    ///
+    /// Gemessen 2026-09-30 (Gemma 4 E2B, 17 Satzanfänge): Mit den Zeilen darüber
+    /// setzte das Modell deren Muster fort statt des angefangenen Satzes — nach
+    /// „Test 1: …\nTest 2: …\nEin kleiner" kam „Test 3:". Nur die Zeile: 0 Mal.
+    static func currentLine(_ context: String) -> String {
+        guard let lastBreak = context.lastIndex(where: \.isNewline) else { return context }
+        return String(context[context.index(after: lastBreak)...])
+    }
+
+    /// Wörter, hinter denen schon ein Leerzeichen oder Satzzeichen steht. Das
+    /// letzte Wort zählt nur, wenn die Zeile nicht auf Buchstabe/Ziffer endet —
+    /// sonst wird es gerade noch getippt.
+    static func completeWordCount(_ line: String) -> Int {
+        let words = line.split(whereSeparator: \.isWhitespace)
+            .filter { $0.contains { $0.isLetter || $0.isNumber } }
+        let lastIsOpen = line.last.map { $0.isLetter || $0.isNumber } ?? false
+        return max(0, words.count - (lastIsOpen ? 1 : 0))
+    }
+
+    /// Genug Kontext für eine Anfrage? `line` ist die aktuelle Zeile (Design §3).
+    static func isLongEnough(_ line: String) -> Bool {
+        line.trimmingCharacters(in: .whitespacesAndNewlines).count >= minCharacters
+            && completeWordCount(line) >= minCompleteWords
+    }
+
+    /// Endet die Zeile auf eine fertige Frage, gibt es nichts fortzusetzen —
+    /// das Modell würde sie beantworten (gemessen 2026-09-30: 9 von 12, auch
+    /// mit ausdrücklichem „Beantworte keine Fragen" im Prompt).
+    static func endsWithQuestion(_ line: String) -> Bool {
+        guard let last = line.trimmingCharacters(in: .whitespacesAndNewlines).last else { return false }
+        return last == "?" || last == "？"
+    }
+
+    enum LineDecision: Equatable {
+        /// Diese Zeile geht ans Modell.
+        case request(String)
+        /// Keine Anfrage; der Grund steht im Protokoll (nie der Text).
+        case skip(String)
+    }
+
+    /// Die Zeile, die ans Modell geht — oder der Grund, warum keine Anfrage kommt.
+    static func requestLine(from beforeCursor: String) -> LineDecision {
+        let line = currentLine(beforeCursor)
+        if endsWithQuestion(line) { return .skip("finished question") }
+        guard isLongEnough(line) else { return .skip("context too short") }
+        return .request(line)
     }
 
     /// Nur vorschlagen, wenn hinter dem Cursor nichts auf derselben Zeile steht.
@@ -320,7 +368,40 @@ enum AutocompleteSanitizer {
                           completesWord: completesWord, isKnownWord: isKnownWord)
 
         // 4. Kürzen.
-        return truncate(joined)
+        guard let result = truncate(joined) else { return nil }
+
+        // 5. Wiederholt der Vorschlag die Zeile, ist er eine Antwort oder ein Echo.
+        return repeatsContext(suggestion: result, line: context) ? nil : result
+    }
+
+    /// Ab so vielen aufeinanderfolgenden Wörtern aus der Zeile gilt ein Vorschlag
+    /// als Wiederholung.
+    static let repeatRunLength = 3
+
+    /// Wiederholt `suggestion` die Zeile? Ja, wenn er `repeatRunLength` Wörter
+    /// am Stück aus `line` enthält, oder wenn sein erstes neues Wort das letzte
+    /// Wort der Zeile ist. Groß/klein, Akzente und Satzzeichen zählen nicht.
+    ///
+    /// Real 2026-09-30 (Michael): „Kannst du mir sagen wie spät es ist" ohne „?"
+    /// ergab „Ich kann dir sagen wie spät es ist". Die Frage-Regel greift dort
+    /// nicht, weil das „?" beim Tippen noch fehlt. Eine echte Fortsetzung
+    /// wiederholt die Zeile nicht, also braucht es keine Liste von Antwortfloskeln.
+    static func repeatsContext(suggestion: String, line: String) -> Bool {
+        let suggested = AutocompleteRequest.words(of: suggestion)
+        let typed = AutocompleteRequest.words(of: line)
+        guard let first = suggested.first else { return false }
+        let run = repeatRunLength
+        if typed.count >= run, suggested.count >= run {
+            let typedRuns = Set((0...(typed.count - run)).map { typed[$0..<($0 + run)].joined(separator: " ") })
+            if (0...(suggested.count - run)).contains(where: {
+                typedRuns.contains(suggested[$0..<($0 + run)].joined(separator: " "))
+            }) { return true }
+        }
+        // Vervollständigt der Vorschlag das angefangene Wort („klein" + „er"),
+        // ist sein Anfang kein neues Wort.
+        let isWordChar: (Character) -> Bool = { $0.isLetter || $0.isNumber }
+        let completesWord = line.last.map(isWordChar) == true && suggestion.first.map(isWordChar) == true
+        return !completesWord && first == typed.last
     }
 
     /// Einbuchstabige Wörter je Sprache. Deutsch hat keine — dort ist ein
@@ -393,9 +474,15 @@ enum AutocompleteSanitizer {
         if body.first?.isWhitespace == true { return " " + trimmed }
         if first.isPunctuation && !"(„\"'«»".contains(first) { return trimmed }
         if first.isLetter, last.isLetter, !modelHadLeadingSpace {
+            // Geklebt wird nur, wenn das letzte Wort für sich KEIN Wort ist (also
+            // unfertig) und erst mit dem Anfang der Antwort eins ergibt. Gemessen
+            // 2026-09-30: Die Rechtschreibprüfung nimmt deutsche Zusammensetzungen
+            // und Binnenmajuskeln an („schnelleHilfe", „obSie", „kleinerTest",
+            // „indem") — und Gemma liefert im Chat nie ein führendes Leerzeichen.
+            // So klebten 12 von 51 sonst guten Vorschlägen am letzten Wort.
             let lastWord = String(context.reversed().prefix { !$0.isWhitespace }.reversed())
             let firstWord = String(trimmed.prefix { !$0.isWhitespace && !$0.isPunctuation })
-            if isKnownWord(lastWord + firstWord) { return trimmed }
+            if !isKnownWord(lastWord), isKnownWord(lastWord + firstWord) { return trimmed }
         }
         return " " + trimmed
     }
@@ -492,8 +579,8 @@ enum AutocompleteRequest {
     }
 
     /// Wörter in Kleinschreibung ohne Akzente; getrennt wird an allem, was
-    /// kein Buchstabe und keine Ziffer ist.
-    private static func words(of text: String) -> [String] {
+    /// kein Buchstabe und keine Ziffer ist. Auch für `AutocompleteSanitizer.repeatsContext`.
+    static func words(of text: String) -> [String] {
         text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
             .split { !$0.isLetter && !$0.isNumber }
             .map(String.init)

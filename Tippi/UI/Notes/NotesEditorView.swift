@@ -83,8 +83,10 @@ struct NotesEditorView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help(String(localized: "notes.generateTitle"))
                 .disabled(isGeneratingTitle || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                // After `.disabled`: a tooltip inside the disabled scope never
+                // shows, and on an empty note the button is disabled.
+                .help(String(localized: "notes.generateTitle"))
 
                 Button {
                     exportAsText()
@@ -94,8 +96,8 @@ struct NotesEditorView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
-                .help(String(localized: "notes.export"))
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .help(String(localized: "notes.export"))
 
                 // Without this the held-back change is invisible: the list shows
                 // a version the other Mac has already moved past, and nothing
