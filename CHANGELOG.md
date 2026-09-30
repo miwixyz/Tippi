@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.20.1] — 2026-09-30
+
+- _Add release notes here._
+
 ## [2.20.0] — 2026-09-29
 
 Neues Design: Tippi bekommt das gemeinsame Aussehen der App-Familie (mit Kalli, TippAI und Qotti).
