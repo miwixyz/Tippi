@@ -5,7 +5,15 @@ Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
 
-### Aktueller Übergabestand nach v2.19.0
+### Aktueller Übergabestand nach v2.21.0
+
+- **v2.21.0:** Tag `v2.21.0` auf `95fa4a2`, Appcast und Build 473 in `302e625`. Diktat-Layout rein regelbasiert in `Core/DictationLayout.swift` (Anrede, ein Satz pro Zeile, Grußformel, Doppelpunkt nach „folgende“; `DictationSource` + Weiche `layoutWanted`: nie in Terminals und Apps mit „Enter nach dem Diktat“), Schalter `DictationSettings.layoutEnabled` (ab Werk aus). „Diktat für Mails“ in `Core/MailDictation.swift` (`MailDictationSettings`, ab Werk ⌃⌥⌘B, Konfliktprüfung `takenCombos`), Carbon-Hotkey id 7 in `AppDelegate.restartMailDictationHotkey` (nur bei eingeschaltetem Diktat und bereiter Engine, drückt nie Enter), UI `MailDictationHotkeyControls` in `UI/DictationHotkeySection.swift`. Autovervollständigung: nur aktuelle Zeile, mindestens 10 Zeichen und 2 fertige Wörter, keine Anfrage nach „?“ (`AutocompleteContext.requestLine`), Wiederholungsfilter `AutocompleteSanitizer.repeatsContext`, Kleben nur bei unfertigem letztem Wort. Währungsrechner: `CurrencyResultMode` (Standard `.copy`), `CurrencyOutcome`, Hinweis per `ToastWindowController.show(message:anchor:seconds:)` an der Markierung. Notizen: Seitenleiste per Menübefehl ⌃⌘S (`TippiApp.swift`, `.toggleNotesSidebar`), Zustand in `NotesSettings`. 609 Tests.
+- **v2.20.1:** `Core/InputAnchor.swift` setzt Prompt-Pop-up und Diktat-Pop-up an Markierung bzw. Schreibmarke, Maus nur als Rückfall (AX-Abfrage höchstens 150 ms). Eigene Wörter gehen nur noch passend ans Modell (`AutocompleteRequest.relevantGlossary`). `scripts/record-demo.sh`; `scripts/docs-drift-check.sh` prüft auch die Website. 575 Tests.
+- **v2.20.0:** Design der App-Familie: `UI/FamilyTheme.swift` (Schiefer, Plus Jakarta Sans als gebündelte Schrift), Website mit gemeinsamem `docs/style.css`. 558 Tests.
+
+Ältere Stände unten sind historisch und beschreiben den Code zum jeweiligen Zeitpunkt.
+
+#### Stand v2.19.0
 
 - **v2.19.0:** Währungsrechner (`Core/CurrencyConversion.swift`: `CurrencyParser`, `ExchangeRateTable`, `ExchangeRateService` mit fester URL, Cache in `Application Support/Tippi/exchange-rates.json`, Abrufregel `decide()`; Favoriten `UI/CurrencyFavoritesSection.swift`), Passwort (`Core/PasswordGenerator.swift`, Einfügen über `TextInsertion.insertSecret`: `.currentHostOnly` + Concealed, 60 s Zwischenablage). Neue Schnellaktionen in `LocalTextAction` (Kategorie `.enclose`), Auswahlleiste zweireihig, Popup-Knöpfe in `UI/PromptPopup/LocalActionButtons.swift`. Markieren = reine Formatänderung → `TextInsertion.pasteFormatting` (Markierung wiederherstellen, dann Rich-Paste, nie vorher AX-Klartext). Leiste ignoriert Neuaufbau, solange der Zeiger auf ihr steht. Design: `docs/SECURE-DESIGN-currency-password.md`. 558 Tests.
 
@@ -76,6 +84,8 @@ Ab v1.1.0 kommt Voice Input dazu: Push-to-Talk-Mikrofon-Button im Popup für Dik
 ---
 
 ## 4. Modul-Struktur
+
+Historischer Grundriss aus der Anfangszeit. Den aktuellen Baum (Stand v2.21.0) führt `ARCHITECTURE.md` §2.
 
 ```
 Tippi/

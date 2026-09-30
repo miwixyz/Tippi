@@ -38,7 +38,7 @@ Inhalte, **kein Log mit Textinhalt** (nur Längen, Dauer, App-Bundle-ID). Cotypi
 ## 2. Datenfluss und Vertrauensgrenzen
 
 ```
-[fremde App: Textfeld] ┆→ (AX lesen) → [Tippi] ┆→ (HTTP loopback) → [MLX-Server, Tippi-Kindprozess]
+[fremde App: Textfeld] ┆→ (AX lesen, ≤ 400 Z.) → [Tippi] ┆→ (HTTP loopback, nur aktuelle Zeile) → [MLX-Server, Tippi-Kindprozess]
         ↑                                   │ ↓
         └── (Übernahme-Taste: TextInsertion) ── [Overlay am Cursor]
 [Tastatur] ┆→ (aktiver CGEvent-Tap) → [Tippi]
@@ -218,7 +218,8 @@ Tests in `TippiTests/AutocompleteTests.swift` (64 Fälle) und `TippiTests/Autoco
 | §3 nur `http://127.0.0.1:<port>`, Bereichsprüfung, kein Cloud-Anbieter | `L:AutocompleteRequest.loopbackURL/isLoopback/make`; `C` benutzt nie `LLMRouter` | `testRequestRefusesAnythingButLoopback`, `testPortRangeIsChecked` |
 | §3 keine Weiterleitung, 1,5 s | `C:RefuseRedirects`, `C:session` (Request- + Resource-Timeout, ephemeral, kein Proxy) | `testRequestDisablesThinking…` (Timeout) |
 | gemessen: `enable_thinking:false` | `L:AutocompleteRequest.Body` | `testRequestDisablesThinkingAndGoesToLoopback`, `testReasoningIsNeverUsed…` |
-| §3 Bereinigung: Steuerzeichen, Umbrüche, 3 Wörter/40 Zeichen, Wiederholung, leer | `L:AutocompleteSanitizer.clean/overlapLength/truncate` | 16 Tests `testRepetition…` bis `testEmptyAnswersGiveNothing` |
+| §3 Bereinigung: Steuerzeichen, Umbrüche, 8 Wörter/80 Zeichen (bis 2026-09-25: 3/40), Wiederholung, leer | `L:AutocompleteSanitizer.clean/overlapLength/truncate` | 16 Tests `testRepetition…` bis `testEmptyAnswersGiveNothing` |
+| §3 Wiederholungsfilter (seit 2026-09-30): 3 Wörter am Stück aus der Zeile oder erstes neues Wort = letztes getipptes → verwerfen | `L:AutocompleteSanitizer.repeatsContext` | `testAnswerRepeatingThreeWordsOfTheLineIsDropped`, `testRepeatIgnoresCaseAccentsAndPunctuation`, `testFirstWordRepeatingLastTypedWordIsDropped`, `testMeasuredSuggestionsKeepGoodOnesAndDropAnswers` |
 | §3 Prompt Injection: kein Werkzeug, Einfügen nur auf ⇥ als Text | `C:acceptShownSuggestion` → `TextInsertion.replace(with:in:)`; sonst kein Einfügepfad | — (Code-Review) |
 | §3 Tap nur wenn an, schluckt nur die zwei Übernahme-Tasten bei sichtbarem Vorschlag | `C:start/stop`, `L:AutocompleteKeyDecision.action/matches/modifiers(from:)`, atomar in `C:AutocompleteTapBridge.consumeIfAccepting` (Tasten per `setBindings`, unter derselben Sperre) | `testTabWithoutModifier…`, `testTabWithOtherModifiers…`, `testDefaultBindings…`, `testCustomBindings…`, `testEventFlagsMap…`, `testOtherKeys…`, `testCapsLock…` |
 | §3 nur sichere Übernahme-Tasten (Recorder + beim Lesen) | `L:AutocompleteKeyRules.problem`, `L:AutocompleteKeyBindings.sanitized`, `S:keyBindings`; Recorder `HotkeyRecorderField(validator:)` in `Tippi/UI/AutocompleteSettingsTab.swift` | `testSafeKeys…`, `testTypingKeys…`, `testShiftOrOption…`, `testEscape…`, `testSwap…`, `testReservedShortcuts…`, `testSanitized…`, `testStoredTypingKeyIsIgnored`, `testStoredModifierNoiseIsStripped` |

@@ -12,6 +12,9 @@ Diktieren wie eine Mail, eine Autovervollständigung, die weiterschreibt statt z
   „folgende“. Dein normales Diktat bleibt für Chats ohne Absätze. Das Kürzel lässt
   sich unter Einstellungen → Hotkeys ändern. Die Aufnahme-Anzeige zeigt dabei einen
   Umschlag. In Terminals und in Apps mit „Enter nach dem Diktat“ gibt es keine Umbrüche.
+  Das Mail-Diktat drückt nie Enter. Es funktioniert, solange der Diktat-Hotkey
+  eingeschaltet ist; belegt schon ein anderer Tippi-Hotkey die Kombination, nennt die
+  Einstellung ihn, und das Kürzel bleibt aus.
 - **Absätze und Satzzeichen auch im normalen Diktat**, als Schalter unter
   Einstellungen → Diktat (ab Werk aus). Das Layout arbeitet mit festen Regeln, ohne KI,
   und trennt „am 3. Oktober“, „Dr.“ oder „z. B.“ nicht.

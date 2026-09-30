@@ -35,7 +35,7 @@ Stand v2.21.0. Nur die tragenden Dateien — die vollständige Liste liefert
 Tippi/
 ├── App/
 │   ├── TippiApp.swift              # @main, NSApplication-Setup
-│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (6 Hotkeys + Sicherheits-Hotkey)
+│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (7 Hotkeys + Sicherheits-Hotkey)
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
@@ -128,7 +128,8 @@ Tippi/
 │   ├── AppListEditor.swift                # v2.16.3 — App-Liste mit Symbol + Name, „App hinzufügen…“ (Ausschlussliste, Enter nach Diktat)
 │   ├── AutocompleteSettingsTab.swift      # Einstellungen → Autovervollständigung (eigener Bereich seit
 │   │                                      #   2026-09-28): Schalter, Modell, zwei Übernahme-Tasten, Ausschlussliste
-│   ├── DictationHotkeySection.swift       # Diktat-Hotkey, seit 2026-09-28 unter Einstellungen → Hotkeys
+│   ├── DictationHotkeySection.swift       # Diktat-Hotkey, seit 2026-09-28 unter Einstellungen → Hotkeys;
+│   │                                      #   2.21: „Diktat für Mails" (MailDictationHotkeyControls)
 │   ├── HotkeyRecorderField.swift          # Tasten-Recorder; ohne `validator` globale Hotkeys (⌘/⌃ Pflicht),
 │   │                                      #   mit `validator` z. B. die Übernahme-Tasten
 │   ├── DictationAutoReturnSection.swift   # v2.16 — App-Liste „Nach dem Einfügen Enter drücken“
@@ -142,8 +143,9 @@ Tippi/
 │   │   ├── NotesListView.swift             # Liste + Neu/Löschen (Bestätigungsdialog)
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
 │   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck
-│   ├── SettingsView.swift          # Seitenleiste + die meisten der 10 Bereiche (großes File, private structs)
-│   ├── CurrencyFavoritesSection.swift # v2.19 — Lieblingswährungen + Quellenhinweis Exchange Rate API
+│   ├── SettingsView.swift          # Seitenleiste + die meisten der 11 Bereiche (großes File, private structs)
+│   ├── CurrencyFavoritesSection.swift # v2.19 — Lieblingswährungen + Quellenhinweis Exchange Rate API;
+│   │                                  #   2.21: Auswahl „Ergebnis" (anzeigen + kopieren / anhängen)
 │   ├── PermissionsSettingsTab.swift # Berechtigungen-Tab: Status + Erteilen je Recht (v2.18)
 │   ├── PromptsSettingsTab.swift    # Prompts-Tab: eine Liste, Ziehen zum Sortieren, Editor für alle
 │   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
