@@ -1663,7 +1663,7 @@ private struct VoiceTab: View {
                     Spacer()
                     Picker("", selection: $engine) {
                         Text("Whisper").tag(SpeechEngine.Kind.whisper.rawValue)
-                        Text("Parakeet v3 (Beta)").tag(SpeechEngine.Kind.parakeet.rawValue)
+                        Text("Parakeet v3").tag(SpeechEngine.Kind.parakeet.rawValue)
                     }
                     .pickerStyle(.menu)
                     .frame(width: 180)
