@@ -37,3 +37,36 @@ ignore:
   - rule: R-F7958
     paths:
       - "Tippi/LLM/OpenRouterProvider.swift"
+
+  # ── R-5F5C6 · "Secret-Vergleich" auf der Markierungs-Signatur ──────────────
+  # Gemeldet auf `signature == dismissedSignature` in
+  # SelectionActionBarPanel.swift:174. `SelectionSignature` ist kein Geheimnis,
+  # sondern ein Wiedererkennungsmerkmal einer Markierung (pid, markierter
+  # Text, Position). Der Vergleich entscheidet nur, ob die eben geschlossene
+  # Leiste für dieselbe Markierung wieder aufspringen darf. Beide Werte stammen
+  # aus demselben Prozess, kein Angreifer liefert einen Wert oder misst die
+  # Zeit. Der markierte Text liegt nur im Speicher, wird nicht gespeichert.
+  # Analysiert 2026-10-01.
+  - rule: R-5F5C6
+    paths:
+      - "Tippi/UI/SelectionPopup/SelectionActionBarPanel.swift"
+
+  # ── R-F7958 · "Veraltete API-Version" in Kommentaren ──────────────────────
+  # Gemeldet auf ProviderModelPresets.swift:39 und :209. Beide Treffer sind
+  # Kommentare, die die Prüfung gegen OpenRouters `/api/v1/models` belegen.
+  # Kein Code ruft dort eine URL auf; v1 ist OpenRouters aktuelle Version.
+  # Analysiert 2026-10-01.
+  - rule: R-F7958
+    paths:
+      - "Tippi/LLM/ProviderModelPresets.swift"
+
+  # ── R-C66D8 · Nicht-kryptografischer Zufall im Messskript ──────────────────
+  # Gemeldet auf `random.Random(a.seed)` in scripts/autocomplete-pruefstand.py.
+  # Das Skript mischt nur die Reihenfolge der Antwortwege für einen Blindtest.
+  # Der feste Seed ist Absicht (Durchläufe wiederholbar). Das Skript läuft nur
+  # lokal, ist nicht Teil der App, erzeugt keine Passwörter oder Tokens
+  # (der Passwortgenerator der App ist Swift-Code).
+  # Analysiert 2026-10-01.
+  - rule: R-C66D8
+    paths:
+      - "scripts/autocomplete-pruefstand.py"
