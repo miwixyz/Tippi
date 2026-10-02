@@ -28,20 +28,36 @@ final class LiveTranscriptionPreview: ObservableObject {
     func start(recorder: AudioRecorder) {
         task?.cancel()
         text = ""
+        // The recorder is shared: if the popup or translate panel takes it over
+        // mid-dictation, its audio must not show up in the dictation window.
+        let owner = recorder.owner
         task = Task { [weak self] in
             var interval: TimeInterval = 1
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
-                guard !Task.isCancelled, recorder.isRecording else { return }
+                guard !Task.isCancelled, recorder.isRecording, recorder.owner == owner else { return }
+                // First dictation after launch: the model is still loading. Wait for
+                // that load (shared with prewarm, no second download) instead of
+                // counting it as a slow pass, which stretched the interval to 2× the
+                // load time. If it can't load (offline, broken cache), give up for
+                // this take — the final transcription reports the error.
+                let loaded = await ParakeetTranscriber.shared.isLoaded
+                if !loaded {
+                    await ParakeetTranscriber.shared.prewarm()
+                    let nowLoaded = await ParakeetTranscriber.shared.isLoaded
+                    guard nowLoaded else { return }
+                    continue
+                }
                 let samples = recorder.snapshot()
                 guard samples.count >= Int(AudioCapture.sampleRate) else { continue }   // < 1 s: nothing to read yet
                 let started = Date()
-                guard let raw = try? await ParakeetTranscriber.shared.transcribe(samples: samples) else { continue }
+                let raw = try? await ParakeetTranscriber.shared.transcribe(samples: samples)
+                interval = Self.nextInterval(afterPassTaking: Date().timeIntervalSince(started))
                 // The take may have ended while this pass ran — don't paint stale text over the next phase.
-                guard !Task.isCancelled, recorder.isRecording, let self else { return }
+                guard !Task.isCancelled, recorder.isRecording, recorder.owner == owner, let self else { return }
+                guard let raw else { continue }
                 // Same custom-word fixes as the final text, or the preview would jump on release.
                 self.text = CustomWordVariants.apply(to: raw, entries: DictationSettings.customWords)
-                interval = Self.nextInterval(afterPassTaking: Date().timeIntervalSince(started))
             }
         }
     }

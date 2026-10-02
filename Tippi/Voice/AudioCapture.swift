@@ -135,6 +135,10 @@ final class SampleStore: @unchecked Sendable {
     }
 
     var count: Int { lock.lock(); defer { lock.unlock() }; return samples.count }
+
+    /// The input is gone (device switch failed): the meter must drop to zero,
+    /// not freeze on the last value while the user keeps talking.
+    func clearLevel() { lock.lock(); lastLevel = 0; lock.unlock() }
     var level: Float { lock.lock(); defer { lock.unlock() }; return lastLevel }
 
     /// Copy of everything recorded so far — for live transcription (step B).

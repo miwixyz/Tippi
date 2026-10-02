@@ -181,10 +181,15 @@ actor ParakeetTranscriber {
         _ = try? await loadedManager()
     }
 
+    /// Whether the model is in memory — the live preview waits for the load
+    /// instead of counting it as a slow pass.
+    var isLoaded: Bool { manager != nil }
+
     /// Live preview (LiveTranscriptionPreview): transcribes in-memory 16 kHz
     /// mono samples with the same model, decoder setup and language hint as
     /// `transcribe(wavURL:)` — so the preview matches the final text. Nothing
-    /// touches the disk. Returns "" instead of throwing when nothing was heard yet.
+    /// touches the disk. Throws for audio shorter than the model's minimum
+    /// (the preview only calls it from 1 s of audio on).
     func transcribe(samples: [Float]) async throws -> String {
         let manager = try await loadedManager()
         var decoderState = TdtDecoderState.make()

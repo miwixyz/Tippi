@@ -188,6 +188,7 @@ final class AudioRecorder: NSObject, ObservableObject {
         } catch {
             fresh.inputNode.removeTap(onBus: 0)
             guard attempt < Self.resumeAttempts else {
+                store.clearLevel()
                 NSLog("Tippi AudioRecorder: input change — gave up after \(attempt) attempts, keeping the take so far")
                 return
             }

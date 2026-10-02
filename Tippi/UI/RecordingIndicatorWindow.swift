@@ -153,6 +153,9 @@ private struct LiveTextBox: View {
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
                 .lineLimit(3)
+                // If the text ever needs a fourth line, drop the oldest words,
+                // never the ones being said right now.
+                .truncationMode(.head)
                 .frame(maxWidth: size.windowSize.width - 40, alignment: .leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
@@ -174,7 +177,17 @@ private struct IndicatorContainer: View {
     let position: DictationSettings.IndicatorPosition
     let size: LiveTextSize
 
+    /// Transparent margin around the visible content so the drop shadow
+    /// (radius 12, y 4) fits inside the window. Without it the window ended at
+    /// the pill and cut the shadow into a hard-edged rectangle — measured in
+    /// Michael's screenshot 2026-10-02: shadow inside the window, none below it.
+    static let shadowRoom: CGFloat = 20
+
     var body: some View {
+        content.padding(Self.shadowRoom)
+    }
+
+    @ViewBuilder private var content: some View {
         if let preview {
             VStack(alignment: position.horizontal, spacing: 8) {
                 if position.isTop {
@@ -220,14 +233,20 @@ final class RecordingIndicatorWindowController {
         let hostView = NSHostingView(rootView: IndicatorContainer(
             pill: pill, preview: live, position: DictationSettings.indicatorPosition, size: textSize))
         hostView.layout()
-        let size = live == nil ? hostView.fittingSize : textSize.windowSize
+        let room = IndicatorContainer.shadowRoom
+        let size = live == nil ? hostView.fittingSize
+            : NSSize(width: textSize.windowSize.width + 2 * room, height: textSize.windowSize.height + 2 * room)
 
         // On the screen that currently holds the cursor.
         let screen = NSScreen.screens.first {
             NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
         } ?? NSScreen.main
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let origin = Self.origin(for: DictationSettings.indicatorPosition, size: size, in: visible)
+        // Position the visible content as before; the shadow margin lies outside it.
+        let content = NSSize(width: size.width - 2 * room, height: size.height - 2 * room)
+        var origin = Self.origin(for: DictationSettings.indicatorPosition, size: content, in: visible)
+        origin.x -= room
+        origin.y -= room
 
         if let w = window {
             w.contentView = hostView

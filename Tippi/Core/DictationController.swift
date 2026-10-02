@@ -348,6 +348,7 @@ final class DictationController: ObservableObject {
         if holdReleasedWhileStarting {
             holdReleasedWhileStarting = false
             recorder.discard(ifStartedBy: .dictation)
+            livePreview?.stop(); livePreview = nil
             state = .idle
             RecordingIndicatorWindowController.shared.hide()
             NSLog("Tippi: hold released during mic permission prompt — recording discarded")

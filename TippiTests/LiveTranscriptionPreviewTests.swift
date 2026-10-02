@@ -42,7 +42,7 @@ final class LiveTranscriptionPreviewTests: XCTestCase {
 
     // MARK: Text size (Michael 2026-10-02: „Schrift ein bisschen klein“)
 
-    func testTextSizesGrowAndDefaultIsNormal() {
+    func testTextSizesGrow() {
         let sizes = LiveTextSize.allCases
         XCTAssertEqual(sizes, [.normal, .large, .extraLarge])
         for (a, b) in zip(sizes, sizes.dropFirst()) {
@@ -52,24 +52,44 @@ final class LiveTranscriptionPreviewTests: XCTestCase {
         }
     }
 
-    /// Measured, not estimated: a real German tail at each size must fit the
-    /// space above the pill — pill (~44 pt) + spacing 8 + box padding 20.
-    func testThreeLinesOfRealTextFitTheWindowAtEverySize() {
+    @MainActor
+    func testTextSizeDefaultsToNormalAndSurvivesUnknownValues() {
+        let suite = UserDefaults(suiteName: "tippi-test-\(UUID().uuidString)")!
+        let saved = DictationSettings.store
+        DictationSettings.store = suite
+        defer { DictationSettings.store = saved }
+        XCTAssertEqual(DictationSettings.liveTextSize, .normal)
+        suite.set("huge", forKey: "dictation.livePreview.textSize.v1")
+        XCTAssertEqual(DictationSettings.liveTextSize, .normal)
+    }
+
+    /// Measured, not estimated: every tail of a real German dictation must fit
+    /// the three lines the window shows (`lineLimit(3)`), at the real text width
+    /// (`frame(maxWidth: width - 40)`, padding outside), with real line heights.
+    /// Review 2026-10-02: the first version allowed 4 lines, measured a narrower
+    /// width and counted glyph boxes — so it could never fail.
+    func testEveryTailFitsThreeLinesAtEverySize() {
         let sample = "Hallo Patrik, ich habe mir gerade die neue Version des CMS angesehen. Die Navigation "
             + "gefällt mir deutlich besser als vorher, aber beim Hochladen der Filmplakate gibt es noch ein Problem, "
-            + "wenn ein Bild größer als fünf Megabyte ist, erscheint keine Fehlermeldung."
+            + "wenn ein Bild größer als fünf Megabyte ist, erscheint keine Fehlermeldung. Außerdem würde ich gern "
+            + "wissen, ob wir die Spielzeiten für Donnerstag schon übernehmen können oder ob das Kino Weißenburg "
+            + "noch Änderungen schickt. Bitte gib mir bis morgen Mittag kurz Bescheid, danke dir."
         for size in LiveTextSize.allCases {
             let font = NSFont(name: FamilyTheme.fontFamily, size: size.pointSize) ?? .systemFont(ofSize: size.pointSize)
             XCTAssertEqual(font.familyName, FamilyTheme.fontFamily, "measured with Tippi's real font, not a fallback")
-            let text = LiveTranscriptionPreview.tail(sample, maxCharacters: size.tailCharacters)
-            let width = size.windowSize.width - 40 - 28          // maxWidth minus horizontal padding
-            let rect = (text as NSString).boundingRect(
-                with: NSSize(width: width, height: .greatestFiniteMagnitude),
-                options: [.usesLineFragmentOrigin], attributes: [.font: font])
-            let lines = Int((rect.height / font.boundingRectForFont.height).rounded(.up))
-            let available = size.windowSize.height - 44 - 8 - 20
-            XCTAssertLessThanOrEqual(rect.height, available, "\(size): text \(rect.height) pt > \(available) pt")
-            XCTAssertLessThanOrEqual(lines, 4, "\(size): \(lines) lines")
+            let lineHeight = NSLayoutManager().defaultLineHeight(for: font)
+            let width = size.windowSize.width - 40
+            var worst = 0
+            for end in stride(from: 40, through: sample.count, by: 7) {
+                let text = LiveTranscriptionPreview.tail(String(sample.prefix(end)), maxCharacters: size.tailCharacters)
+                let rect = (text as NSString).boundingRect(
+                    with: NSSize(width: width, height: .greatestFiniteMagnitude),
+                    options: [.usesLineFragmentOrigin], attributes: [.font: font])
+                worst = max(worst, Int((rect.height / lineHeight).rounded()))
+            }
+            XCTAssertLessThanOrEqual(worst, 3, "\(size): a tail needs \(worst) lines")
+            // Three lines plus pill (~44), spacing 8 and box padding 20 fit the window.
+            XCTAssertLessThanOrEqual(3 * lineHeight + 44 + 8 + 20, size.windowSize.height, "\(size): window too low")
         }
     }
 }

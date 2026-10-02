@@ -22,7 +22,12 @@ private struct ToastView: View {
         .tippiGlass(in: Capsule())
         .overlay(Capsule().stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
         .shadow(color: .black.opacity(0.14), radius: 10, y: 4)
+        // Room for the shadow inside the window; without it the window edge cut
+        // the shadow into a hard rectangle (same fix as the recording pill, 2026-10-02).
+        .padding(Self.shadowRoom)
     }
+
+    static let shadowRoom: CGFloat = 18
 }
 
 // MARK: - Controller
@@ -71,19 +76,24 @@ final class ToastWindowController {
         let hostView = NSHostingView(rootView: ToastView(message: message))
         hostView.layout()
         let size = hostView.fittingSize
+        let room = ToastView.shadowRoom
+        let content = NSSize(width: size.width - 2 * room, height: size.height - 2 * room)
 
         // Just below the cursor, kept on the visible part of the screen under
         // it — at the bottom edge or over the Dock the toast used to land
         // off-screen, hiding exactly the feedback it exists for (audit 2026-09-27).
-        let origin: NSPoint
+        // Placed by its visible content; the shadow margin lies outside it.
+        var origin: NSPoint
         if let anchor {
-            origin = InputAnchor.origin(for: anchor, panelSize: size, visibleFrames: NSScreen.screens.map(\.visibleFrame))
+            origin = InputAnchor.origin(for: anchor, panelSize: content, visibleFrames: NSScreen.screens.map(\.visibleFrame))
         } else {
             let cursor = NSEvent.mouseLocation
             let visible = (NSScreen.screens.first { NSMouseInRect(cursor, $0.frame, false) } ?? NSScreen.main)?
                 .visibleFrame ?? .infinite
-            origin = Self.origin(cursor: cursor, size: size, visible: visible)
+            origin = Self.origin(cursor: cursor, size: content, visible: visible)
         }
+        origin.x -= room
+        origin.y -= room
 
         if let w = window {
             // Reuse existing window — swap content & reposition.

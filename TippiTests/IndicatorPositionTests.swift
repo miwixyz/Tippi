@@ -39,6 +39,50 @@ final class IndicatorPositionTests: XCTestCase {
         XCTAssertEqual(DictationSettings.IndicatorPosition.allCases.count, 6)
     }
 
+    /// Review 2026-10-02: only Normal was checked; Extra large is the widest window.
+    func testEveryTextSizeStaysOnScreenEverywhere() {
+        for textSize in LiveTextSize.allCases {
+            for p in DictationSettings.IndicatorPosition.allCases {
+                let frame = NSRect(origin: RecordingIndicatorWindowController.origin(
+                    for: p, size: textSize.windowSize, in: visible), size: textSize.windowSize)
+                XCTAssertTrue(visible.contains(frame), "\(textSize) at \(p) leaves the visible area")
+            }
+        }
+    }
+
+    /// The window is big while recording (live text) and pill-sized while
+    /// transcribing. The pill itself must not jump between the two.
+    func testPillStaysPutBetweenRecordingAndTranscribing() {
+        let pill = NSSize(width: 300, height: 44)
+        for textSize in LiveTextSize.allCases {
+            let big = textSize.windowSize
+            for p in DictationSettings.IndicatorPosition.allCases {
+                let small = RecordingIndicatorWindowController.origin(for: p, size: pill, in: visible)
+                let win = RecordingIndicatorWindowController.origin(for: p, size: big, in: visible)
+                let x: CGFloat
+                switch p.horizontal {
+                case .leading: x = win.x
+                case .trailing: x = win.x + big.width - pill.width
+                default: x = win.x + (big.width - pill.width) / 2
+                }
+                let y = p.isTop ? win.y + big.height - pill.height : win.y   // AppKit: y grows upwards
+                XCTAssertEqual(x, small.x, accuracy: 0.5, "\(textSize) \(p): pill moves sideways")
+                XCTAssertEqual(y, small.y, accuracy: 0.5, "\(textSize) \(p): pill moves up or down")
+            }
+        }
+    }
+
+    @MainActor
+    func testUnknownStoredPositionFallsBackToBottomCentre() {
+        let suite = UserDefaults(suiteName: "tippi-test-\(UUID().uuidString)")!
+        let saved = DictationSettings.store
+        DictationSettings.store = suite
+        defer { DictationSettings.store = saved }
+        XCTAssertEqual(DictationSettings.indicatorPosition, .bottom, "nothing stored")
+        suite.set("middle", forKey: "dictation.indicator.position.v1")
+        XCTAssertEqual(DictationSettings.indicatorPosition, .bottom, "unknown value")
+    }
+
     func testAlignmentPutsPillAndTextIntoTheChosenCorner() {
         XCTAssertEqual(DictationSettings.IndicatorPosition.topLeft.alignment, .topLeading)
         XCTAssertEqual(DictationSettings.IndicatorPosition.bottomRight.alignment, .bottomTrailing)
