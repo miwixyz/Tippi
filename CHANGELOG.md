@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.22.0] — 2026-10-02
+
+- _Add release notes here._
+
 ## [2.21.0] — 2026-09-30
 
 Diktieren wie eine Mail, eine Autovervollständigung, die weiterschreibt statt zu antworten, und ein Währungsrechner, der dir das Ergebnis zeigt.
