@@ -138,11 +138,8 @@ final class AudioRecorder: NSObject, ObservableObject {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         let resampler = try AudioResampler(inputFormat: format)
-        DiagnoseLog.write("tap installiert · Eingang \(Int(format.sampleRate)) Hz · \(format.channelCount) Kanal · \(format.commonFormat.rawValue) commonFormat")
         input.installTap(onBus: 0, bufferSize: 4096, format: format) { buffer, _ in
-            store.diagNote(tap: true)
             do { store.append(try resampler.convert(buffer)) } catch {
-                store.diagNote(error: true)
                 NSLog("Tippi AudioRecorder: conversion failed — \(error.localizedDescription)")
             }
         }
@@ -214,7 +211,6 @@ final class AudioRecorder: NSObject, ObservableObject {
         // the temp WAV behind, and a stale URL could be returned twice.
         let url = outputURL
         outputURL = nil
-        DiagnoseLog.write("stop · Tap-Aufrufe \(store.diagTaps) · Umrechnungsfehler \(store.diagErrors) · Samples \(store.count) (= \(String(format: "%.1f", Double(store.count) / AudioCapture.sampleRate)) s) · Spitzenpegel \(String(format: "%.4f", store.diagPeak))")
         let samples = store.drain()
         if let url {
             do { try AudioCapture.writeWAV(samples, to: url) } catch {
@@ -296,22 +292,5 @@ final class AudioRecorder: NSObject, ObservableObject {
     private func stopLevelTimer() {
         levelTimer?.invalidate()
         levelTimer = nil
-    }
-}
-
-// DIAGNOSE 2026-10-02 (vor Merge entfernen): NSLog wird in Developer-ID-Builds als
-// <private> geschwärzt — dieser Messpunkt schreibt nur Zahlen (kein Audio, kein Text)
-// nach ~/Library/Logs/Tippi/recorder-diagnose.log.
-enum DiagnoseLog {
-    static func write(_ line: String) {
-        let dir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/Tippi")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let url = dir.appendingPathComponent("recorder-diagnose.log")
-        let text = "\(Date()) \(line)\n"
-        if let h = try? FileHandle(forWritingTo: url) {
-            h.seekToEndOfFile(); h.write(Data(text.utf8)); try? h.close()
-        } else {
-            try? Data(text.utf8).write(to: url)
-        }
     }
 }
