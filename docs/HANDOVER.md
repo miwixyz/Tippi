@@ -158,6 +158,7 @@ Tippi/
 
 scripts/
 ├── release.sh                      Vollautomatische Build-Notarisierungs-Release-Pipeline
+├── modell-pruefstand.py            Prüfstand vor jedem Wechsel des Anthropic-Standardmodells: eingebaute Prompts aus DemoPrompt.swift, 12 Steuer- + 8 verdeckte Abnahmefälle (modell-pruefstand-abnahme.json), Exit 0/1
 └── prepare-binary.sh               Build-Skript für whisper-cli (whisper.cpp v1.7.4, statisch)
 
 docs/

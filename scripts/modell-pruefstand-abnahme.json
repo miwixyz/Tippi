@@ -1,0 +1,22 @@
+{
+  "_hinweis": "ABNAHMEFÄLLE für scripts/modell-pruefstand.py. Beim Anpassen von Prompts NICHT ansehen und NICHT ändern — sie zählen nur bei der Modellentscheidung. Neue Fälle nur ergänzen, wenn ein echter Fehler im Feld auftrat (dann mit Datum im Feld 'herkunft').",
+  "faelle": [
+    {"prompt": "translateEN", "text": "Danke, das ist lieb von dir!",
+     "pruef": {"sprache": "en", "enthaelt": ["thank"], "nicht": ["you're welcome", "no problem"]}},
+    {"prompt": "translateDE", "text": "What time does the cinema open on Sunday?",
+     "pruef": {"sprache": "de", "enthaelt": ["kino", "sonntag", "?"]}},
+    {"prompt": "translateES", "text": "Hallo, wie geht es dir?",
+     "pruef": {"sprache": "es", "enthaelt": ["¿"], "nicht": ["estoy bien", "bien, gracias", "muy bien"]}},
+    {"prompt": "translateEN", "text": "Was machst du heute Abend?",
+     "pruef": {"sprache": "en", "enthaelt": ["?"], "nicht": ["i'm going", "nothing much", "i am going"]}},
+    {"prompt": "fixGrammar", "lang": "German", "text": "Wir treffen uns um 8 uhr vor dem Kino, bitte seit pünktlich.",
+     "pruef": {"sprache": "de", "enthaelt": ["Uhr", "seid"], "nicht": ["seit pünktlich"], "laenge": [0.85, 1.15]}},
+    {"prompt": "fixGrammar", "lang": "English", "text": "I seen the movie yesterday and it were great.",
+     "pruef": {"sprache": "en", "enthaelt": ["saw", "was"], "nicht": ["it were"], "laenge": [0.8, 1.25]}},
+    {"prompt": "makeFormal", "lang": "German", "text": "Kannst du mir kurz sagen, wann du Zeit hast?",
+     "pruef": {"sprache": "de", "sie_form": true}},
+    {"prompt": "shorten", "lang": "German",
+     "text": "Ich möchte dich gerne darüber informieren, dass wir uns entschieden haben, das Treffen, das eigentlich für kommenden Donnerstag geplant war, aus organisatorischen Gründen auf die darauffolgende Woche zu verschieben.",
+     "pruef": {"sprache": "de", "enthaelt": ["Treffen", "Donnerstag", "Woche"], "laenge": [0.2, 0.8]}}
+  ]
+}

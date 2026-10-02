@@ -277,6 +277,8 @@ This route always works because macOS does the binding, not Tippi.
 
 **Testing next to an installed release:** use `scripts/devid-testbuild.sh` instead. It produces a Developer-ID-signed build in `/tmp/tippi-devid/export/` that satisfies the existing grant — no toggling in System Settings.
 
+**Changing the default model:** run `python3 scripts/modell-pruefstand.py <model-id>` first. It sends Tippi's built-in prompts (read live from `DemoPrompt.swift`, exactly as the app does) through 12 tuning cases and 8 held-back acceptance cases (`scripts/modell-pruefstand-abnahme.json` — don't tune prompts against those) and exits non-zero on any failure. Baseline 2026-10-02: `claude-haiku-4-5` 20/20 in 0.68 s; Sonnet 5 / 5.5 also 20/20 but ~1.1–1.2 s at twice the price.
+
 On **macOS 27** the Accessibility pane is called **Device Control and Data Access** (German: *Gerätesteuerung und Datenzugriff*).
 
 1. **System Settings → Privacy & Security → Accessibility** → enable **Tippi**. If Tippi is not listed, add it via **+** → `build/Build/Products/Release/Tippi.app`.
