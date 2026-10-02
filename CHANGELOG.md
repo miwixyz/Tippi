@@ -2,7 +2,46 @@
 
 ## [2.22.1] — 2026-10-02
 
-- _Add release notes here._
+Saubere Ränder an der Aufnahme-Anzeige, das Ende des letzten Worts bleibt in der Aufnahme, und Diktat, Popup und Übersetzen kommen sich nicht mehr in die Quere.
+
+### Behoben
+
+- **Eckiger Rand um die Aufnahme-Anzeige und die kurze Meldung danach.** Das Fenster
+  war genau so groß wie die Pille und schnitt ihren Schatten zu einem hellen Rechteck
+  ab. Jetzt passt der Schatten hinein; die Pille steht an derselben Stelle.
+- **Das Ende des letzten Worts fehlte manchmal.** Das Mikrofon liefert etwa alle
+  0,1 Sekunden neue Tondaten, und beim Stoppen ging die letzte Lieferung verloren.
+  Tippi wartet jetzt kurz darauf (höchstens 0,15 Sekunden) und nimmt auch den Rest aus
+  der Umrechnung mit. Gemessen: 57 und 64 ms gewartet, beide Male kam das Stück an.
+- **Live-Text nach dem Start von Tippi:** Beim ersten Diktat zählte das Laden des
+  Sprachmodells als langsamer Durchlauf, der Live-Text blieb dadurch lange leer. Jetzt
+  wartet Tippi auf das Modell. Kann es nicht laden, versucht die Vorschau es nicht mehr
+  jede Sekunde neu.
+- **Live-Text kürzt vorne:** Braucht der Text mehr als drei Zeilen, fallen die ältesten
+  Wörter weg, nie die gerade gesprochenen. Er blendet jetzt sanft ein, VoiceOver liest
+  ihn ganz vor, und bei einem Wechsel auf Whisper während der Aufnahme verschwindet er.
+- **Diktat, Popup-Mikrofon und Übersetzen teilen sich ein Mikrofon.** Bisher konnte der
+  Mikrofon-Knopf im Popup ein laufendes Diktat beenden und dessen Text im Popup zeigen,
+  und eine verdrängte Aufnahme blieb als Datei liegen. Jetzt beendet jede Funktion nur
+  ihre eigene Aufnahme.
+- **Beim Beenden von Tippi** während einer Aufnahme wird die Aufnahme gelöscht, statt bis
+  zum nächsten Start im Temp-Ordner zu liegen.
+- **Eine Aufnahme ist auf 30 Minuten begrenzt**, damit ein vergessenes Diktat nicht
+  stundenlang Arbeitsspeicher füllt.
+- **Scheitert ein Mikrofonwechsel**, fällt die Pegelanzeige auf null, statt auf dem
+  letzten Wert stehen zu bleiben.
+- **Die Aufnahme-Anzeige bleibt auf ihrem Bildschirm**, statt beim Übergang zur
+  Erkennung dem Mauszeiger zu folgen.
+- **Hilfe und README:** Der Mikrofon-Knopf im Popup wird angeklickt (Start) und noch
+  einmal angeklickt (Stopp), nicht gehalten.
+
+### Intern
+
+- Code-Review von 2.22.0 mit drei unabhängigen Prüfungen, jeder Befund am Code
+  nachgeprüft. Tests für die Passform des Live-Texts mit echter Breite und Zeilenhöhe
+  (Gegenprobe wird rot), Position der Pille zwischen Aufnahme und Erkennung, Obergrenze,
+  Warten auf die letzte Lieferung, Resampler-Flush.
+- 638 Tests (vorher 629).
 
 ## [2.22.0] — 2026-10-02
 

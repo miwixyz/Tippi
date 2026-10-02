@@ -479,6 +479,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 | Version | Status | Highlights |
 |---------|--------|------------|
+| v2.22.1 | ✅ Done | **Fixes** — no square edge around the recording indicator and toast, the end of the last word stays in the recording (stop waits up to 150 ms for the last audio delivery), dictation / popup mic / translate no longer stop each other's recording, a recording is deleted when you quit, 30-minute cap per recording, live text reliable on the first dictation after launch |
 | v2.22.0 | ✅ Done | **Live text while dictating** — the recording window shows what you say about once a second, from the same local Parakeet model that writes the final text; text size Normal / Large / Extra large; recording indicator in six positions; switching microphones mid-dictation (e.g. AirPods) keeps recording; audio stays in memory until you stop |
 | v2.21.0 | ✅ Done | **Dictation for emails** — a second dictation hotkey (⌃⌥⌘B) that lays text out like an email (greeting line, one sentence per line, sign-off block, colon after "following"); autocomplete continues instead of answering and no longer glues words; currency converter shows and copies the result; Notes sidebar can be hidden (⌃⌘S) |
 | v2.20.1 | ✅ Done | **Popup where you type** — the prompt popup opens at your selection or text cursor instead of at the mouse pointer (multi-display aware); autocomplete sends your custom words only when they fit, so no more stray names in suggestions; neutral name for the Thursday-week snippet option |
