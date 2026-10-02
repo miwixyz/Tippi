@@ -115,13 +115,22 @@ final class SampleStore: @unchecked Sendable {
     private let lock = NSLock()
     private var samples: [Float] = []
     private var lastLevel: Float = 0
+    // DIAGNOSE 2026-10-02 (vor Merge entfernen): Tap-Aufrufe, Umrechnungsfehler, Spitzenpegel
+    private(set) var diagTaps = 0
+    private(set) var diagErrors = 0
+    private(set) var diagPeak: Float = 0
+    func diagNote(tap: Bool = false, error: Bool = false) {
+        lock.lock(); if tap { diagTaps += 1 }; if error { diagErrors += 1 }; lock.unlock()
+    }
 
     func append(_ chunk: [Float]) {
         guard !chunk.isEmpty else { return }
         let lvl = AudioCapture.level(of: chunk[...])
+        let pk = chunk.reduce(Float(0)) { max($0, abs($1)) }
         lock.lock()
         samples.append(contentsOf: chunk)
         lastLevel = lvl
+        diagPeak = max(diagPeak, pk)
         lock.unlock()
     }
 

@@ -50,11 +50,19 @@ enum SpeechTranscriber {
     /// before any AI cleanup, and also when cleanup is off.
     static func transcribe(wavURL: URL) async throws -> String {
         let raw: String
-        switch SpeechEngine.current {
-        case .whisper:
-            raw = try await WhisperTranscriber.transcribe(wavURL: wavURL)
-        case .parakeet:
-            raw = try await ParakeetTranscriber.shared.transcribe(wavURL: wavURL)
+        // DIAGNOSE 2026-10-02 (vor Merge entfernen): Dateigröße, Engine, Länge/Fehler — kein Text.
+        let bytes = (try? FileManager.default.attributesOfItem(atPath: wavURL.path)[.size] as? Int) ?? -1
+        do {
+            switch SpeechEngine.current {
+            case .whisper:
+                raw = try await WhisperTranscriber.transcribe(wavURL: wavURL)
+            case .parakeet:
+                raw = try await ParakeetTranscriber.shared.transcribe(wavURL: wavURL)
+            }
+            DiagnoseLog.write("transkribiert · \(SpeechEngine.current) · WAV \(bytes) Bytes · \(raw.count) Zeichen")
+        } catch {
+            DiagnoseLog.write("transkription FEHLER · \(SpeechEngine.current) · WAV \(bytes) Bytes · \(error.localizedDescription)")
+            throw error
         }
         let entries = await MainActor.run { DictationSettings.customWords }
         return CustomWordVariants.apply(to: raw, entries: entries)
