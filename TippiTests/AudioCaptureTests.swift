@@ -93,6 +93,19 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(try AVAudioFile(forReading: url).length, 0)
     }
 
+    /// AirPods mid-take (log 2026-10-02): hardware already 24 kHz, client still
+    /// 48 kHz. Installing the tap then would raise an uncatchable exception.
+    func testFormatCheckRejectsTheBluetoothSwitchMoment() {
+        let hw24 = AVAudioFormat(standardFormatWithSampleRate: 24_000, channels: 1)!
+        let cl48 = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1)!
+        let hw48 = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1)!
+        let st48 = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2)!
+        XCTAssertFalse(AudioCapture.formatsMatch(hardware: hw24, client: cl48))
+        XCTAssertFalse(AudioCapture.formatsMatch(hardware: st48, client: cl48), "channel count differs")
+        XCTAssertTrue(AudioCapture.formatsMatch(hardware: hw48, client: cl48))
+        XCTAssertTrue(AudioCapture.formatsMatch(hardware: hw24, client: AVAudioFormat(standardFormatWithSampleRate: 24_000, channels: 1)!))
+    }
+
     func testDrainHandsOverAndClears() {
         let store = SampleStore()
         store.append([0.1, 0.2, 0.3])

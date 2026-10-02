@@ -32,6 +32,15 @@ enum AudioCapture {
         AVLinearPCMIsBigEndianKey: false,
     ]
 
+    /// Whether a tap in `client` format can be installed on hardware delivering
+    /// `hardware`. During a Bluetooth switch the two disagree for a moment
+    /// (24 vs 48 kHz); installing then raises an uncatchable exception.
+    static func formatsMatch(hardware: AVAudioFormat, client: AVAudioFormat) -> Bool {
+        hardware.sampleRate > 0 && client.sampleRate > 0
+            && hardware.sampleRate == client.sampleRate
+            && hardware.channelCount == client.channelCount
+    }
+
     /// Level for the waveform UI, mapped like the old `averagePower` meter:
     /// RMS in dBFS, clamped to -60…0, scaled to 0…1.
     static func level(of samples: ArraySlice<Float>) -> Float {

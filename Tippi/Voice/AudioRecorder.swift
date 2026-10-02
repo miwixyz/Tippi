@@ -137,6 +137,13 @@ final class AudioRecorder: NSObject, ObservableObject {
     nonisolated private static func installTap(on engine: AVAudioEngine, into store: SampleStore) throws {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
+        // A tap whose format differs from the hardware makes AVAudioEngine raise an
+        // Objective-C exception — Swift can't catch it, the take is left half-dead
+        // (measured 2026-10-02: AirPods mid-take, hardware already 24 kHz, client
+        // still 48 kHz → "Format mismatch", pill stuck). Check first, throw a Swift error.
+        guard AudioCapture.formatsMatch(hardware: input.inputFormat(forBus: 0), client: format) else {
+            throw AudioRecorderError.setupFailed("input device still switching")
+        }
         let resampler = try AudioResampler(inputFormat: format)
         input.installTap(onBus: 0, bufferSize: 4096, format: format) { buffer, _ in
             do { store.append(try resampler.convert(buffer)) } catch {
@@ -146,28 +153,48 @@ final class AudioRecorder: NSObject, ObservableObject {
     }
 
     /// The input device can change mid-take (AirPods connect, USB mic unplugged).
-    /// AVAudioEngine then stops and posts a configuration change; re-install the
-    /// tap for the new format and keep the samples recorded so far.
+    /// AVAudioEngine then stops and posts a configuration change.
     private func observeConfigurationChanges(of engine: AVAudioEngine) {
+        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
         configObserver = NotificationCenter.default.addObserver(
             forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.restartAfterConfigurationChange(engine) }
+            Task { @MainActor [weak self] in self?.resumeAfterConfigurationChange(of: engine) }
         }
     }
 
-    private func restartAfterConfigurationChange(_ changed: AVAudioEngine) {
+    /// Bluetooth needs a moment to switch to its headset mode (log 2026-10-02:
+    /// ~4 s until the format settled). Try every 0.4 s for up to 6 s.
+    private static let resumeAttempts = 15
+    private static let resumeDelay: UInt64 = 400_000_000
+
+    /// Continues the take on the new device with a *fresh* engine (the stopped
+    /// one keeps stale formats) and the same sample store, so nothing recorded so
+    /// far is lost. If the device never settles, the take keeps what it has and
+    /// the user ends it as usual — the level meter stays flat meanwhile; a later
+    /// configuration change of the old engine tries again.
+    private func resumeAfterConfigurationChange(of changed: AVAudioEngine, attempt: Int = 1) {
         guard isRecording, engine === changed else { return }
         changed.inputNode.removeTap(onBus: 0)
+        changed.stop()
+        let fresh = AVAudioEngine()
         do {
-            try Self.installTap(on: changed, into: store)
-            changed.prepare()
-            try changed.start()
-            NSLog("Tippi AudioRecorder: input changed mid-take — resumed at \(Int(changed.inputNode.outputFormat(forBus: 0).sampleRate)) Hz")
+            try Self.installTap(on: fresh, into: store)
+            fresh.prepare()
+            try fresh.start()
+            engine = fresh
+            observeConfigurationChanges(of: fresh)
+            NSLog("Tippi AudioRecorder: input changed mid-take — resumed (attempt \(attempt))")
         } catch {
-            // Same contract as the old encode-error path: an unusable take is dropped.
-            NSLog("Tippi AudioRecorder: could not resume after input change — \(error.localizedDescription)")
-            if let url = stop() { try? FileManager.default.removeItem(at: url) }
+            fresh.inputNode.removeTap(onBus: 0)
+            guard attempt < Self.resumeAttempts else {
+                NSLog("Tippi AudioRecorder: input change — gave up after \(attempt) attempts, keeping the take so far")
+                return
+            }
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: Self.resumeDelay)
+                self?.resumeAfterConfigurationChange(of: changed, attempt: attempt + 1)
+            }
         }
     }
 
