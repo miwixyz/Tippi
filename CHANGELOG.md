@@ -2,7 +2,47 @@
 
 ## [2.22.0] — 2026-10-02
 
-- _Add release notes here._
+Beim Diktieren siehst du jetzt mit, was Tippi versteht, und die Aufnahme-Anzeige steht, wo du sie haben willst.
+
+### Neu
+
+- **Text schon während der Aufnahme.** Schalter unter Einstellungen → Diktat →
+  „Text schon während der Aufnahme anzeigen“ (ab Werk aus, nur mit Parakeet). Das
+  Aufnahmefenster zeigt etwa jede Sekunde, was du bisher gesagt hast, die neuesten
+  Wörter am Ende. Erkannt wird mit demselben lokalen Parakeet-Modell, das auch den
+  eingefügten Text schreibt, deshalb springt beim Loslassen nichts um. Eigene Wörter
+  wirken schon in der Vorschau. Das kostet einen zusätzlichen Erkennungsdurchlauf pro
+  Sekunde; wird ein Durchlauf langsam, wartet Tippi von selbst länger. Auf älteren
+  Macs besser aus lassen. Gemessen auf einem Mac mini M2 Pro: die ersten Wörter
+  erscheinen etwa 2 Sekunden nach Sprechbeginn.
+- **Schriftgröße für den Live-Text:** Normal, Groß oder Sehr groß, damit du ihn auch
+  mit Abstand zum Bildschirm lesen kannst. Das Fenster wächst mit.
+- **Aufnahme-Anzeige an sechs Stellen:** oben oder unten, jeweils links, in der Mitte
+  oder rechts (Einstellungen → Diktat → „Position der Anzeige“). Wer bisher „oben“
+  oder „unten“ gewählt hatte, landet bei „Oben Mitte“ bzw. „Unten Mitte“.
+- **Mikrofon wechseln mitten im Diktat.** Setzt du während der Aufnahme AirPods ein
+  oder nimmst sie heraus, nimmt Tippi auf dem neuen Gerät weiter auf. Was du bis dahin
+  gesagt hast, bleibt erhalten. Bluetooth braucht zum Umschalten ein paar Sekunden,
+  in dieser Lücke kommt nichts an.
+- **Deine Stimme liegt während der Aufnahme nur im Arbeitsspeicher.** Die Audiodatei
+  entsteht erst beim Stoppen und wird nach der Erkennung gelöscht wie bisher.
+
+### Behoben
+
+- Parakeet v3 trägt in den Einstellungen kein „Beta“ mehr. Es ist seit v1.12.1 die
+  Standard-Engine.
+- Kimi: Die Beschreibung in den Anbieter-Einstellungen nennt keine veraltete
+  Benchmark-Platzierung mehr.
+- Hilfe: nennt Parakeet als Standard-Engine und sagt, dass das Mail-Diktat den
+  eingeschalteten Diktat-Hotkey braucht.
+
+### Intern
+
+- Aufnahme über `AVAudioEngine` statt `AVAudioRecorder`, die Datei bleibt gleich
+  (16 kHz, mono, 16 Bit). Vor jedem Mikrofon-Abgriff prüft Tippi das Format, weil ein
+  Tap mit falschem Format eine Ausnahme auslöst, die Swift nicht abfangen kann.
+- Modell-Prüfstand für den Nachfolger von Haiku 4.5 (`scripts/modell-pruefstand.py`).
+- 629 Tests (vorher 609).
 
 ## [2.21.0] — 2026-09-30
 

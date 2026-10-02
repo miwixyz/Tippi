@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 30. September 2026 · Version: **2.21.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 2. Oktober 2026 · Version: **2.22.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
@@ -86,7 +86,7 @@ Ab v1.1.0 kommt Voice Input dazu: Push-to-Talk-Mikrofon-Button im Popup für Dik
 
 ## 4. Modul-Struktur
 
-Historischer Grundriss aus der Anfangszeit. Den aktuellen Baum (Stand v2.21.0) führt `ARCHITECTURE.md` §2.
+Historischer Grundriss aus der Anfangszeit. Den aktuellen Baum (Stand v2.22.0) führt `ARCHITECTURE.md` §2.
 
 ```
 Tippi/

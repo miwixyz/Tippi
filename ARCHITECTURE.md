@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.21.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.22.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -151,7 +151,9 @@ Tippi/
 │   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
 │   └── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
 ├── Voice/
-│   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate)
+│   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate), AVAudioEngine seit 2.22
+│   ├── AudioCapture.swift          # 16-kHz-Umrechnung, Sample-Speicher, WAV, Formatprüfung (2.22)
+│   ├── LiveTranscriptionPreview.swift # Live-Text im Aufnahmefenster, Schriftgröße (2.22)
 │   ├── WhisperTranscriber.swift    # whisper-cli-Wrapper
 │   ├── ParakeetTranscriber.swift   # CoreML/ANE, Default-Engine seit v1.12.1
 │   └── SystemAudioMuter.swift      # optionales Mute während der Aufnahme
