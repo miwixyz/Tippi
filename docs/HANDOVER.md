@@ -314,7 +314,7 @@ Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedli
 | Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris) |
 | Scaleway | `llama-3.1-8b-instruct` | `https://api.scaleway.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris), Groq-Klasse Speed |
 | Groq | `openai/gpt-oss-20b` | `https://api.groq.com/openai/v1/chat/completions` | `Authorization: Bearer <key>` | LPU-Hardware, ~270-800 tok/s |
-| Kimi/Moonshot | `kimi-k2` | `https://api.moonshot.cn/v1/chat/completions` | `Authorization: Bearer <key>` | 1T-MoE, SWE-Bench #1 |
+| Kimi/Moonshot | `kimi-k2` | `https://api.moonshot.cn/v1/chat/completions` | `Authorization: Bearer <key>` | 1T-MoE, 256K context |
 | Nebius | `Qwen/Qwen3-30B-A3B-Instruct-2507` | `https://api.studio.nebius.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Amsterdam) |
 | **OpenRouter** | `openai/gpt-6-luna` | `https://openrouter.ai/api/v1/chat/completions` | `Authorization: Bearer <key>` | Unified Gateway, 300+ Modelle, Modell-IDs im Format `vendor/model` |
 | Ollama | `llama3.3` | `http://localhost:11434/api/chat` | Keine | Lokal, gratis, voll privat |

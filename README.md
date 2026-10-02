@@ -81,7 +81,7 @@ your text for anything that touches AI.
   - **Mistral** (default: `mistral-small-latest`, EU hosting)
   - **Scaleway** (default: `llama-3.1-8b-instruct`, EU/Paris)
   - **Groq** (default: `openai/gpt-oss-20b`, LPU-accelerated)
-  - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, SWE-Bench #1, ~15× cheaper than Opus)
+  - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, ~15× cheaper than Opus)
   - **Nebius** (default: `meta-llama/Llama-3.3-70B-Instruct`, EU/Amsterdam, DSGVO)
   - **OpenRouter** (default: `openai/gpt-6-luna`) — unified gateway, 300+ models behind one key, `vendor/model` id format, pass-through pricing
   - **Ollama** (local, fully offline)
@@ -414,7 +414,7 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 | Mistral   | $          | Fast    | ★★★★   | EU-hosted (Paris). Great German/French. |
 | Scaleway  | $          | ⚡ Fast | ★★★    | EU-hosted (Paris). Llama 3.x on European infra. |
 | Groq      | $          | ⚡⚡ sub-second | ★★★★ | LPU-accelerated. Fastest hosted option for dictation polish. Llama models retired June 2026 → now GPT-OSS. |
-| Kimi      | $          | Fast    | ★★★★★  | Moonshot Kimi K2 — SWE-Bench #1, 256K context, ~15× cheaper than Opus. `platform.moonshot.cn` |
+| Kimi      | $          | Fast    | ★★★★★  | Moonshot Kimi K2 — 256K context, ~15× cheaper than Opus. `platform.moonshot.cn` |
 | Nebius    | $          | ⚡ Fast | ★★★★   | 100% EU (Amsterdam). DSGVO-compliant. Very cheap. `studio.nebius.ai` |
 | OpenRouter | $ (pass-through) | Depends on routed model | Depends on routed model | 300+ models behind one key. `vendor/model` id format, e.g. `openai/gpt-4o-mini`. `openrouter.ai` |
 | Ollama    | **Free**   | ⚡ Hardware-dependent | ★★–★★★★ | Fully local. Privacy-best. Quality depends on model. |

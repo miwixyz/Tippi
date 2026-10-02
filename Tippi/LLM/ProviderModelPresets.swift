@@ -174,7 +174,7 @@ enum ProviderModelPresets {
     // moonshot-v1-* are the older instruction models — still useful for
     // short-text tasks like dictation polish due to low latency.
     static let kimi: [Preset] = [
-        Preset(id: "kimi-k2",              label: "Kimi K2 — flagship, SWE-Bench #1 ⭐",       isFastest: false, isReasoning: false),
+        Preset(id: "kimi-k2",              label: "Kimi K2 — 1T-MoE, 256K context ⭐",           isFastest: false, isReasoning: false),
         Preset(id: "moonshot-v1-8k",       label: "Moonshot v1 8K — fast, short context",       isFastest: true,  isReasoning: false),
         Preset(id: "moonshot-v1-32k",      label: "Moonshot v1 32K — balanced",                 isFastest: false, isReasoning: false),
         Preset(id: "moonshot-v1-128k",     label: "Moonshot v1 128K — long context",            isFastest: false, isReasoning: false),
