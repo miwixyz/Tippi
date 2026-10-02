@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.22.1] — 2026-10-02
+
+- _Add release notes here._
+
 ## [2.22.0] — 2026-10-02
 
 Beim Diktieren siehst du jetzt mit, was Tippi versteht, und die Aufnahme-Anzeige steht, wo du sie haben willst.
