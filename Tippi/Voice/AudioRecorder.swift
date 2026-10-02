@@ -15,17 +15,25 @@ enum AudioRecorderError: LocalizedError {
 
 /// Records microphone audio to a 16 kHz mono WAV file (Whisper's required format).
 /// Owned by AppDelegate; the PromptPopup borrows a reference.
+///
+/// Since 2026-10-02 built on `AVAudioEngine` instead of `AVAudioRecorder`: a tap
+/// converts every input buffer to 16 kHz mono and collects it in memory
+/// (`SampleStore`); the WAV is written once, in `stop()`, at the URL `start()`
+/// already handed out. Same file format as before. Side effect for privacy: the
+/// voice is no longer on disk *during* the take, and a crash leaves no partial
+/// file. Building blocks + rationale: `AudioCapture.swift`.
 @MainActor
-final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
+final class AudioRecorder: NSObject, ObservableObject {
     @Published private(set) var isRecording: Bool = false
     /// Linear amplitude 0…1 for waveform UI (updated at ~10 Hz while recording).
     @Published private(set) var level: Float = 0
-    /// Length of the take so far. Read from `AVAudioRecorder.currentTime`, which
-    /// counts actual recorded audio — a wall-clock stopwatch would drift away
-    /// from the file whenever the audio stack stalls.
+    /// Length of the take so far, counted in recorded samples — a wall-clock
+    /// stopwatch would drift away from the file whenever the audio stack stalls.
     @Published private(set) var elapsed: TimeInterval = 0
 
-    private var recorder: AVAudioRecorder?
+    private var engine: AVAudioEngine?
+    private var store = SampleStore()
+    private var configObserver: NSObjectProtocol?
     private var levelTimer: Timer?
     private var outputURL: URL?
 
@@ -97,35 +105,75 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("tippi-voice-\(UUID().uuidString).wav")
 
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatLinearPCM),
-            AVSampleRateKey: 16_000,
-            AVNumberOfChannelsKey: 1,
-            AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsFloatKey: false,
-        ]
-
+        let store = SampleStore()
+        let engine = AVAudioEngine()
         do {
-            let rec = try AVAudioRecorder(url: url, settings: settings)
-            rec.delegate = self
-            rec.isMeteringEnabled = true
-            guard rec.record() else {
-                throw AudioRecorderError.setupFailed("AVAudioRecorder.record() returned false")
-            }
-            recorder = rec
-            outputURL = url
-            isRecording = true
-            elapsed = 0
-            startLevelTimer()
-            muteSystemAudioIfEnabled()
-            self.owner = owner
-            return url
+            try Self.installTap(on: engine, into: store)
+            engine.prepare()
+            try engine.start()
         } catch let err as AudioRecorderError {
+            engine.inputNode.removeTap(onBus: 0)
             throw err
         } catch {
+            engine.inputNode.removeTap(onBus: 0)
             throw AudioRecorderError.setupFailed(error.localizedDescription)
         }
+        self.engine = engine
+        self.store = store
+        observeConfigurationChanges(of: engine)
+        outputURL = url
+        isRecording = true
+        elapsed = 0
+        startLevelTimer()
+        muteSystemAudioIfEnabled()
+        self.owner = owner
+        return url
     }
+
+    /// Installs the conversion tap for the input node's *current* format.
+    /// `nonisolated` on purpose: the block runs on the audio render thread and
+    /// must not be inferred as main-actor code (see scripts/concurrency-lint.sh,
+    /// 2.11.5 crash). It only touches `store` (locked) and its own resampler.
+    nonisolated private static func installTap(on engine: AVAudioEngine, into store: SampleStore) throws {
+        let input = engine.inputNode
+        let format = input.outputFormat(forBus: 0)
+        let resampler = try AudioResampler(inputFormat: format)
+        input.installTap(onBus: 0, bufferSize: 4096, format: format) { buffer, _ in
+            do { store.append(try resampler.convert(buffer)) } catch {
+                NSLog("Tippi AudioRecorder: conversion failed — \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// The input device can change mid-take (AirPods connect, USB mic unplugged).
+    /// AVAudioEngine then stops and posts a configuration change; re-install the
+    /// tap for the new format and keep the samples recorded so far.
+    private func observeConfigurationChanges(of engine: AVAudioEngine) {
+        configObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.restartAfterConfigurationChange(engine) }
+        }
+    }
+
+    private func restartAfterConfigurationChange(_ changed: AVAudioEngine) {
+        guard isRecording, engine === changed else { return }
+        changed.inputNode.removeTap(onBus: 0)
+        do {
+            try Self.installTap(on: changed, into: store)
+            changed.prepare()
+            try changed.start()
+            NSLog("Tippi AudioRecorder: input changed mid-take — resumed at \(Int(changed.inputNode.outputFormat(forBus: 0).sampleRate)) Hz")
+        } catch {
+            // Same contract as the old encode-error path: an unusable take is dropped.
+            NSLog("Tippi AudioRecorder: could not resume after input change — \(error.localizedDescription)")
+            if let url = stop() { try? FileManager.default.removeItem(at: url) }
+        }
+    }
+
+    /// Everything recorded so far, 16 kHz mono — for live transcription in the
+    /// recording window. A copy; the take keeps recording.
+    func snapshot() -> [Float] { isRecording ? store.snapshot() : [] }
 
     /// Who started the current take. The recorder is one shared instance —
     /// closing the translate panel must not delete a dictation that is
@@ -141,13 +189,20 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         if let url = stop() { try? FileManager.default.removeItem(at: url) }
     }
 
-    /// Stops recording and returns the completed WAV file URL.
+    /// Stops recording, writes the WAV and returns its URL. The file is
+    /// complete when this returns — callers transcribe it right away
+    /// (DictationController uses the URL `start()` returned).
     @discardableResult
     func stop() -> URL? {
         owner = nil
         stopLevelTimer()
-        recorder?.stop()
-        recorder = nil
+        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
+        configObserver = nil
+        if let engine {
+            engine.inputNode.removeTap(onBus: 0)   // no further buffers after this
+            engine.stop()
+        }
+        engine = nil
         isRecording = false
         level = 0
         restoreSystemAudioIfNeeded()
@@ -156,6 +211,12 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         // the temp WAV behind, and a stale URL could be returned twice.
         let url = outputURL
         outputURL = nil
+        let samples = store.drain()
+        if let url {
+            do { try AudioCapture.writeWAV(samples, to: url) } catch {
+                NSLog("Tippi AudioRecorder: writing the WAV failed — \(error.localizedDescription)")
+            }
+        }
         return url
     }
 
@@ -221,12 +282,9 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private func startLevelTimer() {
         levelTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, let rec = self.recorder, rec.isRecording else { return }
-                rec.updateMeters()
-                let dB = rec.averagePower(forChannel: 0) // -160…0
-                let clamped = max(-60, dB)
-                self.level = Float((clamped + 60) / 60)
-                self.elapsed = rec.currentTime
+                guard let self, self.isRecording else { return }
+                self.level = self.store.level
+                self.elapsed = Double(self.store.count) / AudioCapture.sampleRate
             }
         }
     }
@@ -234,18 +292,5 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
     private func stopLevelTimer() {
         levelTimer?.invalidate()
         levelTimer = nil
-    }
-
-    // MARK: - AVAudioRecorderDelegate
-
-    nonisolated func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
-        Task { @MainActor in
-            // Only act if this error belongs to the currently active recorder —
-            // a fast restart would otherwise be aborted by a stale delegate call
-            // for the previous recording.
-            guard self.recorder === recorder else { return }
-            NSLog("Tippi AudioRecorder encode error: \(error?.localizedDescription ?? "?")")
-            if let url = self.stop() { try? FileManager.default.removeItem(at: url) }
-        }
     }
 }
