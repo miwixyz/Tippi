@@ -1625,6 +1625,7 @@ private struct VoiceTab: View {
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationLayout: Bool = DictationSettings.layoutEnabled
     @State private var dictationLivePreview: Bool = DictationSettings.livePreviewEnabled
+    @State private var dictationLiveTextSize: LiveTextSize = DictationSettings.liveTextSize
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
     @State private var dictationPolishModel: String = DictationSettings.postProcessModelOverride
@@ -1780,6 +1781,15 @@ private struct VoiceTab: View {
                         .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    if dictationLivePreview && engine == SpeechEngine.Kind.parakeet.rawValue {
+                        Picker(String(localized: "settings.voice.dictation.livePreview.size"), selection: $dictationLiveTextSize) {
+                            Text(String(localized: "settings.voice.dictation.livePreview.size.normal")).tag(LiveTextSize.normal)
+                            Text(String(localized: "settings.voice.dictation.livePreview.size.large")).tag(LiveTextSize.large)
+                            Text(String(localized: "settings.voice.dictation.livePreview.size.extraLarge")).tag(LiveTextSize.extraLarge)
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: dictationLiveTextSize) { _, new in DictationSettings.liveTextSize = new }
+                    }
 
                     Divider().padding(.vertical, 4)
 

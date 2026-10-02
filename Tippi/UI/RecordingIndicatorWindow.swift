@@ -121,15 +121,16 @@ private struct RecordingIndicatorView: View {
 /// being said right now. Same glass as the pill.
 private struct LiveTextBox: View {
     @ObservedObject var preview: LiveTranscriptionPreview
+    let size: LiveTextSize
 
     var body: some View {
         if !preview.text.isEmpty {
-            Text(LiveTranscriptionPreview.tail(preview.text))
-                .font(FamilyTheme.font(.callout))
+            Text(LiveTranscriptionPreview.tail(preview.text, maxCharacters: size.tailCharacters))
+                .font(FamilyTheme.font(size.pointSize))
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
                 .lineLimit(3)
-                .frame(maxWidth: RecordingIndicatorWindowController.liveSize.width - 40, alignment: .leading)
+                .frame(maxWidth: size.windowSize.width - 40, alignment: .leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .tippiGlass(in: RoundedRectangle(cornerRadius: 14))
@@ -148,14 +149,18 @@ private struct IndicatorContainer: View {
     let pill: RecordingIndicatorView
     let preview: LiveTranscriptionPreview?
     let atTop: Bool
+    let size: LiveTextSize
 
     var body: some View {
         if let preview {
             VStack(spacing: 8) {
-                if atTop { pill; LiveTextBox(preview: preview) } else { LiveTextBox(preview: preview); pill }
+                if atTop {
+                    pill; LiveTextBox(preview: preview, size: size)
+                } else {
+                    LiveTextBox(preview: preview, size: size); pill
+                }
             }
-            .frame(width: RecordingIndicatorWindowController.liveSize.width,
-                   height: RecordingIndicatorWindowController.liveSize.height,
+            .frame(width: size.windowSize.width, height: size.windowSize.height,
                    alignment: atTop ? .top : .bottom)
             .animation(.easeOut(duration: 0.15), value: preview.text.isEmpty)
         } else {
@@ -182,19 +187,17 @@ final class RecordingIndicatorWindowController {
     /// freshly-shown window.
     private var generation = 0
 
-    /// Window area while live text is shown — room for the pill plus three lines.
-    static let liveSize = NSSize(width: 480, height: 150)
-
     func show(mode: Mode, recorder: AudioRecorder, preview: LiveTranscriptionPreview? = nil,
               aiEnabled: Bool = false, providerName: String? = nil, isMail: Bool = false) {
         generation &+= 1
         let pill = RecordingIndicatorView(
             mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail)
         let live = mode == .recording ? preview : nil
+        let textSize = DictationSettings.liveTextSize
         let hostView = NSHostingView(rootView: IndicatorContainer(
-            pill: pill, preview: live, atTop: DictationSettings.indicatorPosition == .top))
+            pill: pill, preview: live, atTop: DictationSettings.indicatorPosition == .top, size: textSize))
         hostView.layout()
-        let size = live == nil ? hostView.fittingSize : Self.liveSize
+        let size = live == nil ? hostView.fittingSize : textSize.windowSize
 
         // Bottom-center of the screen that currently holds the cursor.
         let screen = NSScreen.screens.first {

@@ -68,8 +68,36 @@ final class LiveTranscriptionPreview: ObservableObject {
     }
 }
 
+/// Text size of the live preview — readable from across the desk (Michael
+/// 2026-10-02: „auf die Entfernung kann man das sehr schlecht ausmachen“).
+/// The window grows with it so three lines still fit; bigger text shows a
+/// shorter tail of what was said.
+enum LiveTextSize: String, CaseIterable {
+    case normal, large, extraLarge
+
+    var pointSize: CGFloat {
+        switch self { case .normal: return 13; case .large: return 17; case .extraLarge: return 22 }
+    }
+    var windowSize: NSSize {
+        switch self {
+        case .normal: return NSSize(width: 480, height: 150)
+        case .large: return NSSize(width: 580, height: 185)
+        case .extraLarge: return NSSize(width: 720, height: 235)
+        }
+    }
+    var tailCharacters: Int {
+        switch self { case .normal: return 180; case .large: return 150; case .extraLarge: return 130 }
+    }
+}
+
 extension DictationSettings {
     private static let livePreviewKey = "dictation.livePreview.enabled.v1"
+    private static let liveTextSizeKey = "dictation.livePreview.textSize.v1"
+
+    static var liveTextSize: LiveTextSize {
+        get { LiveTextSize(rawValue: store.string(forKey: liveTextSizeKey) ?? "") ?? .normal }
+        set { store.set(newValue.rawValue, forKey: liveTextSizeKey) }
+    }
 
     /// Live text in the recording window while dictating (Parakeet only).
     /// Default OFF: one transcription pass per second — weaker Macs may not
