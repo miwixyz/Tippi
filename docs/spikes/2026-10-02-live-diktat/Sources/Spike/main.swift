@@ -119,17 +119,21 @@ func neuerkennung(dir: URL, models: AsrModels) async throws {
     let r2 = try String(contentsOf: dir.appendingPathComponent("text2.txt"), encoding: .utf8)
     let a1 = try samples(dir.appendingPathComponent("t1.wav")), a2 = try samples(dir.appendingPathComponent("t2.wav"))
     let pause = [Float](repeating: 0, count: 8000)
-    let faelle: [(String, [Float], String)] = [
+    var faelle: [(String, [Float], String)] = [
         ("Aufnahme 1 (29 s)", a1, r1),
         ("Aufnahme 2 (23 s)", a2, r2),
         ("lang (~110 s)", a1 + pause + a2 + pause + a1 + pause + a2, [r1, r2, r1, r2].joined(separator: " ")),
     ]
+    if FileManager.default.fileExists(atPath: dir.appendingPathComponent("t3.wav").path) {
+        faelle.append(("Michael echt (34 s)", try samples(dir.appendingPathComponent("t3.wav")), try String(contentsOf: dir.appendingPathComponent("text3.txt"), encoding: .utf8)))
+    }
     for (name, audio, ref) in faelle {
         let dauer = Double(audio.count) / 16000
         let t0 = Date()
         var rechen: [Double] = []
         var ersteZeit: Double? = nil
         var letzteVorschau = ""
+        var vorschau10 = ""
         while true {
             let jetzt = Date().timeIntervalSince(t0)
             if jetzt >= dauer { break }
@@ -141,6 +145,7 @@ func neuerkennung(dir: URL, models: AsrModels) async throws {
                 rechen.append(Date().timeIntervalSince(tr))
                 if !r.text.isEmpty && ersteZeit == nil { ersteZeit = Date().timeIntervalSince(t0) }
                 letzteVorschau = r.text
+                if jetzt >= 10 && vorschau10.isEmpty { vorschau10 = r.text }
             }
             // naechster Durchlauf eine Sekunde nach dem Start dieses Durchlaufs
             let rest = 1.0 - (Date().timeIntervalSince(t0) - jetzt)
@@ -151,6 +156,11 @@ func neuerkennung(dir: URL, models: AsrModels) async throws {
         let final = try await mgr.transcribe(audio, decoderState: &st, language: Language(rawValue: "de")).text
         let nachLos = Date().timeIntervalSince(te)
         print("NEU[\(name)] erster Text nach \(ersteZeit.map { String(format: "%.1f s", $0) } ?? "–") · \(rechen.count) Vorschauen · Rechenzeit je Durchlauf Ø \(String(format: "%.2f", rechen.reduce(0,+)/Double(max(1,rechen.count)))) s, max \(String(format: "%.2f", rechen.max() ?? 0)) s")
+        if name.hasPrefix("Michael") {
+            print("       Vorschau 10 s: „\(vorschau10)“")
+            print("       Vorschau beim Loslassen: „\(letzteVorschau)“")
+            print("       Endtext: „\(final)“")
+        }
         print("       WER Endtext \(pct(wer(ref, final))) · Vorschau beim Loslassen WER \(pct(wer(ref, letzteVorschau))) · Umspringen \(pct(wer(final, letzteVorschau))) · fertig \(String(format: "%.2f", nachLos)) s nach Loslassen")
     }
 }

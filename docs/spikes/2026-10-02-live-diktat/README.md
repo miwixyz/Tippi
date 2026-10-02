@@ -22,7 +22,9 @@ Rechenzeit „jede Sekunde neu“: Ø 0,20 s (29 s Audio), Ø 0,40 s / max 0,80 
 - **„Jede Sekunde neu erkennen“ trägt:** gleiche Qualität wie heute, kein zweites Modell,
   kaum Umspringen. Der Recorder-Umbau (Live-Puffer) bleibt nötig.
 
-**Grenzen:** synthetische Stimme statt echtem Diktat · nur M2 Pro gemessen (MacBook Air
+**Echtes Diktat (Michael, Sprachmemo 34 s, nicht im Repo):** erster Text ~2 s nach Sprechbeginn, Takt 1 s, Rechenzeit Ø 0,19 s / max 0,40 s, **Umspringen 0 %**, Endtext mit echten Versprechern, einziger Fehler „Tipi“.
+
+**Grenzen:** nur M2 Pro gemessen (MacBook Air
 langsamer?) · Rechenzeit wächst mit der Länge (bei ~2 min max 0,8 s; darüber Takt strecken
 oder nur das Ende neu erkennen) · Energiebedarf nicht gemessen · Whisper bleibt ohne Live-Text.
 
