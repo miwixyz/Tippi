@@ -70,3 +70,16 @@ ignore:
   - rule: R-C66D8
     paths:
       - "scripts/autocomplete-pruefstand.py"
+
+  # ── R-803BC · "XPath query built with string concatenation" ────────────────
+  # Gemeldet auf scripts/modell-pruefstand.py:144 — `src.find(f'id: "{pid}"')`.
+  # Das ist keine XPath-Abfrage, sondern Pythons str.find() über Tippis EIGENEN
+  # Quelltext (DemoPrompt.swift), um den Prompt-Block zu einer ID zu finden.
+  # `pid` stammt aus den Testfällen im Skript bzw. aus
+  # scripts/modell-pruefstand-abnahme.json (im Repo, von Michael gepflegt) —
+  # kein Nutzer- oder Netzwerkinput, kein XML, kein Abfrage-Interpreter.
+  # Das Skript läuft nur lokal vor einem Modellwechsel und wird nicht ausgeliefert.
+  # Analysiert 2026-10-02.
+  - rule: R-803BC
+    paths:
+      - "scripts/modell-pruefstand.py"
