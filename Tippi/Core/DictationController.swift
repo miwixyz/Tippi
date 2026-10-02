@@ -112,12 +112,6 @@ enum DictationSettings {
     static let maxHoldSeconds: TimeInterval = 300
 
     /// Where the recording indicator sits. Bottom is the historical position.
-    enum IndicatorPosition: String, CaseIterable, Identifiable {
-        case bottom
-        case top
-        var id: String { rawValue }
-    }
-
     static var indicatorPosition: IndicatorPosition {
         get {
             guard let raw = store.string(forKey: indicatorPositionKey),

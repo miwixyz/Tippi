@@ -1762,12 +1762,15 @@ private struct VoiceTab: View {
                 if dictationEnabled {
                     Picker(String(localized: "settings.voice.dictation.indicator.position"),
                            selection: $dictationIndicatorPosition) {
-                        Text(String(localized: "settings.voice.dictation.indicator.bottom"))
-                            .tag(DictationSettings.IndicatorPosition.bottom)
-                        Text(String(localized: "settings.voice.dictation.indicator.top"))
-                            .tag(DictationSettings.IndicatorPosition.top)
+                        Text(String(localized: "settings.voice.dictation.indicator.topLeft")).tag(DictationSettings.IndicatorPosition.topLeft)
+                        Text(String(localized: "settings.voice.dictation.indicator.top")).tag(DictationSettings.IndicatorPosition.top)
+                        Text(String(localized: "settings.voice.dictation.indicator.topRight")).tag(DictationSettings.IndicatorPosition.topRight)
+                        Divider()
+                        Text(String(localized: "settings.voice.dictation.indicator.bottomLeft")).tag(DictationSettings.IndicatorPosition.bottomLeft)
+                        Text(String(localized: "settings.voice.dictation.indicator.bottom")).tag(DictationSettings.IndicatorPosition.bottom)
+                        Text(String(localized: "settings.voice.dictation.indicator.bottomRight")).tag(DictationSettings.IndicatorPosition.bottomRight)
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
                     .onChange(of: dictationIndicatorPosition) { _, new in
                         DictationSettings.indicatorPosition = new
                     }

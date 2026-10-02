@@ -620,8 +620,12 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.dictation.mode.tapOrHold.body" = "Tap the key twice to start and stop. Hold it to record only while held, then release to insert. A single tap deliberately does nothing, so the key stays usable for its normal purpose.";
 "settings.voice.dictation.mode.modifier" = "Key";
 "settings.voice.dictation.indicator.position" = "Indicator position";
-"settings.voice.dictation.indicator.bottom" = "Bottom";
-"settings.voice.dictation.indicator.top" = "Top";
+"settings.voice.dictation.indicator.bottom" = "Bottom center";
+"settings.voice.dictation.indicator.top" = "Top center";
+"settings.voice.dictation.indicator.topLeft" = "Top left";
+"settings.voice.dictation.indicator.topRight" = "Top right";
+"settings.voice.dictation.indicator.bottomLeft" = "Bottom left";
+"settings.voice.dictation.indicator.bottomRight" = "Bottom right";
 "settings.voice.dictation.livePreview.enable" = "Show text live while recording";
 "settings.voice.dictation.livePreview.body" = "The recording window shows what you are saying, updated about once a second. The inserted text is the same. Costs one extra recognition pass per second — leave it off on older or slower Macs.";
 "settings.voice.dictation.livePreview.parakeetOnly" = "Only with the Parakeet engine (see above).";

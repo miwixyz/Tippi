@@ -114,6 +114,29 @@ private struct RecordingIndicatorView: View {
     }
 }
 
+// MARK: - Position (2026-10-02: six places instead of two)
+
+extension DictationSettings {
+    /// Where the recording pill (and live text) sits on the screen. The two
+    /// centred cases keep their old raw values "bottom"/"top", so settings saved
+    /// before 2026-10-02 carry over unchanged. Declared here, not in
+    /// DictationController.swift, which is at its 750-line limit.
+    enum IndicatorPosition: String, CaseIterable, Identifiable {
+        case topLeft, top, topRight, bottomLeft, bottom, bottomRight
+        var id: String { rawValue }
+
+        var isTop: Bool { self == .topLeft || self == .top || self == .topRight }
+        var horizontal: HorizontalAlignment {
+            switch self {
+            case .topLeft, .bottomLeft: return .leading
+            case .top, .bottom: return .center
+            case .topRight, .bottomRight: return .trailing
+            }
+        }
+        var alignment: Alignment { Alignment(horizontal: horizontal, vertical: isTop ? .top : .bottom) }
+    }
+}
+
 // MARK: - Live text (2026-10-02)
 
 /// Live transcription under/over the pill — only while recording, only when the
@@ -148,20 +171,20 @@ private struct LiveTextBox: View {
 private struct IndicatorContainer: View {
     let pill: RecordingIndicatorView
     let preview: LiveTranscriptionPreview?
-    let atTop: Bool
+    let position: DictationSettings.IndicatorPosition
     let size: LiveTextSize
 
     var body: some View {
         if let preview {
-            VStack(spacing: 8) {
-                if atTop {
+            VStack(alignment: position.horizontal, spacing: 8) {
+                if position.isTop {
                     pill; LiveTextBox(preview: preview, size: size)
                 } else {
                     LiveTextBox(preview: preview, size: size); pill
                 }
             }
             .frame(width: size.windowSize.width, height: size.windowSize.height,
-                   alignment: atTop ? .top : .bottom)
+                   alignment: position.alignment)
             .animation(.easeOut(duration: 0.15), value: preview.text.isEmpty)
         } else {
             pill
@@ -195,23 +218,16 @@ final class RecordingIndicatorWindowController {
         let live = mode == .recording ? preview : nil
         let textSize = DictationSettings.liveTextSize
         let hostView = NSHostingView(rootView: IndicatorContainer(
-            pill: pill, preview: live, atTop: DictationSettings.indicatorPosition == .top, size: textSize))
+            pill: pill, preview: live, position: DictationSettings.indicatorPosition, size: textSize))
         hostView.layout()
         let size = live == nil ? hostView.fittingSize : textSize.windowSize
 
-        // Bottom-center of the screen that currently holds the cursor.
+        // On the screen that currently holds the cursor.
         let screen = NSScreen.screens.first {
             NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
         } ?? NSScreen.main
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        // `visibleFrame` already excludes menu bar and Dock, so both edges keep
-        // the same 80 pt breathing room without special-casing either chrome.
-        let y: CGFloat
-        switch DictationSettings.indicatorPosition {
-        case .bottom: y = visible.minY + 80
-        case .top:    y = visible.maxY - size.height - 80
-        }
-        let origin = NSPoint(x: visible.midX - size.width / 2, y: y)
+        let origin = Self.origin(for: DictationSettings.indicatorPosition, size: size, in: visible)
 
         if let w = window {
             w.contentView = hostView
@@ -235,6 +251,21 @@ final class RecordingIndicatorWindowController {
             w.orderFront(nil)
             window = w
         }
+    }
+
+    /// `visibleFrame` already excludes menu bar and Dock, so all edges keep
+    /// fixed breathing room (80 pt top/bottom as before, 24 pt left/right)
+    /// without special-casing either chrome.
+    nonisolated static func origin(for position: DictationSettings.IndicatorPosition,
+                                   size: NSSize, in visible: NSRect) -> NSPoint {
+        let y = position.isTop ? visible.maxY - size.height - 80 : visible.minY + 80
+        let x: CGFloat
+        switch position.horizontal {
+        case .leading: x = visible.minX + 24
+        case .trailing: x = visible.maxX - size.width - 24
+        default: x = visible.midX - size.width / 2
+        }
+        return NSPoint(x: x, y: y)
     }
 
     func hide() {

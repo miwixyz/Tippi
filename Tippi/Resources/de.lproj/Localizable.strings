@@ -595,8 +595,12 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.voice.dictation.mode.tapOrHold.body" = "Taste zweimal kurz antippen startet und stoppt die Aufnahme. Taste halten nimmt nur so lange auf, wie sie gedrückt bleibt — beim Loslassen wird eingefügt. Einmaliges Antippen tut absichtlich nichts, damit die Taste normal benutzbar bleibt.";
 "settings.voice.dictation.mode.modifier" = "Taste";
 "settings.voice.dictation.indicator.position" = "Position der Anzeige";
-"settings.voice.dictation.indicator.bottom" = "Unten";
-"settings.voice.dictation.indicator.top" = "Oben";
+"settings.voice.dictation.indicator.bottom" = "Unten Mitte";
+"settings.voice.dictation.indicator.top" = "Oben Mitte";
+"settings.voice.dictation.indicator.topLeft" = "Oben links";
+"settings.voice.dictation.indicator.topRight" = "Oben rechts";
+"settings.voice.dictation.indicator.bottomLeft" = "Unten links";
+"settings.voice.dictation.indicator.bottomRight" = "Unten rechts";
 "settings.voice.dictation.livePreview.enable" = "Text schon während der Aufnahme anzeigen";
 "settings.voice.dictation.livePreview.body" = "Das Aufnahmefenster zeigt mit, was du sagst – etwa jede Sekunde aktualisiert. Eingefügt wird derselbe Text. Kostet einen zusätzlichen Erkennungsdurchlauf pro Sekunde – auf älteren oder langsameren Macs lieber ausgeschaltet lassen.";
 "settings.voice.dictation.livePreview.parakeetOnly" = "Nur mit der Engine Parakeet (siehe oben).";
