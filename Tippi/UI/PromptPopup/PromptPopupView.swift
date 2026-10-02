@@ -436,9 +436,8 @@ private struct VoiceSection: View {
         .onDisappear {
             transcriptionTask?.cancel()
             transcriptionTask = nil
-            if audioRecorder?.isRecording == true {
-                audioRecorder?.discard(ifStartedBy: .popup)
-            }
+            // Owner-checked; also deletes a take a dictation finalized meanwhile.
+            audioRecorder?.discard(ifStartedBy: .popup)
         }
     }
 
@@ -653,7 +652,7 @@ private struct VoiceSection: View {
     }
 
     private func stopAndTranscribe() {
-        guard let wavURL = audioRecorder?.stop() else {
+        guard let wavURL = audioRecorder?.stop(ifStartedBy: .popup) else {
             voiceState = .idle
             return
         }

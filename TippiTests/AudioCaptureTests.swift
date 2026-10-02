@@ -106,6 +106,58 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertTrue(AudioCapture.formatsMatch(hardware: hw24, client: AVAudioFormat(standardFormatWithSampleRate: 24_000, channels: 1)!))
     }
 
+    /// The resampler holds a few samples (filter delay); without a flush the end
+    /// of every take was short by that amount (review 2026-10-02).
+    func testFlushReturnsTheResamplerTail() throws {
+        let buf = sine(rate: 48_000, channels: 1, seconds: 1)
+        let r = try AudioResampler(inputFormat: buf.format)
+        var out = try r.convert(buf)
+        let before = out.count
+        out += try r.flush()
+        XCTAssertGreaterThan(out.count, before, "flush delivers the held-back tail")
+        XCTAssertEqual(Double(out.count), 16_000, accuracy: 20, "1 s in → 16 000 samples out, almost exactly")
+    }
+
+    /// A forgotten toggle dictation must not grow without bound (review 2026-10-02).
+    func testStoreStopsAtItsCapacityAndDropsTheMeter() {
+        let store = SampleStore(capacity: 10)
+        store.append([Float](repeating: 0.5, count: 8))
+        XCTAssertGreaterThan(store.level, 0)
+        XCTAssertFalse(store.isFull)
+        store.append([Float](repeating: 0.5, count: 5))
+        XCTAssertEqual(store.count, 10, "filled up to the cap, the rest dropped")
+        XCTAssertTrue(store.isFull)
+        XCTAssertEqual(store.level, 0, "meter flat once nothing more is recorded")
+        XCTAssertEqual(SampleStore.maxSamples, 16_000 * 60 * 30, "30 minutes")
+    }
+
+    func testEmptyDeliveryKeepsTheMeterButCounts() {
+        let store = SampleStore()
+        store.append([Float](repeating: 0.5, count: 100))
+        let level = store.level
+        store.append([])
+        XCTAssertEqual(store.level, level, "resampler warm-up returns nothing — meter unchanged")
+        XCTAssertEqual(store.deliveries, 2)
+    }
+
+    /// stop() waits for the next tap delivery so the last word is in the take.
+    func testWaitForDeliveryReturnsWhenTheTapDelivers() {
+        let store = SampleStore()
+        let seen = store.deliveries
+        DispatchQueue.global().asyncAfter(deadline: .now() + 0.03) { store.append([0.1, 0.2]) }
+        let started = Date()
+        XCTAssertTrue(store.waitForDelivery(after: seen, timeout: 1))
+        XCTAssertLessThan(Date().timeIntervalSince(started), 0.5, "returns on delivery, not at the timeout")
+        XCTAssertEqual(store.count, 2)
+    }
+
+    func testWaitForDeliveryGivesUpAtTheTimeout() {
+        let store = SampleStore()
+        let started = Date()
+        XCTAssertFalse(store.waitForDelivery(after: store.deliveries, timeout: 0.05))
+        XCTAssertLessThan(Date().timeIntervalSince(started), 0.5)
+    }
+
     func testDrainHandsOverAndClears() {
         let store = SampleStore()
         store.append([0.1, 0.2, 0.3])

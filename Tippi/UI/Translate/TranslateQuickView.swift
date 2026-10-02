@@ -353,7 +353,7 @@ struct TranslateQuickView: View {
     }
 
     private func stopAndTranscribe() {
-        guard let wavURL = audioRecorder?.stop() else {
+        guard let wavURL = audioRecorder?.stop(ifStartedBy: .translate) else {
             voice = .idle
             return
         }

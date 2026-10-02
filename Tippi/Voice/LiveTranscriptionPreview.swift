@@ -36,6 +36,9 @@ final class LiveTranscriptionPreview: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
                 guard !Task.isCancelled, recorder.isRecording, recorder.owner == owner else { return }
+                // Engine switched to Whisper mid-take: the inserted text will come
+                // from Whisper, a Parakeet preview would only mislead.
+                guard SpeechEngine.current == .parakeet else { self?.text = ""; return }
                 // First dictation after launch: the model is still loading. Wait for
                 // that load (shared with prewarm, no second download) instead of
                 // counting it as a slow pass, which stretched the interval to 2× the

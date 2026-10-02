@@ -435,7 +435,7 @@ final class DictationController: ObservableObject {
         holdWatchdog = nil
         livePreview?.stop()
         livePreview = nil
-        recorder.stop()
+        _ = recorder.stop(ifStartedBy: .dictation)   // the WAV is `wavURL` either way
         state = .transcribing
         RecordingIndicatorWindowController.shared.show(
             mode: .transcribing,

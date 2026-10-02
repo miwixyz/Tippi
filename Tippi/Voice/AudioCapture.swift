@@ -96,6 +96,22 @@ final class AudioResampler {
         self.converter = c
     }
 
+    /// Drains what the resampler still holds (its filter delay) at the end of a
+    /// take. Call once, after the tap is removed; the converter is done afterwards.
+    func flush() throws -> [Float] {
+        guard let out = AVAudioPCMBuffer(pcmFormat: AudioCapture.processingFormat, frameCapacity: 4096) else {
+            throw AudioRecorderError.setupFailed("could not allocate flush buffer")
+        }
+        var err: NSError?
+        let status = converter.convert(to: out, error: &err) { _, outStatus in
+            outStatus.pointee = .endOfStream
+            return nil
+        }
+        if status == .error { throw AudioRecorderError.setupFailed(err?.localizedDescription ?? "flush failed") }
+        guard out.frameLength > 0, let ch = out.floatChannelData else { return [] }
+        return Array(UnsafeBufferPointer(start: ch[0], count: Int(out.frameLength)))
+    }
+
     /// Converts one input buffer; returns the 16 kHz mono samples it produced
     /// (can be empty while the resampler fills its window).
     func convert(_ input: AVAudioPCMBuffer) throws -> [Float] {
@@ -121,17 +137,54 @@ final class AudioResampler {
 /// Thread-safe sample store written from the audio render thread and read from
 /// the main actor (level/elapsed timer, stop, live snapshot).
 final class SampleStore: @unchecked Sendable {
-    private let lock = NSLock()
+    /// Upper bound for one take: 30 minutes (≈ 115 MB as Float). Since 2.22 the
+    /// take lives in memory, not on disk — a dictation forgotten in toggle mode
+    /// must not grow for hours (review 2026-10-02: 8 h ≈ 1.8 GB). Beyond the cap
+    /// nothing is added; the meter drops to zero and the clock stops.
+    static let maxSamples = Int(AudioCapture.sampleRate) * 60 * 30
+
+    private let lock = NSCondition()
     private var samples: [Float] = []
     private var lastLevel: Float = 0
+    private let capacity: Int
+    private var _deliveries = 0
+    private var _isFull = false
+
+    init(capacity: Int = SampleStore.maxSamples) { self.capacity = capacity }
+
+    /// Number of tap deliveries so far — `stop()` waits for one more, see there.
+    var deliveries: Int { lock.lock(); defer { lock.unlock() }; return _deliveries }
+    /// The take reached `maxSamples`; later audio is dropped.
+    var isFull: Bool { lock.lock(); defer { lock.unlock() }; return _isFull }
 
     func append(_ chunk: [Float]) {
-        guard !chunk.isEmpty else { return }
-        let lvl = AudioCapture.level(of: chunk[...])
+        let lvl = chunk.isEmpty ? 0 : AudioCapture.level(of: chunk[...])
         lock.lock()
-        samples.append(contentsOf: chunk)
-        lastLevel = lvl
+        let room = capacity - samples.count
+        if chunk.isEmpty {
+            // The resampler can return nothing while it fills its window — keep the meter.
+        } else if room >= chunk.count {
+            samples.append(contentsOf: chunk)
+            lastLevel = lvl
+        } else {
+            samples.append(contentsOf: chunk.prefix(max(0, room)))
+            lastLevel = 0
+            _isFull = true
+        }
+        _deliveries += 1
+        lock.broadcast()
         lock.unlock()
+    }
+
+    /// Blocks until the tap has delivered after `seen`, or `timeout` passes.
+    /// Returns whether a delivery came in.
+    func waitForDelivery(after seen: Int, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        lock.lock(); defer { lock.unlock() }
+        while _deliveries <= seen {
+            if !lock.wait(until: deadline) { return _deliveries > seen }
+        }
+        return true
     }
 
     var count: Int { lock.lock(); defer { lock.unlock() }; return samples.count }
@@ -142,7 +195,13 @@ final class SampleStore: @unchecked Sendable {
     var level: Float { lock.lock(); defer { lock.unlock() }; return lastLevel }
 
     /// Copy of everything recorded so far — for live transcription (step B).
-    func snapshot() -> [Float] { lock.lock(); defer { lock.unlock() }; return samples }
+    /// A real copy, made here: returning `samples` would share its storage, and
+    /// the next `append` on the audio thread would then copy the whole take
+    /// there, once per preview pass (review 2026-10-02).
+    func snapshot() -> [Float] {
+        lock.lock(); defer { lock.unlock() }
+        return samples.withUnsafeBufferPointer { Array($0) }
+    }
 
     /// Hands the take over and clears the store, so the voice data doesn't
     /// linger in memory after the WAV is written.

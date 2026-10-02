@@ -271,10 +271,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Restore system audio if the user quits Tippi mid-recording with
         // "mute system audio" on — a clean quit should never leave the
         // Mac muted. (Crash/force-quit is covered separately at next
-        // launch by recoverFromCrashIfNeeded().)
-        if audioRecorder.isRecording {
-            audioRecorder.stop()
-        }
+        // launch by recoverFromCrashIfNeeded().) The recording itself is
+        // deleted, not left in $TMPDIR until the next launch's sweep.
+        audioRecorder.discardAll()
     }
 
     private func startGlobalKeyMonitor() {

@@ -1,5 +1,8 @@
 import CoreAudio
 import AVFoundation
+import os
+
+private let recorderLog = Logger(subsystem: "com.tippi.app", category: "recorder")
 
 enum AudioRecorderError: LocalizedError {
     case permissionDenied
@@ -32,7 +35,14 @@ final class AudioRecorder: NSObject, ObservableObject {
     @Published private(set) var elapsed: TimeInterval = 0
 
     private var engine: AVAudioEngine?
+    private var resampler: AudioResampler?
     private var store = SampleStore()
+    /// Takes that another owner's `start()` finalized while they were still
+    /// running (the recorder is shared). The original owner collects its file
+    /// via `stop(ifStartedBy:)` or deletes it via `discard(ifStartedBy:)` —
+    /// before, popup and translate lost the URL and the WAV stayed in $TMPDIR
+    /// until the next launch (review 2026-10-02).
+    private var displaced: [Owner: URL] = [:]
     private var configObserver: NSObjectProtocol?
     private var levelTimer: Timer?
     private var outputURL: URL?
@@ -96,10 +106,14 @@ final class AudioRecorder: NSObject, ObservableObject {
         // recorder/outputURL, orphan the previous WAV (the user's voice) and leak
         // the still-running recorder. Finalize the previous take first.
         if isRecording {
-            // Finalized, not deleted: the other owner still holds this URL and
-            // transcribes what was recorded so far.
+            // Finalized, not deleted: kept for its owner, who transcribes or
+            // discards what was recorded so far.
             NSLog("Tippi: AudioRecorder.start() called while already recording — finalizing previous take first")
-            _ = stop()
+            let previous = self.owner   // not the parameter: who holds the running take
+            if let url = stop(), let previous {
+                if let older = displaced[previous] { try? FileManager.default.removeItem(at: older) }
+                displaced[previous] = url
+            }
         }
 
         let url = FileManager.default.temporaryDirectory
@@ -107,8 +121,9 @@ final class AudioRecorder: NSObject, ObservableObject {
 
         let store = SampleStore()
         let engine = AVAudioEngine()
+        let resampler: AudioResampler
         do {
-            try Self.installTap(on: engine, into: store)
+            resampler = try Self.installTap(on: engine, into: store)
             engine.prepare()
             try engine.start()
         } catch let err as AudioRecorderError {
@@ -119,6 +134,7 @@ final class AudioRecorder: NSObject, ObservableObject {
             throw AudioRecorderError.setupFailed(error.localizedDescription)
         }
         self.engine = engine
+        self.resampler = resampler
         self.store = store
         observeConfigurationChanges(of: engine)
         outputURL = url
@@ -134,7 +150,8 @@ final class AudioRecorder: NSObject, ObservableObject {
     /// `nonisolated` on purpose: the block runs on the audio render thread and
     /// must not be inferred as main-actor code (see scripts/concurrency-lint.sh,
     /// 2.11.5 crash). It only touches `store` (locked) and its own resampler.
-    nonisolated private static func installTap(on engine: AVAudioEngine, into store: SampleStore) throws {
+    @discardableResult
+    nonisolated private static func installTap(on engine: AVAudioEngine, into store: SampleStore) throws -> AudioResampler {
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
         // A tap whose format differs from the hardware makes AVAudioEngine raise an
@@ -150,6 +167,7 @@ final class AudioRecorder: NSObject, ObservableObject {
                 NSLog("Tippi AudioRecorder: conversion failed — \(error.localizedDescription)")
             }
         }
+        return resampler
     }
 
     /// The input device can change mid-take (AirPods connect, USB mic unplugged).
@@ -179,10 +197,11 @@ final class AudioRecorder: NSObject, ObservableObject {
         changed.stop()
         let fresh = AVAudioEngine()
         do {
-            try Self.installTap(on: fresh, into: store)
+            let freshResampler = try Self.installTap(on: fresh, into: store)
             fresh.prepare()
             try fresh.start()
             engine = fresh
+            resampler = freshResampler
             observeConfigurationChanges(of: fresh)
             NSLog("Tippi AudioRecorder: input changed mid-take — resumed (attempt \(attempt))")
         } catch {
@@ -213,8 +232,26 @@ final class AudioRecorder: NSObject, ObservableObject {
     /// that abandons its own take. `_ = stop()` forgot the URL and left the
     /// user's voice in $TMPDIR until the next launch's sweep (audit 2026-09-27).
     func discard(ifStartedBy owner: Owner) {
+        if let url = displaced.removeValue(forKey: owner) { try? FileManager.default.removeItem(at: url) }
         guard isRecording, self.owner == owner else { return }
         if let url = stop() { try? FileManager.default.removeItem(at: url) }
+    }
+
+    /// Ends `owner`'s take and returns its WAV — the running take if `owner`
+    /// started it, or the one another owner's `start()` finalized meanwhile.
+    /// Never stops someone else's take: before, the popup's mic button stopped
+    /// a dictation that had taken over the recorder and transcribed it in the
+    /// popup (review 2026-10-02).
+    func stop(ifStartedBy owner: Owner) -> URL? {
+        if isRecording, self.owner == owner { return stop() }
+        return displaced.removeValue(forKey: owner)
+    }
+
+    /// Quit: nothing of the user's voice may stay behind in $TMPDIR.
+    func discardAll() {
+        for url in displaced.values { try? FileManager.default.removeItem(at: url) }
+        displaced = [:]
+        if isRecording, let url = stop() { try? FileManager.default.removeItem(at: url) }
     }
 
     /// Stops recording, writes the WAV and returns its URL. The file is
@@ -227,10 +264,24 @@ final class AudioRecorder: NSObject, ObservableObject {
         if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
         configObserver = nil
         if let engine {
+            // The tap hands over audio about every 100 ms; removing it at once
+            // dropped whatever was spoken since the last hand-over — the end of
+            // the last word on a quick release (review 2026-10-02). Wait for one
+            // more delivery, at most 150 ms, so the tail is in the take. Blocks
+            // the main thread for that moment; deliveries come on the audio thread.
+            if engine.isRunning {
+                let seen = store.deliveries
+                let started = Date()
+                let delivered = store.waitForDelivery(after: seen, timeout: 0.15)
+                recorderLog.info("stop: waited \(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) ms for the last delivery (\(delivered ? "arrived" : "timed out", privacy: .public))")
+            }
             engine.inputNode.removeTap(onBus: 0)   // no further buffers after this
             engine.stop()
+            // And what the resampler still holds (its filter delay).
+            if let tail = try? resampler?.flush() { store.append(tail) }
         }
         engine = nil
+        resampler = nil
         isRecording = false
         level = 0
         restoreSystemAudioIfNeeded()

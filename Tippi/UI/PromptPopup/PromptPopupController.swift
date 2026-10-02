@@ -143,9 +143,8 @@ final class PromptPopupController {
         }
         panel?.orderOut(nil)
         panel = nil
-        if audioRecorder?.isRecording == true {
-            audioRecorder?.discard(ifStartedBy: .popup)
-        }
+        // Owner-checked; also deletes a take a dictation finalized meanwhile.
+        audioRecorder?.discard(ifStartedBy: .popup)
         audioRecorder = nil
     }
 

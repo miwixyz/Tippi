@@ -147,6 +147,14 @@ private struct LiveTextBox: View {
     let size: LiveTextSize
 
     var body: some View {
+        // The animation sits here, where `preview` is observed: on the container
+        // it never fired (review 2026-10-02). Keyed on appearing only, so the
+        // per-second text updates don't animate.
+        ZStack { box }
+            .animation(.easeOut(duration: 0.15), value: preview.text.isEmpty)
+    }
+
+    @ViewBuilder private var box: some View {
         if !preview.text.isEmpty {
             Text(LiveTranscriptionPreview.tail(preview.text, maxCharacters: size.tailCharacters))
                 .font(FamilyTheme.font(size.pointSize))
@@ -163,6 +171,10 @@ private struct LiveTextBox: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
                 .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
                 .transition(.opacity)
+                // VoiceOver reads the whole text, without the leading "…".
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(preview.text))
+                .accessibilityAddTraits(.updatesFrequently)
         }
     }
 }
@@ -198,7 +210,6 @@ private struct IndicatorContainer: View {
             }
             .frame(width: size.windowSize.width, height: size.windowSize.height,
                    alignment: position.alignment)
-            .animation(.easeOut(duration: 0.15), value: preview.text.isEmpty)
         } else {
             pill
         }
@@ -237,8 +248,11 @@ final class RecordingIndicatorWindowController {
         let size = live == nil ? hostView.fittingSize
             : NSSize(width: textSize.windowSize.width + 2 * room, height: textSize.windowSize.height + 2 * room)
 
-        // On the screen that currently holds the cursor.
-        let screen = NSScreen.screens.first {
+        // On the screen that currently holds the cursor — except when the
+        // indicator is already up (recording → transcribing): then it stays on
+        // its screen instead of following the mouse (review 2026-10-02).
+        let current = window?.isVisible == true ? window?.screen : nil
+        let screen = current ?? NSScreen.screens.first {
             NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
         } ?? NSScreen.main
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
