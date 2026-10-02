@@ -1624,6 +1624,7 @@ private struct VoiceTab: View {
     @State private var dictationIndicatorPosition: DictationSettings.IndicatorPosition = DictationSettings.indicatorPosition
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationLayout: Bool = DictationSettings.layoutEnabled
+    @State private var dictationLivePreview: Bool = DictationSettings.livePreviewEnabled
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
     @State private var dictationPolishProvider: String = DictationSettings.postProcessProviderOverride
     @State private var dictationPolishModel: String = DictationSettings.postProcessModelOverride
@@ -1769,6 +1770,16 @@ private struct VoiceTab: View {
                     .onChange(of: dictationIndicatorPosition) { _, new in
                         DictationSettings.indicatorPosition = new
                     }
+
+                    Toggle(String(localized: "settings.voice.dictation.livePreview.enable"), isOn: $dictationLivePreview)
+                        .onChange(of: dictationLivePreview) { _, new in DictationSettings.livePreviewEnabled = new }
+                        .disabled(engine != SpeechEngine.Kind.parakeet.rawValue)
+                    Text(String(localized: engine == SpeechEngine.Kind.parakeet.rawValue
+                                ? "settings.voice.dictation.livePreview.body"
+                                : "settings.voice.dictation.livePreview.parakeetOnly"))
+                        .font(FamilyTheme.font(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Divider().padding(.vertical, 4)
 

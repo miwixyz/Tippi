@@ -622,6 +622,9 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.dictation.indicator.position" = "Indicator position";
 "settings.voice.dictation.indicator.bottom" = "Bottom";
 "settings.voice.dictation.indicator.top" = "Top";
+"settings.voice.dictation.livePreview.enable" = "Show text live while recording";
+"settings.voice.dictation.livePreview.body" = "The recording window shows what you are saying, updated about once a second. The inserted text is the same. Costs one extra recognition pass per second — leave it off on older or slower Macs.";
+"settings.voice.dictation.livePreview.parakeetOnly" = "Only with the Parakeet engine (see above).";
 "settings.voice.dictation.mode.needsPermission" = "This style needs Input Monitoring. Without it the key does nothing.";
 "settings.voice.dictation.mode.grantPermission" = "Open Settings…";
 "settings.voice.dictation.mode.recheckPermission" = "Check again";

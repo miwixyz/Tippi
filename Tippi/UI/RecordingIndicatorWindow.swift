@@ -114,6 +114,56 @@ private struct RecordingIndicatorView: View {
     }
 }
 
+// MARK: - Live text (2026-10-02)
+
+/// Live transcription under/over the pill — only while recording, only when the
+/// setting is on (LiveTranscriptionPreview). Shows the tail of the text: what is
+/// being said right now. Same glass as the pill.
+private struct LiveTextBox: View {
+    @ObservedObject var preview: LiveTranscriptionPreview
+
+    var body: some View {
+        if !preview.text.isEmpty {
+            Text(LiveTranscriptionPreview.tail(preview.text))
+                .font(FamilyTheme.font(.callout))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(3)
+                .frame(maxWidth: RecordingIndicatorWindowController.liveSize.width - 40, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .tippiGlass(in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+                .transition(.opacity)
+        }
+    }
+}
+
+/// Pill plus optional live text. With live text the window has a fixed size
+/// (the text grows inside it instead of the window resizing every second); the
+/// pill stays where it always was — at the bottom of that area, or at the top
+/// when the indicator sits at the top of the screen.
+private struct IndicatorContainer: View {
+    let pill: RecordingIndicatorView
+    let preview: LiveTranscriptionPreview?
+    let atTop: Bool
+
+    var body: some View {
+        if let preview {
+            VStack(spacing: 8) {
+                if atTop { pill; LiveTextBox(preview: preview) } else { LiveTextBox(preview: preview); pill }
+            }
+            .frame(width: RecordingIndicatorWindowController.liveSize.width,
+                   height: RecordingIndicatorWindowController.liveSize.height,
+                   alignment: atTop ? .top : .bottom)
+            .animation(.easeOut(duration: 0.15), value: preview.text.isEmpty)
+        } else {
+            pill
+        }
+    }
+}
+
 // MARK: - Controller
 
 /// Persistent floating indicator for dictation. Unlike the toast, it stays
@@ -132,13 +182,19 @@ final class RecordingIndicatorWindowController {
     /// freshly-shown window.
     private var generation = 0
 
-    func show(mode: Mode, recorder: AudioRecorder, aiEnabled: Bool = false, providerName: String? = nil,
-              isMail: Bool = false) {
+    /// Window area while live text is shown — room for the pill plus three lines.
+    static let liveSize = NSSize(width: 480, height: 150)
+
+    func show(mode: Mode, recorder: AudioRecorder, preview: LiveTranscriptionPreview? = nil,
+              aiEnabled: Bool = false, providerName: String? = nil, isMail: Bool = false) {
         generation &+= 1
-        let hostView = NSHostingView(rootView: RecordingIndicatorView(
-            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail))
+        let pill = RecordingIndicatorView(
+            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail)
+        let live = mode == .recording ? preview : nil
+        let hostView = NSHostingView(rootView: IndicatorContainer(
+            pill: pill, preview: live, atTop: DictationSettings.indicatorPosition == .top))
         hostView.layout()
-        let size = hostView.fittingSize
+        let size = live == nil ? hostView.fittingSize : Self.liveSize
 
         // Bottom-center of the screen that currently holds the cursor.
         let screen = NSScreen.screens.first {

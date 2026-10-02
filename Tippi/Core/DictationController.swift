@@ -317,6 +317,7 @@ final class DictationController: ObservableObject {
     /// swallowed while another app owned the event tap). Without this, "record
     /// while held" can mean "record until the disk is full".
     private var holdWatchdog: Timer?
+    private var livePreview: LiveTranscriptionPreview?   // nil: setting off or Whisper
 
     /// Which hot key started the running recording — the mail hot key always lays
     /// the text out (`DictationLayout.layoutWanted`). Set at start, not at stop.
@@ -398,9 +399,17 @@ final class DictationController: ObservableObject {
         do {
             let url = try recorder.start(owner: .dictation)
             state = .recording(url)
+            livePreview?.stop()
+            livePreview = nil
+            if LiveTranscriptionPreview.isActive {
+                let preview = LiveTranscriptionPreview()
+                preview.start(recorder: recorder)
+                livePreview = preview
+            }
             RecordingIndicatorWindowController.shared.show(
                 mode: .recording,
                 recorder: recorder,
+                preview: livePreview,
                 aiEnabled: DictationSettings.postProcessEnabled,
                 isMail: source == .mail
             )
@@ -429,6 +438,8 @@ final class DictationController: ObservableObject {
         // Central exit from `.recording` — covers tap-toggle, hold release and watchdog.
         holdWatchdog?.invalidate()
         holdWatchdog = nil
+        livePreview?.stop()
+        livePreview = nil
         recorder.stop()
         state = .transcribing
         RecordingIndicatorWindowController.shared.show(

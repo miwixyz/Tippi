@@ -597,6 +597,9 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.voice.dictation.indicator.position" = "Position der Anzeige";
 "settings.voice.dictation.indicator.bottom" = "Unten";
 "settings.voice.dictation.indicator.top" = "Oben";
+"settings.voice.dictation.livePreview.enable" = "Text schon während der Aufnahme anzeigen";
+"settings.voice.dictation.livePreview.body" = "Das Aufnahmefenster zeigt mit, was du sagst – etwa jede Sekunde aktualisiert. Eingefügt wird derselbe Text. Kostet einen zusätzlichen Erkennungsdurchlauf pro Sekunde – auf älteren oder langsameren Macs lieber ausgeschaltet lassen.";
+"settings.voice.dictation.livePreview.parakeetOnly" = "Nur mit der Engine Parakeet (siehe oben).";
 "settings.voice.dictation.mode.needsPermission" = "Diese Variante braucht die Eingabeüberwachung. Ohne sie passiert beim Tastendruck nichts.";
 "settings.voice.dictation.mode.grantPermission" = "Einstellungen öffnen …";
 "settings.voice.dictation.mode.recheckPermission" = "Erneut prüfen";

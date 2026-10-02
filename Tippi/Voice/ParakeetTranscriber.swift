@@ -181,6 +181,18 @@ actor ParakeetTranscriber {
         _ = try? await loadedManager()
     }
 
+    /// Live preview (LiveTranscriptionPreview): transcribes in-memory 16 kHz
+    /// mono samples with the same model, decoder setup and language hint as
+    /// `transcribe(wavURL:)` — so the preview matches the final text. Nothing
+    /// touches the disk. Returns "" instead of throwing when nothing was heard yet.
+    func transcribe(samples: [Float]) async throws -> String {
+        let manager = try await loadedManager()
+        var decoderState = TdtDecoderState.make()
+        let result = try await manager.transcribe(samples, decoderState: &decoderState,
+                                                  language: Language(rawValue: WhisperConfig.language))
+        return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     func transcribe(wavURL: URL) async throws -> String {
         // Same privacy contract as WhisperTranscriber: the recording must
         // not outlive the transcription attempt.
