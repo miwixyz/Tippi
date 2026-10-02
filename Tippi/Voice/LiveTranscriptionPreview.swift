@@ -76,7 +76,11 @@ enum LiveTextSize: String, CaseIterable {
     case normal, large, extraLarge
 
     var pointSize: CGFloat {
-        switch self { case .normal: return 13; case .large: return 17; case .extraLarge: return 22 }
+        switch self {
+        case .normal: return 13
+        case .large: return 17
+        case .extraLarge: return 22
+        }
     }
     var windowSize: NSSize {
         switch self {
@@ -86,7 +90,11 @@ enum LiveTextSize: String, CaseIterable {
         }
     }
     var tailCharacters: Int {
-        switch self { case .normal: return 180; case .large: return 150; case .extraLarge: return 130 }
+        switch self {
+        case .normal: return 180
+        case .large: return 150
+        case .extraLarge: return 130
+        }
     }
 }
 
