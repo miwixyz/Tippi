@@ -88,7 +88,7 @@ your text for anything that touches AI.
   - **Ollama** (local, fully offline)
   - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Qwen 3.5 2B (4-bit) preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Proactive model-retirement warning** — Tippi checks each configured provider's live model catalogue in the background at launch and flags in Settings if your selected model has been retired, instead of only finding out when a real task 404s.
-- **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, hold to record (push-to-talk), Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
+- **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, click to start recording and click again to stop, Parakeet or Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Free-form instruction — typed or spoken** — select text, trigger the hotkey, then type an instruction in the popup's input field (e.g. "reply to this email politely", "translate to Spanish") and press Return, or press the mic button and speak it. Tippi follows it literally: transform instructions (translate, summarize, shorten) operate on the text as-is, reaction instructions (reply, respond) produce an answer. The field auto-focuses; press ↓ to jump back to the prompt list
 - **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating pill shows recording (live waveform), transcribing, and AI-cleanup state with the actual provider name (e.g. "· ✨ Groq"). **Dictation for emails (v2.21)**: a second hot key (default **⌃⌥⌘B**) writes greeting, one sentence per line and sign-off, and never presses Return; the same layout is an optional switch for normal dictation (Settings → Dictation)
 - **Custom words, including pronunciation variants**: Settings → Dictionary & Snippets → Custom words keeps the house spelling of brands and names (iPhone stays iPhone, not Iphone) during AI cleanup. When transcription hears a *different real word* (you say "Tippi", it writes "Tipi"), add an arrow entry: `Tipi → Tippi` (`->` and `=>` work too; several heard variants with commas). Tippi swaps exactly that whole word right after transcription, for Parakeet and Whisper, with or without AI cleanup; word parts ("Tipis") and punctuation stay untouched. The AI is deliberately never allowed to guess such swaps and only ever sees the target spelling
@@ -207,7 +207,7 @@ A short confirmation toast appears near the cursor after a quick action runs. To
 
 Press **⌥⌘T** with no text selected. A small popup with a mic button appears. Hold the button to record, release to transcribe. Whisper processes your audio locally. The popup shows the transcript — pick an AI prompt to transform it, or click "Insert directly" to paste as-is.
 
-**Voice Instruction:** select text first, then hold the mic button in the popup and speak your instruction (e.g. "translate this to English"). Tippi applies it via AI — no prompt menu step.
+**Voice Instruction:** select text first, then click the mic button in the popup, speak your instruction and click again (e.g. "translate this to English"). Tippi applies it via AI — no prompt menu step.
 
 Parakeet v3, the default speech engine, downloads its model on first use. If you switch to Whisper, download a Whisper model first: Settings → Dictation → Download Model.
 
@@ -446,7 +446,7 @@ Bug reports and pull requests are welcome. For significant changes, please open 
 - **Hotkey**: `NSEvent.addGlobalMonitorForEvents(matching: .keyDown)` plus a Carbon `RegisterEventHotKey` backup. For self-signed builds, the macOS-native keyboard shortcut binding to the "Trigger Tippi…" menu item is the most reliable path.
 - **LLM layer**: a `LLMProvider` protocol with eleven implementations (OpenAI, Anthropic, Gemini, Mistral, Scaleway, Groq, Kimi, Nebius, OpenRouter, Ollama, MLX); `LLMRouter` picks the preferred configured provider with automatic fallthrough. OpenAI-compatible providers (OpenAI, Mistral, Scaleway, Groq, Kimi, Nebius) share a single `openAIChatComplete()` / `openAIChatStream()` helper. The MLX provider additionally drives `MLXServerManager`, which spawns and supervises a local `mlx_lm.server` process and resolves the active model ID via `/v1/models`.
 - **Voice layer**:
-  - `AudioRecorder` — AVFoundation-based push-to-talk capture
+  - `AudioRecorder` — AVAudioEngine-based capture shared by dictation, popup mic and translate
   - `ParakeetTranscriber` — default engine since v1.12.1: Parakeet v3 via FluidAudio (CoreML, Neural Engine), in-process; model downloaded from Hugging Face on first use
   - `WhisperTranscriber` — wraps a statically linked `whisper-cli` binary bundled in the app; runs out-of-process, no dynamic library dependencies
   - `WhisperModelManager` — handles in-app model download, verification, and storage in Application Support

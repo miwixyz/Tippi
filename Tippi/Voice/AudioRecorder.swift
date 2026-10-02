@@ -273,7 +273,7 @@ final class AudioRecorder: NSObject, ObservableObject {
                 let seen = store.deliveries
                 let started = Date()
                 let delivered = store.waitForDelivery(after: seen, timeout: 0.15)
-                recorderLog.info("stop: waited \(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) ms for the last delivery (\(delivered ? "arrived" : "timed out", privacy: .public))")
+                recorderLog.notice("stop: waited \(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) ms for the last delivery (\(delivered ? "arrived" : "timed out", privacy: .public))")
             }
             engine.inputNode.removeTap(onBus: 0)   // no further buffers after this
             engine.stop()
