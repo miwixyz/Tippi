@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.23.0] — 2026-10-05
+
+- _Add release notes here._
+
 ## [2.22.1] — 2026-10-02
 
 Saubere Ränder an der Aufnahme-Anzeige, das Ende des letzten Worts bleibt in der Aufnahme, und Diktat, Popup und Übersetzen kommen sich nicht mehr in die Quere.
