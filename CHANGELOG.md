@@ -2,17 +2,24 @@
 
 ## [2.23.0] — 2026-10-05
 
-Das Notizen-Fenster zählt jetzt auch die Zeilen.
+Listen im Notizen-Fenster, und der Zähler zählt jetzt auch die Zeilen.
 
 ### Neu
 
+- **Listen in Notizen: Aufzählung, Checkliste, nummeriert.** Drei neue Knöpfe unten im
+  Notizen-Fenster machen die markierten Zeilen zur Liste; ein zweiter Klick macht sie
+  wieder zu normalem Text. Beginnt eine Zeile schon mit `- `, `- [ ] ` oder `1. `, setzt
+  Return die Liste fort (Nummern zählen hoch, neue Checklisten-Punkte sind unabgehakt);
+  Return auf einem leeren Punkt beendet die Liste. Ein Klick auf `[ ]` hakt ab, ein
+  zweiter Klick nimmt den Haken wieder weg. Die Notiz bleibt reiner Text — TippAI zeigt
+  dieselben Zeilen als Liste. Wer keine Listen benutzt, merkt nichts davon.
 - **Zeilenzahl im Notizen-Fenster.** Rechts unten steht jetzt „Wörter · Zeichen · Zeilen“.
   Eine leere Notiz hat 0 Zeilen; jeder Zeilenumbruch beginnt eine neue Zeile, auch einer am
   Ende, weil der Cursor dort schon in der nächsten Zeile steht.
 
 ### Intern
 
-- 638 Tests bestanden; Zählregel zusätzlich gegen eine zweite, unabhängige Zählung an
+- 653 Tests bestanden (15 neu für die Listen, davon 4 an einem echten Textfeld); Zählregel zusätzlich gegen eine zweite, unabhängige Zählung an
   9 Beispielen geprüft (leer, Umbruch am Ende, `\r\n`, Unicode-Zeilentrenner).
 
 ## [2.22.1] — 2026-10-02

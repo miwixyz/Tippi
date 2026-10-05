@@ -84,6 +84,90 @@ struct PlainTextEditor: NSViewRepresentable {
             }
         }
 
+        // MARK: Lists (2026-10-05) — logic in `NoteListEditing`, only the wiring here.
+        // All edits go through `insertText(_:replacementRange:)`: that registers
+        // undo (⌘Z) and fires `textDidChange`, so the binding and autosave follow.
+
+        /// Return inside a list item continues the list; Return on an empty item
+        /// ends it. Anywhere else (or while composing with an input method) the
+        /// normal newline.
+        override func insertNewline(_ sender: Any?) {
+            let selection = selectedRange()
+            guard !hasMarkedText(), selection.length == 0 else { return super.insertNewline(sender) }
+            let ns = string as NSString
+            let lineRange = ns.lineRange(for: NSRange(location: selection.location, length: 0))
+            var line = ns.substring(with: lineRange)
+            if line.hasSuffix("\n") { line.removeLast() }
+            guard let item = NoteListEditing.parse(line) else { return super.insertNewline(sender) }
+            let prefixLength = (item.prefix as NSString).length
+            // Cursor inside the marker ("- |[ ] …"): a normal newline, nothing clever.
+            guard selection.location - lineRange.location >= prefixLength else { return super.insertNewline(sender) }
+
+            switch NoteListEditing.continuation(forLineBeforeCursor: line) {
+            case .none:
+                super.insertNewline(sender)
+            case .endList(let length):
+                insertText("", replacementRange: NSRange(location: lineRange.location, length: length))
+            case .continueWith(let prefix):
+                insertText("\n" + prefix, replacementRange: selection)
+                scrollRangeToVisible(selectedRange())
+            }
+        }
+
+        /// A single click on `[ ]` / `[x]` checks or unchecks the item without
+        /// moving the cursor. Every other click is a normal click.
+        override func mouseDown(with event: NSEvent) {
+            if event.clickCount == 1,
+               event.modifierFlags.isDisjoint(with: [.shift, .command, .option, .control]),
+               toggleCheckbox(at: event) {
+                return
+            }
+            super.mouseDown(with: event)
+        }
+
+        private func toggleCheckbox(at event: NSEvent) -> Bool {
+            let ns = string as NSString
+            guard ns.length > 0 else { return false }
+            let point = convert(event.locationInWindow, from: nil)
+            let index = min(characterIndexForInsertion(at: point), ns.length)
+            let lineRange = ns.lineRange(for: NSRange(location: min(index, ns.length - 1), length: 0))
+            var line = ns.substring(with: lineRange)
+            if line.hasSuffix("\n") { line.removeLast() }
+            guard let box = NoteListEditing.checkboxRange(in: line),
+                  let replacement = NoteListEditing.toggledCheckbox(in: line) else { return false }
+            let boxInText = NSRange(location: lineRange.location + box.location, length: box.length)
+            // Insertion index alone is too coarse (a click right of a short line
+            // maps to its end) — require the pointer to be on the box itself.
+            let boxOnScreen = firstRect(forCharacterRange: boxInText, actualRange: nil)
+            guard boxOnScreen.insetBy(dx: -3, dy: -2).contains(NSEvent.mouseLocation) else { return false }
+
+            let selection = selectedRange()
+            insertText(replacement, replacementRange: boxInText)
+            setSelectedRange(selection)   // same length — the old selection is still valid
+            return true
+        }
+
+        /// Toolbar / shortcut: makes the selected lines (or the cursor's line) a
+        /// list of `kind`, or plain text again when they already are one.
+        func applyList(_ kind: NoteListEditing.Kind) {
+            window?.makeFirstResponder(self)
+            let ns = string as NSString
+            let lineRange = ns.lineRange(for: selectedRange())
+            var block = ns.substring(with: lineRange)
+            let endsWithNewline = block.hasSuffix("\n")
+            if endsWithNewline { block.removeLast() }
+            let converted = NoteListEditing.toggle(kind, lines: block.components(separatedBy: "\n"))
+                .joined(separator: "\n")
+            insertText(converted + (endsWithNewline ? "\n" : ""), replacementRange: lineRange)
+            let length = (converted as NSString).length
+            // One line: cursor at its end (ready to type). Several: keep them selected.
+            if block.contains("\n") {
+                setSelectedRange(NSRange(location: lineRange.location, length: length))
+            } else {
+                setSelectedRange(NSRange(location: lineRange.location + length, length: 0))
+            }
+        }
+
         /// Called by AppKit when the user picks a font in the system Font
         /// Panel (`NSFontManager.shared.orderFrontFontPanel`, wired to the
         /// toolbar button in `NotesRootView`). With `isRichText = false`

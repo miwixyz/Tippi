@@ -71,6 +71,7 @@ Tippi/
 │   │                               #   Problem (der Monitor rechnet alle 3 s neu)
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
+│   ├── NoteListEditing.swift       # Listen in Notizen: Erkennen, Fortsetzen, Umschalten, Abhaken (reine Textlogik)
 │   ├── CurrencyConversion.swift    # v2.19 — Betragserkennung, Kurse open.er-api.com (Cache, Drossel)
 │   ├── PasswordGenerator.swift     # v2.19 — 12 Zeichen, SystemRandomNumberGenerator
 │   ├── Snippets/                   # v2.0 — systemweite Tipp-Expansion
@@ -142,7 +143,7 @@ Tippi/
 │   │   ├── NotesRootView.swift             # Split View
 │   │   ├── NotesListView.swift             # Liste + Neu/Löschen (Bestätigungsdialog)
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
-│   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck
+│   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck, Listen-Verdrahtung
 │   ├── SettingsView.swift          # Seitenleiste + die meisten der 11 Bereiche (großes File, private structs)
 │   ├── CurrencyFavoritesSection.swift # v2.19 — Lieblingswährungen + Quellenhinweis Exchange Rate API;
 │   │                                  #   2.21: Auswahl „Ergebnis" (anzeigen + kopieren / anhängen)

@@ -99,6 +99,22 @@ struct NotesEditorView: View {
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .help(String(localized: "notes.export"))
 
+                // Lists (2026-10-05): only act when pressed — the editor itself
+                // continues a list only on lines that already are one.
+                ForEach(Self.listButtons, id: \.key) { button in
+                    Button {
+                        NSApp.keyWindow?.contentView?
+                            .firstDescendant(ofType: PlainTextEditor.PasteAwareTextView.self)?
+                            .applyList(button.kind)
+                    } label: {
+                        Label(String(localized: String.LocalizationValue(button.key)), systemImage: button.symbol)
+                            .labelStyle(.iconOnly)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .help(String(localized: String.LocalizationValue(button.key)))
+                }
+
                 // Without this the held-back change is invisible: the list shows
                 // a version the other Mac has already moved past, and nothing
                 // says so. Silently keeping the stale one is the failure mode
@@ -146,6 +162,12 @@ struct NotesEditorView: View {
             ToastWindowController.shared.show(message: String(localized: "notes.export.failed"))
         }
     }
+
+    private static let listButtons: [(key: String, symbol: String, kind: NoteListEditing.Kind)] = [
+        ("notes.list.bullet", "list.bullet", .bullet),
+        ("notes.list.checklist", "checklist", .checklist),
+        ("notes.list.numbered", "list.number", .numbered)
+    ]
 
     private var wordCount: Int {
         text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count

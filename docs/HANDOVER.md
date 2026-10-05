@@ -141,7 +141,7 @@ Tippi/
 │       ├── NotesRootView.swift     Split View, refresh() bei .onAppear
 │       ├── NotesListView.swift     Liste + Neu/Löschen (Löschen nur mit Bestätigungsdialog)
 │       ├── NotesEditorView.swift   Autosave debounced, Wort-/Zeichen-/Zeilenzähler
-│       └── PlainTextEditor.swift   NSViewRepresentable — Paste-Erkennung + Rechtschreibprüfung
+│       └── PlainTextEditor.swift   NSViewRepresentable — Paste-Erkennung + Rechtschreibprüfung + Listen (Return, Klick auf [ ], Knöpfe → Core/NoteListEditing.swift)
 ├── Helpers/
 │   └── whisper-cli                 Statischer Binary (gitignored), via `make prepare-binary`
 └── Resources/
