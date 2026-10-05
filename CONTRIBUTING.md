@@ -199,6 +199,14 @@ is not the pinned, clean version and fails on non-system dylibs;
 `prune-releases.sh` and `docs-drift-check.sh` fail instead of reporting success
 when `gh` or a doc file is missing.
 
+Since v2.23.0: the emoji-database check (`generate-emoji-data.py --check`) only
+downloads the pinned Unicode sources from `raw.githubusercontent.com` when
+`Tippi/Resources/emoji-data.json` or the generator changed since the last release
+tag — that tag already passed the same check, and the skip is printed, not silent.
+`EMOJI_CHECK_FORCE=1 make release` always runs the full check. Reason: on
+2026-10-05 a network filter blocked only that host and stopped a release whose
+emoji files were byte-identical to the previous one.
+
 | Step | What happens |
 |------|-------------|
 | 1 | `make prepare-binary` — builds static `whisper-cli` |
