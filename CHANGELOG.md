@@ -2,7 +2,18 @@
 
 ## [2.23.0] — 2026-10-05
 
-- _Add release notes here._
+Das Notizen-Fenster zählt jetzt auch die Zeilen.
+
+### Neu
+
+- **Zeilenzahl im Notizen-Fenster.** Rechts unten steht jetzt „Wörter · Zeichen · Zeilen“.
+  Eine leere Notiz hat 0 Zeilen; jeder Zeilenumbruch beginnt eine neue Zeile, auch einer am
+  Ende, weil der Cursor dort schon in der nächsten Zeile steht.
+
+### Intern
+
+- 638 Tests bestanden; Zählregel zusätzlich gegen eine zweite, unabhängige Zählung an
+  9 Beispielen geprüft (leer, Umbruch am Ende, `\r\n`, Unicode-Zeilentrenner).
 
 ## [2.22.1] — 2026-10-02
 

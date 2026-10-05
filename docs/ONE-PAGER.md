@@ -57,6 +57,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Line count in the notes window (v2.23)** — the counter in the bottom right shows words · characters · lines
 - **24 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Add emojis · Defuse · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
 - **Type or speak a free-form instruction** — select text, then type ("reply to this email", "translate to Spanish") or speak it; Tippi applies it via AI directly
 - **Live text while dictating (v2.22)** — the recording window shows your words as you speak, from the same on-device model that writes the final text; three text sizes, six positions for the indicator. Off by default, Parakeet only.
