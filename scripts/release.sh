@@ -154,7 +154,19 @@ echo "  ✓ v${VERSION} mentioned in README.md + in-app Help (both languages)"
 # Generated emoji database must match its generator. Without this, a hand-edited
 # or half-regenerated emoji-data.json ships silently — the app would still build
 # and run, just with a database nobody can reproduce from the pinned sources.
-if [ -f scripts/generate-emoji-data.py ]; then
+#
+# The full check downloads the pinned Unicode sources from raw.githubusercontent.com.
+# When neither the database nor its generator changed since the last release tag,
+# that tag already passed this exact check (no waiver exists for it), so the
+# download is skipped — visibly. Real 2026-10-05: a network filter blocked only
+# raw.githubusercontent.com and stopped v2.23.0, although both files were
+# byte-identical to v2.22.1. EMOJI_CHECK_FORCE=1 always runs the full check.
+EMOJI_FILES=(Tippi/Resources/emoji-data.json scripts/generate-emoji-data.py)
+EMOJI_BASE_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+if [ -f scripts/generate-emoji-data.py ] && [ "${EMOJI_CHECK_FORCE:-0}" != "1" ] \
+   && [ -n "$EMOJI_BASE_TAG" ] && git diff --quiet "$EMOJI_BASE_TAG" -- "${EMOJI_FILES[@]}"; then
+    echo "  ✓ emoji-data.json + generator unchanged since ${EMOJI_BASE_TAG} (checked at that release) — download skipped"
+elif [ -f scripts/generate-emoji-data.py ]; then
     if command -v python3 >/dev/null 2>&1; then
         # Output kept and shown on failure: offline, --check fails on the
         # download and was misreported as "stale or hand-edited" (audit 2026-09-27).
