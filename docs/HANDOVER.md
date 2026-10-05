@@ -140,7 +140,7 @@ Tippi/
 │       │                           Preview/Translate: Notes ist ein eigenständiges Editier-Fenster)
 │       ├── NotesRootView.swift     Split View, refresh() bei .onAppear
 │       ├── NotesListView.swift     Liste + Neu/Löschen (Löschen nur mit Bestätigungsdialog)
-│       ├── NotesEditorView.swift   Autosave debounced, Wort-/Zeichenzähler
+│       ├── NotesEditorView.swift   Autosave debounced, Wort-/Zeichen-/Zeilenzähler
 │       └── PlainTextEditor.swift   NSViewRepresentable — Paste-Erkennung + Rechtschreibprüfung
 ├── Helpers/
 │   └── whisper-cli                 Statischer Binary (gitignored), via `make prepare-binary`

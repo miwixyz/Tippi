@@ -121,7 +121,7 @@ struct NotesEditorView: View {
 
                 Spacer()
 
-                Text(String(format: String(localized: "notes.counter"), wordCount, text.count))
+                Text(String(format: String(localized: "notes.counter"), wordCount, text.count, lineCount))
                     .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
@@ -149,6 +149,13 @@ struct NotesEditorView: View {
 
     private var wordCount: Int {
         text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
+    }
+
+    /// Lines as an editor counts them: an empty note has 0, otherwise every
+    /// line break starts a new line — a trailing break counts, because the
+    /// cursor already sits on that next line (Michael, 2026-10-05).
+    private var lineCount: Int {
+        text.isEmpty ? 0 : text.reduce(1) { $1.isNewline ? $0 + 1 : $0 }
     }
 
     /// Asks Tippi's configured AI provider for a short title and inserts it

@@ -716,7 +716,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "notes.export.failed" = "Couldn't export the note";
 "notes.pin.pin" = "Pin note window (stays visible when you switch apps)";
 "notes.pin.unpin" = "Unpin note window";
-"notes.counter" = "%d words · %d characters";
+"notes.counter" = "%d words · %d characters · %d lines";
 "notes.favorite" = "Add to Favorites";
 "notes.unfavorite" = "Remove from Favorites";
 "notes.section.favorites" = "Favorites";

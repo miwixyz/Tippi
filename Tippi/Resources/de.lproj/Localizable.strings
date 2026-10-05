@@ -718,7 +718,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "notes.export.failed" = "Notiz konnte nicht exportiert werden";
 "notes.pin.pin" = "Notizen-Fenster anpinnen (bleibt beim App-Wechsel sichtbar)";
 "notes.pin.unpin" = "Anpinnen aufheben";
-"notes.counter" = "%d Wörter · %d Zeichen";
+"notes.counter" = "%d Wörter · %d Zeichen · %d Zeilen";
 "notes.favorite" = "Zu Favoriten hinzufügen";
 "notes.unfavorite" = "Aus Favoriten entfernen";
 "notes.section.favorites" = "Favoriten";
