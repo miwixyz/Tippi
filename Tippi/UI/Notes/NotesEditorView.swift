@@ -113,6 +113,9 @@ struct NotesEditorView: View {
                     .buttonStyle(.plain)
                     .foregroundStyle(.secondary)
                     .help(String(localized: String.LocalizationValue(button.key)))
+                    // Measured 2026-10-05: icon-only buttons here announce only
+                    // "Taste" to VoiceOver — name them explicitly.
+                    .accessibilityLabel(Text(String(localized: String.LocalizationValue(button.key))))
                 }
 
                 // Without this the held-back change is invisible: the list shows

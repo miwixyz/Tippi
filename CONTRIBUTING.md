@@ -207,6 +207,12 @@ tag — that tag already passed the same check, and the skip is printed, not sil
 2026-10-05 a network filter blocked only that host and stopped a release whose
 emoji files were byte-identical to the previous one.
 
+For visual checks before a release, `./scripts/sichttest.sh <name>` builds an
+isolated copy "Tippi Test" (own bundle ID `com.tippi.app.sichtpruefung`, App Sandbox,
+no iCloud) and measures that it touches neither the iCloud notes nor
+`~/Library/Application Support/Tippi/Notes` — the folder the real Tippi migrates into
+iCloud. Quit the real Tippi first; reopening the copy shows the notes window.
+
 | Step | What happens |
 |------|-------------|
 | 1 | `make prepare-binary` — builds static `whisper-cli` |
