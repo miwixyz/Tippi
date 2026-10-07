@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.23.2] — 2026-10-07
+
+- _Add release notes here._
+
 ## [2.23.1] — 2026-10-07
 
 Diktat in Notizen stürzt nicht mehr ab, und die Aktionsleiste taucht nicht mehr an sinnlosen Stellen auf.
