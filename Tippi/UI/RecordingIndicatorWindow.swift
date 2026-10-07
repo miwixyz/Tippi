@@ -243,8 +243,8 @@ final class RecordingIndicatorWindowController {
             mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail)
         let live = mode == .recording ? preview : nil
         let textSize = DictationSettings.liveTextSize
-        // Fixed, separately measured size — same layout-loop fix as the toast (2026-10-07).
-        let (hostView, measured) = NSHostingView<AnyView>.fixedSizeHost(AnyView(IndicatorContainer(
+        // Fixed, separately measured size — same layout-loop fix as the toast, see `fixedSizeContent` (2026-10-07).
+        let (hostView, measured) = NSHostingView<AnyView>.fixedSizeContent(AnyView(IndicatorContainer(
             pill: pill, preview: live, position: DictationSettings.indicatorPosition, size: textSize)))
         let room = IndicatorContainer.shadowRoom
         let size = live == nil ? measured

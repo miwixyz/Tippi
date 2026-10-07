@@ -179,6 +179,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        #if DEBUG
+        // PRÜFSTAND (nur Debug, nur mit Umgebungsvariable): Diktat-Ende in einer Notiz nachspielen.
+        if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_DICTATION"] != nil {
+            Task { @MainActor in await self.reproNotesDictation() }
+        }
+        #endif
         // Design der App-Familie (2.20.0): Plus Jakarta Sans vor dem ersten Fenster
         // registrieren. Ohne Registrierung fällt SwiftUI still auf die Systemschrift
         // zurück — deshalb Ergebnis UND Auflösbarkeit protokollieren (Muster Kalli 0.6.0).
@@ -1590,6 +1596,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// `firstResponder` (not just window identity) means this stays `nil`
     /// while focus is on, say, the note list or a Settings text field, where
     /// none of this native-replacement machinery applies.
+    #if DEBUG
+    /// Prüfstand für den Absturz „Diktat in eine Tippi-Notiz“ (07.10.): spielt das Ende von
+    /// `DictationController.transcribeAndInsert` nach — Anzeige, Einfügen, Toast — ohne Mikrofon.
+    @MainActor private func reproNotesDictation() async {
+        try? await Task.sleep(for: .seconds(3))
+        NotesStore.shared.create()
+        showNotesWindow()
+        try? await Task.sleep(for: .seconds(2))
+        guard let window = NSApp.windows.first(where: { $0.identifier == NotesWindowController.windowIdentifier }),
+              let textView = window.contentView?.firstDescendant(ofType: PlainTextEditor.PasteAwareTextView.self) else {
+            NSLog("REPRO: kein Notiz-Editor gefunden")
+            return
+        }
+        window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(textView)
+        // macOS lässt eine im Hintergrund gestartete App nicht selbst nach vorn — im echten
+        // Fall hat Michael das Notizenfenster angeklickt. Darauf warten (bis 3 Min.).
+        NSLog("REPRO: warte auf Klick ins Notizenfenster …")
+        for _ in 0..<360 where !(window.isKeyWindow && NSApp.isActive) {
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        window.makeFirstResponder(textView)
+        NSLog("REPRO: Editor fokussiert, key=\(window.isKeyWindow) active=\(NSApp.isActive)")
+        for round in 1...5 {
+            // Vollständige Folge wie im echten Diktat: Aufnahme → Transkribiere → KI-Nachbearbeitung.
+            RecordingIndicatorWindowController.shared.show(
+                mode: .recording, recorder: audioRecorder, aiEnabled: DictationSettings.postProcessEnabled)
+            try? await Task.sleep(for: .seconds(2))
+            RecordingIndicatorWindowController.shared.show(
+                mode: .transcribing, recorder: audioRecorder, aiEnabled: DictationSettings.postProcessEnabled)
+            try? await Task.sleep(for: .milliseconds(600))
+            RecordingIndicatorWindowController.shared.show(
+                mode: .transcribing, recorder: audioRecorder, aiEnabled: true, providerName: "MLX")
+            try? await Task.sleep(for: .milliseconds(800))
+            ReplacementWriter.writeNative("Testdiktat \(round). ", in: textView, range: textView.selectedRange())
+            RecordingIndicatorWindowController.shared.hide()
+            ToastWindowController.shared.show(message: "Eingefügt · Parakeet v3")
+            NSLog("REPRO: Runde \(round) eingefügt + Toast")
+            try? await Task.sleep(for: .seconds(2.5))
+        }
+        NSLog("REPRO: fertig ohne Absturz")
+    }
+    #endif
+
     static func focusedNotesTextView() -> NSTextView? {
         NSApp.keyWindow?.firstResponder as? PlainTextEditor.PasteAwareTextView
     }
