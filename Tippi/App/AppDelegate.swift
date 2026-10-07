@@ -184,6 +184,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_DICTATION"] != nil {
             Task { @MainActor in await self.reproNotesDictation() }
         }
+        if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_SELECTION"] != nil {
+            Task { @MainActor in await self.reproNotesSelection() }
+        }
         #endif
         // Design der App-Familie (2.20.0): Plus Jakarta Sans vor dem ersten Fenster
         // registrieren. Ohne Registrierung fällt SwiftUI still auf die Systemschrift
@@ -1637,6 +1640,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try? await Task.sleep(for: .seconds(2.5))
         }
         NSLog("REPRO: fertig ohne Absturz")
+    }
+
+    /// Prüfstand „Aktionsleiste in Tippi-Notizen“ (07.10., nach 2.23.1 weg): Doppelklick
+    /// auf ein Wort per `NSApp.postEvent` — läuft durch dieselbe Ereignisschleife wie echte
+    /// Klicks, inklusive Mausverfolgung der Textansicht — und meldet, ob die Leiste kommt.
+    @MainActor private func reproNotesSelection() async {
+        UserDefaults.standard.set(true, forKey: SelectionPopupSettings.enabledKey)
+        try? await Task.sleep(for: .seconds(3))
+        selectionPopupMonitor.start()
+        NSLog("REPRO-SEL: AX=\(AXIsProcessTrusted()) monitorAktiv=\(selectionPopupMonitor.isActive)")
+        NotesStore.shared.create()
+        showNotesWindow()
+        try? await Task.sleep(for: .seconds(2))
+        guard let window = NSApp.windows.first(where: { $0.identifier == NotesWindowController.windowIdentifier }),
+              let textView = window.contentView?.firstDescendant(ofType: PlainTextEditor.PasteAwareTextView.self) else {
+            NSLog("REPRO-SEL: kein Notiz-Editor gefunden"); return
+        }
+        window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(textView)
+        textView.insertText("Eine Funktion wie OneThing integrieren", replacementRange: textView.selectedRange())
+        for _ in 0..<60 where !(window.isKeyWindow && NSApp.isActive) { try? await Task.sleep(for: .milliseconds(500)) }
+        window.makeFirstResponder(textView)
+        try? await Task.sleep(for: .milliseconds(500))
+        let word = (textView.string as NSString).range(of: "integrieren")
+        let screen = textView.firstRect(forCharacterRange: NSRange(location: word.location + 3, length: 1), actualRange: nil)
+        let point = window.convertPoint(fromScreen: NSPoint(x: screen.midX, y: screen.midY))
+        for (type, clicks) in [(NSEvent.EventType.leftMouseDown, 1), (.leftMouseUp, 1), (.leftMouseDown, 2), (.leftMouseUp, 2)] {
+            if let event = NSEvent.mouseEvent(with: type, location: point, modifierFlags: [],
+                                              timestamp: ProcessInfo.processInfo.systemUptime,
+                                              windowNumber: window.windowNumber, context: nil,
+                                              eventNumber: 0, clickCount: clicks, pressure: 1) {
+                NSApp.postEvent(event, atStart: false)
+            }
+            try? await Task.sleep(for: .milliseconds(60))
+        }
+        // Erschienen, nicht „noch da“: die Leiste schließt sich nach ~0,5 s, weil der echte
+        // Mauszeiger beim simulierten Klick woanders steht („pointer left“).
+        var appeared = false
+        for _ in 0..<20 where !appeared {
+            try? await Task.sleep(for: .milliseconds(50))
+            appeared = selectionPopupPanel.isShowingForTesting
+        }
+        NSLog("REPRO-SEL: markiert=\(textView.selectedRange()) leisteErschienen=\(appeared)")
     }
     #endif
 

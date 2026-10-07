@@ -11,6 +11,8 @@ import SwiftUI
 @MainActor
 final class SelectionActionBarPanel {
     private var panel: NSPanel?
+    /// Für Tests und den Debug-Prüfstand: ist die Leiste gerade sichtbar?
+    var isShowingForTesting: Bool { panel?.isVisible == true }
     private var globalMouseMonitor: Any?
     private var escapeKeyMonitor: Any?
     private var localMouseMonitor: Any?

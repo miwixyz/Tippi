@@ -65,7 +65,12 @@ final class SelectionPopupMonitor: ObservableObject {
     func start() {
         guard !isActive else { return }
         lastError = nil
-        guard AXIsProcessTrusted() else {
+        var trusted = AXIsProcessTrusted()
+        #if DEBUG
+        // Prüfstand-Testkopie hat keine Bedienungshilfen-Freigabe; Tippis Notizen brauchen sie nicht.
+        if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_SELECTION"] != nil { trusted = true }
+        #endif
+        guard trusted else {
             lastError = String(localized: "error.accessibility.selection")
             selectionPopupLog.debug("SelectionPopupMonitor — not trusted (Accessibility permission missing)")
             return
@@ -78,7 +83,9 @@ final class SelectionPopupMonitor: ObservableObject {
             // Clicks on Tippi's own floating panels (this bar, emoji, translate …)
             // are not selections — and treating a click on a bar button as "plain
             // click, hide the bar" would close it before the button fires.
-            if !(event.window is NSPanel) { self?.handle(event) }
+            guard !(event.window is NSPanel) else { return event }
+            self?.handle(event)
+            if event.type == .leftMouseDown { self?.evaluateAfterTracking(event) }
             return event
         }
 
@@ -126,9 +133,34 @@ final class SelectionPopupMonitor: ObservableObject {
             mouseDownLocation = NSEvent.mouseLocation
             return
         }
+        handleMouseUp(clickCount: event.clickCount, shiftHeld: event.modifierFlags.contains(.shift))
+    }
+
+    /// Text views (the Notes editor) track the mouse in their own loop and swallow
+    /// the mouse-up — the local monitor never sees it. Measured 2026-10-07 with the
+    /// debug repro `TIPPI_REPRO_NOTES_SELECTION`: a double-click in a note delivered
+    /// only the two mouse-downs, so since 2.23.1 (which waits for the mouse-up) the
+    /// bar no longer appeared in Notes. A block in the default run-loop mode runs only
+    /// once that tracking loop has ended; if the button is up by then, the mouse-up
+    /// was swallowed and is evaluated here. If it is still down, the real mouse-up
+    /// will reach the monitor.
+    private func evaluateAfterTracking(_ mouseDown: NSEvent) {
+        let clicks = mouseDown.clickCount
+        let shift = mouseDown.modifierFlags.contains(.shift)
+        RunLoop.main.perform(inModes: [.default]) { [weak self] in
+            // concurrency-lint: on-main RunLoop.main runs its blocks on the main thread.
+            MainActor.assumeIsolated {
+                guard let self, self.mouseDownLocation != nil,
+                      NSEvent.pressedMouseButtons & 1 == 0 else { return }
+                self.handleMouseUp(clickCount: clicks, shiftHeld: shift)
+            }
+        }
+    }
+
+    private func handleMouseUp(clickCount: Int, shiftHeld: Bool) {
         let isGesture = Self.isUserSelectionGesture(
             mouseDown: mouseDownLocation, mouseUp: NSEvent.mouseLocation,
-            clickCount: event.clickCount, shiftHeld: event.modifierFlags.contains(.shift))
+            clickCount: clickCount, shiftHeld: shiftHeld)
         mouseDownLocation = nil
         guard isGesture else {
             // A plain click elsewhere: hide the bar, don't look for a selection —
