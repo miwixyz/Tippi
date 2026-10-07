@@ -2,7 +2,13 @@
 
 ## [2.23.2] — 2026-10-07
 
-- _Add release notes here._
+Diktat in Notizen stürzt jetzt wirklich nicht mehr ab.
+
+### Behoben
+- **Absturz beim Diktat in eine Tippi-Notiz, zweiter Anlauf.** Der Fix aus 2.23.1 reichte nicht. Die eigentliche Ursache: Aufnahme-Anzeige und „Eingefügt“-Meldung bestanden direkt aus einer SwiftUI-Ansicht als Fensterinhalt. In dieser Rolle passt sie bei jeder Aktualisierung die Mindest- und Höchstgröße des Fensters an, und macOS bricht die dabei entstehende Layout-Schleife mit einem Absturz ab, sobald Tippi selbst das aktive Programm ist. Die Ansicht sitzt jetzt in einem schlichten Container. Nachgestellt mit einer Testkopie: ohne Fix 2 von 2 Läufen abgestürzt, mit Fix 15 Diktat-Abläufe ohne Absturz.
+
+### Intern
+- 661 Tests. Debug-Prüfstand `TIPPI_REPRO_NOTES_DICTATION=1` (nur Debug-Build): legt eine Notiz an, holt das Fenster nach vorn und spielt fünfmal Anzeige → Einfügen → Meldung durch.
 
 ## [2.23.1] — 2026-10-07
 
