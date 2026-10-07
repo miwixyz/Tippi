@@ -479,6 +479,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 | Version | Status | Highlights |
 |---------|--------|------------|
+| v2.23.1 | ✅ Done | **Fixes** — dictating into a note no longer crashes (layout loop in the confirmation toast); the selection action bar only appears after a selection you made yourself and closes on any plain click |
 | v2.23.0 | ✅ Done | **Lists in notes + line count** — bulleted, checklist and numbered lists in the notes window (buttons at the bottom, Return continues the list, click `[ ]` to check it off; plain text, TippAI shows the same lines as lists); the counter now shows words · characters · lines |
 | v2.22.1 | ✅ Done | **Fixes** — no square edge around the recording indicator and toast, the end of the last word stays in the recording (stop waits up to 150 ms for the last audio delivery), dictation / popup mic / translate no longer stop each other's recording, a recording is deleted when you quit, 30-minute cap per recording, live text reliable on the first dictation after launch |
 | v2.22.0 | ✅ Done | **Live text while dictating** — the recording window shows what you say about once a second, from the same local Parakeet model that writes the final text; text size Normal / Large / Extra large; recording indicator in six positions; switching microphones mid-dictation (e.g. AirPods) keeps recording; audio stays in memory until you stop |

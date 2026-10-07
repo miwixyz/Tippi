@@ -2,7 +2,15 @@
 
 ## [2.23.1] — 2026-10-07
 
-- _Add release notes here._
+Diktat in Notizen stürzt nicht mehr ab, und die Aktionsleiste taucht nicht mehr an sinnlosen Stellen auf.
+
+### Behoben
+- **Absturz bei jedem Diktat in eine Tippi-Notiz.** Am Ende des Diktats, wenn „Eingefügt“ erschien, brach macOS die App ab. Ursache war das kleine Meldungsfenster: Tippi setzte seine Größe, SwiftUI zog zusätzlich daran — eine Endlosschleife beim Layout. Meldung und Aufnahme-Anzeige haben jetzt eine feste, vorab gemessene Größe.
+- **Aktionsleiste an sinnlosen Stellen.** Sie kam nach jedem Mausklick, sobald danach Text markiert war — viele Apps markieren ein Feld beim bloßen Anklicken selbst (z. B. die Uhrzeit in Erinnerungen). Jetzt erscheint sie nur nach einer Markierung, die du selbst machst: Ziehen, Doppel- oder Dreifachklick, Shift-Klick.
+- **Aktionsleiste verschwand nicht beim Klick daneben.** Ein einfacher Klick schließt sie jetzt sofort, auch im Notizen-Fenster.
+
+### Intern
+- 661 Tests (8 neu): Klick-Erkennung der Aktionsleiste, feste Fenstergröße von Meldung und Aufnahme-Anzeige. `ToastWindowController` ist jetzt an den Main Actor gebunden.
 
 ## [2.23.0] — 2026-10-05
 
