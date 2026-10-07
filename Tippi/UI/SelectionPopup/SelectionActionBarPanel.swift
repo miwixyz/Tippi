@@ -198,16 +198,7 @@ final class SelectionActionBarPanel {
         // fires for a key window) can't be used for Escape-to-dismiss —
         // watch for it directly instead. Global, not local: Escape is
         // pressed in the app the user is actually working in, not in Tippi.
-        // The global monitor never sees clicks in Tippi's own windows (Notes) —
-        // the bar stayed up there until auto-hide (Michael, 2026-10-07).
-        localMouseMonitor = NSEvent.addLocalMonitorForEvents(
-            matching: [.leftMouseDown, .rightMouseDown]
-        ) { [weak self] event in
-            if event.window !== self?.panel {
-                Task { @MainActor in self?.close(reason: "mouse down in Tippi window") }
-            }
-            return event
-        }
+        installLocalMouseMonitor()
         escapeKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard event.keyCode == 53 else { return } // kVK_Escape
             Task { @MainActor in self?.close(reason: "escape") }
@@ -231,6 +222,20 @@ final class SelectionActionBarPanel {
         // comment). The source app stays frontmost and keeps the keyboard.
         panel.orderFront(nil)
         startAutoHide()
+    }
+
+    /// The global monitor never sees clicks in Tippi's own windows (Notes) —
+    /// the bar stayed up there until auto-hide (Michael, 2026-10-07). Clicks on
+    /// the bar itself are left alone.
+    private func installLocalMouseMonitor() {
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] event in
+            if event.window !== self?.panel {
+                Task { @MainActor in self?.close(reason: "mouse down in Tippi window") }
+            }
+            return event
+        }
     }
 
     // MARK: - Auto-hide
