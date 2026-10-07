@@ -2,7 +2,13 @@
 
 ## [2.23.3] — 2026-10-07
 
-- _Add release notes here._
+Die Aktionsleiste erscheint wieder in Tippi-Notizen.
+
+### Behoben
+- **Aktionsleiste kam in Tippi-Notizen nicht mehr** (seit 2.23.1, andere Apps nicht betroffen). 2.23.1 wertet erst das Loslassen der Maustaste aus, um eigene Markierungen von Klicks zu unterscheiden. Die Textansicht der Notizen verarbeitet die Maus beim Markieren aber selbst und verschluckt dieses Loslassen. Jetzt prüft Tippi nach einem Klick in eigenen Fenstern, sobald die Textansicht fertig ist. Gemessen per Prüfstand: ohne Fix sah Tippi beim Doppelklick nur die beiden Klicks, mit Fix erschien die Leiste in 5 von 5 Läufen.
+
+### Intern
+- 661 Tests. Debug-Prüfstand `TIPPI_REPRO_NOTES_SELECTION=1` (nur Debug-Build): Doppelklick auf ein Wort in einer Notiz per `NSApp.postEvent`, meldet, ob die Leiste erscheint.
 
 ## [2.23.2] — 2026-10-07
 
