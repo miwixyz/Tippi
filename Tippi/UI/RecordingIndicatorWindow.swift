@@ -229,6 +229,8 @@ final class RecordingIndicatorWindowController {
     enum Mode { case recording, transcribing }
 
     private var window: NSWindow?
+    /// Für Tests: das Fenster der Anzeige.
+    var windowForTesting: NSWindow? { window }
     /// Bumped on every show()/hide() so a pending fade-out completion from an
     /// earlier hide() can detect a newer show() interrupted it and NOT hide the
     /// freshly-shown window.
@@ -241,11 +243,11 @@ final class RecordingIndicatorWindowController {
             mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail)
         let live = mode == .recording ? preview : nil
         let textSize = DictationSettings.liveTextSize
-        let hostView = NSHostingView(rootView: IndicatorContainer(
-            pill: pill, preview: live, position: DictationSettings.indicatorPosition, size: textSize))
-        hostView.layout()
+        // Fixed, separately measured size — same layout-loop fix as the toast (2026-10-07).
+        let (hostView, measured) = NSHostingView<AnyView>.fixedSizeHost(AnyView(IndicatorContainer(
+            pill: pill, preview: live, position: DictationSettings.indicatorPosition, size: textSize)))
         let room = IndicatorContainer.shadowRoom
-        let size = live == nil ? hostView.fittingSize
+        let size = live == nil ? measured
             : NSSize(width: textSize.windowSize.width + 2 * room, height: textSize.windowSize.height + 2 * room)
 
         // On the screen that currently holds the cursor — except when the

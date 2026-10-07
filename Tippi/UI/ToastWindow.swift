@@ -36,8 +36,32 @@ private struct ToastView: View {
 /// - Appears just below the cursor (or an `anchor`), auto-dismisses after 1.5 s with a 0.3 s fade.
 /// - Non-activating, mouse-transparent — the user's workflow is never interrupted.
 @MainActor
+extension NSHostingView where Content == AnyView {
+    /// Hosting view for a borderless window whose frame Tippi sets itself (toast,
+    /// recording indicator). Measured with a separate view, then shown with
+    /// SwiftUI's own window sizing switched off: with the default sizing options
+    /// SwiftUI also resized the window (`updateAnimatedWindowSize`), each resize
+    /// re-invalidated the safe-area insets, and AppKit aborted the layout loop —
+    /// "more Update Constraints in Window passes than there are views". Every
+    /// dictation into a Tippi note crashed on the 228 × 71 toast (Michael,
+    /// 2026-10-07, five crashes, window size from the system log).
+    static func fixedSizeHost(_ view: AnyView) -> (NSHostingView<AnyView>, NSSize) {
+        let measure = NSHostingView(rootView: view)
+        measure.layout()
+        let size = measure.fittingSize
+        let host = NSHostingView(rootView: view)
+        host.sizingOptions = []
+        host.safeAreaRegions = []
+        host.frame = NSRect(origin: .zero, size: size)
+        return (host, size)
+    }
+}
+
+@MainActor
 final class ToastWindowController {
     static let shared = ToastWindowController()
+    /// Für Tests: das zuletzt gezeigte Toast-Fenster.
+    var windowForTesting: NSWindow? { window }
     private init() {}
 
     private var window: NSWindow?
@@ -72,10 +96,8 @@ final class ToastWindowController {
         // Cancel any in-flight dismiss so rapid consecutive toasts don't flicker.
         dismissTask?.cancel()
 
-        // Size the content via a temporary hosting view.
-        let hostView = NSHostingView(rootView: ToastView(message: message))
-        hostView.layout()
-        let size = hostView.fittingSize
+        // Size measured separately; the window keeps exactly this size (see `fixedSizeHost`).
+        let (hostView, size) = NSHostingView<AnyView>.fixedSizeHost(AnyView(ToastView(message: message)))
         let room = ToastView.shadowRoom
         let content = NSSize(width: size.width - 2 * room, height: size.height - 2 * room)
 

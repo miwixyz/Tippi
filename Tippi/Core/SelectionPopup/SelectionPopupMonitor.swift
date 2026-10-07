@@ -44,6 +44,9 @@ final class SelectionPopupMonitor: ObservableObject {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private var debounceTask: Task<Void, Never>?
+    /// Where the left button went down (screen coordinates) — to tell a drag
+    /// from a plain click at mouse-up.
+    private var mouseDownLocation: CGPoint?
 
     private let onSelection: (SelectionSnapshot) -> Void
     private let onNoSelection: () -> Void
@@ -68,11 +71,14 @@ final class SelectionPopupMonitor: ObservableObject {
             return
         }
 
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] _ in
-            self?.scheduleCheck()
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseUp]) { [weak self] event in
+            self?.handle(event)
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
-            self?.scheduleCheck()
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseUp]) { [weak self] event in
+            // Clicks on Tippi's own floating panels (this bar, emoji, translate …)
+            // are not selections — and treating a click on a bar button as "plain
+            // click, hide the bar" would close it before the button fires.
+            if !(event.window is NSPanel) { self?.handle(event) }
             return event
         }
 
@@ -102,6 +108,36 @@ final class SelectionPopupMonitor: ObservableObject {
     /// surface and is explicitly let through.
     nonisolated static func shouldConsiderSelection(appIsActive: Bool, notesEditorHasFocus: Bool) -> Bool {
         !appIsActive || notesEditorHasFocus
+    }
+
+    /// A selection the user made themselves: a drag, a double/triple click, or a
+    /// shift-click. A plain click is not — many apps select a field's whole
+    /// content when it is merely clicked (Reminders' time field "09:00"), and the
+    /// bar popped up there (Michael, 2026-10-07, screenshot). Pure for testing.
+    nonisolated static func isUserSelectionGesture(mouseDown: CGPoint?, mouseUp: CGPoint,
+                                                   clickCount: Int, shiftHeld: Bool) -> Bool {
+        if clickCount >= 2 || shiftHeld { return true }
+        guard let mouseDown else { return false }
+        return hypot(mouseUp.x - mouseDown.x, mouseUp.y - mouseDown.y) >= 4
+    }
+
+    private func handle(_ event: NSEvent) {
+        if event.type == .leftMouseDown {
+            mouseDownLocation = NSEvent.mouseLocation
+            return
+        }
+        let isGesture = Self.isUserSelectionGesture(
+            mouseDown: mouseDownLocation, mouseUp: NSEvent.mouseLocation,
+            clickCount: event.clickCount, shiftHeld: event.modifierFlags.contains(.shift))
+        mouseDownLocation = nil
+        guard isGesture else {
+            // A plain click elsewhere: hide the bar, don't look for a selection —
+            // otherwise a field that keeps its selection brought it straight back.
+            debounceTask?.cancel()
+            onNoSelection()
+            return
+        }
+        scheduleCheck()
     }
 
     private func scheduleCheck() {

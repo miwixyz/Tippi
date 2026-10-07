@@ -13,6 +13,7 @@ final class SelectionActionBarPanel {
     private var panel: NSPanel?
     private var globalMouseMonitor: Any?
     private var escapeKeyMonitor: Any?
+    private var localMouseMonitor: Any?
     private var autoHideTimer: Timer?
     private var idleSeconds: TimeInterval = 0
     private var appActivationObserver: NSObjectProtocol?
@@ -197,6 +198,16 @@ final class SelectionActionBarPanel {
         // fires for a key window) can't be used for Escape-to-dismiss —
         // watch for it directly instead. Global, not local: Escape is
         // pressed in the app the user is actually working in, not in Tippi.
+        // The global monitor never sees clicks in Tippi's own windows (Notes) —
+        // the bar stayed up there until auto-hide (Michael, 2026-10-07).
+        localMouseMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown]
+        ) { [weak self] event in
+            if event.window !== self?.panel {
+                Task { @MainActor in self?.close(reason: "mouse down in Tippi window") }
+            }
+            return event
+        }
         escapeKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard event.keyCode == 53 else { return } // kVK_Escape
             Task { @MainActor in self?.close(reason: "escape") }
@@ -284,6 +295,10 @@ final class SelectionActionBarPanel {
         if let monitor = escapeKeyMonitor {
             NSEvent.removeMonitor(monitor)
             escapeKeyMonitor = nil
+        }
+        if let monitor = localMouseMonitor {
+            NSEvent.removeMonitor(monitor)
+            localMouseMonitor = nil
         }
         if let observer = appActivationObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
