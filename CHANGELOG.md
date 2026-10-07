@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.23.3] — 2026-10-07
+
+- _Add release notes here._
+
 ## [2.23.2] — 2026-10-07
 
 Diktat in Notizen stürzt jetzt wirklich nicht mehr ab.
