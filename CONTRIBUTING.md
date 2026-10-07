@@ -213,6 +213,27 @@ no iCloud) and measures that it touches neither the iCloud notes nor
 `~/Library/Application Support/Tippi/Notes` — the folder the real Tippi migrates into
 iCloud. Quit the real Tippi first; reopening the copy shows the notes window.
 
+**Debug repro harnesses** (Debug builds only, `#if DEBUG` in `AppDelegate`, inert
+without the environment variable — verified absent from release binaries). Launch the
+sichttest copy with the variable and bring it to the front from the shell; no click needed:
+
+```bash
+APP="build/testbuild-<date>-<name>/Tippi Test.app"
+open --env TIPPI_REPRO_NOTES_DICTATION=1 --stdout /tmp/repro.log --stderr /tmp/repro.log "$APP"
+osascript -e 'tell application "Tippi Test" to activate'   # the hook waits until Tippi is active
+grep REPRO /tmp/repro.log
+```
+
+| Variable | Replays | Pass |
+|---|---|---|
+| `TIPPI_REPRO_NOTES_DICTATION` | 5× end of a dictation into a note: indicator recording → transcribing → provider, insert, hide, toast | `REPRO: fertig ohne Absturz` |
+| `TIPPI_REPRO_NOTES_SELECTION` | double-click on a word in a note via `NSApp.postEvent` (runs through the text view's real mouse tracking) | `leisteErschienen=true` |
+
+Pitfalls: the test copy has no Accessibility grant (the selection harness bypasses
+that check); the action bar closes after ~0.5 s with "pointer left" because the real
+pointer is elsewhere — so the harness measures *appeared*, not *still visible*. Quit
+with `osascript -e 'quit app "Tippi Test"'`.
+
 | Step | What happens |
 |------|-------------|
 | 1 | `make prepare-binary` — builds static `whisper-cli` |

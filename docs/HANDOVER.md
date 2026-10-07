@@ -558,6 +558,14 @@ In früheren Builds war `CURRENT_PROJECT_VERSION` hardcoded `1` in `project.yml`
 
 Gist kann keine Binaries liefern (HTTP 406 / Redirect). Daher: GitHub Releases als Hosting. `generate_appcast` mit `--download-url-prefix https://github.com/miwixyz/Tippi/releases/download/v<version>/` aufrufen.
 
+### 8.13 `NSHostingView` nie als `contentView` eines selbst positionierten Fensters (2.23.2)
+
+Aufnahme-Anzeige und Toast stürzten bei jedem Diktat in eine Tippi-Notiz ab: „more Update Constraints in Window passes than there are views“. Als `contentView` passt `NSHostingView` bei jeder Graph-Änderung Min-/Max-Größe des Fensters an (`updateWindowContentSizeExtremaIfNecessary`) und fordert neue Constraint-Pässe an — nur wenn Tippi selbst aktiv ist. `sizingOptions = []` (2.23.1) reichte nicht. Lösung: `NSHostingView.fixedSizeContent` (`UI/ToastWindow.swift`) legt den Hosting-View in einen schlichten `NSView`. Das Fenster nennt der Absturzbericht nicht, das Systemprotokoll schon: `/usr/bin/log show --predicate 'process == "Tippi" AND eventMessage CONTAINS "Future marking"'` → `{{x,y},{w,h}}`. Autocomplete-/Emoji-Panels nutzen noch die alte Bauart (kein Absturz belegt). Prüfstand: `TIPPI_REPRO_NOTES_DICTATION` (CONTRIBUTING).
+
+### 8.14 Lokale Event-Monitore sehen das mouseUp aus Textansichten nicht (2.23.3)
+
+`NSTextView` verfolgt die Maus beim Markieren in einer eigenen Schleife und verbraucht das `leftMouseUp` — `addLocalMonitorForEvents` bekommt es nie. Die Aktionsleiste wertet seit 2.23.1 erst beim Loslassen aus und kam deshalb in Notizen nicht mehr. Lösung (`SelectionPopupMonitor.evaluateAfterTracking`): nach dem mouseDown ein Block in `RunLoop.main.perform(inModes: [.default])` — läuft erst nach Ende der Tracking-Schleife (`.common` liefe mitten drin, weil der Tracking-Modus dazugehört); Taste dann oben → mouseUp war verschluckt → auswerten. Prüfstand: `TIPPI_REPRO_NOTES_SELECTION`.
+
 ---
 
 ## 9. Erweiterungs-Punkte (zukünftige Phasen)
