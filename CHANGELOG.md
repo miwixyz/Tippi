@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.23.1] — 2026-10-07
+
+- _Add release notes here._
+
 ## [2.23.0] — 2026-10-05
 
 Listen im Notizen-Fenster, und der Zähler zählt jetzt auch die Zeilen.
