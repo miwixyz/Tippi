@@ -8,7 +8,7 @@
 
 System-wide AI writing assistant for macOS. Select text in any app → hotkey (⌥⌘T) → AI transforms → result back in the original app. Also dictation mode (⌃⌥⌘M): hotkey → speak → Whisper transcribes → inserted at cursor. Optional LLM polish for dictation transcripts.
 
-Open source, MIT, Developer ID signed, Sparkle auto-updates. BYOK with 11 providers (9 cloud + 2 local).
+Open source, MIT, Developer ID signed, Sparkle auto-updates. BYOK with 7 providers (5 cloud + 2 local).
 
 ## Tech
 

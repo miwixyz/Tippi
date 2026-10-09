@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.24.0] — 2026-10-09
+
+Tippi braucht nach dem Diktieren keine Rechenleistung mehr im Leerlauf, und die Anbieterliste ist aufgeräumt.
+
+### Behoben
+- **Hohe CPU-Last nach jedem Diktat.** Nach dem ersten Diktat blieb Tippi dauerhaft bei rund 20 % CPU, auch ohne sichtbares Fenster (gemessen 09.10.: 0–1 % vor dem Diktat, danach 20–27 %). Ursache war das Häkchen in der „Eingefügt“-Meldung: Es hüpfte nach dem Ausblenden unsichtbar endlos weiter. Jetzt hüpft es einmal, und die Meldung gibt ihren Inhalt nach dem Ausblenden frei. Gemessen per Prüfstand: mit Meldung vorher 7–9 % im Leerlauf, mit Fix 0–0,2 %.
+
+### Neu
+- **Claude Haiku 5.5** als Modell wählbar (Anthropic und OpenRouter). Tippi schickt dafür geringen Denkaufwand ohne Vorab-Denken mit, so antwortet es so schnell wie Haiku 4.5. Standard bleibt Haiku 4.5: Bei vier Test-Diktaten ließ Haiku 5.5 öfter Füllwörter stehen.
+
+### Entfernt
+- **Kimi, Scaleway, Groq und Nebius.** Die meisten ihrer voreingestellten Modelle hatten die Anbieter selbst abgeschaltet (Kimi alle vier, Scaleway drei von vier). War einer davon gewählt, nimmt Tippi automatisch den nächsten Anbieter mit hinterlegtem Schlüssel. Tippi kennt jetzt 7 Anbieter: OpenAI, Anthropic, Gemini, Mistral, OpenRouter, Ollama und MLX.
+
+### Intern
+- 666 Tests (5 neu: entfernte Anbieter, Migration, Haiku-5.5-Parameter).
+- Debug-Prüfstand `TIPPI_REPRO_IDLE_CPU=toast|indicator` (nur Debug-Build): zeigt Meldung bzw. Aufnahme-Anzeige einmal und blendet sie aus, danach Leerlauf-CPU messen.
+- Claude Opus 5.5 als denkendes Modell gekennzeichnet (wird nie als schnellstes Glättungsmodell vorgeschlagen). Haiku 5.5: Ablehnung (`refusal`) wird als Fehler gemeldet statt leeren Text einzufügen.
+
 ## [2.23.3] — 2026-10-07
 
 Die Aktionsleiste erscheint wieder in Tippi-Notizen.

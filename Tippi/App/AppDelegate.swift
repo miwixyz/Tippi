@@ -187,6 +187,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_SELECTION"] != nil {
             Task { @MainActor in await self.reproNotesSelection() }
         }
+        // PRÜFSTAND Leerlauf-CPU (2026-10-09): nach jedem Diktat blieb Tippi bei ~20 % CPU.
+        // Zeigt Toast und/oder Aufnahmeanzeige („toast“, „indicator“) einmal und blendet sie aus;
+        // danach CPU messen. Wert = welche Anzeige.
+        if let which = ProcessInfo.processInfo.environment["TIPPI_REPRO_IDLE_CPU"] {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                if which.contains("indicator") {
+                    RecordingIndicatorWindowController.shared.show(mode: .transcribing, recorder: self.audioRecorder)
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    RecordingIndicatorWindowController.shared.hide()
+                }
+                if which.contains("toast") {
+                    ToastWindowController.shared.show(message: "Prüfstand")
+                }
+                NSLog("Tippi: REPRO_IDLE_CPU gezeigt (\(which))")
+            }
+        }
         #endif
         // Design der App-Familie (2.20.0): Plus Jakarta Sans vor dem ersten Fenster
         // registrieren. Ohne Registrierung fällt SwiftUI still auf die Systemschrift
@@ -208,8 +225,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         SyncedPreferences.shared.start()
         // Light/dark override from Settings → General, before any window opens.
         AppearanceSettings.apply()
-        // Remap persisted Nebius model ids that the provider removed (they 404).
+        // Remap persisted model ids that a provider retired (they 404).
         ProviderModelPresets.migrateRetiredModels()
+        // Choices pointing at a provider Tippi no longer ships (Kimi, Scaleway, Groq, Nebius).
+        ProviderModelPresets.migrateRemovedProviders()
         // Best-effort, non-blocking: catch a provider retiring the configured
         // model (see ModelAvailabilityChecker) before a real task hits it.
         // Explicit .background priority — with several cloud providers

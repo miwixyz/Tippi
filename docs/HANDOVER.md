@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 7. Oktober 2026 · Version: **2.23.3** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 9. Oktober 2026 · Version: **2.24.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
@@ -314,10 +314,6 @@ Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedli
 | Anthropic | `claude-haiku-4-5` | `https://api.anthropic.com/v1/messages` | `x-api-key: <key>` + `anthropic-version: 2023-06-01` | Beste Prosa-Qualität |
 | Google | `gemini-flash-latest` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` | Header `x-goog-api-key: <key>` (nicht Query-Param — Tabelle war hier veraltet) | Großzügiges Free-Tier. 2.5-Generation seit 2026-09 teils HTTP 404 („no longer available to new users") |
 | Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris) |
-| Scaleway | `llama-3.1-8b-instruct` | `https://api.scaleway.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris), Groq-Klasse Speed |
-| Groq | `openai/gpt-oss-20b` | `https://api.groq.com/openai/v1/chat/completions` | `Authorization: Bearer <key>` | LPU-Hardware, ~270-800 tok/s |
-| Kimi/Moonshot | `kimi-k2` | `https://api.moonshot.cn/v1/chat/completions` | `Authorization: Bearer <key>` | 1T-MoE, 256K context |
-| Nebius | `Qwen/Qwen3-30B-A3B-Instruct-2507` | `https://api.studio.nebius.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Amsterdam) |
 | **OpenRouter** | `openai/gpt-6-luna` | `https://openrouter.ai/api/v1/chat/completions` | `Authorization: Bearer <key>` | Unified Gateway, 300+ Modelle, Modell-IDs im Format `vendor/model` |
 | Ollama | `llama3.3` | `http://localhost:11434/api/chat` | Keine | Lokal, gratis, voll privat |
 | MLX | `mlx-community/Qwen3.5-2B-MLX-4bit` | `http://localhost:8080/v1/chat/completions` (lokaler `mlx_lm.server`) | Keine | Lokal, Apple-Silicon-nativ |

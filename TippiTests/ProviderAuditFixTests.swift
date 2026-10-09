@@ -30,8 +30,7 @@ final class ProviderAuditFixTests: XCTestCase {
     /// `…/v1/chat/completions` → `…/v1/models` (was `…/v1/chat/models`, a 404).
     func testModelsURLIsTwoSegmentsUp() {
         let providers: [any OpenAICompatibleProvider] = [
-            OpenAIProvider(), MistralProvider(), GroqProvider(), KimiProvider(),
-            NebiusProvider(), ScalewayProvider(), OpenRouterProvider(),
+            OpenAIProvider(), MistralProvider(), OpenRouterProvider(),
         ]
         for p in providers {
             let url = p.modelsURL.absoluteString

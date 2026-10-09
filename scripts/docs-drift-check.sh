@@ -321,7 +321,7 @@ ok "$marker_checked marketing surface(s) checked"
 # sentences were false.
 #
 # Scope is deliberately narrow: only strings that describe MLX itself. Cloud
-# provider hints legitimately name Llama (Scaleway and Nebius host it), and the
+# provider hints may legitimately name hosted models (e.g. via OpenRouter), and the
 # general "which model" help discusses models Tippi does not bundle. A first
 # draft of this check flagged all six of those and would have had someone
 # "correct" accurate text — the failure mode CLAUDE.md warns about.

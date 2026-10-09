@@ -1032,7 +1032,7 @@ private struct ProviderRow: View {
     }
 
     /// Curated dropdown for hosted providers (OpenAI/Anthropic/Gemini/
-    /// Mistral/Groq). Falls back to a free-form text field for Ollama
+    /// Mistral/OpenRouter). Falls back to a free-form text field for Ollama
     /// (whatever the user has pulled locally) and for unknown providers.
     /// The "Custom…" sentinel always lets the user type a model ID that
     /// isn't in the curated list (new releases between Tippi updates).
@@ -1258,10 +1258,6 @@ private struct ProviderRow: View {
         case "anthropic": return String(localized: "settings.providers.hint.anthropic")
         case "gemini":    return String(localized: "settings.providers.hint.gemini")
         case "mistral":   return String(localized: "settings.providers.hint.mistral")
-        case "scaleway":  return String(localized: "settings.providers.hint.scaleway")
-        case "groq":      return String(localized: "settings.providers.hint.groq")
-        case "kimi":      return String(localized: "settings.providers.hint.kimi")
-        case "nebius":    return String(localized: "settings.providers.hint.nebius")
         case "openrouter": return String(localized: "settings.providers.hint.openrouter")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
         case "mlx":       return String(localized: "settings.providers.hint.mlx")
@@ -1849,9 +1845,8 @@ private struct VoiceTab: View {
     }
 
     /// Provider+model override for the polish step only. Default is
-    /// "use the same provider as everything else"; switching to Groq +
-    /// Llama 3.1 8B Instant typically takes polish latency from 2–5 s
-    /// (OpenAI/MLX) to well under 1 s.
+    /// "use the same provider as everything else"; a fast hosted model
+    /// (e.g. Mistral Small, Gemini Flash Lite) keeps polish latency short.
     private var polishProviderPicker: some View {
         // Sentinel value for "no override" since Picker can't bind to nil.
         let useActive = "__active__"

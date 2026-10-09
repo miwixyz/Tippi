@@ -241,7 +241,7 @@ enum DictationSettings {
 
     /// Optional provider ID override for the polish step. Empty/nil = use
     /// the same provider as everything else (LLMRouter's preferred). Set to
-    /// a specific provider ID (e.g. "groq") to always polish through the
+    /// a specific provider ID (e.g. "mistral") to always polish through the
     /// fastest available hosted LLM regardless of the chat provider.
     static var postProcessProviderOverride: String {
         get { store.string(forKey: postProcessProviderKey) ?? "" }
@@ -591,7 +591,7 @@ final class DictationController: ObservableObject {
         let modelOverride    = DictationSettings.postProcessModelOverride
 
         // Resolve the provider display name before the async call so the
-        // indicator pill can show "· ✨ Groq" instead of the generic "· ✨ KI"
+        // indicator pill can show "· ✨ Mistral" instead of the generic "· ✨ KI"
         // the moment cleanup starts — no extra round-trip needed.
         let resolvedProviderID = !providerOverride.isEmpty
             ? providerOverride

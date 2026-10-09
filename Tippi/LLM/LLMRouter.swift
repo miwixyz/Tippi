@@ -29,10 +29,6 @@ struct LLMRouter {
         AnthropicProvider(),
         GeminiProvider(),
         MistralProvider(),
-        ScalewayProvider(),
-        GroqProvider(),
-        KimiProvider(),
-        NebiusProvider(),
         OpenRouterProvider(),
         OllamaProvider(),
         MLXProvider()

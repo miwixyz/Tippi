@@ -37,7 +37,7 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
 | Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
-| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 11 providers — in place, no app switch, your own keys |
+| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 7 providers — in place, no app switch, your own keys |
 | Text case/formatting one-offs (bold, UPPERCASE, join lines, word count) | TextSoap, a word-count widget | **Local Quick Actions** — instant, no AI call, works offline (v2.0) |
 
 The point isn't only cost — Rocket and Espanso are free or cheap. It's that
@@ -51,6 +51,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **Quiet when idle, tidier provider list (v2.24)** — after a dictation Tippi no longer keeps about 20 % CPU busy (an invisible confirmation animation kept running); Claude Haiku 5.5 is selectable; Kimi, Scaleway, Groq and Nebius are gone, a stored choice moves to the next provider with a key
 - **New app-family design (v2.20)** — shared look with Kalli, TippAI and Qotti: the calm "Slate" palette (accent slate blue, light and dark), the typeface **Plus Jakarta Sans** (SIL Open Font License, bundled), and tinted glass so the selection bar and popups no longer take on the colors of the app underneath. Prominent buttons and selected rows stay readable in dark mode (white text ≥ 4.6 : 1)
 - **Works everywhere** — Mail, Safari, Notes, Slack, VS Code, Pages, every text field on macOS
 - **It tells you what broke and what to do (v2.11.5)** — the menu bar used to say only "Fehler". It now names the cause, puts the next step on its own clickable row that opens the right place in Settings, and announces a failure on its own — once per new problem, silently. If notifications are denied the menu still carries everything. A stale local server holding the MLX port is cleared automatically (v2.11.7); a *foreign* program holding it is named with its pid rather than killed
@@ -75,26 +76,22 @@ your text for anything that touches AI.
 - **Live text while dictating (v2.22)** — the recording window shows your words as you speak (Settings → Dictation, off by default, Parakeet only), in three text sizes, and the indicator can sit in six places; switching microphones mid-dictation (e.g. AirPods) keeps recording. Details under Quick start
 - **Press Return after dictation, per app (v2.16)** — add apps under Settings → Dictation (e.g. the Claude app) and a dictation is sent right away. The list starts empty. Return only fires if the app is still in front, and not if you cancelled. In terminals, code editors and coding agents (Terminal, iTerm, Ghostty, VS Code, Codex …) Tippi presses Return only when AI cleanup left your dictated text unchanged, and inserts it as one line — a command there can never come from the AI.
 - **Autocomplete while typing (Labs, off by default, v2.15)** — pause briefly while typing and your **local** model suggests the rest of the sentence (up to eight words) in grey right at the cursor — based only on the current line, once it has a few words, never after a finished question, and never when it would just repeat your line (an answer instead of a continuation) — in any app with a regular text field and in Apple Mail. **⇥ takes the next word**, the rest stays; **⇧⇥ takes the whole suggestion** at once — both keys can be changed (Settings → Autocomplete: ⇥, →, ↓ and F-keys with any modifier, the key above ⇥ only bare, anything else only with ⌘/⌃ — so no key you type with can be swallowed; Tippi's own hotkeys and ⌃Space are refused, picking the other action's key swaps them); keep typing the suggested letters and it stays too, anything else dismisses it. Your custom words are passed along when you start typing one of them or one is already in the line, so names and brands come out spelled your way. The accept keys are only intercepted while a suggestion is visible, so indenting in a code editor keeps working. The suggestion sits in a small glass capsule with a key hint (can be hidden). Everything you type goes **only to the MLX server Tippi started itself** on this Mac (never a cloud provider, never a foreign server that happens to sit on the same port) and is **never stored or logged**. Password fields, secure input and an editable app list (password managers and terminals by default) are never read. Turn it on from the menu bar or in Settings → Autocomplete, which also shows the model in use. Design: `docs/SECURE-DESIGN-autocomplete.md`
-- **11 AI providers** — choose any combination, switch freely:
+- **7 AI providers** — choose any combination, switch freely:
   - **OpenAI** (default: `gpt-6-luna`, sent with `reasoning_effort: none`)
   - **Anthropic Claude** (default: `claude-haiku-4-5`)
   - **Google Gemini** (default: `gemini-flash-latest`, auto-updating alias)
   - **Mistral** (default: `mistral-small-latest`, EU hosting)
-  - **Scaleway** (default: `llama-3.1-8b-instruct`, EU/Paris)
-  - **Groq** (default: `openai/gpt-oss-20b`, LPU-accelerated)
-  - **Kimi / Moonshot** (default: `kimi-k2`, 1T-MoE, ~15× cheaper than Opus)
-  - **Nebius** (default: `meta-llama/Llama-3.3-70B-Instruct`, EU/Amsterdam, DSGVO)
   - **OpenRouter** (default: `openai/gpt-6-luna`) — unified gateway, 300+ models behind one key, `vendor/model` id format, pass-through pricing
   - **Ollama** (local, fully offline)
   - **MLX** (local, Apple-Silicon-native, ~1.5–2× faster than Ollama) — Tippi manages a local `mlx_lm.server` on demand, defaults to the faster Qwen 3.5 2B (4-bit) preset, keeps larger quality presets available, auto-starts on launch when MLX is your preferred provider, and shows generation time in the preview badge.
 - **Proactive model-retirement warning** — Tippi checks each configured provider's live model catalogue in the background at launch and flags in Settings if your selected model has been retired, instead of only finding out when a real task 404s.
 - **Voice Input** — trigger the hotkey with no text selected: a popup with a mic button appears, click to start recording and click again to stop, Parakeet or Whisper transcribes locally, the popup shows the transcript with AI prompt options and an "Insert directly" button
 - **Free-form instruction — typed or spoken** — select text, trigger the hotkey, then type an instruction in the popup's input field (e.g. "reply to this email politely", "translate to Spanish") and press Return, or press the mic button and speak it. Tippi follows it literally: transform instructions (translate, summarize, shorten) operate on the text as-is, reaction instructions (reply, respond) produce an answer. The field auto-focuses; press ↓ to jump back to the prompt list
-- **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating pill shows recording (live waveform), transcribing, and AI-cleanup state with the actual provider name (e.g. "· ✨ Groq"). **Dictation for emails (v2.21)**: a second hot key (default **⌃⌥⌘B**) writes greeting, one sentence per line and sign-off, and never presses Return; the same layout is an optional switch for normal dictation (Settings → Dictation)
+- **Dictation mode (v1.7+)** — a dedicated hotkey (default **⌃⌥⌘M**) starts recording, press again to stop; Whisper transcribes locally and inserts the text at the cursor — no popup, no text selection. A floating pill shows recording (live waveform), transcribing, and AI-cleanup state with the actual provider name (e.g. "· ✨ Mistral"). **Dictation for emails (v2.21)**: a second hot key (default **⌃⌥⌘B**) writes greeting, one sentence per line and sign-off, and never presses Return; the same layout is an optional switch for normal dictation (Settings → Dictation)
 - **Custom words, including pronunciation variants**: Settings → Dictionary & Snippets → Custom words keeps the house spelling of brands and names (iPhone stays iPhone, not Iphone) during AI cleanup. When transcription hears a *different real word* (you say "Tippi", it writes "Tipi"), add an arrow entry: `Tipi → Tippi` (`->` and `=>` work too; several heard variants with commas). Tippi swaps exactly that whole word right after transcription, for Parakeet and Whisper, with or without AI cleanup; word parts ("Tipis") and punctuation stay untouched. The AI is deliberately never allowed to guess such swaps and only ever sees the target spelling
 - **Translate Quick Panel** — a dedicated hotkey (default **⌥⌘L**) opens a Spotlight-style window anywhere; if text is selected it's pre-filled automatically, otherwise type, paste, or dictate it. Source/target language pickers (German, English, Spanish, French, Japanese; source defaults to auto-detect) with a one-click swap button. Input grows with multi-line text and the result scrolls, so a long selection is never clipped. **Replace (⌘⏎)** writes the translation back over the text it came from — shown only when you opened the panel on a selection; otherwise the result is yours to copy (⌘C) and nothing is inserted automatically
 - **Local Whisper transcription** — speech never leaves your Mac; model downloaded in-app (Settings → Dictation); choose Tiny / Base / Small in English or multilingual
-- **Streaming preview**: the AI result streams in token by token instead of appearing all at once after a wait (real streaming for OpenAI, Mistral, Scaleway, Groq, Kimi, Nebius, OpenRouter; Anthropic, Gemini, Ollama and MLX show it in one piece)
+- **Streaming preview**: the AI result streams in token by token instead of appearing all at once after a wait (real streaming for OpenAI, Mistral, OpenRouter; Anthropic, Gemini, Ollama and MLX show it in one piece)
 - **Iterative refine** — once a result is ready, type a follow-up in the Refine field ("shorter", "more formal", "add a greeting") to rewrite it in place; chain as many refinements as you like
 - **Preview before applying** — side-by-side original vs. AI suggestion, then Replace / Append / Copy / Regenerate, with keyboard shortcuts (Return = Replace, ⌘C = Copy, ⌘Return = Append, ⌘R = Regenerate, Esc = Cancel). A result that hits the model's length limit is kept and flagged "Cut off" rather than discarded
 - **Optional provider fallback** — Providers tab → if your chosen provider fails (rate limit, server or network error), Tippi can retry the next configured provider; off by default since it sends your text to a second provider
@@ -119,7 +116,7 @@ your text for anything that touches AI.
 - macOS 15 Sequoia or later
 - Apple Silicon Mac (M1, M2, M3, M4, M5)
 - At least one AI provider:
-  - An API key for one of the nine cloud providers (OpenAI, Anthropic, Google Gemini, Mistral, Scaleway, Groq, Kimi, Nebius, OpenRouter), **or**
+  - An API key for one of the five cloud providers (OpenAI, Anthropic, Google Gemini, Mistral, OpenRouter), **or**
   - [Ollama](https://ollama.com) installed locally (free, no key required), **or**
   - **MLX** — no manual install needed; Settings → Providers → MLX → "Install MLX…" handles everything (`uv` + `mlx-lm`) from the app
 - **Voice features** (optional): nothing to install. Parakeet v3 (the default engine) downloads its model on first use; for Whisper, download a model via Settings → Dictation (in-app download, no manual install)
@@ -417,10 +414,6 @@ Settings → General → "Launch Tippi at login". Wired through `SMAppService`, 
 | Anthropic | $          | Fast    | ★★★★★  | Excellent prose quality. `claude-haiku-4-5` for fast tier. |
 | Gemini    | Free tier  | Fast    | ★★★    | Generous free tier at `aistudio.google.com/apikey`. |
 | Mistral   | $          | Fast    | ★★★★   | EU-hosted (Paris). Great German/French. |
-| Scaleway  | $          | ⚡ Fast | ★★★    | EU-hosted (Paris). Llama 3.x on European infra. |
-| Groq      | $          | ⚡⚡ sub-second | ★★★★ | LPU-accelerated. Fastest hosted option for dictation polish. Llama models retired June 2026 → now GPT-OSS. |
-| Kimi      | $          | Fast    | ★★★★★  | Moonshot Kimi K2 — 256K context, ~15× cheaper than Opus. `platform.moonshot.cn` |
-| Nebius    | $          | ⚡ Fast | ★★★★   | 100% EU (Amsterdam). DSGVO-compliant. Very cheap. `studio.nebius.ai` |
 | OpenRouter | $ (pass-through) | Depends on routed model | Depends on routed model | 300+ models behind one key. `vendor/model` id format, e.g. `openai/gpt-4o-mini`. `openrouter.ai` |
 | Ollama    | **Free**   | ⚡ Hardware-dependent | ★★–★★★★ | Fully local. Privacy-best. Quality depends on model. |
 | MLX       | **Free**   | ⚡⚡ ~1.5–2× faster than Ollama on Apple Silicon | ★★–★★★★ | Fully local, Apple-Silicon-native via Metal. Tippi manages the `mlx_lm.server` process. Auto-starts on launch when set as default. |
@@ -444,7 +437,7 @@ Bug reports and pull requests are welcome. For significant changes, please open 
 - **Hardened Runtime, no Sandbox** — required for cross-app text capture
 - **Text capture**: Accessibility API first (`AXUIElementCopyAttributeValue` on focused element), Pasteboard ⌘C round-trip as fallback (with snapshot/restore to keep clipboard intact)
 - **Hotkey**: `NSEvent.addGlobalMonitorForEvents(matching: .keyDown)` plus a Carbon `RegisterEventHotKey` backup. For self-signed builds, the macOS-native keyboard shortcut binding to the "Trigger Tippi…" menu item is the most reliable path.
-- **LLM layer**: a `LLMProvider` protocol with eleven implementations (OpenAI, Anthropic, Gemini, Mistral, Scaleway, Groq, Kimi, Nebius, OpenRouter, Ollama, MLX); `LLMRouter` picks the preferred configured provider with automatic fallthrough. OpenAI-compatible providers (OpenAI, Mistral, Scaleway, Groq, Kimi, Nebius) share a single `openAIChatComplete()` / `openAIChatStream()` helper. The MLX provider additionally drives `MLXServerManager`, which spawns and supervises a local `mlx_lm.server` process and resolves the active model ID via `/v1/models`.
+- **LLM layer**: a `LLMProvider` protocol with seven implementations (OpenAI, Anthropic, Gemini, Mistral, OpenRouter, Ollama, MLX); `LLMRouter` picks the preferred configured provider with automatic fallthrough. OpenAI-compatible providers (OpenAI, Mistral, OpenRouter) share a single `openAIChatComplete()` / `openAIChatStream()` helper. The MLX provider additionally drives `MLXServerManager`, which spawns and supervises a local `mlx_lm.server` process and resolves the active model ID via `/v1/models`.
 - **Voice layer**:
   - `AudioRecorder` — AVAudioEngine-based capture shared by dictation, popup mic and translate
   - `ParakeetTranscriber` — default engine since v1.12.1: Parakeet v3 via FluidAudio (CoreML, Neural Engine), in-process; model downloaded from Hugging Face on first use
@@ -479,6 +472,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 
 | Version | Status | Highlights |
 |---------|--------|------------|
+| v2.24.0 | ✅ Done | **Idle CPU fix + provider cleanup** — the confirmation toast's checkmark kept bouncing invisibly after every dictation (~20 % CPU, measured 0–1 % before / 20–27 % after); it now bounces once and the toast releases its content. Claude Haiku 5.5 selectable with low effort and thinking off (Haiku 4.5 stays default after a 4-dictation comparison). Kimi, Scaleway, Groq and Nebius removed (most of their presets had been retired by the providers) — 7 providers |
 | v2.23.1 | ✅ Done | **Fixes** — dictating into a note no longer crashes (layout loop in the confirmation toast); the selection action bar only appears after a selection you made yourself and closes on any plain click |
 | v2.23.2 | ✅ Done | **Fix** — dictating into a note no longer crashes, second attempt: the recording indicator and toast no longer use a SwiftUI hosting view as the window's content view (layout loop when Tippi itself is active) |
 | v2.23.3 | ✅ Done | **Fix** — the selection action bar appears again in Tippi's own Notes window (the text view swallowed the mouse-up the 2.23.1 gesture check waits for) |

@@ -21,7 +21,7 @@ That's it. That's the product.
 | Most AI assistants | Tippi |
 |---|---|
 | Open a new tab, paste your text, copy the answer back | Works in every app, right at your cursor |
-| Locked to one provider | **11 providers** — pick what works for you |
+| Locked to one provider | **7 providers** — pick what works for you |
 | Cloud-only, your data leaves your Mac | **Two local engines** (MLX, Ollama) — fully offline option |
 | Subscription | **Free, open-source (MIT)**, bring your own key |
 | Telemetry, analytics, "anonymized" data | **Zero telemetry**, no analytics, no crash reports |
@@ -43,7 +43,7 @@ covers that whole row:
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
 | Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |
-| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 11 providers — in place, no app switch |
+| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 7 providers — in place, no app switch |
 | Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |
 
 Several of those are cheap or free — the saving isn't mainly money. It's eight
@@ -57,6 +57,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Quiet when idle (v2.24)** — no lasting CPU load after dictating anymore; Claude Haiku 5.5 selectable; 7 providers after removing Kimi, Scaleway, Groq and Nebius
 - **Lists in notes (v2.23)** — bulleted, checklist and numbered lists: buttons at the bottom, Return continues the list, a click on `[ ]` checks it off; the counter now also shows lines
 - **24 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Add emojis · Defuse · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
 - **Type or speak a free-form instruction** — select text, then type ("reply to this email", "translate to Spanish") or speak it; Tippi applies it via AI directly
@@ -85,7 +86,7 @@ for anything that touches AI.
 - **Notes window (v2.3)** — **favorite notes (v2.8)** via a star on the row or its context menu, sorted into their own section. ⌥⌘N opens a resizable window: note list on the left, editor on the right, a solid window body with a translucent sidebar (v2.9). **Pin it (v2.4)** to float above every other app across switches/Spaces/full-screen. **Appears in ⌘Tab while open (v2.6)** — temporary Dock icon, since Tippi is normally menu-bar-only and invisible to the switcher. **AI titles (v2.5)**: a sparkles button inserts a short AI-generated title above your text, never replacing anything — file names in Finder now show that title too (v2.6). **Choosable font + size (v2.6)**, persisted across sessions, via the standard Font Panel. **Export as `.txt` (v2.7)** via a toolbar button. **Hide the note list (v2.21)** with the sidebar button or ⌃⌘S. Each note is its own plain `.txt` file, visible in Finder as **iCloud Drive → Tippi → Notes (v2.4.1)** — synced across your Macs via iCloud (local fallback when signed out). Pasting anything with formatting lands as clean text automatically, with a quiet toast confirming it (no longer sticks on screen, v2.7) — plus native spell check and a live word/character/line counter with comfortable padding (v2.7)
 - **Liquid Glass where it belongs (v2.5, scoped in v2.9)**: the floating panels (cursor popup, selection bar, emoji picker, Translate panel, preview, toast, recording indicator) use Apple's Liquid Glass on macOS 26+ and render exactly as before below it. Window bodies deliberately do not: a fully translucent window blurs the wallpaper down to its average colour and reads as fog rather than glass. Settings, Notes and Welcome keep a solid body with a translucent sidebar, the same split Finder, Mail and Notes.app use
 - **Dictation on a single key (v2.2)** — double-tap one modifier key to toggle recording, or hold it to record only while it is down; the classic key combination remains the default and is untouched by the update. The key is recorded by pressing it, not picked from a list of names. A running m:ss timer in the recording pill shows how long you have been speaking, and the indicator can sit at the bottom or the top of the screen. Whisper or Parakeet run fully on-device (no audio leaves your Mac); optionally mutes your Mac's system audio for the duration of the recording
-- **11 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · Scaleway (EU) · Groq · Kimi (Moonshot) · Nebius (EU) · OpenRouter (300+ models, one key) · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
+- **7 AI providers** — OpenAI · Anthropic Claude · Google Gemini · Mistral · OpenRouter (300+ models, one key) · Ollama (local) · MLX (local, Apple-Silicon-native, ~1.5–2× faster than Ollama)
 - **One-click MLX setup** from Settings — no Terminal needed
 - **Auto-updates** via Sparkle 2
 - **DE + EN UI**

@@ -3,7 +3,7 @@ import Foundation
 struct AnthropicProvider: LLMProvider {
     let id = "anthropic"
     let displayName = "Anthropic Claude"
-    let defaultModel = "claude-haiku-4-5"  // current as of May 2026
+    let defaultModel = "claude-haiku-4-5"  // still the measured best for polish, 2026-10-09
     let requiresAPIKey = true
 
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
@@ -17,6 +17,14 @@ struct AnthropicProvider: LLMProvider {
     static func acceptsTemperature(_ model: String) -> Bool {
         ["claude-haiku-4", "claude-sonnet-4", "claude-opus-4-5", "claude-opus-4-6", "claude-opus-4-1", "claude-3"]
             .contains { model.hasPrefix($0) }
+    }
+
+    /// Haiku 5.5 thinks by default (adaptive, effort `medium`): one polish run took
+    /// 3.6 s / 620 tokens instead of ~1.2 s (measured 2026-10-09). For Tippi's short
+    /// rewrites: effort `low` and thinking off — allowed up to effort `high`
+    /// (platform.claude.com/docs/en/build-with-claude/effort).
+    static func usesLowEffortNoThinking(_ model: String) -> Bool {
+        model.hasPrefix("claude-haiku-5")
     }
 
     func complete(systemPrompt: String, userText: String, model: String,
@@ -36,12 +44,16 @@ struct AnthropicProvider: LLMProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         struct Message: Encodable { let role: String; let content: String }
+        struct OutputConfig: Encodable { let effort: String }
+        struct Thinking: Encodable { let type: String }
         struct Body: Encodable {
             let model: String
             let max_tokens: Int
             let system: String
             let messages: [Message]
             let temperature: Double?   // nil → omitted from the JSON
+            let output_config: OutputConfig?
+            let thinking: Thinking?
         }
         let useModel = model.isEmpty ? defaultModel : model
         let body = Body(
@@ -49,7 +61,9 @@ struct AnthropicProvider: LLMProvider {
             max_tokens: 8192,
             system: systemPrompt,
             messages: [Message(role: "user", content: userText)],
-            temperature: Self.acceptsTemperature(useModel) ? hint : nil
+            temperature: Self.acceptsTemperature(useModel) ? hint : nil,
+            output_config: Self.usesLowEffortNoThinking(useModel) ? OutputConfig(effort: "low") : nil,
+            thinking: Self.usesLowEffortNoThinking(useModel) ? Thinking(type: "disabled") : nil
         )
         request.httpBody = try JSONEncoder().encode(body)
 
@@ -71,6 +85,10 @@ struct AnthropicProvider: LLMProvider {
         // A truncated rewrite must never be inserted — it would silently
         // destroy the tail of the user's selection.
         guard decoded.stop_reason != "max_tokens" else { throw LLMError.truncated }
+        // Haiku 5.5 runs safety classifiers and may decline without a fallback.
+        guard decoded.stop_reason != "refusal" else {
+            throw LLMError.providerError(message: "Claude declined this request (refusal).")
+        }
         let text = decoded.content.compactMap { block in
             block.type == "text" ? block.text : nil
         }.joined()

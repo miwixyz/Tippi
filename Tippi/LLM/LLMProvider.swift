@@ -195,8 +195,8 @@ extension LLMProvider {
 
 /// A provider that speaks the OpenAI `/chat/completions` schema. Conforming
 /// types declare only their identity + endpoint; `complete`/`completeStream`
-/// come from the default implementation below, so the five interchangeable
-/// hosted providers (Kimi, Nebius, Groq, Scaleway, Mistral) carry no request
+/// come from the default implementation below, so the interchangeable
+/// hosted providers (Mistral, OpenRouter) carry no request
 /// glue. Override `temperature(for:)` for per-model tuning — OpenAI omits it
 /// for its reasoning family.
 protocol OpenAICompatibleProvider: LLMProvider {
@@ -237,8 +237,8 @@ extension OpenAICompatibleProvider {
         return base.appendingPathComponent("models")
     }
 
-    /// Every OpenAI-compatible provider Tippi uses (OpenAI, Mistral, Scaleway,
-    /// Groq, Kimi, Nebius, OpenRouter) also serves `GET …/v1/models` next to
+    /// Every OpenAI-compatible provider Tippi uses (OpenAI, Mistral,
+    /// OpenRouter) also serves `GET …/v1/models` next to
     /// `…/v1/chat/completions`, in the same `{"data":[{"id":…}]}` shape — the
     /// OpenAI-compatibility convention these providers opted into. One
     /// implementation covers all seven instead of one per provider.
@@ -307,7 +307,7 @@ func keychainAPIKey(id: String, displayName: String) async throws -> String {
 }
 
 /// One request/response path for every OpenAI-compatible `/chat/completions`
-/// endpoint (OpenAI, Mistral, Scaleway, Groq). Centralises the timeout, the
+/// endpoint (OpenAI, Mistral, OpenRouter). Centralises the timeout, the
 /// truncation guard (`finish_reason == "length"` → `.truncated`, never insert a
 /// cut-off rewrite), and JSON shaping so each provider only declares its
 /// identity + endpoint. Anthropic, Gemini and Ollama keep bespoke paths

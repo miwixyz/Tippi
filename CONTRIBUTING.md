@@ -227,6 +227,7 @@ grep REPRO /tmp/repro.log
 | Variable | Replays | Pass |
 |---|---|---|
 | `TIPPI_REPRO_NOTES_DICTATION` | 5× end of a dictation into a note: indicator recording → transcribing → provider, insert, hide, toast | `REPRO: fertig ohne Absturz` |
+| `TIPPI_REPRO_IDLE_CPU` | `toast` and/or `indicator`: show the confirmation toast / recording indicator once and hide it, then measure idle CPU (`top -pid`) | log `REPRO_IDLE_CPU gezeigt`; CPU back to ~0 % |
 | `TIPPI_REPRO_NOTES_SELECTION` | double-click on a word in a note via `NSApp.postEvent` (runs through the text view's real mouse tracking) | `leisteErschienen=true` |
 
 Pitfalls: the test copy has no Accessibility grant (the selection harness bypasses

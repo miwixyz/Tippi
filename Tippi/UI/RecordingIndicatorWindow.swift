@@ -57,7 +57,7 @@ private struct RecordingIndicatorView: View {
     let mode: RecordingIndicatorWindowController.Mode
     @ObservedObject var recorder: AudioRecorder
     let aiEnabled: Bool
-    /// Display name of the AI provider handling cleanup (e.g. "Groq", "Claude").
+    /// Display name of the AI provider handling cleanup (e.g. "Mistral", "Claude").
     /// nil = generic AI badge. Shown only when aiEnabled is true.
     let providerName: String?
     /// Started with the mail dictation hot key: envelope instead of microphone.
@@ -99,7 +99,7 @@ private struct RecordingIndicatorView: View {
 
     /// Status hint (not a button) — the whole window ignores mouse events.
     /// When `providerName` is known (cleanup step), shows the actual provider
-    /// (e.g. "· ✨ Groq"). During transcription (provider not yet known),
+    /// (e.g. "· ✨ Mistral"). During transcription (provider not yet known),
     /// falls back to the generic "· ✨ KI" label.
     private var aiBadge: some View {
         HStack(spacing: 4) {

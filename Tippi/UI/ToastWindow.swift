@@ -5,13 +5,18 @@ import SwiftUI
 
 private struct ToastView: View {
     let message: String
+    /// Einmal hüpfen beim Erscheinen. `.symbolEffect(.bounce)` ohne `value:` hüpft
+    /// endlos — auch im ausgeblendeten Fenster: nach jedem Diktat blieb Tippi bei
+    /// ~20 % CPU (gemessen 2026-10-09, Prüfstand `TIPPI_REPRO_IDLE_CPU=toast`).
+    @State private var appeared = false
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.tint)
                 .font(.system(size: 13, weight: .medium))
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: appeared)
+                .onAppear { appeared = true }
             Text(message)
                 .font(FamilyTheme.font(.subheadline, weight: .medium))
                 .foregroundStyle(.primary)
@@ -161,7 +166,7 @@ final class ToastWindowController {
                 }, completionHandler: { [weak self] in
                     Task { @MainActor in
                         guard let self, self.generation == myGeneration else { return }
-                        win?.orderOut(nil)
+                        Self.hide(win)
                     }
                 })
             }
@@ -180,8 +185,15 @@ final class ToastWindowController {
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 guard let self, self.generation == myGeneration else { return }
-                self.window?.orderOut(nil)
+                Self.hide(self.window)
             }
         }
+    }
+
+    /// Ausblenden UND Inhalt entfernen: ein nur ausgeblendetes Fenster rechnet seine
+    /// SwiftUI-Ansicht weiter (2026-10-09). `show()` setzt den Inhalt jedes Mal neu.
+    private static func hide(_ win: NSWindow?) {
+        win?.orderOut(nil)
+        win?.contentView = nil
     }
 }

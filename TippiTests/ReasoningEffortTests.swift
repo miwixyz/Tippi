@@ -39,7 +39,7 @@ final class ReasoningEffortTests: XCTestCase {
     }
 
     func testNonOpenAIProvidersSendNoReasoningEffort() {
-        XCTAssertNil(GroqProvider().reasoningEffort(for: "openai/gpt-oss-20b"))
+        XCTAssertNil(MistralProvider().reasoningEffort(for: "mistral-small-latest"))
     }
 
     // MARK: - The field actually reaches the wire

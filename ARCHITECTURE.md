@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.23.3. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.24.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -110,12 +110,12 @@ Tippi/
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
 │       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
 │                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
-├── LLM/                            # 11 Provider + Router
+├── LLM/                            # 7 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
 │   ├── LLMRouter.swift             # Registry, Routing, Fallback
 │   ├── ProviderModelPresets.swift  # kuratierte Modell-Listen + retiredModels-Migration
 │   ├── ModelAvailabilityChecker.swift  # Live-Katalog-Abgleich beim Start
-│   └── {OpenAI,Anthropic,Gemini,Mistral,Groq,Scaleway,Kimi,Nebius,OpenRouter,Ollama,MLX}Provider.swift
+│   └── {OpenAI,Anthropic,Gemini,Mistral,OpenRouter,Ollama,MLX}Provider.swift
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):
 │   │                               #   Akzent, accentFill, glassTint, Plus Jakarta Sans, Schrift-Registrierung
