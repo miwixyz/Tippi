@@ -473,6 +473,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | Version | Status | Highlights |
 |---------|--------|------------|
 | v2.24.0 | ✅ Done | **Idle CPU fix + provider cleanup** — the confirmation toast's checkmark kept bouncing invisibly after every dictation (~20 % CPU, measured 0–1 % before / 20–27 % after); it now bounces once and the toast releases its content. Claude Haiku 5.5 selectable with low effort and thinking off (Haiku 4.5 stays default after a 4-dictation comparison). Kimi, Scaleway, Groq and Nebius removed (most of their presets had been retired by the providers) — 7 providers |
+| v2.24.1 | ✅ Done | **Gemini 3.8 Flash** — Google retired Gemini 3.7 Flash on 08.10. and silently routes it to 3.8; the pinned Gemini preset is now 3.8 Flash and saved 3.7 selections migrate on launch (benchmark 20/20) |
 | v2.23.1 | ✅ Done | **Fixes** — dictating into a note no longer crashes (layout loop in the confirmation toast); the selection action bar only appears after a selection you made yourself and closes on any plain click |
 | v2.23.2 | ✅ Done | **Fix** — dictating into a note no longer crashes, second attempt: the recording indicator and toast no longer use a SwiftUI hosting view as the window's content view (layout loop when Tippi itself is active) |
 | v2.23.3 | ✅ Done | **Fix** — the selection action bar appears again in Tippi's own Notes window (the text view swallowed the mouse-up the 2.23.1 gesture check waits for) |
