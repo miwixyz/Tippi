@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Behoben
+- **Gemini 3.7 Flash durch Gemini 3.8 Flash ersetzt.** Google hat 3.7 Flash am 08.10. abgekündigt und beantwortet Anfragen daran stillschweigend mit 3.8 Flash. Das feste Gemini-Modell in der Auswahl ist jetzt 3.8 Flash. Wer 3.7 Flash gewählt hatte, wird beim Start automatisch umgestellt. Gemessen mit den Prüfstand-Fällen: 20 von 20 bestanden.
+
+### Intern
+- Kommentare zu Haiku 4.5 berichtigt: Es ist nicht mehr das günstigste Anthropic-Modell, und eine Abschaltung ist nicht angekündigt (nur „nicht vor 15.10.2026“).
+
 ## [2.24.0] — 2026-10-09
 
 Tippi braucht nach dem Diktieren keine Rechenleistung mehr im Leerlauf, und die Anbieterliste ist aufgeräumt.

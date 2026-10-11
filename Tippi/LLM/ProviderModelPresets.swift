@@ -123,13 +123,18 @@ enum ProviderModelPresets {
     // exactly the failure this file kept hitting. Prefer them over pinned
     // ids wherever a provider offers the convention (Mistral's `-latest`
     // aliases are the same idea and are why Mistral never broke here).
-    // The pinned 3.7 entry stays available for anyone who wants a fixed
+    // The pinned entry stays available for anyone who wants a fixed
     // target; `gemini-2.5-pro` is dropped — the 2.5 generation is being
     // retired and no confirmed 3.x Pro GA id exists to replace it with.
+    // 2026-10-11: pinned entry moved 3.7 → 3.8. Google deprecated gemini-3.7-flash
+    // on 2026-10-08 and silently routes it to gemini-3.8-flash (measured: the
+    // response's `modelVersion` is gemini-3.8-flash; `/models` still lists 3.7,
+    // so ModelAvailabilityChecker can't see it). Prüfstand cases with
+    // GeminiProvider's request shape: 20/20, median 4.9 s.
     static let gemini: [Preset] = [
         Preset(id: "gemini-flash-lite-latest", label: "Gemini Flash Lite (latest) — fastest ⭐", isFastest: true,  isReasoning: false),
         Preset(id: "gemini-flash-latest",      label: "Gemini Flash (latest) — auto-updating",  isFastest: false, isReasoning: false),
-        Preset(id: "gemini-3.7-flash",         label: "Gemini 3.7 Flash — pinned, most capable", isFastest: false, isReasoning: false),
+        Preset(id: "gemini-3.8-flash",         label: "Gemini 3.8 Flash — pinned, most capable", isFastest: false, isReasoning: false),
     ]
 
     // MARK: - Mistral La Plateforme (EU/FR hosting, current 2026)
@@ -202,6 +207,8 @@ enum ProviderModelPresets {
         .init(providerID: "gemini", deadID: "gemini-3.5-flash-lite", replacementID: "gemini-flash-lite-latest"),
         .init(providerID: "gemini", deadID: "gemini-3.5-flash",      replacementID: "gemini-flash-latest"),
         .init(providerID: "gemini", deadID: "gemini-2.5-pro",        replacementID: "gemini-flash-latest"),
+        // Deprecated 2026-10-08, Google routes it to 3.8 — keep the pinned choice pinned.
+        .init(providerID: "gemini", deadID: "gemini-3.7-flash",      replacementID: "gemini-3.8-flash"),
 
         // OpenAI's gpt-4o and gpt-5 generations are no longer in the current
         // model list (developers.openai.com, checked 2026-09-02); the whole
@@ -216,9 +223,10 @@ enum ProviderModelPresets {
         .init(providerID: "openai", deadID: "gpt-5",       replacementID: "gpt-6-sol"),
 
         // Anthropic's 4.5 Sonnet/Opus are legacy since the 5 generation.
-        // Haiku 4.5 is deliberately NOT remapped — it's still the fastest and
-        // cheapest model Anthropic sells and remains the right pick until its
-        // announced retirement (not before 2026-10-15).
+        // Haiku 4.5 is deliberately NOT remapped — it's still the measured best
+        // for polish (Haiku 5.5 is cheaper since 2026-10-07 but kept fillers, see
+        // the anthropic presets). No retirement is announced; Anthropic only
+        // guarantees it until "not sooner than 2026-10-15".
         .init(providerID: "anthropic", deadID: "claude-sonnet-4-5", replacementID: "claude-sonnet-5"),
         .init(providerID: "anthropic", deadID: "claude-opus-4-5",   replacementID: "claude-opus-5-5"),
 
