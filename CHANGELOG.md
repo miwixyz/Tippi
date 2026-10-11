@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.24.1] — 2026-10-11
+
+- _Add release notes here._
+
 ## [Unreleased]
 
 ### Behoben
