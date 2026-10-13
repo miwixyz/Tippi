@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.25.0] — 2026-10-13
+
+- _Add release notes here._
+
 ## [2.24.1] — 2026-10-11
 
 Google hat Gemini 3.7 Flash abgekündigt. Tippi nutzt jetzt den Nachfolger.
