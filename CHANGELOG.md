@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.27.1] — 2026-10-13
+
+- _Add release notes here._
+
 ## [2.27.0] — 2026-10-13
 
 Die Autovervollständigung (Labs) kann direkt in Tippi rechnen, bietet mitten im Wort Alternativen an, und Gemma 4 E4B ist wählbar.
