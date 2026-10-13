@@ -15,9 +15,10 @@ faelle = m.faelle(korpus, 80)[:n]          # abwechselnd Wortgrenze / mitten im 
 TIPPEN = 4                                 # so viele Zeichen am Ende werden echt getippt
 
 import subprocess as _sp
-_v = _sp.run(["defaults", "read", "-g", "NSDocumentSaveNewDocumentsToCloud"], capture_output=True, text=True).stdout.strip()
+_v = _sp.run(["/usr/bin/defaults", "read", "-g", "NSDocumentSaveNewDocumentsToCloud"], capture_output=True, text=True).stdout.strip()
 if _v != "0":
     sys.exit("ABBRUCH: NSDocumentSaveNewDocumentsToCloud ist nicht 0 — TextEdit würde in iCloud speichern")
+ORDNER = tempfile.mkdtemp(prefix="tippi-vergleich-")   # eigener, zufälliger Ordner
 ergebnisse = []
 for i, f in enumerate(faelle):
     text = f["before"][-1200:]
@@ -25,14 +26,13 @@ for i, f in enumerate(faelle):
     k = min(TIPPEN, len(text) - zeile_start)
     davor, getippt = text[:-k], text[-k:]
     import os
-    ordner = "/tmp/ac-messung/doks"   # nur Kontext-Übergabe an osascript; TextEdit öffnet die Datei NICHT
-    os.makedirs(ordner, exist_ok=True)
+    ordner = ORDNER   # nur Kontext-Übergabe an osascript; TextEdit öffnet die Datei NICHT
     datei = f"{ordner}/{name}-{i+1:02d}.txt"
     with open(datei, "w", encoding="utf-8") as tf:
         tf.write(davor)
     t0 = time.time()
     try:
-        out = subprocess.run(["osascript", "vergleich.applescript", datei, getippt],
+        out = subprocess.run(["/usr/bin/osascript", "vergleich.applescript", datei, getippt],
                              capture_output=True, text=True, timeout=40)
     except subprocess.TimeoutExpired:
         print(f"{i+1}: Zeitüberschreitung (TextEdit blockiert?) — Test angehalten"); break

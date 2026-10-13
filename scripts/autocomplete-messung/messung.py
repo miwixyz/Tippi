@@ -86,7 +86,7 @@ def vokabular():
     global VOKABULAR
     if VOKABULAR is None:
         from transformers import AutoTokenizer
-        tok = AutoTokenizer.from_pretrained(MODEL)
+        tok = AutoTokenizer.from_pretrained(MODEL, local_files_only=True)   # nur aus dem Zwischenspeicher, nie laden
         VOKABULAR = [(i, (p or "").replace("▁", " ")) for i, p in
                      enumerate(tok.convert_ids_to_tokens(list(range(len(tok)))))]
     return VOKABULAR
