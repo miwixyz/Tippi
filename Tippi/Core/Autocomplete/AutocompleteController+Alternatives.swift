@@ -49,7 +49,8 @@ extension AutocompleteController {
             let fontSize = AutocompleteGeometry.fontSize(reported: entry.field.fontSize,
                                                          caretHeight: entry.field.caret.height)
             self.panel.show(AutocompleteAlternatives.label(words), caret: entry.field.caret,
-                            fontSize: fontSize, hint: "1–\(words.count)", animated: false)
+                            fontSize: fontSize,
+                            hint: .init(key: "1–\(words.count)", label: "1–\(words.count)"), animated: false)
         }
     }
 

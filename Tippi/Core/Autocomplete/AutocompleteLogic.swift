@@ -313,6 +313,21 @@ enum AutocompleteKeyDecision {
     static func restartsPause(keyCode: Int64, flags: CGEventFlags) -> Bool {
         keyCode != escapeKeyCode && flags.isDisjoint(with: [.maskCommand, .maskControl])
     }
+
+    /// Bildschirmfoto-Kurzbefehl (⇧⌘3/4/5, mit ⌃ in die Zwischenablage): Der
+    /// Vorschlag bleibt stehen, sonst ist er auf dem Foto nie zu sehen
+    /// (Michael 2026-10-13, Cotypist bleibt stehen). Der Text ändert sich dabei nicht.
+    static func screenshotShortcut(keyCode: Int64, flags: CGEventFlags) -> ScreenshotShortcut? {
+        let mods = modifiers(from: flags)
+        guard mods == [.command, .shift] || mods == [.command, .shift, .control] else { return nil }
+        switch keyCode {
+        case 20: return .wholeScreen   // 3
+        case 21, 23: return .withPick  // 4, 5 — danach folgt ein Klick zum Aufziehen
+        default: return nil
+        }
+    }
+
+    enum ScreenshotShortcut { case wholeScreen, withPick }
 }
 
 // MARK: - Bereinigung der Modellantwort (Design §3 „Tampering der Ausgabe")
@@ -686,44 +701,5 @@ enum AutocompleteSuggestion {
               typed.lowercased() == String(next).lowercased() else { return .mismatch }
         let rest = String(suggestion.dropFirst())
         return rest.trimmingCharacters(in: .whitespaces).isEmpty ? .usedUp : .keep(rest)
-    }
-}
-
-// MARK: - Platzierung
-
-enum AutocompleteGeometry {
-    /// Design §7: Wo Apps falsche Cursor-Bounds melden (Electron), lieber kein
-    /// Vorschlag als ein falsch platzierter. Verworfen werden Rechtecke ohne
-    /// Höhe, absurd große, der typische Nullpunkt-Müll und alles außerhalb
-    /// der Bildschirme.
-    static func isPlausibleCaret(_ rect: CGRect, screens: [CGRect]) -> Bool {
-        guard rect.height >= 6, rect.height <= 200, rect.width >= 0, rect.width <= 400 else { return false }
-        guard rect.origin != .zero else { return false }
-        let probe = CGPoint(x: rect.midX, y: rect.midY)
-        return screens.contains { $0.contains(probe) }
-    }
-
-    /// Ein Textmarker-Rechteck ist nur dann ein Cursor, wenn es (fast) keine Breite
-    /// hat. Gemessen 2026-09-28 in Obsidian: Cursor in einer Notiz = Breite 0; leeres
-    /// Eingabefeld = ganze Zeile (887 pt) — das darf nicht als Cursorstelle gelten.
-    static func isCollapsedCaret(_ rect: CGRect) -> Bool {
-        rect.width <= 2
-    }
-
-    /// Schriftgröße passend zur Zeilenhöhe des Feldes, im Rahmen des Lesbaren.
-    static func fontSize(forCaretHeight height: CGFloat) -> CGFloat {
-        min(max(height * 0.8, 11), 28)
-    }
-
-    /// Schriftgröße für den Vorschlag: die von der App gemeldete Schriftgröße
-    /// des Zeichens vor dem Cursor, wenn es eine gibt und sie zur Zeilenhöhe am
-    /// Bildschirm passt — sonst die Schätzung aus der Zeilenhöhe. Bei Zoom
-    /// (Pages auf 200 %) meldet die App Dokument-Punkte, nicht Bildschirm-Punkte;
-    /// dann passt die Zahl nicht zur Cursorhöhe und wird verworfen.
-    static func fontSize(reported: CGFloat?, caretHeight: CGFloat) -> CGFloat {
-        guard let reported, reported >= caretHeight * 0.5, reported <= caretHeight else {
-            return fontSize(forCaretHeight: caretHeight)
-        }
-        return min(max(reported, 11), 28)
     }
 }

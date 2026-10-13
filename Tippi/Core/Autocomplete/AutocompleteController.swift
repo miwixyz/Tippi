@@ -248,7 +248,11 @@ final class AutocompleteController: ObservableObject {
     /// beim Weitertippen und Wort-für-Wort bleibt die Kapsel ruhig stehen.
     func showPanel(_ text: String, field: Field, animated: Bool) {
         let fontSize = AutocompleteGeometry.fontSize(reported: field.fontSize, caretHeight: field.caret.height)
-        let hint = AutocompleteSettings.showKeyHint ? AutocompleteSuggestionPanel.keyHint(AutocompleteSettings.keyBindings) : nil
+        let bindings = AutocompleteSettings.keyBindings
+        let hint = AutocompleteSettings.showKeyHint
+            ? AutocompleteSuggestionView.Hint(key: bindings.nextWord.displayString,
+                                              label: AutocompleteSuggestionPanel.keyHint(bindings))
+            : nil
         panel.show(text, caret: field.caret, fontSize: fontSize, hint: hint, animated: animated)
     }
 
@@ -484,13 +488,12 @@ final class AutocompleteController: ObservableObject {
     /// Bounds liefert — dann lieber kein Vorschlag als ein falsch platzierter.
     private func caretRect(_ element: AXUIElement, location: Int) -> CGRect? {
         let screens = NSScreen.screens.map(\.frame)
-        if let rect = TextCapture.boundsForSelection(element: element, range: CFRange(location: location, length: 0)),
-           AutocompleteGeometry.isPlausibleCaret(rect, screens: screens) {
-            return CGRect(x: rect.minX, y: rect.minY, width: 0, height: rect.height)
-        }
-        if let rect = TextCapture.boundsForSelection(element: element, range: CFRange(location: location - 1, length: 1)),
-           AutocompleteGeometry.isPlausibleCaret(rect, screens: screens) {
-            return CGRect(x: rect.maxX, y: rect.minY, width: 0, height: rect.height)
+        let plausible = { (rect: CGRect?) in rect.flatMap { AutocompleteGeometry.isPlausibleCaret($0, screens: screens) ? $0 : nil } }
+        if let caret = AutocompleteGeometry.caret(
+            zeroLength: plausible(TextCapture.boundsForSelection(element: element, range: CFRange(location: location, length: 0))),
+            charBefore: plausible(TextCapture.boundsForSelection(element: element, range: CFRange(location: location - 1, length: 1)))
+        ) {
+            return caret
         }
         // Electron/Chromium (Obsidian, Codex, Teams): Beide Wege oben liefern dort ein
         // Nullrechteck, die Textmarker den echten Cursor (gemessen 2026-09-28 in Obsidian).
@@ -528,6 +531,23 @@ final class AutocompleteTapBridge: @unchecked Sendable {
     var isVisible: Bool {
         lock.lock(); defer { lock.unlock() }
         return visible
+    }
+
+    /// Nach ⇧⌘4/5 wird zum Aufziehen geklickt — dieser eine Klick verwirft
+    /// den Vorschlag nicht. Jede andere Taste und die Frist heben das auf.
+    private var screenshotPickUntil: Date?
+
+    func armScreenshotPick(_ armed: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        screenshotPickUntil = armed ? Date().addingTimeInterval(30) : nil
+    }
+
+    /// `true` genau einmal für den Klick nach ⇧⌘4/5.
+    func consumeScreenshotClick() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard let until = screenshotPickUntil else { return false }
+        screenshotPickUntil = nil
+        return Date() < until
     }
 
     func setBindings(_ value: AutocompleteKeyBindings) {
@@ -591,6 +611,11 @@ private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, user
         }
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
+        if let shot = AutocompleteKeyDecision.screenshotShortcut(keyCode: keyCode, flags: flags) {
+            bridge.armScreenshotPick(shot == .withPick)
+            return Unmanaged.passUnretained(event)
+        }
+        bridge.armScreenshotPick(false)
         switch bridge.alternativesDecision(keyCode: keyCode, flags: flags) {
         case .show:
             Task { @MainActor in bridge.controller?.showAlternatives() }
@@ -612,6 +637,7 @@ private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, user
             ? typedCharacters(event) : nil
         Task { @MainActor in bridge.controller?.userTyped(restartPause: restart, typed: typed) }
     case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+        if bridge.consumeScreenshotClick() { break }
         Task { @MainActor in bridge.controller?.userClicked() }
     default:
         break

@@ -2,7 +2,19 @@
 
 ## [2.27.1] — 2026-10-13
 
-- _Add release notes here._
+Autovervollständigung (Labs): Der Vorschlag sieht aus wie Apples eigene Vorschläge beim Tippen, sitzt in TextEdit in der richtigen Zeile und bleibt bei einem Bildschirmfoto stehen.
+
+### Neu
+- **Neuer Look des Vorschlags:** grauer Text direkt hinter dem Cursor, ohne Hintergrund, dahinter eine kleine Taste mit der Wort-Taste (z. B. ⇥). Bis 2.27.0 war es eine Glas-Kapsel. Das Glas nahm den Hintergrund des Dokuments an, und der graue Text darauf war hell wie dunkel schlecht lesbar. Das Grau ist jetzt ein fester Mittelton, der auf Weiß und auf Fast-Schwarz lesbar ist. VoiceOver liest weiter beide Tasten vor („⇥ Wort · ⇧⇥ alles“).
+
+### Behoben
+- **TextEdit: Vorschlag eine Zeile zu hoch.** TextEdit meldet die Cursorposition eine Zeilenhöhe zu hoch (gemessen: Cursor y 430, Zeichen davor y 444). Steht das Zeichen vor dem Cursor direkt daneben, nimmt Tippi jetzt dessen Zeile. Nach einem Zeilenumbruch gilt weiter die Cursorposition.
+- **Bildschirmfoto:** ⇧⌘3, ⇧⌘4 und ⇧⌘5 (auch mit ⌃) lassen den Vorschlag stehen, damit er auf dem Foto zu sehen ist. Der Klick zum Aufziehen nach ⇧⌘4/5 verwirft ihn nicht. Jede andere Taste oder 30 Sekunden heben das auf.
+- Ohne Kapsel klebte der Vorschlag am Wort davor („dennpassiert?“). Ein führendes Leerzeichen bleibt jetzt als genau eines stehen.
+
+### Intern
+- Platzierung in eigene Datei `AutocompleteGeometry.swift`, neue Tests `AutocompletePlacementTests`.
+- 723 Tests.
 
 ## [2.27.0] — 2026-10-13
 

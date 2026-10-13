@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Vorschlag der Autovervollständigung als kompakte Glas-Kapsel direkt hinter
-/// dem Cursor.
+/// Vorschlag der Autovervollständigung als grauer Text direkt hinter dem
+/// Cursor (ohne Hintergrund, siehe `AutocompleteSuggestionView`).
 ///
 /// Gleiche Grundregel wie `EmojiSuggestionPanel`: `NonKeyPanel`, wird nie
 /// Key-Fenster — der Nutzer tippt in einer *anderen* App weiter. Anders als die
@@ -30,7 +30,7 @@ final class AutocompleteSuggestionPanel {
     /// `caret` in AppKit-Bildschirmkoordinaten (Ursprung unten links), wie
     /// `TextCapture.boundsForSelection` sie liefert. `animated` = weich
     /// einblenden; gilt nur, wenn gerade keine Kapsel sichtbar ist.
-    func show(_ suggestion: String, caret: CGRect, fontSize: CGFloat, hint: String?, animated: Bool) {
+    func show(_ suggestion: String, caret: CGRect, fontSize: CGFloat, hint: AutocompleteSuggestionView.Hint?, animated: Bool) {
         let view = AutocompleteSuggestionView(text: suggestion, fontSize: fontSize, hint: hint, animateIn: animated)
         let panel: NSPanel
         let hosting: ClickableHostingView<AutocompleteSuggestionView>
@@ -121,18 +121,42 @@ final class AutocompleteSuggestionPanel {
     }
 }
 
-/// Vorschlag in sekundärer Farbe, rechts daneben dezent die Tasten. Kapsel mit
-/// `tippiGlass` (Liquid Glass ab macOS 26, sonst Material) — ohne eigene Kontur.
+/// Vorschlag als grauer Text direkt im Textfluss, ohne Hintergrund und ohne
+/// Linie — wie Apples eigene Vorschläge beim Tippen; dahinter eine kleine
+/// Tastenkappe mit der Wort-Taste. Bis 2.27.0 eine Glas-Kapsel: Auf hellem wie
+/// dunklem Dokument nahm das Glas den Hintergrund an, der graue Text darauf war
+/// kaum lesbar. Eine Unterstreichung in Akzentfarbe war Michael „altmodisch"
+/// (beides 2026-10-13). Vorschläge gibt es nur am Zeilenende, der Text
+/// überdeckt also nichts.
 struct AutocompleteSuggestionView: View {
+    /// `key` steht auf der Kappe (z. B. „⇥"), `label` liest VoiceOver vor
+    /// („⇥ Wort · ⇧⇥ alles").
+    struct Hint: Equatable {
+        let key: String
+        let label: String
+    }
+
+    /// Fester Mittelton statt `.secondary`: Das Panel kennt nur Tippis
+    /// Erscheinungsbild, nicht den Hintergrund des Dokuments — Mittelgrau ist
+    /// auf Weiß wie auf Fast-Schwarz lesbar und sieht trotzdem nach Vorschlag aus.
+    static let ghostColor = Color(white: 0.5)
+
     let text: String
     let fontSize: CGFloat
     /// Tastenhinweis — `nil`, wenn in den Einstellungen ausgeblendet.
-    let hint: String?
+    let hint: Hint?
+
+    /// Ein führendes Leerzeichen bleibt als genau eines stehen — ohne Kapsel
+    /// trennt sonst nichts den Vorschlag vom Wort davor („dennpassiert?").
+    static func displayText(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        return text.first?.isWhitespace == true ? " " + trimmed : trimmed
+    }
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared: Bool
 
-    init(text: String, fontSize: CGFloat, hint: String?, animateIn: Bool) {
+    init(text: String, fontSize: CGFloat, hint: Hint?, animateIn: Bool) {
         self.text = text
         self.fontSize = fontSize
         self.hint = hint
@@ -143,24 +167,27 @@ struct AutocompleteSuggestionView: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: fontSize * 0.55) {
-            Text(text.trimmingCharacters(in: .whitespaces))
+            Text(Self.displayText(text))
                 .font(.system(size: fontSize))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Self.ghostColor)
                 .lineLimit(1)
                 .fixedSize()
             if let hint {
-                // Nennt die Tasten, die übernehmen — sonst sieht der graue Text
+                // Nennt die Taste, die übernimmt — sonst sieht der graue Text
                 // wie ein Anzeigefehler aus.
-                Text(hint)
-                    .font(.system(size: max(9, fontSize * 0.62), weight: .medium))
-                    .foregroundStyle(.tertiary)
+                Text(hint.key)
+                    .font(.system(size: max(9, fontSize * 0.68), weight: .medium))
+                    .foregroundStyle(Self.ghostColor)
                     .lineLimit(1)
                     .fixedSize()
+                    .padding(.horizontal, max(4, fontSize * 0.35))
+                    .padding(.vertical, max(1, fontSize * 0.08))
+                    .overlay(RoundedRectangle(cornerRadius: max(3, fontSize * 0.3), style: .continuous)
+                        .strokeBorder(Self.ghostColor.opacity(0.6), lineWidth: 1))
+                    .accessibilityLabel(hint.label)
             }
         }
-        .padding(.horizontal, max(7, fontSize * 0.55))
-        .padding(.vertical, max(1, fontSize * 0.12))
-        .tippiGlass(in: Capsule())
+        .padding(.trailing, 2)
         .scaleEffect(appeared || reduceMotion ? 1 : 0.94, anchor: .leading)
         .onAppear {
             guard !appeared else { return }
