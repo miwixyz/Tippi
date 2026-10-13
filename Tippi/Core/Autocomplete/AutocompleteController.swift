@@ -24,6 +24,10 @@ final class AutocompleteController: ObservableObject {
 
     /// Design §3: Anfrage erst nach 350 ms Pause.
     static let pauseNanoseconds: UInt64 = 350_000_000
+    /// Kürzere Pause, wenn ein sichtbarer Vorschlag gerade an einem getippten
+    /// Buchstaben gescheitert ist — dann soll er schnell „nachziehen" (wie
+    /// Cotypist). Nur in diesem Fall, damit flüssiges Tippen keine Anfragen auslöst.
+    static let snapPauseNanoseconds: UInt64 = 200_000_000
     /// Wartezeit, bis die App nach Einfügen/Tippen den Cursor weitergerückt hat.
     static let reshowDelayNanoseconds: UInt64 = 40_000_000
 
@@ -41,6 +45,8 @@ final class AutocompleteController: ObservableObject {
     /// wird verworfen (höchstens eine gültige Anfrage, Design §3).
     private var generation = 0
     private var shown: (text: String, pid: pid_t)?
+    /// Wortstücke für die Wortheilung (mitten im Wort, `AutocompleteHealingRun`).
+    private let vocabularies = AutocompleteVocabularyCache()
 
     private lazy var session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
@@ -120,6 +126,7 @@ final class AutocompleteController: ObservableObject {
         if MLXServerManager.isInstalled, MLXServerManager.shared.state == .stopped {
             Task { try? await MLXServerManager.shared.start() }
         }
+        _ = vocabularies.vocabulary(for: MLXServerManager.activeModel)   // vorladen
         autocompleteLog.notice("autocomplete on")
     }
 
@@ -147,6 +154,7 @@ final class AutocompleteController: ObservableObject {
     func userTyped(restartPause: Bool, typed: String? = nil) {
         // „Einfach weitertippen": passt das Zeichen zum Vorschlag, bleibt er
         // stehen (gekürzt) — keine neue Anfrage, kein Flackern.
+        var snap = false
         if let shown, let typed {
             switch AutocompleteSuggestion.afterTyping(typed, suggestion: shown.text) {
             case .keep(let rest):
@@ -154,15 +162,18 @@ final class AutocompleteController: ObservableObject {
                 bridge.setVisible(true)
                 reshow(rest, pid: shown.pid)
                 return
-            case .usedUp, .mismatch:
+            case .usedUp:
                 break
+            case .mismatch:
+                snap = typed.count == 1 && typed.first?.isLetter == true
             }
         }
         cancelPending()
         dismiss(animated: true)
         guard restartPause else { return }
+        let pause = snap ? Self.snapPauseNanoseconds : Self.pauseNanoseconds
         pauseTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: Self.pauseNanoseconds)
+            try? await Task.sleep(nanoseconds: pause)
             guard !Task.isCancelled else { return }
             autocompleteLog.notice("pause elapsed")
             self?.requestSuggestion()
@@ -260,29 +271,42 @@ final class AutocompleteController: ObservableObject {
         guard let field = readFocusedField(in: app) else { return }
         let glossary = AutocompleteRequest.relevantGlossary(
             terms: CustomWordVariants.glossaryTerms(from: DictationSettings.customWords), context: field.context)
-        guard let request = AutocompleteRequest.make(server: server, model: MLXServerManager.activeModel,
-                                                     context: field.context, glossary: glossary) else {
-            return skip("request not built")
+        let model = MLXServerManager.activeModel
+        // Mitten im Wort: Wortheilung, sofern Vorlage und Wortstücke da sind.
+        let healing = AutocompleteWordHealing.split(field.context).flatMap { split in
+            AutocompleteWordHealing.supports(model: model)
+                ? vocabularies.vocabulary(for: model).map { (split: split, vocabulary: $0) } : nil
         }
+        let request = AutocompleteRequest.make(server: server, model: model, context: field.context, glossary: glossary)
+        guard healing != nil || request != nil else { return skip("request not built") }
         let gen = generation
         let started = Date()
         let bundleID = app.bundleIdentifier ?? "?"
         requestTask = Task { [weak self] in
             guard let self else { return }
-            let raw = await self.fetch(request)
+            let raw: String?
+            if let healing {
+                raw = await AutocompleteHealingRun(server: server, model: model, fetch: self.fetchData)
+                    .suggestion(healing.split, vocabulary: healing.vocabulary, glossary: glossary)
+            } else if let request {
+                raw = await self.fetch(request)
+            } else {
+                raw = nil
+            }
             guard !Task.isCancelled, gen == self.generation else { return }
             let ms = Int(Date().timeIntervalSince(started) * 1000)
             guard let raw,
-                  let suggestion = AutocompleteSanitizer.clean(raw, context: field.context, isKnownWord: Self.isKnownWord),
+                  let suggestion = AutocompleteSanitizer.clean(raw, context: field.context, isKnownWord: Self.isKnownWord,
+                                                               continuesStartedWord: healing != nil),
                   NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier,
                   !self.isOtherTypingUIActive() else {
-                autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
+                autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : "heal", privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
                 return
             }
             self.showPanel(suggestion, field: field, animated: true)
             self.shown = (suggestion, app.processIdentifier)
             self.bridge.setVisible(true)
-            autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
+            autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : "heal", privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
         }
     }
 
@@ -291,9 +315,14 @@ final class AutocompleteController: ObservableObject {
     }
 
     private func fetch(_ request: URLRequest) async -> String? {
+        guard let data = await fetchData(request) else { return nil }
+        return AutocompleteRequest.content(from: data)
+    }
+
+    private func fetchData(_ request: URLRequest) async -> Data? {
         guard let (data, response) = try? await session.data(for: request),
               let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
-        return AutocompleteRequest.content(from: data)
+        return data
     }
 
     private static func isKnownWord(_ word: String) -> Bool {

@@ -2,7 +2,19 @@
 
 ## [2.26.0] — 2026-10-13
 
-- _Add release notes here._
+Die Autovervollständigung (Labs) ergänzt jetzt angefangene Wörter.
+
+### Neu
+- **Vorschläge mitten im Wort.** Bisher überging Tippi ein angefangenes Wort: Aus „ku" wurde „können", aus „lauf" ein neuer Satz. Jetzt ergänzt Tippi zuerst das Wort und schreibt dann weiter („Besch" → „Bescheid geben.", „Antw" → „Antwort."). Gemessen an 80 Stellen in echten deutschen Texten: mitten im Wort 0 von 40 richtig vorher, 20 bis 22 von 40 jetzt; in TextEdit 5 von 6. Funktioniert mit Gemma 4 als lokalem Modell; mit anderen Modellen bleibt es wie bisher.
+- **Schnelleres Nachziehen.** Passt ein getippter Buchstabe nicht zum Vorschlag, kommt nach 0,2 statt 0,35 Sekunden ein neuer.
+
+### Behoben
+- Schreibt das Modell mitten im Wort Teile seiner Anweisung ab, zeigt Tippi nur das ergänzte Wort.
+
+### Intern
+- Neu `AutocompleteWordHealing.swift`: Das Modell bekommt den Satz bis vor das angefangene Wort; beim nächsten Wortstück sind über `logit_bias` nur Stücke erlaubt, die mit dem Getippten beginnen. Wortstücke aus der `tokenizer.json` des Modells, sortiert indiziert (Suche 0,006 ms statt 58 ms, gegen die Komplettsuche an 2265 Wortanfängen ohne Abweichung).
+- Umgehung eines Fehlers in mlx-lm 0.31.3 und 0.32.0: Eine Anfrage, die genau die vorige plus das erzeugte Stück ist, hängt den Server dauerhaft auf. Jeder Schritt erzeugt deshalb 2 Stücke (133 Anfragen ohne Fehler); der Prompt-Cache bleibt an, sonst würde Diktat ~0,2 s langsamer.
+- Messskripte in `scripts/autocomplete-messung/`. 697 Tests.
 
 ## [2.25.0] — 2026-10-13
 

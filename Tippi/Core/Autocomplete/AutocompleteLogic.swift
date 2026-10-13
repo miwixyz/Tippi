@@ -335,7 +335,13 @@ enum AutocompleteSanitizer {
     /// und ohne, wenn es das angefangene Wort vervollständigt („vermis" → „se").
     /// `isKnownWord` entscheidet den unklaren Fall „Buchstabe trifft Buchstabe";
     /// in der App ist das die Rechtschreibprüfung.
-    static func clean(_ raw: String, context: String, isKnownWord: (String) -> Bool = { _ in false }) -> String? {
+    ///
+    /// `continuesStartedWord`: Die Antwort kommt aus der Wortheilung und setzt
+    /// das angefangene Wort sicher fort — ohne führendes Leerzeichen gehört sie
+    /// ans Wort, mit Leerzeichen beginnt ein neues. Kein Raten über Überlappung
+    /// oder Rechtschreibprüfung (die kennt viele Zusammensetzungen nicht).
+    static func clean(_ raw: String, context: String, isKnownWord: (String) -> Bool = { _ in false },
+                      continuesStartedWord: Bool = false) -> String? {
         // 1. Nur die erste nicht-leere Zeile — Mehrzeilen-Vorschläge gibt es nicht (§6).
         let firstLine = raw
             .components(separatedBy: .newlines)
@@ -347,7 +353,9 @@ enum AutocompleteSanitizer {
         let modelHadLeadingSpace = line.first?.isWhitespace ?? false
         var body = String(line.drop { $0.isWhitespace })
         var completesWord = false
-        if let overlap = overlapLength(context: context, suggestion: body) {
+        if continuesStartedWord {
+            completesWord = !modelHadLeadingSpace
+        } else if let overlap = overlapLength(context: context, suggestion: body) {
             body = String(body.dropFirst(overlap))
             completesWord = !(body.first?.isWhitespace ?? true)
             if body.trimmingCharacters(in: .whitespaces).isEmpty { return nil }
@@ -589,7 +597,7 @@ enum AutocompleteRequest {
     /// Grundprompt plus die eigenen Wörter des Nutzers als Schreibweisen-Liste.
     /// Die Begriffe sind Daten: Steuerzeichen/Zeilenumbrüche werden zu
     /// Leerzeichen, überlange und leere fallen weg.
-    static func systemPrompt(glossary: [String]) -> String {
+    static func systemPrompt(glossary: [String], base: String = systemPrompt) -> String {
         let terms = glossary
             .map { term in
                 String(term.unicodeScalars.map { $0.properties.generalCategory == .control ? " " : Character($0) })
@@ -597,8 +605,8 @@ enum AutocompleteRequest {
             }
             .filter { !$0.isEmpty && $0.count <= maxGlossaryTermLength }
             .prefix(maxGlossaryTerms)
-        guard !terms.isEmpty else { return systemPrompt }
-        return systemPrompt + " Schreibe diese Namen und Begriffe genau so: " + terms.joined(separator: ", ") + "."
+        guard !terms.isEmpty else { return base }
+        return base + " Schreibe diese Namen und Begriffe genau so: " + terms.joined(separator: ", ") + "."
     }
 
     static func make(server: URL, model: String, context: String, glossary: [String] = []) -> URLRequest? {

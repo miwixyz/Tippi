@@ -84,6 +84,25 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
   Einstellungen mit Bereichsprüfung. **Kein Cloud-Anbieter** für diese Funktion, auch
   wenn der Standard-Anbieter einer ist — Getipptes geht nie ins Netz.
 - Kein Weiterleiten (`redirect` wird nicht verfolgt), Zeitlimit 1,5 s.
+- **Wortheilung (ab 2026-10-13, `AutocompleteWordHealing.swift`):** Endet die Zeile mitten
+  in einem Wort und ist das Modell Gemma 4, gehen bis zu 5 Anfragen an
+  `/v1/completions` **desselben** eigenen Loopback-Servers, über dieselbe Sitzung (kein
+  Proxy, keine Weiterleitung, 1,5 s je Anfrage). Inhalt: dieselbe aktuelle Zeile (≤ 400
+  Zeichen), aufgeteilt in Text davor und Satzanfang, in Gemmas Gesprächsvorlage. Getippter
+  Text kann keine Vorlagen-Marken bilden (`<|`/`|>` werden entschärft,
+  `testTypedTextCannotFormTemplateMarkers`). `logit_bias` beschränkt nur, welche Wortstücke
+  als nächstes in Frage kommen; `logprobs` liefert nur deren Nummer.
+- **Lesen der Wortstücke (`tokenizer.json`):** aus dem Hugging-Face-Zwischenspeicher
+  (`HF_HUB_CACHE` → `HF_HOME/hub` → `~/.cache/huggingface/hub`) — dieselbe Datei, die
+  `mlx_lm.server` lädt. Pfad nur aus einer Modellkennung der Form `organisation/name`
+  (Buchstaben, Ziffern, `._-`; kein `..`, `testCacheFolderOnlyForOrganisationSlashName`),
+  Datei höchstens 100 MB, nur gelesen, nur im Arbeitsspeicher. Eine manipulierte Datei
+  kann nur falsche Wortstück-Nummern liefern → schlechter Vorschlag, kein Codepfad.
+- **Bekannter Server-Fehler (mlx-lm 0.31.3 und 0.32.0, gemessen 2026-10-13):** Eine
+  Anfrage, die genau die vorige Anfrage plus das dabei erzeugte Stück ist, tötet den
+  Rechen-Thread; danach hängt **jede** Anfrage (auch Diktat/Umschreiben). Umgangen mit
+  2 erzeugten Stücken je Schritt (`stepTokens`, `testStepTokensNeverOne`); 133 Anfragen
+  ohne Fehler. Abschalten des Prompt-Caches hätte Umschreiben/Diktat um ~0,2 s verlangsamt.
 
 ### Modell → Tippi (Antwort)
 - **Prompt injection:** Der Kontext ist fremder Text und kann Anweisungen enthalten.
@@ -243,3 +262,10 @@ Tests in `TippiTests/AutocompleteTests.swift` (64 Fälle) und `TippiTests/Autoco
   `testFinishedWordIsNeverGluedToTheAnswer`).
 - Bidi-Steuerzeichen (U+202E u. a.) werden entfernt: Anzeige und Eingefügtes dürfen nicht
   auseinanderlaufen.
+- **Wortheilung (2026-10-13):** Mitten im Wort traf die Chat-Anfrage 0 von 40 Schnitten in
+  echten deutschen Texten, die Wortheilung 20–22 von 40 (Messung `scripts/autocomplete-messung/`, eigener `mlx_lm.server`, Gemma 4
+  E2B, temperature 0). Ob der Vorschlag ans Wort gehört, weiß sie sicher — kein Raten per
+  Rechtschreibprüfung (`clean(continuesStartedWord:)`). Schreibt das Modell Teile der
+  Anweisung ab, bleibt nur das ergänzte Wort (`withoutInstructionEcho`, 2/40 → 0/40).
+  Nach einem nicht passenden Buchstaben fragt Tippi nach 200 statt 350 ms neu
+  (`snapPauseNanoseconds`), nur in diesem Fall.

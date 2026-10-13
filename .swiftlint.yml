@@ -45,6 +45,7 @@ identifier_name:
     - enable_thinking
     - chat_template_kwargs
     - output_config
+    - logit_bias
 
 line_length:
   warning: 150
