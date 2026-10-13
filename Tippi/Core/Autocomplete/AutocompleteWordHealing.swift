@@ -87,7 +87,10 @@ enum AutocompleteWordHealing {
     /// Am Wortanfang (Zeile endet mit Leerzeichen): derselbe Satz-als-Antwortbeginn,
     /// nur ohne Beschränkung der Wortstücke. Gemessen 2026-10-13 an 40 Stellen: die
     /// Chat-Anfrage traf 2, und 15 Antworten wiederholten den Satzanfang (vom
-    /// Wiederholungsfilter verworfen → kein Vorschlag); so 4 Treffer, 8 verworfen.
+    /// Wiederholungsfilter verworfen → kein Vorschlag); so 4 Treffer. Mit `startsNewWord`
+    /// bleiben trotzdem 15 von 40 ohne Vorschlag (Leerzeichen behalten: 1 Treffer; erstes
+    /// Stück auf „Leerzeichen + Buchstabe“ beschränken: 4 Treffer, 8 leer, aber 0,66 s und
+    /// 136 000 Bias-Einträge je Anfrage — verworfen).
     static func splitAtWordStart(_ line: String) -> Split? {
         guard line.last == " " else { return nil }
         return sentenceSplit(head: Array(line), started: "")

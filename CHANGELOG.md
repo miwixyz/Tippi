@@ -5,7 +5,7 @@
 Autovervollständigung (Labs): ordentlichere Vorschläge am Wortanfang, ein Eigenes Wort drängt sich nicht mehr vor.
 
 ### Behoben
-- **Wortanfang:** Nach einem Leerzeichen wiederholte das Modell oft den Satzanfang; Tippi verwarf das, und es kam gar kein Vorschlag. Jetzt bekommt das Modell den angefangenen Satz als Beginn seiner Antwort (wie mitten im Wort) und Tippi zeigt nur Vorschläge, die mit einem neuen Wort beginnen — nicht mehr „hen" nach „Mac " oder einen Punkt nach „laufen ". Gemessen an 40 Stellen: 15 → 8 verworfene Antworten.
+- **Wortanfang:** Nach einem Leerzeichen wiederholte das Modell oft den Satzanfang; Tippi verwarf das, und es kam gar kein Vorschlag. Jetzt bekommt das Modell den angefangenen Satz als Beginn seiner Antwort (wie mitten im Wort) und Tippi zeigt nur Vorschläge, die mit einem neuen Wort beginnen — nicht mehr „hen" nach „Mac " oder einen Punkt nach „laufen ". Gemessen an 40 Stellen: 4 statt 2 Treffer beim ersten Wort. *(Korrigiert am 13.10.: Hier stand zuerst „15 → 8 verworfene Antworten“ — gemessen vor der Neues-Wort-Regel. So wie ausgeliefert bleiben 15 von 40 Stellen ohne Vorschlag.)*
 - **Eigene Wörter erst ab 3 Buchstaben:** Bei „…wichtiger als re" schlug Tippi „Rentrak-Nummer" vor, weil der Begriff schon bei 2 passenden Buchstaben ans Modell ging.
 - **Kein Hänger des lokalen Servers beim Übernehmen:** Endete die Antwort des Modells an der Längengrenze und übernahm man sie komplett, konnte der MLX-Server danach hängen (Fehler in mlx-lm, gemessen). Tippi lässt in diesem Fall das letzte, meist abgeschnittene Wort weg.
 
