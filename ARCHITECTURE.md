@@ -100,6 +100,8 @@ Tippi/
 │   │   │                                   #   Übernahme-Tasten (erlaubt? welche Aktion?), Bereinigung
 │   │   │                                   #   samt Wiederholungsfilter (Antwort statt Fortsetzung),
 │   │   │                                   #   Loopback-Anfrage
+│   │   ├── AutocompleteGeometry.swift      # rein + getestet: Platzierung am Cursor (Plausibilität, Zeile
+│   │   │                                   #   aus dem Zeichen davor bei TextEdit), Schriftgröße
 │   │   ├── AutocompleteEngine.swift        # Labs: Rechenwerk im Prozess (MLX Swift), Laden aus dem HF-Cache,
 │   │   │                                   #   Wortheilung + Kandidaten + Fortsetzung in einem Durchgang
 │   │   ├── AutocompleteSettings.swift      # an/aus, Ausschlussliste, Übernahme-Tasten (beim Lesen
@@ -134,7 +136,7 @@ Tippi/
 │   │   └── LocalActionButtons.swift # v2.19 — Schnellaktions-Knöpfe, Währungsreihe, Passwort-Knopf
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
-│   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # Glas-Kapsel am Cursor mit Tastenhinweis, nie Key, keine Klicks
+│   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # grauer Text am Cursor + Tastenkappe, nie Key, keine Klicks
 │   ├── AppListEditor.swift                # v2.16.3 — App-Liste mit Symbol + Name, „App hinzufügen…“ (Ausschlussliste, Enter nach Diktat)
 │   ├── AutocompleteSettingsTab.swift      # Einstellungen → Autovervollständigung (eigener Bereich seit
 │   │                                      #   2026-09-28): Schalter, Modell, zwei Übernahme-Tasten, Ausschlussliste
