@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.27.0] — 2026-10-13
+
+- _Add release notes here._
+
 ## [2.26.1] — 2026-10-13
 
 Autovervollständigung (Labs): ordentlichere Vorschläge am Wortanfang, ein Eigenes Wort drängt sich nicht mehr vor.

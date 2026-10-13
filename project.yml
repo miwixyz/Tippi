@@ -27,6 +27,17 @@ packages:
   Yams:
     url: https://github.com/jpsim/Yams
     from: 5.0.0
+  # Autovervollständigung im eigenen Prozess (2026-10-13, SECURE-DESIGN-autocomplete §10).
+  # Bewusst exakte Versionen: bringen Metal-Code und Modell-Lader mit.
+  MLXSwift:
+    url: https://github.com/ml-explore/mlx-swift
+    exactVersion: 0.32.3
+  MLXSwiftLM:
+    url: https://github.com/ml-explore/mlx-swift-lm
+    exactVersion: 3.32.3
+  SwiftTransformers:
+    url: https://github.com/huggingface/swift-transformers
+    exactVersion: 1.3.5
 
 targets:
   Tippi:
@@ -42,6 +53,14 @@ targets:
         product: FluidAudio
       - package: Yams
         product: Yams
+      - package: MLXSwift
+        product: MLX
+      - package: MLXSwiftLM
+        product: MLXLLM
+      - package: MLXSwiftLM
+        product: MLXLMCommon
+      - package: SwiftTransformers
+        product: Tokenizers
     sources:
       - path: Tippi
         excludes:
@@ -53,8 +72,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tippi.app
         PRODUCT_NAME: Tippi
-        MARKETING_VERSION: "2.26.1"
-        CURRENT_PROJECT_VERSION: "545"
+        MARKETING_VERSION: "2.27.0"
+        CURRENT_PROJECT_VERSION: "548"
         INFOPLIST_FILE: Tippi/Resources/Info.plist
         ENABLE_HARDENED_RUNTIME: YES
         DEAD_CODE_STRIPPING: YES
