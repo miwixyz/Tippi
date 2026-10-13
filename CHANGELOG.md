@@ -2,7 +2,18 @@
 
 ## [2.25.0] — 2026-10-13
 
-- _Add release notes here._
+„Text aus Bildschirmausschnitt“ startet zügiger, zeigt klar, wann es losgeht, und hat ein neues Auswahlfenster.
+
+### Neu
+- **Klares Startsignal.** Bisher sah das Auswahlfenster fast genauso aus wie der Bildschirm darunter: leicht abgedunkelt, und das Fadenkreuz kam erst bei der ersten Mausbewegung. Jetzt dunkelt der Bildschirm deutlich ab und blendet dabei kurz ein, das Fadenkreuz ist sofort da, und oben in der Mitte steht „Bereich aufziehen · Esc bricht ab“.
+- **Neues Auswahlfenster** im Stil des macOS-Bildschirmfotos: weißer Rahmen mit Schatten und Eckwinkeln, die Maße als Glas-Kapsel unter der Auswahl. Das Aufziehen läuft flüssig, auch auf breiten Monitoren. Vorher wurde bei jeder Mausbewegung der ganze Bildschirm neu gezeichnet.
+
+### Behoben
+- **Verzögerter Start.** Tippi fragte bei jedem Tastendruck erst alle offenen Fenster aller Apps ab, obwohl nur die Bildschirme gebraucht werden, und nahm mehrere Bildschirme nacheinander auf. Jetzt merkt sich Tippi die Bildschirme (neu ermittelt, sobald sich die Anordnung ändert) und nimmt alle gleichzeitig auf. Gemessen mit zwei Monitoren (3440 × 1440 und 1920 × 1080): Auswahl nach 0,3 bis 0,5 Sekunden bereit. Einen Vergleichswert der alten Version gibt es nicht.
+
+### Intern
+- Messpunkt im System-Protokoll (Kategorie `screen-ocr`): „Eingefroren: … ms“ und „Auswahl bereit nach … ms“. Nur Zeiten und Bildschirmzahl, nie Inhalt.
+- 666 Tests.
 
 ## [2.24.1] — 2026-10-11
 

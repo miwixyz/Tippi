@@ -78,48 +78,132 @@ enum ScreenTextCapture {
     /// sieht genau, was aufgenommen wurde — und eine fehlende Berechtigung
     /// fällt **vor** dem Aufziehen auf, nicht danach.
     static func freezeAllScreens() async throws -> [FrozenScreen] {
-        let content: SCShareableContent
+        let start = ContinuousClock.now
+        observeScreenChanges()
+        let fromCache = cachedDisplays != nil
+
+        let result: [FrozenScreen]
         do {
-            content = try await SCShareableContent.excludingDesktopWindows(
+            result = try await capture(try await displays(fresh: false))
+        } catch Failure.captureFailed where fromCache {
+            // Gemerkte Bildschirmliste kann veraltet sein (Monitor ab- und
+            // wieder angesteckt, ohne dass die Benachrichtigung kam) — einmal
+            // frisch holen, bevor wir aufgeben.
+            ocrLog.notice("Aufnahme mit gemerkter Bildschirmliste fehlgeschlagen, hole sie neu")
+            result = try await capture(try await displays(fresh: true))
+        }
+
+        // Nur Geometrie und Zeiten, kein Inhalt.
+        ocrLog.notice("""
+            Eingefroren: \(result.count, privacy: .public) Bildschirm(e) in \
+            \(milliseconds(since: start), privacy: .public) ms \
+            (Bildschirmliste \(fromCache ? "gemerkt" : "neu geholt", privacy: .public))
+            """)
+        return result
+    }
+
+    /// Messpunkt (2026-10-13, Michael: „Start ziemlich verzögert“): Zeit vom
+    /// Tastendruck bis die Auswahl bedienbar ist. Landet als `notice` im
+    /// System-Protokoll — `info` würde macOS nicht dauerhaft aufheben.
+    static func logReady(since start: ContinuousClock.Instant) {
+        ocrLog.notice("Auswahl bereit nach \(milliseconds(since: start), privacy: .public) ms")
+    }
+
+    nonisolated static func milliseconds(since start: ContinuousClock.Instant) -> Int {
+        let parts = (ContinuousClock.now - start).components
+        return Int(parts.seconds) * 1000 + Int(parts.attoseconds / 1_000_000_000_000_000)
+    }
+
+    // MARK: Bildschirmliste merken
+
+    /// Zuletzt ermittelte Bildschirme.
+    ///
+    /// `SCShareableContent` zählt bei jedem Aufruf **alle Fenster aller Apps**
+    /// auf — gebraucht werden hier nur die Bildschirme. Deshalb gemerkt, bis
+    /// sich die Bildschirmanordnung ändert.
+    private static var cachedDisplays: [SCDisplay]?
+    private static var screenChangeObserver: NSObjectProtocol?
+
+    /// Holt die Bildschirmliste vorab, damit schon der erste Tastendruck nicht
+    /// auf die Fensteraufzählung wartet. **Nur mit bereits erteilter
+    /// Berechtigung** — ohne würde der Aufruf den Systemdialog auslösen, und
+    /// der darf nur auf ausdrückliche Auslösung kommen.
+    static func prepare() {
+        observeScreenChanges()
+        guard cachedDisplays == nil, CGPreflightScreenCaptureAccess() else { return }
+        Task { _ = try? await displays(fresh: false) }
+    }
+
+    private static func observeScreenChanges() {
+        guard screenChangeObserver == nil else { return }
+        screenChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { _ in
+            MainActor.assumeIsolated { cachedDisplays = nil }
+        }
+    }
+
+    private static func displays(fresh: Bool) async throws -> [SCDisplay] {
+        if !fresh, let cachedDisplays { return cachedDisplays }
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: true
             )
+            cachedDisplays = content.displays
+            return content.displays
         } catch {
+            cachedDisplays = nil
             ocrLog.error("Bildschirminhalt nicht verfügbar — vermutlich fehlende Berechtigung")
             throw Failure.noPermission
         }
+    }
 
-        var result: [FrozenScreen] = []
-        for display in content.displays {
+    /// Nimmt alle Bildschirme **gleichzeitig** auf. Vorher nacheinander — bei
+    /// zwei Monitoren addierten sich die Wartezeiten.
+    private static func capture(_ displays: [SCDisplay]) async throws -> [FrozenScreen] {
+        // Geometrie hier auf dem Main Actor bestimmen (NSScreen), nur die
+        // Aufnahmen laufen parallel.
+        struct Job { let display: SCDisplay, frame: CGRect, width: Int, height: Int }
+        var jobs: [Job] = []
+        for display in displays {
             // Zuordnung über die Display-ID, nicht über die Geometrie: Zwei
             // Bildschirme können dieselbe Größe haben.
             guard let screen = NSScreen.screens.first(where: {
                 ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID)
                     == display.displayID
             }) else { continue }
-
             let scale = screen.backingScaleFactor
-            let filter = SCContentFilter(display: display, excludingWindows: [])
-            let config = SCStreamConfiguration()
-            config.captureResolution = .best
-            config.showsCursor = false
-            config.width = max(1, Int(screen.frame.width * scale))
-            config.height = max(1, Int(screen.frame.height * scale))
+            jobs.append(Job(display: display, frame: screen.frame,
+                            width: max(1, Int(screen.frame.width * scale)),
+                            height: max(1, Int(screen.frame.height * scale))))
+        }
+        guard !jobs.isEmpty else { throw Failure.displayUnavailable }
 
+        return try await withThrowingTaskGroup(of: (Int, FrozenScreen).self) { group in
+            for (index, job) in jobs.enumerated() {
+                group.addTask {
+                    let config = SCStreamConfiguration()
+                    config.captureResolution = .best
+                    config.showsCursor = false
+                    config.width = job.width
+                    config.height = job.height
+                    let image = try await SCScreenshotManager.captureImage(
+                        contentFilter: SCContentFilter(display: job.display, excludingWindows: []),
+                        configuration: config
+                    )
+                    return (index, FrozenScreen(frame: job.frame, image: image))
+                }
+            }
+            var captured: [(Int, FrozenScreen)] = []
             do {
-                let image = try await SCScreenshotManager.captureImage(
-                    contentFilter: filter, configuration: config
-                )
-                result.append(FrozenScreen(frame: screen.frame, image: image))
+                for try await item in group { captured.append(item) }
             } catch {
                 ocrLog.error("Aufnahme eines Bildschirms fehlgeschlagen")
                 throw Failure.captureFailed
             }
+            return captured.sorted { $0.0 < $1.0 }.map(\.1)
         }
-
-        guard !result.isEmpty else { throw Failure.displayUnavailable }
-        // Nur Geometrie, kein Inhalt.
-        ocrLog.info("\(result.count) Bildschirm(e) eingefroren")
-        return result
     }
 
     /// **Reine** Umrechnung: Auswahl (AppKit global, Punkte, Y nach oben) →

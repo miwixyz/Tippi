@@ -1091,6 +1091,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor in self?.beginScreenOCR() }
         }
         NSLog("Tippi: screen OCR hot key registered (\(combo.displayString))")
+        ScreenTextCapture.prepare()
     }
 
     /// Auswahl aufziehen, Text erkennen, in die Zwischenablage legen.
@@ -1102,6 +1103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func beginScreenOCR() {
         guard !screenOCRInProgress else { return }
         screenOCRInProgress = true
+        let pressedAt = ContinuousClock.now
 
         // ZUERST einfrieren, DANN auswählen.
         //
@@ -1133,6 +1135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
 
+            defer { ScreenTextCapture.logReady(since: pressedAt) }
             self.screenSelectionOverlay.begin(frozen: frozen) { [weak self] rect in
             guard let self else { return }
             guard let rect else {

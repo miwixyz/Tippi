@@ -57,6 +57,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Screen OCR, faster and clearer (v2.25)** — the selection is ready in 0.3–0.5 s (measured, two monitors), the screen dims noticeably with an immediate crosshair and a hint, and the overlay follows the macOS screenshot tool: white frame, corner marks, dimensions in a glass capsule
 - **Quiet when idle (v2.24)** — no lasting CPU load after dictating anymore; Claude Haiku 5.5 selectable; 7 providers after removing Kimi, Scaleway, Groq and Nebius
 - **Lists in notes (v2.23)** — bulleted, checklist and numbered lists: buttons at the bottom, Return continues the list, a click on `[ ]` checks it off; the counter now also shows lines
 - **24 curated built-in prompts** — Improve · Fix grammar · Shorten · Lengthen · Make formal · Make casual · Simplify · Explain like I'm 10 · Humanize · Add emojis · Defuse · Summarize · TL;DR · Bullet points · Key points · Action items · Email reply · Adapt for App · LinkedIn / Instagram / Facebook post · Translate (DE/EN/ES)
