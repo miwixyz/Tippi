@@ -54,3 +54,4 @@ build-test/
 
 # Python-Bytecode (scripts/autocomplete-pruefstand.py)
 __pycache__/
+scripts/autocomplete-messung/korpus.json

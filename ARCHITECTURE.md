@@ -97,8 +97,12 @@ Tippi/
 │   │   │                                   #   Übernahme-Tasten (erlaubt? welche Aktion?), Bereinigung
 │   │   │                                   #   samt Wiederholungsfilter (Antwort statt Fortsetzung),
 │   │   │                                   #   Loopback-Anfrage
-│   │   └── AutocompleteSettings.swift      # an/aus, Ausschlussliste, Übernahme-Tasten (beim Lesen
-│   │                                       #   geprüft), Tastenhinweis; `store` für Tests
+│   │   ├── AutocompleteSettings.swift      # an/aus, Ausschlussliste, Übernahme-Tasten (beim Lesen
+│   │   │                                   #   geprüft), Tastenhinweis; `store` für Tests
+│   │   └── AutocompleteWordHealing.swift   # mitten im Wort (Gemma 4): Satz bis vor das Wort als
+│   │                                       #   Antwortbeginn, nächstes Wortstück per `logit_bias`;
+│   │                                       #   Wortstücke aus `tokenizer.json` (sortierter Index),
+│   │                                       #   `/v1/completions`, Umgehung mlx-lm-Hänger (2 Stücke/Schritt)
 │   │                                       #   Design: docs/SECURE-DESIGN-autocomplete.md
 │   ├── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync

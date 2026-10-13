@@ -60,6 +60,24 @@ Decide by the sheet, not by a single example. Variants that were measured and ru
 out are listed in the script header (raw completion with the chat model; Gemma base
 models that don't load in mlx-lm) — don't retry them without a new reason.
 
+For a number instead of a judgement, `scripts/autocomplete-messung/` cuts real text
+at random points (half of them mid-word) and counts how often the suggestion hits the
+actual next word:
+
+```bash
+cd scripts/autocomplete-messung
+python3 -I korpus.py <folder with markdown notes> korpus.json   # German prose paragraphs
+mlx_lm.server --model mlx-community/gemma-4-e2b-it-4bit --port 8094   # own server, never the one Tippi uses
+~/.local/share/uv/tools/mlx-lm/bin/python -I messung.py korpus.json --n 80 --varianten A,DZ2
+~/.local/share/uv/tools/mlx-lm/bin/python -I satzanfang.py      # lines that are a single sentence
+osascript tippen.applescript "Vielen Dank für deine schnelle Antw"   # end-to-end in TextEdit (Developer-ID build)
+```
+
+The mlx-lm venv is needed for the tokenizer (variants D*). Never point these at the
+server Tippi started: the plain step-by-step variant `D` hangs mlx-lm 0.31.3/0.32.0
+(request = previous request + generated token), `DZ2` is the one Tippi ships.
+`korpus.json` holds your own text — it stays out of the repo.
+
 ## Development setup
 
 ```bash
