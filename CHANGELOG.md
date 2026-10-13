@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.26.1] — 2026-10-13
+
+- _Add release notes here._
+
 ## [2.26.0] — 2026-10-13
 
 Die Autovervollständigung (Labs) ergänzt jetzt angefangene Wörter.
