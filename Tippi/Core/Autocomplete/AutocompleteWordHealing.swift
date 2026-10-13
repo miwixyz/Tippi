@@ -194,17 +194,27 @@ enum AutocompleteWordHealing {
 /// Proxy, keine Weiterleitung).
 @MainActor
 struct AutocompleteHealingRun {
-    let server: URL
+    /// Server-Weg; `nil`, wenn nur das Rechenwerk im Prozess läuft.
+    let server: URL?
     let model: String
     let fetch: (URLRequest) async -> Data?
+    /// Rechenwerk im Prozess (Labs, Design §10) — hat Vorrang vor dem Server.
+    var engine: AutocompleteEngine?
 
     /// Rest des Wortes + Fortsetzung, roh (führendes Leerzeichen = das getippte
-    /// Wort war schon fertig) — oder `nil`.
+    /// Wort war schon fertig) — oder `nil`. Mitten im Wort dazu die Grundlage für
+    /// die Alternativen (`AutocompleteAlternatives`).
     func suggestion(_ split: AutocompleteWordHealing.Split, vocabulary: AutocompleteVocabulary,
-                    glossary: [String]) async -> String? {
+                    glossary: [String]) async -> (text: String, seed: AutocompleteAlternatives.Seed?)? {
         typealias Healing = AutocompleteWordHealing
         let system = AutocompleteRequest.systemPrompt(glossary: glossary, base: Healing.systemPrompt)
-        var prompt = Healing.prompt(system: system, split: split)
+        let firstPrompt = Healing.prompt(system: system, split: split)
+        if let engine {
+            return await engineSuggestion(engine, split: split, prompt: firstPrompt, vocabulary: vocabulary)
+        }
+        guard let server else { return nil }
+        var prompt = firstPrompt
+        var candidates: [String] = []
         var rest = Healing.openPrefix(split)
         // Am Wortanfang gibt es nichts zu heilen — gleich frei weiterschreiben.
         var tail: String? = rest.isEmpty ? "" : nil
@@ -224,10 +234,13 @@ struct AutocompleteHealingRun {
             guard !allowed.isEmpty, !Task.isCancelled,
                   let request = AutocompleteRequest.makeCompletion(
                       server: server, model: model, prompt: prompt,
-                      maxTokens: Healing.stepTokens, allowedTokenIDs: allowed),
+                      maxTokens: Healing.stepTokens, allowedTokenIDs: allowed,
+                      topLogprobs: steps == 1 ? AutocompleteAlternatives.candidatePieces : nil),
                   let data = await fetch(request),
-                  let id = AutocompleteRequest.completion(from: data)?.firstTokenID,
+                  let answer = AutocompleteRequest.completion(from: data),
+                  let id = answer.firstTokenID,
                   let piece = vocabulary.piece(id) else { return nil }
+            if steps == 1 { candidates = answer.alternativeIDs.compactMap(vocabulary.piece) }
             prompt += Healing.neutralized(piece)
             switch Healing.step(rest: rest, piece: piece) {
             case .finished(let wordTail): tail = wordTail
@@ -241,8 +254,68 @@ struct AutocompleteHealingRun {
               let data = await fetch(request),
               let answer = AutocompleteRequest.completion(from: data) else { return nil }
         let more = Healing.continuation(answer.text, cutAtLength: answer.finishReason == "length")
+        return Self.finish(split: split, prompt: firstPrompt, tail: tail, more: more, candidates: candidates)
+    }
+
+    /// Dieselbe Wortheilung im Rechenwerk: ein Durchgang, ein Rechen-Cache.
+    private func engineSuggestion(_ engine: AutocompleteEngine, split: AutocompleteWordHealing.Split,
+                                  prompt: String, vocabulary: AutocompleteVocabulary)
+        async -> (text: String, seed: AutocompleteAlternatives.Seed?)? {
+        typealias Healing = AutocompleteWordHealing
+        let started = Date()
+        let result = try? await engine.run(
+            prompt: prompt, open: Healing.openPrefix(split), vocabulary: vocabulary,
+            maxSteps: Healing.maxSteps, maxTokens: Healing.continuationTokens,
+            candidates: split.started.isEmpty ? 0 : AutocompleteAlternatives.candidatePieces)
+        healingLog.notice("engine heal totalMs=\(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) found=\(result != nil, privacy: .public)")
+        guard let result else { return nil }
+        let more = Healing.continuation(result.continuation, cutAtLength: result.cutAtLength)
+        return Self.finish(split: split, prompt: prompt, tail: result.tail, more: more,
+                           candidates: result.candidates.compactMap(vocabulary.piece))
+    }
+
+    /// Gemeinsamer Abschluss beider Wege: am Wortanfang nur ein neues Wort,
+    /// abgeschriebene Anweisung weg, Grundlage für die Alternativen.
+    private static func finish(split: AutocompleteWordHealing.Split, prompt: String, tail: String, more: String,
+                               candidates: [String]) -> (text: String, seed: AutocompleteAlternatives.Seed?)? {
+        typealias Healing = AutocompleteWordHealing
         if split.started.isEmpty, !Healing.startsNewWord(more) { return nil }
-        return Healing.withoutInstructionEcho(tail + more)
+        let text = Healing.withoutInstructionEcho(tail + more)
+        let seed = split.started.isEmpty || candidates.count < 2 ? nil : AutocompleteAlternatives.Seed(
+            prompt: prompt, open: Healing.openPrefix(split), started: split.started,
+            firstWord: AutocompleteAlternatives.firstWord(started: split.started, suggestion: text),
+            pieces: candidates)
+        return (text, seed)
+    }
+
+    /// Weitere ganze Wörter für die Alternativen: die nächstwahrscheinlichen
+    /// Kandidaten fürs erste Stück, je kurz fortgesetzt. Nur auf ↓ (Kurzbefehl).
+    func alternativeWords(for seed: AutocompleteAlternatives.Seed) async -> [String] {
+        var words: [String] = []
+        for piece in seed.pieces where words.count < AutocompleteAlternatives.maxWords - 1 {
+            guard !Task.isCancelled else { break }
+            guard piece.hasPrefix(seed.open),
+                  let answer = await shortCompletion(seed.prompt + AutocompleteWordHealing.neutralized(piece)),
+                  let word = AutocompleteAlternatives.word(
+                      open: seed.open, started: seed.started, piece: piece,
+                      continuation: AutocompleteWordHealing.continuation(answer.text),
+                      cutAtLength: answer.cutAtLength)
+            else { continue }
+            let known = [seed.firstWord] + words
+            if !known.contains(where: { $0.lowercased() == word.lowercased() }) { words.append(word) }
+        }
+        return words
+    }
+
+    /// Kurze freie Fortsetzung (ein Wort ergänzen) — Rechenwerk oder Server.
+    private func shortCompletion(_ prompt: String) async -> (text: String, cutAtLength: Bool)? {
+        let tokens = AutocompleteAlternatives.wordTokens
+        if let engine { return try? await engine.complete(prompt: prompt, maxTokens: tokens) }
+        guard let server,
+              let request = AutocompleteRequest.makeCompletion(server: server, model: model, prompt: prompt, maxTokens: tokens),
+              let data = await fetch(request),
+              let answer = AutocompleteRequest.completion(from: data) else { return nil }
+        return (answer.text, answer.finishReason == "length")
     }
 }
 
@@ -289,23 +362,31 @@ extension AutocompleteRequest {
         let logit_bias: [String: Double]?
         /// Nur damit die Nummer des ersten erzeugten Wortstücks zurückkommt.
         let logprobs: Bool?
+        /// Kandidaten fürs erste Stück (Alternativen).
+        let top_logprobs: Int?
     }
 
+    struct CompletionTopEntry: Decodable { let id: Int }
+
     struct CompletionLogProbs: Decodable {
-        struct Entry: Decodable { let id: Int }
+        struct Entry: Decodable {
+            let id: Int
+            let top_logprobs: [CompletionTopEntry]?
+        }
         let content: [Entry]?
     }
 
     /// Anfrage mit fertigem Prompt — oder `nil`, wenn `server` kein Loopback
     /// ist (dieselbe Regel wie bei `make`).
     static func makeCompletion(server: URL, model: String, prompt: String, maxTokens: Int,
-                               allowedTokenIDs: [Int]? = nil) -> URLRequest? {
+                               allowedTokenIDs: [Int]? = nil, topLogprobs: Int? = nil) -> URLRequest? {
         guard isLoopback(server) else { return nil }
         let bias = allowedTokenIDs.map { ids in
             Dictionary(uniqueKeysWithValues: ids.map { (String($0), AutocompleteWordHealing.allowedBias) })
         }
         let body = CompletionBody(model: model, prompt: prompt, stream: false, max_tokens: maxTokens,
-                                  temperature: 0, logit_bias: bias, logprobs: bias == nil ? nil : true)
+                                  temperature: 0, logit_bias: bias, logprobs: bias == nil ? nil : true,
+                                  top_logprobs: bias == nil ? nil : topLogprobs)
         guard let data = try? JSONEncoder().encode(body) else { return nil }
         var request = URLRequest(url: server.appendingPathComponent("v1/completions"))
         request.httpMethod = "POST"
@@ -317,7 +398,15 @@ extension AutocompleteRequest {
     }
 
     /// Text und Nummer des ersten Wortstücks einer `/v1/completions`-Antwort.
-    static func completion(from data: Data) -> (text: String, firstTokenID: Int?, finishReason: String?)? {
+    struct CompletionAnswer {
+        let text: String
+        let firstTokenID: Int?
+        let finishReason: String?
+        /// Kandidaten fürs erste Stück (nur mit `top_logprobs`).
+        let alternativeIDs: [Int]
+    }
+
+    static func completion(from data: Data) -> CompletionAnswer? {
         struct Response: Decodable {
             struct Choice: Decodable {
                 let text: String?
@@ -327,7 +416,9 @@ extension AutocompleteRequest {
             let choices: [Choice]
         }
         guard let choice = (try? JSONDecoder().decode(Response.self, from: data))?.choices.first else { return nil }
-        return (choice.text ?? "", choice.logprobs?.content?.first?.id, choice.finish_reason)
+        let first = choice.logprobs?.content?.first
+        return CompletionAnswer(text: choice.text ?? "", firstTokenID: first?.id, finishReason: choice.finish_reason,
+                                alternativeIDs: first?.top_logprobs?.map(\.id) ?? [])
     }
 }
 

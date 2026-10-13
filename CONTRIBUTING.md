@@ -94,6 +94,18 @@ Results (`ergebnis-*.json`) contain words from your own text and stay out of the
 
 ## Development setup
 
+**Metal Toolchain required (since 2.27.0).** The in-process autocomplete engine pulls in
+`mlx-swift`, whose Metal shaders Xcode compiles during the build. On a fresh Mac:
+
+```bash
+xcodebuild -downloadComponent MetalToolchain   # ~840 MB, once per Mac
+```
+
+Without it the build stops with “cannot execute tool 'metal' due to missing Metal Toolchain”.
+`swift build` on the command line cannot compile the shaders — always build with Xcode/`xcodebuild`.
+`make build` quits a running Tippi first; to build without that, run `xcodegen generate` and
+`xcodebuild -project Tippi.xcodeproj -scheme Tippi -configuration Release -derivedDataPath ./build build`.
+
 ```bash
 git clone https://github.com/miwixyz/Tippi.git
 cd Tippi

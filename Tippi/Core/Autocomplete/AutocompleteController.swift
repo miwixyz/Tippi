@@ -35,18 +35,23 @@ final class AutocompleteController: ObservableObject {
     /// gerade aktiv sind — dann kein Vorschlag, damit sich nichts überlagert.
     private let isOtherTypingUIActive: () -> Bool
 
-    private let bridge = AutocompleteTapBridge()
-    private let panel = AutocompleteSuggestionPanel()
+    let bridge = AutocompleteTapBridge()
+    let panel = AutocompleteSuggestionPanel()
     private var runLoopSource: CFRunLoopSource?
     private var appSwitchObserver: NSObjectProtocol?
     private var pauseTask: Task<Void, Never>?
-    private var requestTask: Task<Void, Never>?
+    var requestTask: Task<Void, Never>?
     /// Wird bei jedem Tastendruck erhöht; eine Antwort mit veralteter Nummer
     /// wird verworfen (höchstens eine gültige Anfrage, Design §3).
-    private var generation = 0
+    var generation = 0
     private var shown: (text: String, pid: pid_t)?
+    /// Alternativen (↓) — siehe `AutocompleteController+Alternatives.swift`.
+    var alternativesSeed: (seed: AutocompleteAlternatives.Seed, pid: pid_t, field: Field)?
+    var alternatives: [String] = []
     /// Wortstücke für die Wortheilung (mitten im Wort, `AutocompleteHealingRun`).
     private let vocabularies = AutocompleteVocabularyCache()
+    /// Rechenwerk im Prozess (Labs, `AutocompleteSettings.inProcess`).
+    let engines = AutocompleteEngineHost()
 
     private lazy var session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
@@ -127,10 +132,15 @@ final class AutocompleteController: ObservableObject {
             Task { try? await MLXServerManager.shared.start() }
         }
         _ = vocabularies.vocabulary(for: MLXServerManager.activeModel)   // vorladen
+        if let engine = AutocompleteEngineHost.availableModel(), AutocompleteSettings.inProcess {
+            _ = vocabularies.vocabulary(for: engine)
+            _ = activeEngine()                                              // im Hintergrund laden
+        }
         autocompleteLog.notice("autocomplete on")
     }
 
     private func stop() {
+        engines.unload()
         cancelPending()
         dismiss()
         if let tap = bridge.tap {
@@ -152,6 +162,7 @@ final class AutocompleteController: ObservableObject {
     // MARK: - Ereignisse aus dem Tap
 
     func userTyped(restartPause: Bool, typed: String? = nil) {
+        clearAlternatives()   // gilt nur für den Vorschlag, wie er erschien
         // „Einfach weitertippen": passt das Zeichen zum Vorschlag, bleibt er
         // stehen (gekürzt) — keine neue Anfrage, kein Flackern.
         var snap = false
@@ -235,13 +246,13 @@ final class AutocompleteController: ObservableObject {
     /// Ein Ort für das Anzeigen: Schriftgröße und Tastenhinweis aus den
     /// aktuellen Einstellungen. `animated` nur für einen frischen Vorschlag —
     /// beim Weitertippen und Wort-für-Wort bleibt die Kapsel ruhig stehen.
-    private func showPanel(_ text: String, field: Field, animated: Bool) {
+    func showPanel(_ text: String, field: Field, animated: Bool) {
         let fontSize = AutocompleteGeometry.fontSize(reported: field.fontSize, caretHeight: field.caret.height)
         let hint = AutocompleteSettings.showKeyHint ? AutocompleteSuggestionPanel.keyHint(AutocompleteSettings.keyBindings) : nil
         panel.show(text, caret: field.caret, fontSize: fontSize, hint: hint, animated: animated)
     }
 
-    private func cancelPending() {
+    func cancelPending() {
         generation &+= 1
         pauseTask?.cancel()
         requestTask?.cancel()
@@ -251,7 +262,8 @@ final class AutocompleteController: ObservableObject {
 
     /// `animated` blendet weich aus (verworfen). Beim Übernehmen nicht: Dort
     /// steht sofort der eingefügte Text an derselben Stelle.
-    private func dismiss(animated: Bool = false) {
+    func dismiss(animated: Bool = false) {
+        clearAlternatives()
         bridge.setVisible(false)
         panel.close(animated: animated)
         shown = nil
@@ -264,14 +276,16 @@ final class AutocompleteController: ObservableObject {
         // seinen Grund — nur Gründe und Zahlen, nie getippten Text.
         guard bridge.tap != nil else { return skip("no tap") }
         guard !isOtherTypingUIActive() else { return skip("other typing UI active") }
-        guard let server = MLXServerManager.shared.ownedServerURL else {
-            return skip("no server started by Tippi (state=\(MLXServerManager.shared.state))")
+        let engine = activeEngine()
+        let server = MLXServerManager.shared.ownedServerURL
+        guard engine != nil || server != nil else {
+            return skip("no engine and no server started by Tippi (state=\(MLXServerManager.shared.state))")
         }
         guard let app = NSWorkspace.shared.frontmostApplication else { return skip("no frontmost app") }
         guard let field = readFocusedField(in: app) else { return }
         let glossary = AutocompleteRequest.relevantGlossary(
             terms: CustomWordVariants.glossaryTerms(from: DictationSettings.customWords), context: field.context)
-        let model = MLXServerManager.activeModel
+        let model = engine?.model ?? MLXServerManager.activeModel
         // Mitten im Wort: Wortheilung; am Wortanfang derselbe Satz-als-Antwortbeginn
         // ohne Beschränkung — sofern Vorlage und Wortstücke da sind.
         let split = AutocompleteWordHealing.split(field.context)
@@ -280,7 +294,9 @@ final class AutocompleteController: ObservableObject {
             AutocompleteWordHealing.supports(model: model)
                 ? vocabularies.vocabulary(for: model).map { (split: split, vocabulary: $0) } : nil
         }
-        let request = AutocompleteRequest.make(server: server, model: model, context: field.context, glossary: glossary)
+        let request = server.flatMap {
+            AutocompleteRequest.make(server: $0, model: model, context: field.context, glossary: glossary)
+        }
         guard healing != nil || request != nil else { return skip("request not built") }
         let gen = generation
         let started = Date()
@@ -288,9 +304,13 @@ final class AutocompleteController: ObservableObject {
         requestTask = Task { [weak self] in
             guard let self else { return }
             let raw: String?
+            var seed: AutocompleteAlternatives.Seed?
             if let healing {
-                raw = await AutocompleteHealingRun(server: server, model: model, fetch: self.fetchData)
+                let result = await AutocompleteHealingRun(server: server, model: model, fetch: self.fetchData,
+                                                          engine: engine)
                     .suggestion(healing.split, vocabulary: healing.vocabulary, glossary: glossary)
+                raw = result?.text
+                seed = result?.seed
             } else if let request {
                 raw = await self.fetch(request)
             } else {
@@ -303,14 +323,23 @@ final class AutocompleteController: ObservableObject {
                                                                continuesStartedWord: healing != nil),
                   NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier,
                   !self.isOtherTypingUIActive() else {
-                autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : "heal", privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
+                autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : (engine == nil ? "heal" : "engine"), privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
                 return
             }
             self.showPanel(suggestion, field: field, animated: true)
             self.shown = (suggestion, app.processIdentifier)
+            self.alternativesSeed = seed.map { ($0, app.processIdentifier, field) }
+            self.bridge.setAlternatives(seedAvailable: seed != nil, listCount: 0)
             self.bridge.setVisible(true)
-            autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : "heal", privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
+            autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : (engine == nil ? "heal" : "engine"), privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
         }
+    }
+
+    /// Das geladene Rechenwerk, wenn der Labs-Schalter an ist und ein Modell im
+    /// Zwischenspeicher liegt — sonst `nil` (lädt dann im Hintergrund nach).
+    func activeEngine() -> AutocompleteEngine? {
+        guard AutocompleteSettings.inProcess, let model = AutocompleteEngineHost.availableModel() else { return nil }
+        return engines.engine(for: model)
     }
 
     private func skip(_ why: String) {
@@ -322,7 +351,7 @@ final class AutocompleteController: ObservableObject {
         return AutocompleteRequest.content(from: data)
     }
 
-    private func fetchData(_ request: URLRequest) async -> Data? {
+    func fetchData(_ request: URLRequest) async -> Data? {
         guard let (data, response) = try? await session.data(for: request),
               let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
         return data
@@ -346,7 +375,7 @@ final class AutocompleteController: ObservableObject {
 
     // MARK: - Fokussiertes Feld lesen
 
-    private struct Field {
+    struct Field {
         /// Nur die aktuelle Zeile vor dem Cursor — geht ans Modell, an das
         /// Glossar und an die Bereinigung.
         let context: String
@@ -475,65 +504,6 @@ final class AutocompleteController: ObservableObject {
         return nil
     }
 
-    private static func element(_ element: AXUIElement, _ attribute: String) -> AXUIElement? {
-        var ref: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &ref) == .success,
-              let raw = ref, CFGetTypeID(raw) == AXUIElementGetTypeID() else { return nil }
-        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
-        return (raw as! AXUIElement)
-    }
-
-    private static func string(_ element: AXUIElement, _ attribute: String) -> String? {
-        var ref: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &ref) == .success else { return nil }
-        return ref as? String
-    }
-
-    private static func string(_ element: AXUIElement, forRange range: CFRange) -> String? {
-        var mutable = range
-        guard range.length > 0, let axRange = AXValueCreate(.cfRange, &mutable) else { return nil }
-        var ref: CFTypeRef?
-        guard AXUIElementCopyParameterizedAttributeValue(
-            element, kAXStringForRangeParameterizedAttribute as CFString, axRange, &ref
-        ) == .success else { return nil }
-        return ref as? String
-    }
-
-    private static func isValueSettable(_ element: AXUIElement) -> Bool {
-        var settable: DarwinBoolean = false
-        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success
-            && settable.boolValue
-    }
-
-    private static func selectedRangeViaTextMarkers(_ element: AXUIElement) -> CFRange? {
-        var ref: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, "AXSelectedTextMarkerRange" as CFString, &ref) == .success,
-              let raw = ref, CFGetTypeID(raw) == AXTextMarkerRangeGetTypeID() else { return nil }
-        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
-        let markers = raw as! AXTextMarkerRange
-        guard let start = index(of: AXTextMarkerRangeCopyStartMarker(markers), in: element),
-              let end = index(of: AXTextMarkerRangeCopyEndMarker(markers), in: element),
-              start >= 0, end >= start else { return nil }
-        return CFRange(location: start, length: end - start)
-    }
-
-    private static func index(of marker: AXTextMarker, in element: AXUIElement) -> Int? {
-        var ref: CFTypeRef?
-        guard AXUIElementCopyParameterizedAttributeValue(
-            element, "AXIndexForTextMarker" as CFString, marker, &ref
-        ) == .success else { return nil }
-        return (ref as? NSNumber)?.intValue
-    }
-
-    private static func selectedRange(_ element: AXUIElement) -> CFRange? {
-        var ref: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, &ref) == .success,
-              let raw = ref, CFGetTypeID(raw) == AXValueGetTypeID() else { return nil }
-        var range = CFRange()
-        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
-        guard AXValueGetValue(raw as! AXValue, .cfRange, &range) else { return nil }
-        return range
-    }
 }
 
 // MARK: - Tap
@@ -563,6 +533,30 @@ final class AutocompleteTapBridge: @unchecked Sendable {
     func setBindings(_ value: AutocompleteKeyBindings) {
         lock.lock(); defer { lock.unlock() }
         bindings = value
+    }
+
+    private var seedAvailable = false
+    private var listCount = 0
+
+    func setAlternatives(seedAvailable: Bool, listCount: Int) {
+        lock.lock(); defer { lock.unlock() }
+        self.seedAvailable = seedAvailable
+        self.listCount = listCount
+    }
+
+    /// ↓ zeigt Alternativen, 1–3 wählt, andere Taste schließt die Liste
+    /// (`AutocompleteAlternatives.decide`). Zustand im selben Schritt nachziehen.
+    func alternativesDecision(keyCode: Int64, flags: CGEventFlags) -> AutocompleteAlternatives.KeyDecision {
+        lock.lock(); defer { lock.unlock() }
+        let decision = AutocompleteAlternatives.decide(keyCode: keyCode, flags: flags, suggestionVisible: visible,
+                                                       seedAvailable: seedAvailable, listCount: listCount,
+                                                       bindings: bindings)
+        switch decision {
+        case .show: visible = false; seedAvailable = false
+        case .choose, .close: listCount = 0
+        case .none: break
+        }
+        return decision
     }
 
     /// Schluckt genau dann, wenn `AutocompleteKeyDecision.action` eine
@@ -597,6 +591,18 @@ private let autocompleteTapCallback: CGEventTapCallBack = { _, type, event, user
         }
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags
+        switch bridge.alternativesDecision(keyCode: keyCode, flags: flags) {
+        case .show:
+            Task { @MainActor in bridge.controller?.showAlternatives() }
+            return nil
+        case .choose(let index):
+            Task { @MainActor in bridge.controller?.chooseAlternative(index) }
+            return nil
+        case .close:
+            Task { @MainActor in bridge.controller?.closeAlternatives() }   // Taste geht normal weiter
+        case .none:
+            break
+        }
         if let action = bridge.consumeIfAccepting(keyCode: keyCode, flags: flags) {
             Task { @MainActor in bridge.controller?.acceptShownSuggestion(action, keyCode: keyCode, flags: flags) }
             return nil

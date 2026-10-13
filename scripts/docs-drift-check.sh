@@ -143,7 +143,9 @@ while IFS= read -r name; do
   if ! find Tippi -name "$name" -print -quit 2>/dev/null | grep -q .; then
     bad "ARCHITECTURE.md mentions '$name' — exists nowhere under Tippi/"
   fi
-done < <(grep -v '{' ARCHITECTURE.md | grep -oE '[A-Za-z][A-Za-z0-9_]*\.swift' | sort -u)
+# `+` gehört zum Namen (Swift-Erweiterungsdateien wie `AutocompleteController+AX.swift`);
+# ohne ihn las die Prüfung 2026-10-13 „AX.swift" und meldete eine existierende Datei als fehlend.
+done < <(grep -v '{' ARCHITECTURE.md | grep -oE '[A-Za-z][A-Za-z0-9_+]*\.swift' | sort -u)
 
 while IFS= read -r dir; do
   path_checked=$((path_checked + 1))

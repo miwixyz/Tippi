@@ -276,3 +276,59 @@ Tests in `TippiTests/AutocompleteTests.swift` (64 Fälle) und `TippiTests/Autoco
   Antwort übernimmt, erzeugt als nächste Anfrage „vorige + Antwort“ — gemessen hängt das mlx-lm
   0.31.3 auf; endet die Antwort per Stoppzeichen, nicht. Direktvergleich mit Cotypist (40 Stellen,
   `scripts/autocomplete-messung/vergleich.py`): Cotypist 6/20 · 15/20, Tippi 2/20 · 9/20.
+
+## 10. Rechnen im eigenen Prozess (Design 2026-10-13, vor dem Code)
+
+**Was:** Die Autovervollständigung rechnet das Modell (Gemma 4 E4B/E2B, MLX-Format) direkt in
+Tippi über `ml-explore/mlx-swift-lm`, statt Anfragen an `mlx_lm.server` zu schicken. Diktat und
+Umschreiben bleiben beim Server. Labs-Schalter, ab Werk **aus**; ohne passendes Modell im
+Zwischenspeicher oder bei einem Ladefehler bleibt alles beim bisherigen Weg.
+
+**Warum (gemessen, Spike `~/Coding/tippi-mlx-spike`):** Wortheilung E4B 0,32 s statt 0,77 s über
+den Server, E2B 0,30 s statt 0,45–0,66 s; der mlx-lm-Hänger („vorige Anfrage + Antwort",
+Fix #1887 seit 14.09. offen) tritt im Prozess nicht auf (20 Anfragen ohne Fehler).
+
+**Abhängigkeiten — entschieden:**
+- `ml-explore/mlx-swift-lm` **3.32.3** und `ml-explore/mlx-swift` **0.32.3** (Apple, MIT, Release
+  30.09.2026) — `exactVersion`, nicht `from:`. Nur die Produkte `MLXLLM`, `MLXLMCommon`.
+- `huggingface/swift-transformers` **1.3.5** (Apache-2.0) nur für den Tokenizer, `exactVersion`.
+  Gemma-Tokenizer (BPE mit Byte-Rückfall) selbst zu schreiben wäre die schlechtere Wahl.
+- **Nicht** `MLXHuggingFace`/`swift-huggingface`: deren Makros verlangen `-skipMacroValidation`
+  und bringen `swift-crypto`, `swift-asn1`, `EventSource` mit. Der Tokenizer-Adapter sind wenige
+  Zeilen eigener Code.
+- Transitiv: `swift-numerics`, `swift-collections`, `swift-crypto` (Apple — kommt über
+  `swift-transformers`/Hub, im Build gesehen) mit `swift-asn1`, `swift-jinja`, `yyjson` (HF-Umfeld).
+- **Code-Review 2026-10-13 (rafter-code-review, LLM Top 10 + Pfad):** kein Netzzugriff im Rechenwerk
+  (`AutocompleteEngine.load(from:)`, Tokenizer `configuration(fileURL:)` lokal, Rückfall-Konfig aus dem
+  Paket-Bundle); Pfad nur über `cacheFolder`; Protokoll ohne Text; Chat-Vorlage nie ausgeführt;
+  Abbruch je Wortstück. `rafter secrets`: 2081 Treffer, alle in Testdaten der Fremdpakete unter
+  `build/SourcePackages` (v. a. swift-crypto), keiner im Repo. `rafter run` prüft nur `origin` —
+  nach dem Commit nachholen.
+  Kein Installations-Skript läuft; SwiftPM-Makros nur, falls `mlx-swift-lm` sie für `MLXLLM`
+  braucht — beim Bau prüfen, nicht freischalten.
+- Bestehendes Risiko, **nicht** Teil dieser Änderung: Tippis übrige Pakete stehen auf `from:`,
+  `Package.resolved` ist nicht im Repo.
+
+**Eingaben, die Tippi neu verarbeitet:**
+- Modellgewichte (`*.safetensors` — reines Zahlenformat, kein Code), `config.json`,
+  `tokenizer.json`/`tokenizer_config.json` aus `~/.cache/huggingface/hub`. Pfad nur aus einer
+  Kennung `organisation/name` (bestehende Prüfung `AutocompleteVocabulary.cacheFolder`, kein `..`).
+  Schreiben kann dort nur der eigene Benutzer — wer das kann, hat den Account schon.
+- **Kein Download aus Tippi heraus.** Fehlt das Modell, bleibt der Server-Weg; heruntergeladen
+  wird wie bisher über Anbieter → MLX (mlx_lm, HTTPS, mlx-community).
+- Chat-Vorlagen (Jinja) werden nicht ausgeführt: Tippi baut den Prompt selbst
+  (`AutocompleteWordHealing.prompt`, Steuermarken entschärft).
+
+**Getippter Text:** bleibt im Speicher von Tippi — der Weg über `127.0.0.1` und damit „fremder
+Prozess auf dem Port" entfällt. Nichts wird protokolliert (nur Zeiten, Anzahl). Der Rechen-Cache
+gilt je Vorschlag und wird verworfen; beim Ausschalten wird das Modell entladen.
+
+**Neue Risiken (bewusst):**
+- Ein Absturz in MLX/Metal beendet jetzt **Tippi selbst**, nicht nur den Hilfsprozess →
+  Labs-Schalter getrennt von der Autovervollständigung, ab Werk aus; Server-Weg bleibt Rückfall.
+- Speicher: E4B belegt ~4,6 GB **im** Tippi-Prozess zusätzlich zum Diktat-Server → nur geladen,
+  solange der Schalter an ist.
+- Rechenzeit: läuft nie auf dem Hauptthread (eigener Actor), höchstens 4 + 20 Wortstücke,
+  Abbruch zwischen jedem Stück.
+- Bauen braucht die Xcode-Metal-Toolchain (`xcodebuild -downloadComponent MetalToolchain`) auf
+  jedem Bau-Mac; App +~25 MB.

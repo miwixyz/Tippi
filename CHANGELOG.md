@@ -2,7 +2,18 @@
 
 ## [2.27.0] — 2026-10-13
 
-- _Add release notes here._
+Die Autovervollständigung (Labs) kann direkt in Tippi rechnen, bietet mitten im Wort Alternativen an, und Gemma 4 E4B ist wählbar.
+
+### Neu
+- **Direkt in Tippi rechnen** (Einstellungen → Autovervollständigung, Labs, ab Werk aus): Tippi rechnet die Vorschläge selbst mit Apples MLX Swift statt über den MLX-Server. Nutzt Gemma 4 E4B, falls heruntergeladen, sonst E2B — Tippi lädt nichts aus dem Netz. Gemessen an 40 Stellen in TextEdit: mitten im Wort 13 statt 9 Treffer von 20, am Wortanfang 3 statt 2, Antwort im Mittel 0,5 s. Der MLX-Server kann dabei nicht mehr hängen. Diktat und Umschreiben laufen weiter über den Server. Belegt solange 3–5 GB Arbeitsspeicher in Tippi.
+- **Alternativen mitten im Wort:** ↓ zeigt drei Wörter („1 zwingen   2 zwar   3 zweite"), 1–3 (auch Ziffernblock) setzt eines ein, jede andere Taste schließt die Liste. Gemessen: das gesuchte Wort war in 21 von 40 Fällen der Vorschlag, in 27 unter den drei Wörtern. Gerechnet wird erst, wenn du ↓ drückst.
+- **Gemma 4 E4B** unter Anbieter → MLX: treffsicherere Autovervollständigung (über den Server mitten im Wort 24 statt 20 von 40), aber langsameres Diktat (Nachbearbeitung 1,1 statt 0,7 s). E2B bleibt der Standard.
+
+### Intern
+- Neue Pakete mit fester Version: mlx-swift 0.32.3, mlx-swift-lm 3.32.3, swift-transformers 1.3.5. Bauen braucht jetzt die Metal-Toolchain von Xcode (`xcodebuild -downloadComponent MetalToolchain`).
+- Sicherheitsdesign §10 (`docs/SECURE-DESIGN-autocomplete.md`) vor dem Bau, Code-Prüfung danach.
+- Messungen zur Lücke zu Cotypist: Prompt-Varianten und „bestes ganzes Wort" bringen nichts Wesentliches (`scripts/autocomplete-messung/`).
+- 715 Tests.
 
 ## [2.26.1] — 2026-10-13
 

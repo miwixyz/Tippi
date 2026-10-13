@@ -9,12 +9,14 @@ struct AutocompleteSettingsTab: View {
     @ObservedObject var controller: AutocompleteController
     @ObservedObject private var mlx = MLXServerManager.shared
     @State private var excluded: [String] = AutocompleteSettings.excludedBundleIDs
+    @State private var inProcess = AutocompleteSettings.inProcess
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 GroupBox { toggleSection.padding(6) }
                 GroupBox { modelSection.padding(6) }
+                GroupBox { inProcessSection.padding(6) }
                 GroupBox { AutocompleteKeysSection(controller: controller).padding(6) }
                 GroupBox { exclusionList.padding(6) }
             }
@@ -72,6 +74,41 @@ struct AutocompleteSettingsTab: View {
                 .fixedSize(horizontal: false, vertical: true)
             if controller.isEnabled, mlx.ownedServerURL == nil {
                 serverHint
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Labs: direkt in Tippi rechnen (MLX Swift) — Design §10. Ab Werk aus.
+    private var inProcessSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: Binding(
+                get: { inProcess },
+                set: { on in inProcess = on; controller.setInProcess(on) }
+            )) {
+                HStack(spacing: 6) {
+                    Text(String(localized: "settings.autocomplete.inProcess.toggle"))
+                        .font(FamilyTheme.font(.headline))
+                    Text("Labs")
+                        .font(FamilyTheme.font(.caption2, weight: .semibold))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.orange.opacity(0.2), in: Capsule())
+                }
+            }
+            Text(String(localized: "settings.autocomplete.inProcess.hint"))
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if let model = AutocompleteEngineHost.availableModel() {
+                Text(String(format: String(localized: "settings.autocomplete.inProcess.model"), model))
+                    .font(FamilyTheme.font(.callout))
+                    .textSelection(.enabled)
+            } else {
+                Text(String(localized: "settings.autocomplete.inProcess.none"))
+                    .font(FamilyTheme.font(.caption))
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

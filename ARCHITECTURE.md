@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.26.1. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.27.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -90,6 +90,9 @@ Tippi/
 │   │   ├── InlineSuggestion.swift          # Eintrag der „:“-Liste: Emoji oder eigenes Snippet (v2.18)
 │   │   └── EmojiSettings.swift             # Hotkey, Toggles, Recents
 │   ├── Autocomplete/               # Labs — Autovervollständigung beim Tippen (ab Werk AUS)
+│   │   ├── AutocompleteAlternatives.swift  # ↓ zeigt 3 Wörter, 1–3 wählt (rein, getestet); nur mitten im Wort
+│   │   ├── AutocompleteController+AX.swift # Bedienungshilfen-Lesehilfen (aus dem Controller ausgelagert)
+│   │   ├── AutocompleteController+Alternatives.swift # Verdrahtung der Alternativen
 │   │   ├── AutocompleteController.swift    # aktiver CGEvent-Tap (nur wenn an; schluckt NUR die zwei
 │   │   │                                   #   Übernahme-Tasten bei sichtbarem Vorschlag), 350-ms-Pause,
 │   │   │                                   #   AX-Kontext, Anfrage an Tippis EIGENEN MLX-Server, Overlay
@@ -97,6 +100,8 @@ Tippi/
 │   │   │                                   #   Übernahme-Tasten (erlaubt? welche Aktion?), Bereinigung
 │   │   │                                   #   samt Wiederholungsfilter (Antwort statt Fortsetzung),
 │   │   │                                   #   Loopback-Anfrage
+│   │   ├── AutocompleteEngine.swift        # Labs: Rechenwerk im Prozess (MLX Swift), Laden aus dem HF-Cache,
+│   │   │                                   #   Wortheilung + Kandidaten + Fortsetzung in einem Durchgang
 │   │   ├── AutocompleteSettings.swift      # an/aus, Ausschlussliste, Übernahme-Tasten (beim Lesen
 │   │   │                                   #   geprüft), Tastenhinweis; `store` für Tests
 │   │   └── AutocompleteWordHealing.swift   # mitten im Wort (Gemma 4): Satz bis vor das Wort als

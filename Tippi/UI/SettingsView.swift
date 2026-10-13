@@ -764,104 +764,6 @@ private struct ProviderRow: View {
         let downloadSize: String
     }
 
-    /// Presets curated for Tippi's use case: fast text transformation, return
-    /// only the result.
-    ///
-    /// **Admission rule — check this before adding anything here.** By 2026
-    /// almost every current small model is a thinking model, so "no reasoning
-    /// models" is no longer a list one can pick from; what matters is whether
-    /// the monologue can be switched *off*. `MLXProvider` sends
-    /// `chat_template_kwargs: {enable_thinking: false}`, so a model qualifies
-    /// only if its `chat_template.jinja` either ignores that kwarg or gates
-    /// thinking on it. Read the template — the model card does not reliably say.
-    /// A model that gates on something else (a `/no_think` marker in the prompt,
-    /// a differently named flag) will return an empty `content` with the whole
-    /// answer in `reasoning`: the exact failure v1.18.0 hit with Qwen 3.x, and
-    /// it fails silently, as an empty polish rather than an error.
-    ///
-    /// Verified this way on 2026-09-15: Qwen 3.5 (2B/4B/9B) ✓, Gemma 4 E2B ✓
-    /// (a thinking model as of Gemma 4, unlike Gemma 3, but correctly gated).
-    ///
-    /// Reviewed 2026-09-15: every repo ID below was verified to exist against
-    /// `huggingface.co/api/models`, and the sizes were read from the same API.
-    /// Note that HuggingFace answers **401, not 404**, for a repo that does not
-    /// exist — so "no error" is not a check; only an explicit 200 is.
-    ///
-    /// These are curated for *availability, provenance and size*, which is all a
-    /// catalogue can establish. They are explicitly NOT a measured quality
-    /// ranking for Tippi's task, and the difference matters: the one datapoint
-    /// actually measured here found a 2B model more faithful on German than a
-    /// 3B one, which had distorted meaning. Recency and parameter count do not
-    /// predict quality for "clean up this dictation". Ranking them honestly
-    /// needs the same treatment Parakeet-vs-Whisper got — real audio, both
-    /// metrics, written down.
-    ///
-    /// Two traps worth recording, both hit during this review:
-    /// - The first pass excluded Gemma 4 after probing a *guessed* repo ID
-    ///   (`gemma-4-4b-it-4bit`, which does not exist). The real builds are the
-    ///   E-series (`gemma-4-e2b-it-4bit`). Probing a guess tests the guess, not
-    ///   the catalogue — list the author's models instead.
-    /// - Qwen3.6 and Qwen3.8 exist but only from 27B upward, so the newest Qwen
-    ///   generation is irrelevant at this latency budget. "Newer family exists"
-    ///   does not imply "newer family exists in the size you need".
-    ///
-    /// The list before that review had aged badly: six of seven entries were
-    /// one to three model generations old (Llama 3.1/3.2, Qwen 2.5, Phi-4-mini,
-    /// Gemma 3), and the one marked "⭐ premium" for 32 GB Macs was Qwen 2.5
-    /// 14B — an ~8 GB download from late 2024, beaten by Qwen 3.5 9B at 6 GB.
-    /// This is drift the v1.23.0 model-catalogue audit could not catch: that
-    /// pass covered cloud providers, and none of its three defence layers
-    /// (aliases, `retiredModels`, `ModelAvailabilityChecker`) apply locally —
-    /// the checker is deliberately empty for Ollama/MLX. Local presets have no
-    /// automatic drift protection at all, so they need a dated manual review.
-    ///
-    /// Deliberately NOT migrating anyone off the removed entries: unlike the
-    /// cloud case, those repos still resolve (verified 200), so a saved choice
-    /// keeps working. Rewriting a functioning user setting to satisfy a curated
-    /// list would be the false-positive failure v1.22.1 argued against.
-    ///
-    /// ⭐ marks the recommended default for speed.
-    static let mlxPresets: [MLXPreset] = [
-        // Measured 2026-09-15 on 10 real German dictation transcripts run
-        // through Tippi's own polish prompt via mlx_lm.server — same path
-        // production uses, temperature 0, warm. Scored on filler removal,
-        // German noun capitalisation, commas, self-correction, brand spelling
-        // via the custom-word list, and whether the model answered the text
-        // instead of cleaning it. Latency is the per-transcript average.
-        //
-        // ⭐ default. Gemma 4 E2B won on both axes at once — zero findings and
-        // the fastest — which is why it displaced the 2B despite being the
-        // larger download.
-        MLXPreset(
-            id: "gemma4-e2b",
-            label: String(localized: "settings.providers.mlx.preset.gemma4-e2b"),
-            repoID: "mlx-community/gemma-4-e2b-it-4bit",
-            downloadSize: "3.6 GB"
-        ),
-        MLXPreset(
-            id: "qwen35-4b-4bit",
-            label: String(localized: "settings.providers.mlx.preset.qwen35-4b-4bit"),
-            repoID: "mlx-community/Qwen3.5-4B-MLX-4bit",
-            downloadSize: "3.1 GB"
-        ),
-        // Kept for 8 GB Macs and anyone who wants the smallest download, with
-        // the trade-off stated rather than hidden: it left "äh"/"halt" in,
-        // kept an abandoned clause, dropped sentence-final punctuation twice,
-        // and ignored the custom-word list where both larger models honoured
-        // it. Fine for rough notes, wrong for anything that gets sent.
-        MLXPreset(
-            id: "qwen35-2b-4bit",
-            label: String(localized: "settings.providers.mlx.preset.qwen35-2b-4bit"),
-            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit",
-            downloadSize: "1.7 GB"
-        ),
-        MLXPreset(
-            id: "qwen35-9b-4bit",
-            label: String(localized: "settings.providers.mlx.preset.qwen35-9b-4bit"),
-            repoID: "mlx-community/Qwen3.5-9B-MLX-4bit",
-            downloadSize: "6.0 GB"
-        ),
-    ]
     var body: some View {
         GroupBox {
             DisclosureGroup(isExpanded: $isExpanded) {
@@ -2144,4 +2046,118 @@ private struct ModelRow: View {
             if downloading == nil { isDownloaded = model.isDownloaded }
         }
     }
+}
+
+// Außerhalb des Struct-Körpers (SwiftLint type_body_length), sonst unverändert.
+extension ProviderRow {
+    /// Presets curated for Tippi's use case: fast text transformation, return
+    /// only the result.
+    ///
+    /// **Admission rule — check this before adding anything here.** By 2026
+    /// almost every current small model is a thinking model, so "no reasoning
+    /// models" is no longer a list one can pick from; what matters is whether
+    /// the monologue can be switched *off*. `MLXProvider` sends
+    /// `chat_template_kwargs: {enable_thinking: false}`, so a model qualifies
+    /// only if its `chat_template.jinja` either ignores that kwarg or gates
+    /// thinking on it. Read the template — the model card does not reliably say.
+    /// A model that gates on something else (a `/no_think` marker in the prompt,
+    /// a differently named flag) will return an empty `content` with the whole
+    /// answer in `reasoning`: the exact failure v1.18.0 hit with Qwen 3.x, and
+    /// it fails silently, as an empty polish rather than an error.
+    ///
+    /// Verified this way on 2026-09-15: Qwen 3.5 (2B/4B/9B) ✓, Gemma 4 E2B ✓
+    /// (a thinking model as of Gemma 4, unlike Gemma 3, but correctly gated).
+    ///
+    /// Reviewed 2026-09-15: every repo ID below was verified to exist against
+    /// `huggingface.co/api/models`, and the sizes were read from the same API.
+    /// Note that HuggingFace answers **401, not 404**, for a repo that does not
+    /// exist — so "no error" is not a check; only an explicit 200 is.
+    ///
+    /// These are curated for *availability, provenance and size*, which is all a
+    /// catalogue can establish. They are explicitly NOT a measured quality
+    /// ranking for Tippi's task, and the difference matters: the one datapoint
+    /// actually measured here found a 2B model more faithful on German than a
+    /// 3B one, which had distorted meaning. Recency and parameter count do not
+    /// predict quality for "clean up this dictation". Ranking them honestly
+    /// needs the same treatment Parakeet-vs-Whisper got — real audio, both
+    /// metrics, written down.
+    ///
+    /// Two traps worth recording, both hit during this review:
+    /// - The first pass excluded Gemma 4 after probing a *guessed* repo ID
+    ///   (`gemma-4-4b-it-4bit`, which does not exist). The real builds are the
+    ///   E-series (`gemma-4-e2b-it-4bit`). Probing a guess tests the guess, not
+    ///   the catalogue — list the author's models instead.
+    /// - Qwen3.6 and Qwen3.8 exist but only from 27B upward, so the newest Qwen
+    ///   generation is irrelevant at this latency budget. "Newer family exists"
+    ///   does not imply "newer family exists in the size you need".
+    ///
+    /// The list before that review had aged badly: six of seven entries were
+    /// one to three model generations old (Llama 3.1/3.2, Qwen 2.5, Phi-4-mini,
+    /// Gemma 3), and the one marked "⭐ premium" for 32 GB Macs was Qwen 2.5
+    /// 14B — an ~8 GB download from late 2024, beaten by Qwen 3.5 9B at 6 GB.
+    /// This is drift the v1.23.0 model-catalogue audit could not catch: that
+    /// pass covered cloud providers, and none of its three defence layers
+    /// (aliases, `retiredModels`, `ModelAvailabilityChecker`) apply locally —
+    /// the checker is deliberately empty for Ollama/MLX. Local presets have no
+    /// automatic drift protection at all, so they need a dated manual review.
+    ///
+    /// Deliberately NOT migrating anyone off the removed entries: unlike the
+    /// cloud case, those repos still resolve (verified 200), so a saved choice
+    /// keeps working. Rewriting a functioning user setting to satisfy a curated
+    /// list would be the false-positive failure v1.22.1 argued against.
+    ///
+    /// ⭐ marks the recommended default for speed.
+    static let mlxPresets: [MLXPreset] = [
+        // Measured 2026-09-15 on 10 real German dictation transcripts run
+        // through Tippi's own polish prompt via mlx_lm.server — same path
+        // production uses, temperature 0, warm. Scored on filler removal,
+        // German noun capitalisation, commas, self-correction, brand spelling
+        // via the custom-word list, and whether the model answered the text
+        // instead of cleaning it. Latency is the per-transcript average.
+        //
+        // ⭐ default. Gemma 4 E2B won on both axes at once — zero findings and
+        // the fastest — which is why it displaced the 2B despite being the
+        // larger download.
+        MLXPreset(
+            id: "gemma4-e2b",
+            label: String(localized: "settings.providers.mlx.preset.gemma4-e2b"),
+            repoID: "mlx-community/gemma-4-e2b-it-4bit",
+            downloadSize: "3.6 GB"
+        ),
+        // Larger sibling for better autocomplete, measured 2026-10-13 on the same
+        // 80 cut points in real German text (scripts/autocomplete-messung/e4b.py):
+        // mid-word 24/40 vs 20/40 for E2B, word start 6/40 vs 4/40. Cost: the
+        // rewrite/dictation polish request took 1.14 s instead of 0.69 s, and the
+        // server needs 4.6 GB instead of 2.9 GB. Not tested on the 10 dictations
+        // above — offered as an option, E2B stays the default.
+        MLXPreset(
+            id: "gemma4-e4b",
+            label: String(localized: "settings.providers.mlx.preset.gemma4-e4b"),
+            repoID: "mlx-community/gemma-4-e4b-it-4bit",
+            downloadSize: "4.8 GB"
+        ),
+        MLXPreset(
+            id: "qwen35-4b-4bit",
+            label: String(localized: "settings.providers.mlx.preset.qwen35-4b-4bit"),
+            repoID: "mlx-community/Qwen3.5-4B-MLX-4bit",
+            downloadSize: "3.1 GB"
+        ),
+        // Kept for 8 GB Macs and anyone who wants the smallest download, with
+        // the trade-off stated rather than hidden: it left "äh"/"halt" in,
+        // kept an abandoned clause, dropped sentence-final punctuation twice,
+        // and ignored the custom-word list where both larger models honoured
+        // it. Fine for rough notes, wrong for anything that gets sent.
+        MLXPreset(
+            id: "qwen35-2b-4bit",
+            label: String(localized: "settings.providers.mlx.preset.qwen35-2b-4bit"),
+            repoID: "mlx-community/Qwen3.5-2B-MLX-4bit",
+            downloadSize: "1.7 GB"
+        ),
+        MLXPreset(
+            id: "qwen35-9b-4bit",
+            label: String(localized: "settings.providers.mlx.preset.qwen35-9b-4bit"),
+            repoID: "mlx-community/Qwen3.5-9B-MLX-4bit",
+            downloadSize: "6.0 GB"
+        ),
+    ]
 }

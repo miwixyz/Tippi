@@ -43,6 +43,16 @@ enum AutocompleteSettings {
         store.data(forKey: key).flatMap { try? JSONDecoder().decode(KeyCombo.self, from: $0) }
     }
 
+    private static let inProcessKey = "tippi.autocomplete.inProcess.v1"
+
+    /// Labs: direkt in Tippi rechnen (MLX Swift) statt über den MLX-Server.
+    /// **Ab Werk AUS** (Design §10): Ein Absturz im Rechenwerk beendet dann Tippi
+    /// selbst, und das Modell belegt Arbeitsspeicher im Tippi-Prozess.
+    static var inProcess: Bool {
+        get { store.object(forKey: inProcessKey) as? Bool ?? false }
+        set { store.set(newValue, forKey: inProcessKey) }
+    }
+
     /// **Ab Werk AUS** (Design §8): Die Funktion liest alles, was im fokussierten
     /// Feld vor dem Cursor steht, und braucht einen aktiven Tastatur-Tap.
     static var isEnabled: Bool {

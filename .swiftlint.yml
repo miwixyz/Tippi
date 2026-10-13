@@ -46,6 +46,7 @@ identifier_name:
     - chat_template_kwargs
     - output_config
     - logit_bias
+    - top_logprobs
 
 line_length:
   warning: 150

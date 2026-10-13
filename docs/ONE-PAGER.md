@@ -57,6 +57,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Autocomplete inside Tippi, with alternatives (v2.27)** — optional in-process engine (MLX Swift, Gemma 4 E4B): mid-word 13/20 instead of 9/20 in a head-to-head test, no server hang; ↓ shows three alternatives
 - **Autocomplete finishes the word you started (v2.26)** — mid-word suggestions went from 0 to 20–22 correct out of 40 (measured, German text, Gemma 4 locally); a new suggestion follows 0.2 s after a mismatching letter
 - **Screen OCR, faster and clearer (v2.25)** — the selection is ready in 0.3–0.5 s (measured, two monitors), the screen dims noticeably with an immediate crosshair and a hint, and the overlay follows the macOS screenshot tool: white frame, corner marks, dimensions in a glass capsule
 - **Quiet when idle (v2.24)** — no lasting CPU load after dictating anymore; Claude Haiku 5.5 selectable; 7 providers after removing Kimi, Scaleway, Groq and Nebius
