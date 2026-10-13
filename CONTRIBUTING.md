@@ -78,6 +78,20 @@ server Tippi started: the plain step-by-step variant `D` hangs mlx-lm 0.31.3/0.3
 (request = previous request + generated token), `DZ2` is the one Tippi ships.
 `korpus.json` holds your own text — it stays out of the repo.
 
+Head-to-head against another autocomplete app (e.g. Cotypist) in TextEdit, one ⇥ per cut point:
+
+```bash
+defaults write -g NSDocumentSaveNewDocumentsToCloud -bool false     # REQUIRED, see below
+defaults write -g NSAutomaticSpellingCorrectionEnabled -bool false  # the correction bubble blocks AppleScript
+python3 -I vergleich.py <Name> 40      # only one autocomplete app running at a time
+defaults delete -g NSDocumentSaveNewDocumentsToCloud; defaults delete -g NSAutomaticSpellingCorrectionEnabled
+```
+
+With iCloud enabled, TextEdit saves every new document to iCloud Drive even with
+`close … saving no` (measured 2026-10-13: 85 test documents); `vergleich.py` refuses to start
+unless the first setting is off. TextEdit is sandboxed — it can't open test files from `/tmp`.
+Results (`ergebnis-*.json`) contain words from your own text and stay out of the repo.
+
 ## Development setup
 
 ```bash

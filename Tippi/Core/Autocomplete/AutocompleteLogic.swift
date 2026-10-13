@@ -563,18 +563,25 @@ enum AutocompleteRequest {
     /// bleibt kurz, auch bei einer langen Liste.
     static let maxGlossaryTerms = 40
     static let maxGlossaryTermLength = 40
+    /// Ab so vielen getippten Buchstaben zählt ein Wortanfang als Hinweis auf ein
+    /// eigenes Wort. Vorher 2 — real 2026-10-13: „…wichtiger als re" holte
+    /// „Rentrak-Nummer" in den Prompt, das Modell übernahm es statt „reine".
+    /// Gemessen an 40 Stellen mitten im Wort: ab 3 Buchstaben 21 statt 20 Treffer.
+    static let minOpenWordForGlossary = 3
 
     /// Nur die eigenen Wörter, die gerade gebraucht werden: das unfertige letzte
-    /// Wort (mind. 2 Zeichen) ist der Anfang des Begriffs oder eines seiner
-    /// Wörter, oder der Begriff steht schon als ganzes Wort im Kontext. Groß/klein
-    /// und Akzente egal. Sonst leer — der Grundprompt bleibt ohne Wörterliste.
+    /// Wort (mind. `minOpenWordForGlossary` Zeichen) ist der Anfang des Begriffs
+    /// oder eines seiner Wörter, oder der Begriff steht schon als ganzes Wort im
+    /// Kontext. Groß/klein und Akzente egal. Sonst leer — der Grundprompt bleibt
+    /// ohne Wörterliste.
     ///
     /// Warum (gemessen 2026-09-30): Mit der ganzen Liste in JEDER Anfrage streute
     /// das kleine lokale Modell die Begriffe in Sätze, die nichts damit zu tun hatten.
     static func relevantGlossary(terms: [String], context: String) -> [String] {
         let contextWords = words(of: context)
         let lastIsOpen = context.last.map { $0.isLetter || $0.isNumber } ?? false
-        let openWord = lastIsOpen ? contextWords.last.flatMap { $0.count >= 2 ? $0 : nil } : nil
+        let openWord = lastIsOpen
+            ? contextWords.last.flatMap { $0.count >= minOpenWordForGlossary ? $0 : nil } : nil
         return terms.filter { term in
             let termWords = words(of: term)
             guard !termWords.isEmpty else { return false }

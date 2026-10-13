@@ -126,7 +126,8 @@ Tippi ↔ Modellserver (Ausgabe verlässt den Prozess) · Modell ↔ Tippi (Antw
   System-Prompt — nur Zielwörter, höchstens 40 Begriffe à 40 Zeichen, Steuerzeichen
   und Umbrüche entfernt. Bleibt wie alles andere auf dem eigenen Loopback-Server.
   Seit 2026-09-30 nur die gerade passenden Begriffe (`AutocompleteRequest.relevantGlossary`):
-  das unfertige letzte Wort beginnt wie der Begriff, oder er steht schon im Text. Mit der
+  das unfertige letzte Wort (seit 2026-10-13 ab 3 Buchstaben, vorher 2 — „re“ holte „Rentrak-Nummer“)
+  beginnt wie der Begriff, oder er steht schon im Text. Mit der
   ganzen Liste in jeder Anfrage gab das 2B-Modell bei einem von fünf neutralen Sätzen
   nur die Wörterliste selbst zurück (3/3 Wiederholungen); ohne sie 0 von 15 Antworten.
 
@@ -269,3 +270,9 @@ Tests in `TippiTests/AutocompleteTests.swift` (64 Fälle) und `TippiTests/Autoco
   Anweisung ab, bleibt nur das ergänzte Wort (`withoutInstructionEcho`, 2/40 → 0/40).
   Nach einem nicht passenden Buchstaben fragt Tippi nach 200 statt 350 ms neu
   (`snapPauseNanoseconds`), nur in diesem Fall.
+- **Wortanfang (2.26.1):** Derselbe Satz-als-Antwortbeginn ohne Beschränkung (`splitAtWordStart`);
+  gezeigt wird nur, was mit einem neuen Wort beginnt (`startsNewWord`). Endet eine Antwort an der
+  Längengrenze, fällt ihr letztes Wort weg (`continuation(cutAtLength:)`): Wer sonst die ganze
+  Antwort übernimmt, erzeugt als nächste Anfrage „vorige + Antwort“ — gemessen hängt das mlx-lm
+  0.31.3 auf; endet die Antwort per Stoppzeichen, nicht. Direktvergleich mit Cotypist (40 Stellen,
+  `scripts/autocomplete-messung/vergleich.py`): Cotypist 6/20 · 15/20, Tippi 2/20 · 9/20.

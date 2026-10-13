@@ -36,6 +36,29 @@ final class AutocompleteWordHealingTests: XCTestCase {
         XCTAssertNil(Healing.split(""))
     }
 
+    func testSplitAtWordStart() {
+        XCTAssertEqual(Healing.splitAtWordStart("Erster Satz. Ich gehe heute ins "),
+                       Healing.Split(before: "Erster Satz. ", base: "Ich gehe heute ins ", started: ""))
+        XCTAssertNil(Healing.splitAtWordStart("Ich gehe heute ins"))
+        XCTAssertNil(Healing.splitAtWordStart("Ich gehe heute ins\n"))
+    }
+
+    func testWordStartHasNoOpenPrefixAndPromptEndsWithoutSpace() throws {
+        let split = try XCTUnwrap(Healing.splitAtWordStart("Ich gehe heute ins "))
+        XCTAssertEqual(Healing.openPrefix(split), "")
+        XCTAssertTrue(Healing.prompt(system: "S", split: split).hasSuffix("<|turn>model\nIch gehe heute ins"))
+    }
+
+    func testWordStartNeedsANewWord() {
+        // Real 2026-10-13 in TextEdit: „Mac " → „hen", „laufen " → „."
+        XCTAssertFalse(Healing.startsNewWord("hen"))
+        XCTAssertFalse(Healing.startsNewWord("."))
+        XCTAssertFalse(Healing.startsNewWord(" ."))
+        XCTAssertFalse(Healing.startsNewWord(""))
+        XCTAssertTrue(Healing.startsNewWord(" Kino."))
+        XCTAssertTrue(Healing.startsNewWord(" „Tippi\""))
+    }
+
     func testDecimalPointIsNoSentenceEnd() {
         XCTAssertEqual(Healing.split("Es kostet 3.50 Eu")?.before, "")
     }
@@ -112,6 +135,18 @@ final class AutocompleteWordHealingTests: XCTestCase {
     func testInstructionWordsComeFromThePrompt() {
         XCTAssertTrue(Healing.instructionWords.isSuperset(of: ["vervollständige", "fortsetzung", "höchstens", "wörter", "acht"]))
         XCTAssertFalse(Healing.instructionWords.contains("den"))   // kurze Wörter zählen nicht
+    }
+
+    func testContinuationCutAtLengthDropsLastWord() {
+        // mlx-lm hängt, wenn die nächste Anfrage genau „vorige + ganze Antwort" ist.
+        XCTAssertEqual(Healing.continuation(" meine Sachen und ein Gesch", cutAtLength: true), " meine Sachen und ein")
+        XCTAssertEqual(Healing.continuation("enk", cutAtLength: true), "")
+        XCTAssertEqual(Healing.continuation(" meine Sachen.", cutAtLength: false), " meine Sachen.")
+    }
+
+    func testParseFinishReason() throws {
+        let data = Data(#"{"choices":[{"text":" meine Sachen","finish_reason":"length"}]}"#.utf8)
+        XCTAssertEqual(try XCTUnwrap(AutocompleteRequest.completion(from: data)).finishReason, "length")
     }
 
     func testContinuationStopsAtTemplateEndAndNewline() {

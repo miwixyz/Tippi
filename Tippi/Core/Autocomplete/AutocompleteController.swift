@@ -272,8 +272,11 @@ final class AutocompleteController: ObservableObject {
         let glossary = AutocompleteRequest.relevantGlossary(
             terms: CustomWordVariants.glossaryTerms(from: DictationSettings.customWords), context: field.context)
         let model = MLXServerManager.activeModel
-        // Mitten im Wort: Wortheilung, sofern Vorlage und Wortstücke da sind.
-        let healing = AutocompleteWordHealing.split(field.context).flatMap { split in
+        // Mitten im Wort: Wortheilung; am Wortanfang derselbe Satz-als-Antwortbeginn
+        // ohne Beschränkung — sofern Vorlage und Wortstücke da sind.
+        let split = AutocompleteWordHealing.split(field.context)
+            ?? AutocompleteWordHealing.splitAtWordStart(field.context)
+        let healing = split.flatMap { split in
             AutocompleteWordHealing.supports(model: model)
                 ? vocabularies.vocabulary(for: model).map { (split: split, vocabulary: $0) } : nil
         }

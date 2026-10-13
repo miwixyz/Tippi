@@ -2,7 +2,16 @@
 
 ## [2.26.1] — 2026-10-13
 
-- _Add release notes here._
+Autovervollständigung (Labs): ordentlichere Vorschläge am Wortanfang, ein Eigenes Wort drängt sich nicht mehr vor.
+
+### Behoben
+- **Wortanfang:** Nach einem Leerzeichen wiederholte das Modell oft den Satzanfang; Tippi verwarf das, und es kam gar kein Vorschlag. Jetzt bekommt das Modell den angefangenen Satz als Beginn seiner Antwort (wie mitten im Wort) und Tippi zeigt nur Vorschläge, die mit einem neuen Wort beginnen — nicht mehr „hen" nach „Mac " oder einen Punkt nach „laufen ". Gemessen an 40 Stellen: 15 → 8 verworfene Antworten.
+- **Eigene Wörter erst ab 3 Buchstaben:** Bei „…wichtiger als re" schlug Tippi „Rentrak-Nummer" vor, weil der Begriff schon bei 2 passenden Buchstaben ans Modell ging.
+- **Kein Hänger des lokalen Servers beim Übernehmen:** Endete die Antwort des Modells an der Längengrenze und übernahm man sie komplett, konnte der MLX-Server danach hängen (Fehler in mlx-lm, gemessen). Tippi lässt in diesem Fall das letzte, meist abgeschnittene Wort weg.
+
+### Intern
+- Direktvergleich mit Cotypist (kostenlose Stufe, gleiche Modellgröße) an 40 Stellen in TextEdit: Cotypist Wortanfang 6/20, mitten im Wort 15/20; Tippi mit diesen Änderungen 2/20 und 9/20, in 9 Fällen kein Vorschlag. Skripte `scripts/autocomplete-messung/vergleich.py` + `vergleich.applescript`.
+- 703 Tests.
 
 ## [2.26.0] — 2026-10-13
 

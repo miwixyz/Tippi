@@ -81,7 +81,19 @@ enum AutocompleteWordHealing {
         let isWordChar: (Character) -> Bool = { $0.isLetter || $0.isNumber }
         guard let last = line.last, isWordChar(last) else { return nil }
         let started = String(line.reversed().prefix(while: isWordChar).reversed())
-        let head = Array(line.dropLast(started.count))
+        return sentenceSplit(head: Array(line.dropLast(started.count)), started: started)
+    }
+
+    /// Am Wortanfang (Zeile endet mit Leerzeichen): derselbe Satz-als-Antwortbeginn,
+    /// nur ohne Beschränkung der Wortstücke. Gemessen 2026-10-13 an 40 Stellen: die
+    /// Chat-Anfrage traf 2, und 15 Antworten wiederholten den Satzanfang (vom
+    /// Wiederholungsfilter verworfen → kein Vorschlag); so 4 Treffer, 8 verworfen.
+    static func splitAtWordStart(_ line: String) -> Split? {
+        guard line.last == " " else { return nil }
+        return sentenceSplit(head: Array(line), started: "")
+    }
+
+    private static func sentenceSplit(head: [Character], started: String) -> Split {
         // Satzgrenze: Zeilenumbruch oder .!?: gefolgt von Leerraum.
         var cut = 0
         for index in stride(from: head.count - 1, through: 0, by: -1) {
@@ -99,7 +111,8 @@ enum AutocompleteWordHealing {
     /// Der getippte Wortanfang, wie das Modell ihn als Wortstücke sieht: mit
     /// Leerzeichen davor, wenn im Satz schon etwas steht.
     static func openPrefix(_ split: Split) -> String {
-        (split.base.isEmpty ? "" : " ") + split.started
+        guard !split.started.isEmpty else { return "" }
+        return (split.base.isEmpty ? "" : " ") + split.started
     }
 
     /// Gemma-4-Vorlage bis zum Beginn der Modellantwort, plus der Satzanfang.
@@ -138,15 +151,36 @@ enum AutocompleteWordHealing {
         return .mismatch
     }
 
+    /// Am Wortanfang (der Nutzer hat schon ein Leerzeichen getippt) zählt nur eine
+    /// Fortsetzung, die mit einem neuen Wort beginnt. Gemessen 2026-10-13 in
+    /// TextEdit: Der Satzanfang endet für das Modell ohne das Leerzeichen, es setzte
+    /// sonst das letzte Wort fort („Mac " → „hen") oder hängte Satzzeichen an
+    /// („laufen " → „.").
+    static func startsNewWord(_ continuation: String) -> Bool {
+        guard let first = continuation.first, first.isWhitespace else { return false }
+        return continuation.dropFirst().first.map { $0.isLetter || $0.isNumber || "„\"'(".contains($0) } ?? false
+    }
+
     /// Darf `piece` als nächstes Stück kommen, solange `rest` offen ist?
     static func isAllowed(_ piece: String, rest: String) -> Bool {
         !piece.isEmpty && (piece.hasPrefix(rest) || (piece.count >= 2 && rest.hasPrefix(piece)))
     }
 
     /// Fortsetzung nach dem Wortanfang: nur die erste Zeile, ohne Vorlagen-Ende.
-    static func continuation(_ raw: String) -> String {
+    ///
+    /// `cutAtLength`: Die Antwort endete an der Längengrenze (`finish_reason`
+    /// „length"). Dann fällt das letzte Wort weg — es ist meist abgeschnitten, und
+    /// vor allem: Übernähme man die **ganze** Antwort, wäre die nächste Anfrage
+    /// genau „vorige Anfrage + Antwort" — der mlx-lm-Fall, der den Server aufhängt
+    /// (gemessen 2026-10-13: „…bringe" + „ meine Sachen" → Server hängt). Endet
+    /// die Antwort von selbst, liegt das Ende-Zeichen im Zwischenspeicher, und die
+    /// nächste Anfrage ist ein echter Anfang davon (gemessen: kein Hänger).
+    static func continuation(_ raw: String, cutAtLength: Bool = false) -> String {
         let text = raw.components(separatedBy: "<turn|>").first ?? raw
-        return text.components(separatedBy: .newlines).first ?? text
+        let line = text.components(separatedBy: .newlines).first ?? text
+        guard cutAtLength else { return line }
+        guard let lastSpace = line.lastIndex(where: \.isWhitespace) else { return "" }
+        return String(line[..<lastSpace])
     }
 }
 
@@ -169,7 +203,8 @@ struct AutocompleteHealingRun {
         let system = AutocompleteRequest.systemPrompt(glossary: glossary, base: Healing.systemPrompt)
         var prompt = Healing.prompt(system: system, split: split)
         var rest = Healing.openPrefix(split)
-        var tail: String?
+        // Am Wortanfang gibt es nichts zu heilen — gleich frei weiterschreiben.
+        var tail: String? = rest.isEmpty ? "" : nil
         // Messpunkt (2026-10-13, erster Lauf 1,4–1,5 s statt 0,55 s gemessen):
         // Schritte, Suchzeit, Gesamtzeit — nie Text.
         let started = Date()
@@ -178,7 +213,7 @@ struct AutocompleteHealingRun {
         defer {
             healingLog.notice("heal steps=\(steps, privacy: .public) lookupMs=\(Int(lookupSeconds * 1000), privacy: .public) totalMs=\(Int(Date().timeIntervalSince(started) * 1000), privacy: .public) found=\(tail != nil, privacy: .public)")
         }
-        for _ in 0..<Healing.maxSteps {
+        while tail == nil, steps < Healing.maxSteps {
             steps += 1
             let lookupStart = Date()
             let allowed = vocabulary.allowedIDs(rest: rest)
@@ -193,17 +228,18 @@ struct AutocompleteHealingRun {
             prompt += Healing.neutralized(piece)
             switch Healing.step(rest: rest, piece: piece) {
             case .finished(let wordTail): tail = wordTail
-            case .partial(let open): rest = open; continue
+            case .partial(let open): rest = open
             case .mismatch: return nil
             }
-            break
         }
         guard let tail, !Task.isCancelled,
               let request = AutocompleteRequest.makeCompletion(
                   server: server, model: model, prompt: prompt, maxTokens: Healing.continuationTokens),
               let data = await fetch(request),
-              let text = AutocompleteRequest.completion(from: data)?.text else { return nil }
-        return Healing.withoutInstructionEcho(tail + Healing.continuation(text))
+              let answer = AutocompleteRequest.completion(from: data) else { return nil }
+        let more = Healing.continuation(answer.text, cutAtLength: answer.finishReason == "length")
+        if split.started.isEmpty, !Healing.startsNewWord(more) { return nil }
+        return Healing.withoutInstructionEcho(tail + more)
     }
 }
 
@@ -278,16 +314,17 @@ extension AutocompleteRequest {
     }
 
     /// Text und Nummer des ersten Wortstücks einer `/v1/completions`-Antwort.
-    static func completion(from data: Data) -> (text: String, firstTokenID: Int?)? {
+    static func completion(from data: Data) -> (text: String, firstTokenID: Int?, finishReason: String?)? {
         struct Response: Decodable {
             struct Choice: Decodable {
                 let text: String?
                 let logprobs: CompletionLogProbs?
+                let finish_reason: String?
             }
             let choices: [Choice]
         }
         guard let choice = (try? JSONDecoder().decode(Response.self, from: data))?.choices.first else { return nil }
-        return (choice.text ?? "", choice.logprobs?.content?.first?.id)
+        return (choice.text ?? "", choice.logprobs?.content?.first?.id, choice.finish_reason)
     }
 }
 
