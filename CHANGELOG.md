@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.26.0] — 2026-10-13
+
+- _Add release notes here._
+
 ## [2.25.0] — 2026-10-13
 
 „Text aus Bildschirmausschnitt“ startet zügiger, zeigt klar, wann es losgeht, und hat ein neues Auswahlfenster.
