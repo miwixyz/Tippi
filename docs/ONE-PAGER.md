@@ -57,6 +57,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Capitalized + underscores, safer Refine (v2.28)** — new quick action A_B turns `all of this` into `All_Of_This`. Only the first letters change, so acronyms stay. Refine used to hand back your own one-word wish: with Gemma 4 E2B, “cooler” came back as “Cooler” in 3 of 3 runs. Now you get an error instead of that suggestion.
 - **Autocomplete inside Tippi, with alternatives (v2.27)** — optional in-process engine (MLX Swift, Gemma 4 E4B): mid-word 13/20 instead of 9/20 in a head-to-head test, no server hang; ↓ shows three alternatives
 - **Autocomplete finishes the word you started (v2.26)** — mid-word suggestions went from 0 to 20–22 correct out of 40 (measured, German text, Gemma 4 locally); a new suggestion follows 0.2 s after a mismatching letter
 - **Screen OCR, faster and clearer (v2.25)** — the selection is ready in 0.3–0.5 s (measured, two monitors), the screen dims noticeably with an immediate crosshair and a hint, and the overlay follows the macOS screenshot tool: white frame, corner marks, dimensions in a glass capsule

@@ -142,4 +142,23 @@ final class LocalTextTransformerTests: XCTestCase {
     func testSlugifyTransliteratesUmlauts() {
         XCTAssertEqual(LocalTextTransformer.slugify("Über uns"), "ueber_uns")
     }
+
+    // MARK: - capitalizeUnderscore (Michael, 2026-10-14)
+
+    func testCapitalizeUnderscoreJoinsCapitalizedWords() {
+        XCTAssertEqual(LocalTextTransformer.capitalizeUnderscore("alles soll so dargestellt werden"),
+                       "Alles_Soll_So_Dargestellt_Werden")
+    }
+
+    /// Only the first letter changes — `capitalizeWords` would turn the
+    /// brand into "Cineweb".
+    func testCapitalizeUnderscoreKeepsAcronyms() {
+        XCTAssertEqual(LocalTextTransformer.capitalizeUnderscore("CINEWEB magazin"), "CINEWEB_Magazin")
+    }
+
+    /// Same umlaut rule as the other separators (vault file names): ä→ae.
+    func testCapitalizeUnderscoreTransliteratesUmlauts() {
+        XCTAssertEqual(LocalTextTransformer.capitalizeUnderscore("über äußere größe"),
+                       "Ueber_Aeussere_Groesse")
+    }
 }

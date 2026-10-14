@@ -86,7 +86,9 @@ final class LocalTextEncloseAndListTests: XCTestCase {
 
     /// The point of the second row: the bar must stay well inside a 13-inch
     /// screen (1280 pt) instead of the ~890 pt a single row would need.
+    /// 560 → 600 on 2026-10-14: "Groß + Unterstriche" (A_B) took the bar from
+    /// 526 to 564 pt — still under half the screen, which is what this guards.
     func testSelectionBarStaysCompact() {
-        XCTAssertLessThan(SelectionActionBarView.width, 560)
+        XCTAssertLessThan(SelectionActionBarView.width, 600)
     }
 }

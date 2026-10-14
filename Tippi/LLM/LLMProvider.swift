@@ -108,6 +108,10 @@ enum LLMError: LocalizedError {
     /// The answer finished without any text. Never offered as a result: an
     /// empty "ready" preview let Return delete the selection.
     case emptyResult
+    /// The model only repeated the user's instruction ("cooler" → "Cooler").
+    /// Small local models do this with one-word wishes (Gemma 4 E2B, measured
+    /// 2026-10-14) — offered as a result, Replace would destroy the text.
+    case echoedInstruction
 
     var errorDescription: String? {
         switch self {
@@ -127,6 +131,8 @@ enum LLMError: LocalizedError {
             return "The AI provider stopped with an error: \(message.prefix(240))"
         case .emptyResult:
             return String(localized: "llm.error.empty")
+        case .echoedInstruction:
+            return String(localized: "llm.error.echo")
         }
     }
 
@@ -145,6 +151,18 @@ enum LLMError: LocalizedError {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw LLMError.emptyResult }
         return trimmed
+    }
+
+    /// The text, or `.echoedInstruction` when it is nothing but the user's own
+    /// instruction (case, quotes and trailing punctuation ignored). `nil`
+    /// instruction — built-in prompts — never matches.
+    static func notEcho(_ text: String, of instruction: String?) throws -> String {
+        guard let instruction else { return text }
+        let ignored = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+        func core(_ s: String) -> String { s.trimmingCharacters(in: ignored).lowercased() }
+        let wish = core(instruction)
+        guard !wish.isEmpty, core(text) == wish else { return text }
+        throw LLMError.echoedInstruction
     }
 
     private func provider(forStatus status: Int) -> String {

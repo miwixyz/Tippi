@@ -41,6 +41,7 @@ struct LocalTextAction: Identifiable, Equatable {
         case underscore
         case splitUnderscore
         case slugify
+        case capitalizeUnderscore
         case hyphenate
         case transliterateUmlauts
         case brackets
@@ -101,6 +102,7 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .capitalizeWords, title: String(localized: "local.action.capitalizeWords"), label: "Aa", category: .transform),
             LocalTextAction(kind: .underscore, title: String(localized: "local.action.underscore"), label: "A_b", category: .transform),
             LocalTextAction(kind: .slugify, title: String(localized: "local.action.slugify"), label: "a_b", category: .transform),
+            LocalTextAction(kind: .capitalizeUnderscore, title: String(localized: "local.action.capitalizeUnderscore"), label: "A_B", category: .transform),
             LocalTextAction(kind: .splitUnderscore, title: String(localized: "local.action.splitUnderscore"), label: "A b", category: .transform),
             LocalTextAction(kind: .hyphenate, title: String(localized: "local.action.hyphenate"), label: "A-b", category: .transform),
             LocalTextAction(kind: .transliterateUmlauts, title: String(localized: "local.action.transliterateUmlauts"), label: "äöü", category: .transform),
@@ -159,6 +161,8 @@ struct LocalTextAction: Identifiable, Equatable {
             return .plainReplacement(LocalTextTransformer.splitUnderscore(text))
         case .slugify:
             return .plainReplacement(LocalTextTransformer.slugify(text))
+        case .capitalizeUnderscore:
+            return .plainReplacement(LocalTextTransformer.capitalizeUnderscore(text))
         case .hyphenate:
             return .plainReplacement(LocalTextTransformer.hyphenate(text))
         case .transliterateUmlauts:
@@ -240,6 +244,16 @@ enum LocalTextTransformer {
     /// and identifiers, which previously took two clicks in the right order.
     static func slugify(_ text: String) -> String {
         underscore(text).lowercased()
+    }
+
+    /// Every word capitalised, joined by underscores: `alles soll so` →
+    /// `Alles_Soll_So` (Michael, 2026-10-14). Only the first letter changes —
+    /// unlike `capitalizeWords` (`localizedCapitalized`), which would turn
+    /// `CINEWEB` into `Cineweb`. Umlauts transliterated like `underscore`.
+    static func capitalizeUnderscore(_ text: String) -> String {
+        words(in: transliterateUmlauts(text))
+            .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+            .joined(separator: "_")
     }
 
     static func hyphenate(_ text: String) -> String {
