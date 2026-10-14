@@ -135,6 +135,7 @@ Tippi/
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
 │   │   └── LocalActionButtons.swift # v2.19 — Schnellaktions-Knöpfe, Währungsreihe, Passwort-Knopf
 │   ├── Preview/                    # Streaming-Vorschau, Refine, Provider-Wechsel
+│   │   ├── RefinePrompt.swift          # v2.28 — Auftrag fürs Verfeinern (Ein-Wort-Wunsch = „so soll sich der Text ändern“)
 │   ├── Emoji/                      # v2.1 — Picker-Panel, View, Model
 │   ├── Autocomplete/AutocompleteSuggestionPanel.swift  # grauer Text am Cursor + Tastenkappe, nie Key, keine Klicks
 │   ├── AppListEditor.swift                # v2.16.3 — App-Liste mit Symbol + Name, „App hinzufügen…“ (Ausschlussliste, Enter nach Diktat)
