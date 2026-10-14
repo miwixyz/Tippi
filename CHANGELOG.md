@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.28.0] — 2026-10-14
+
+Neue Schnellaktion „Groß + Unterstriche“, und Verfeinern ersetzt deinen Text nicht mehr durch den eigenen Befehl.
+
+### Neu
+- **Schnellaktion „Groß + Unterstriche“ (A_B)** im Popup: aus „alles soll so dargestellt werden“ wird „Alles_Soll_So_Dargestellt_Werden“. Nur der erste Buchstabe jedes Worts wird groß, „CINEWEB magazin“ bleibt „CINEWEB_Magazin“. Umlaute wie bei den anderen Unterstrich-Aktionen: ä→ae, ß→ss. Das Popup wird dadurch 38 pt breiter (564 statt 526).
+
+### Behoben
+- **Verfeinern gab nur den eigenen Befehl zurück.** Mit dem lokalen Modell Gemma 4 E2B (MLX) wurde aus „cooler“ der Vorschlag „Cooler“. „Ersetzen“ hätte den ganzen Text durch ein Wort ersetzt. Gemessen mit Tippis Anfrage direkt am MLX-Server: 3 von 3. Der Auftrag beschreibt einen Kurzbefehl jetzt ausdrücklich als „so soll sich der Text ändern“. Das behebt „cooler“ und „formeller“ bei E2B und E4B, „kürzer“ und „auf Englisch“ bleiben wie zuvor. Wiederholt ein Modell trotzdem nur den Befehl, zeigt Tippi eine Fehlermeldung statt eines Vorschlags.
+
+### Bekannt
+- Gemma 4 E2B ist für Verfeinern und gesprochene Befehle zu klein: „kürzer“ und „Fass das zusammen“ geben den Text unverändert zurück (Hinweis „keine Änderung“), egal wie der Auftrag formuliert ist. E4B schafft beides. „antworte darauf“ wiederholt mit E2B und E4B nur den Text.
+
+### Intern
+- Auftrag in eigene Datei `RefinePrompt.swift`, neue Prüfung `LLMError.notEcho`, neue Tests `RefineEchoTests`.
+- `LocalTextTransformer.capitalizeUnderscore` + 3 Tests; Breitengrenze im Popup-Test 560 → 600 pt.
+- 729 Tests.
+
 ## [2.27.1] — 2026-10-13
 
 Autovervollständigung (Labs): Der Vorschlag sieht aus wie Apples eigene Vorschläge beim Tippen, sitzt in TextEdit in der richtigen Zeile und bleibt bei einem Bildschirmfoto stehen.
