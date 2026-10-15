@@ -29,8 +29,25 @@ final class RefineEchoTests: XCTestCase {
     /// The wording that stopped the echo for "cooler" and "formeller" on E2B
     /// and E4B without breaking "kürzer"/"auf Englisch" (measured 2026-10-14).
     func testRefinePromptFramesShortWishAsChange() {
-        let prompt = RefinePrompt.system(for: "cooler")
+        let prompt = RefinePrompt.system(for: "cooler", text: "")
         XCTAssertTrue(prompt.contains("WISH: “cooler”"))
         XCTAssertTrue(prompt.contains("never the answer itself"))
+    }
+
+    /// 2026-10-15: E4B rewrote German text in English for "cooler" (3/3);
+    /// naming the language kept it German (6/6).
+    func testRefinePromptNamesConfidentLanguage() {
+        let german = "Wir freuen uns, Ihnen mitteilen zu können, dass unser Kino ab nächster Woche wieder geöffnet hat."
+        let prompt = RefinePrompt.system(for: "cooler", text: german)
+        XCTAssertTrue(prompt.contains("The text is written in German. Write your result in German unless"))
+        XCTAssertEqual(RefinePrompt.language(of: "Thanks for your message, I'll get back to you later."), "English")
+    }
+
+    /// Short snippets get a wrong guess ("ok" → Polish) — then say nothing.
+    func testRefinePromptOmitsUnsureLanguage() {
+        for snippet in ["ok", "CINEWEB Magazin", ""] {
+            XCTAssertNil(RefinePrompt.language(of: snippet), snippet)
+            XCTAssertFalse(RefinePrompt.system(for: "cooler", text: snippet).contains("written in"), snippet)
+        }
     }
 }

@@ -565,7 +565,7 @@ struct PreviewView: View {
         refineInstruction = ""
         // `instruction` arms the echo guard: small local models answered
         // "cooler" with just "Cooler" (2026-10-14).
-        perform(systemPrompt: RefinePrompt.system(for: instruction), userText: current,
+        perform(systemPrompt: RefinePrompt.system(for: instruction, text: current), userText: current,
                 input: current, allowLocalFallback: false, instruction: instruction)
     }
 
