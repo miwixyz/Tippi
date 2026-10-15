@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.28.1] — 2026-10-15
+
+Verfeinern bleibt in der Sprache deines Textes.
+
+### Behoben
+- **Verfeinern mit „cooler“ schrieb deutschen Text auf Englisch um.** Mit dem lokalen Modell Gemma 4 E4B (MLX) wurde aus „Wir freuen uns, Ihnen mitteilen zu können, dass unser Kino ab nächster Woche wieder geöffnet hat.“ der Vorschlag „Our cinema is back open next week.“ (3 von 3). Das Modell hielt das englische Wort für einen Sprachwunsch. Tippi erkennt jetzt die Sprache des Textes (macOS-Spracherkennung) und nennt sie dem Modell: „cooler“ bleibt deutsch (6 von 6), „auf Englisch“ übersetzt weiter (3 von 3). Bei kurzen, unklaren Schnipseln wie „ok“ nennt Tippi keine Sprache, dort bleibt alles wie bisher. Eine allgemeine Regel „Sprache beibehalten“ ohne die erkannte Sprache half nicht (weiter 3 von 3 Englisch).
+
+### Bekannt
+- Kurze Sätze lässt „cooler“ mit E4B manchmal unverändert („Danke für deine Nachricht, ich melde mich später.“, 2 von 2).
+
+### Intern
+- `RefinePrompt.system(for:text:)` + `RefinePrompt.language(of:)` (Schwelle 0,8, gemessen: echte Sätze 0,96–1,00, „ok“ → Polnisch 0,29); 2 neue Tests in `RefineEchoTests`.
+- 731 Tests.
+
 ## [2.28.0] — 2026-10-14
 
 Neue Schnellaktion „Groß + Unterstriche“, und Verfeinern ersetzt deinen Text nicht mehr durch den eigenen Befehl.
