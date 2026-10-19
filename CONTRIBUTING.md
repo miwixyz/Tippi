@@ -117,6 +117,8 @@ Build and run with **⌘R** in Xcode. Unsigned Debug builds work for development
 
 **Testing anything that needs Accessibility** (selection bar, snippets, text replacement) next to an installed Tippi release: run `scripts/devid-testbuild.sh`, then `open /tmp/tippi-devid/export/Tippi.app`. If that folder still holds an older test build, the script stops instead of overwriting it: run it again with `OUT=<new path> scripts/devid-testbuild.sh` and open `<new path>/export/Tippi.app`. macOS keeps a single Accessibility entry per bundle ID and checks it against the signing certificate. `make build` signs with Apple Development and therefore does **not** satisfy the grant the installed Developer-ID release holds — it runs without the permission. The script produces a Developer-ID build (archive + export + re-sign, no notarization, nothing published) that uses the existing grant as is.
 
+**Which background watchers are active** (e.g. does Pause really stop snippets?): `swiftc -O scripts/eventtaps.swift -o /tmp/eventtaps && /tmp/eventtaps $(pgrep -x Tippi)` lists Tippi's event taps with their event mask. Snippets = keys + mouse clicks (`0x200040a`), a dictation hotkey with a tap trigger = keys + modifiers (`0x1400`). Measured 2026-10-19: paused → only the dictation tap remains.
+
 For voice features, build `whisper-cli` once:
 
 ```bash
