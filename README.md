@@ -38,6 +38,7 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
 | Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
 | AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 7 providers — in place, no app switch, your own keys |
+| Silence the helpers for a while (no popup, no autocomplete, no snippets) | quitting each helper app, or toggling settings one by one | **Pause** (⌃⌥⌘P or menu bar), timed or until you resume — hotkeys keep working (v2.29) |
 | Text case/formatting one-offs (bold, UPPERCASE, join lines, word count) | TextSoap, a word-count widget | **Local Quick Actions** — instant, no AI call, works offline (v2.0) |
 
 The point isn't only cost — Rocket and Espanso are free or cheap. It's that
@@ -275,6 +276,7 @@ This route always works because macOS does the binding, not Tippi.
 | ⌥⌘N | Notes window | yes |
 | ⌃⌘S | Show/hide the note list (only while Notes is open, View menu) | yes, fixed |
 | ⌥⌘2 | Text from a screen selection | no |
+| ⌃⌥⌘P | Pause / resume what Tippi does on its own (popup, autocomplete, snippets) — v2.29 | yes, fixed |
 | ⇥ / ⇧⇥ | Accept next word / whole autocomplete suggestion (only while one is visible) | with Autocomplete (Labs) |
 
 ### Local build permissions (test builds)

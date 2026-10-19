@@ -38,6 +38,7 @@ covers that whole row:
 |---|---|---|
 | Emoji without the system palette | Rocket | **⌥⌘E picker + `:name:` shortcodes** |
 | Text shortcuts while typing | Espanso · TextExpander | **Text Snippets** (imports Espanso files) |
+| Silence the helpers for a while | quitting each helper app | **Pause** (⌃⌥⌘P or menu bar), timed or until you resume |
 | Action bar at your text selection | PopClip | **Selection action bar** |
 | On-device dictation | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode** (Whisper / Parakeet) — on your Mac, no account, audio stays local; a second hot key lays out emails |
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |

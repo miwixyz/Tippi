@@ -259,6 +259,7 @@ for feature in $hotkeys; do
     notes)     needle="Notes" ;;
     screenOCR) needle="OCR" ;;
     main)      needle="rewriting" ;;   # das KI-Umschreiben, Tippis Kernfeature
+    pause)     needle="Pause" ;;       # ⌃⌥⌘P (2.29), Zeile „Silence the helpers“
     *)
       bad "unknown hotkey feature '$feature' — add a comparison row to README.md AND docs/ONE-PAGER.md, then map it in $(basename "$0")"
       continue

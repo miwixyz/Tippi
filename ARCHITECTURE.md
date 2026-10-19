@@ -71,6 +71,7 @@ Tippi/
 │   │                               #   Problem (der Monitor rechnet alle 3 s neu)
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
+│   ├── TippiPause.swift            # Pause (v2.29): Endzeitpunkt; Popup, Autocomplete, Snippets fragen ihn ab
 │   ├── NoteListEditing.swift       # Listen in Notizen: Erkennen, Fortsetzen, Umschalten, Abhaken (reine Textlogik)
 │   ├── CurrencyConversion.swift    # v2.19 — Betragserkennung, Kurse open.er-api.com (Cache, Drossel)
 │   ├── PasswordGenerator.swift     # v2.19 — 12 Zeichen, SystemRandomNumberGenerator
