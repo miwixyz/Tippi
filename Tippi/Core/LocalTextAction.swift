@@ -43,6 +43,7 @@ struct LocalTextAction: Identifiable, Equatable {
         case slugify
         case capitalizeUnderscore
         case hyphenate
+        case kebab
         case transliterateUmlauts
         case brackets
         case squareBrackets
@@ -105,6 +106,7 @@ struct LocalTextAction: Identifiable, Equatable {
             LocalTextAction(kind: .capitalizeUnderscore, title: String(localized: "local.action.capitalizeUnderscore"), label: "A_B", category: .transform),
             LocalTextAction(kind: .splitUnderscore, title: String(localized: "local.action.splitUnderscore"), label: "A b", category: .transform),
             LocalTextAction(kind: .hyphenate, title: String(localized: "local.action.hyphenate"), label: "A-b", category: .transform),
+            LocalTextAction(kind: .kebab, title: String(localized: "local.action.kebab"), label: "a-b", category: .transform),
             LocalTextAction(kind: .transliterateUmlauts, title: String(localized: "local.action.transliterateUmlauts"), label: "äöü", category: .transform),
             LocalTextAction(kind: .joinLines, title: String(localized: "local.action.joinLines"), label: "¶→␣", category: .transform),
             LocalTextAction(kind: .characterCount, title: String(localized: "local.action.characterCount"), symbol: "number", category: .info),
@@ -165,6 +167,8 @@ struct LocalTextAction: Identifiable, Equatable {
             return .plainReplacement(LocalTextTransformer.capitalizeUnderscore(text))
         case .hyphenate:
             return .plainReplacement(LocalTextTransformer.hyphenate(text))
+        case .kebab:
+            return .plainReplacement(LocalTextTransformer.kebab(text))
         case .transliterateUmlauts:
             return .plainReplacement(LocalTextTransformer.transliterateUmlauts(text))
         case .brackets:
@@ -258,6 +262,12 @@ enum LocalTextTransformer {
 
     static func hyphenate(_ text: String) -> String {
         words(in: transliterateUmlauts(text)).joined(separator: "-")
+    }
+
+    /// Klein mit Bindestrichen, wie in Web-Adressen: `Bob Trevino likes it` →
+    /// `bob-trevino-likes-it` (Michael, 2026-10-19). Gegenstück zu `slugify` (`a_b`).
+    static func kebab(_ text: String) -> String {
+        hyphenate(text).lowercased()
     }
 
     static func brackets(_ text: String) -> String {

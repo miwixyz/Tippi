@@ -87,6 +87,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// und die ist eine Dauervollmacht. Siehe `ScreenOCRSettings` und
     /// `docs/SECURE-DESIGN-screen-ocr.md`.
     let screenOCRHotkeyManager = HotkeyManager(id: 6)
+    /// ⌃⌥⌘P: Pause an/aus (TippiPause, Michael 2026-10-19). Fest, nicht einstellbar.
+    let pauseHotkeyManager = HotkeyManager(id: 8)
+    private var pauseMenuItem: NSMenuItem?
+    private var resumeMenuItem: NSMenuItem?
+    private var pauseEndTimer: Timer?
     private let screenSelectionOverlay = ScreenSelectionOverlay()
     /// Verhindert, dass ein zweiter Hotkey-Druck ein zweites Overlay öffnet.
     private var screenOCRInProgress = false
@@ -277,6 +282,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         restartNotesHotkey()
         restartScreenOCRHotkey()
         restartAutocomplete()
+        restartPauseHotkey()
+        applyPause()
         if !UserDefaults.standard.bool(forKey: "setupCompleted") {
             showWelcomeWindow()
         }
@@ -402,7 +409,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             EmojiDatabase.shared.load()
         }
 
-        if snippetsOn || inlineEmojiOn || emoticonsOn {
+        // Pause (TippiPause): Textbausteine und Emoji-Ersetzung laufen von selbst → aus.
+        if (snippetsOn || inlineEmojiOn || emoticonsOn) && !TippiPause.isActive() {
             snippetMonitor.start()
         } else {
             snippetMonitor.stop()
@@ -417,13 +425,69 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// UserDefaults-backed settings, only for `SnippetStore`'s own
     /// `ObservableObject`).
     func restartSelectionPopupEngine() {
-        let enabled = SelectionPopupSettings.isEnabled
+        let enabled = SelectionPopupSettings.isEnabled && !TippiPause.isActive()
         appDelegateLog.notice("restartSelectionPopupEngine called, isEnabled=\(enabled, privacy: .public)")
         selectionPopupMonitor.stop()
         if enabled {
             selectionPopupMonitor.start()
         }
         appDelegateLog.notice("restartSelectionPopupEngine done, monitor.isActive=\(self.selectionPopupMonitor.isActive, privacy: .public), lastError=\(self.selectionPopupMonitor.lastError ?? "nil", privacy: .public)")
+    }
+
+    // MARK: - Pause (TippiPause, Michael 2026-10-19)
+
+    /// Pause anwenden: die drei automatischen Funktionen neu starten (sie fragen `TippiPause`),
+    /// Menü und Statuspunkt nachziehen, Ende planen. Kürzel bleiben unberührt.
+    func applyPause() {
+        applyKeystrokeMonitorState()
+        restartSelectionPopupEngine()
+        restartAutocomplete()
+        let active = TippiPause.isActive()
+        let until = TippiPause.pausedUntil()
+        pauseMenuItem?.isHidden = active
+        resumeMenuItem?.isHidden = !active
+        if active, let until, until != .distantFuture {
+            let time = until.formatted(date: Calendar.current.isDateInToday(until) ? .omitted : .abbreviated, time: .shortened)
+            resumeMenuItem?.title = String(format: String(localized: "menu.pause.resumeUntil"), time)
+        } else {
+            resumeMenuItem?.title = String(localized: "menu.pause.resume")
+        }
+        pauseEndTimer?.invalidate()
+        pauseEndTimer = nil
+        if active, let until, until != .distantFuture {
+            let timer = Timer(fire: until.addingTimeInterval(1), interval: 0, repeats: false) { [weak self] _ in
+                // concurrency-lint: on-main Timer is added to RunLoop.main directly below
+                MainActor.assumeIsolated { self?.applyPause() }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            pauseEndTimer = timer
+        }
+        updateStatusBadge(TippiStatusMonitor.shared.status)
+        appDelegateLog.notice("pause applied, active=\(active, privacy: .public)")
+    }
+
+    func togglePause() {
+        if TippiPause.isActive() { TippiPause.resume() } else { TippiPause.pause(until: .distantFuture) }
+        applyPause()
+    }
+
+    func restartPauseHotkey() {
+        pauseHotkeyManager.stop()
+        pauseHotkeyManager.update(trigger: .combo(keyCode: 35, // P
+                                                  carbonModifierFlags: UInt32(controlKey | optionKey | cmdKey)))
+        pauseHotkeyManager.start { [weak self] in self?.togglePause() }
+    }
+
+    @objc private func pauseFromMenu(_ sender: NSMenuItem) {
+        let durations = TippiPause.Duration.allCases
+        guard durations.indices.contains(sender.tag) else { return }
+        TippiPause.pause(until: TippiPause.end(for: durations[sender.tag], now: Date()))
+        applyPause()
+    }
+
+    @objc private func resumeFromMenu() {
+        TippiPause.resume()
+        applyPause()
     }
 
     /// Labs-Autovervollständigung: Einstellung anwenden (Tap an/aus) und das
@@ -705,6 +769,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(autocompleteItem)
         autocompleteMenuItem = autocompleteItem
 
+        // Pause (TippiPause): Untermenü mit Dauer; während der Pause stattdessen „Fortsetzen“.
+        let pauseSub = NSMenu()
+        for (index, key) in ["menu.pause.15min", "menu.pause.1h", "menu.pause.tomorrow", "menu.pause.untilResumed"].enumerated() {
+            let item = NSMenuItem(title: String(localized: String.LocalizationValue(key)), action: #selector(pauseFromMenu(_:)), keyEquivalent: "")
+            item.tag = index
+            item.target = self
+            pauseSub.addItem(item)
+        }
+        let pauseItem = NSMenuItem(title: String(localized: "menu.pause"), action: nil, keyEquivalent: "")
+        pauseItem.submenu = pauseSub
+        pauseItem.image = menuIcon("pause.circle")
+        menu.addItem(pauseItem)
+        pauseMenuItem = pauseItem
+        let resumeItem = NSMenuItem(title: String(localized: "menu.pause.resume"), action: #selector(resumeFromMenu), keyEquivalent: "")
+        resumeItem.image = menuIcon("play.circle")
+        resumeItem.target = self
+        resumeItem.isHidden = true
+        menu.addItem(resumeItem)
+        resumeMenuItem = resumeItem
+
         menu.addItem(.separator())
 
         let updateItem = NSMenuItem(
@@ -820,7 +904,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .error:   color = .systemRed; symbol = "exclamationmark.triangle.fill"
         }
 
-        statusRowView?.configure(symbol: symbol, color: color, text: status.label)
+        // Pause (TippiPause): grauer Punkt, Zeile „Pausiert“ — überdeckt „Bereit“, nicht Fehler.
+        let paused = TippiPause.isActive() && status.problem == nil
+        let dotColor = paused ? NSColor.systemGray : color
+        statusRowView?.configure(symbol: paused ? "pause.circle.fill" : symbol, color: dotColor,
+                                 text: paused ? String(localized: "status.paused") : status.label)
 
         // The menu is the durable report: it is there whenever the user looks,
         // with or without notification permission.
@@ -845,7 +933,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Instant, un-animated color change.
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        dot.backgroundColor = color.cgColor
+        dot.backgroundColor = dotColor.cgColor
         CATransaction.commit()
     }
 

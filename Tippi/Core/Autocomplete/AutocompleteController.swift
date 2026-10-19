@@ -76,7 +76,8 @@ final class AutocompleteController: ObservableObject {
     func apply() {
         isEnabled = AutocompleteSettings.isEnabled
         reloadKeyBindings()
-        if isEnabled { start() } else { stop() }
+        // Pause (TippiPause): Einstellung bleibt an (Häkchen im Menü), der Tap ist aus.
+        if isEnabled && !TippiPause.isActive() { start() } else { stop() }
     }
 
     /// Übernimmt geänderte Übernahme-Tasten sofort in den Tap.

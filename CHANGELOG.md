@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.29.0] — 2026-10-19
+
+Tippi lässt sich pausieren, und das Popup kann Text in Adress-Schreibweise bringen.
+
+### Neu
+- **Tippi pausieren.** Im Tippi-Menü „Tippi pausieren“: 15 Minuten, 1 Stunde, bis morgen früh (6 Uhr) oder bis du fortsetzt — oder mit ⌃⌥⌘P an und aus. Pausiert wird, was Tippi von selbst tut: Popup beim Markieren, Autovervollständigung, Textbausteine und Emoji-Ersetzung. Deine Tastenkürzel (Diktat, Übersetzen, Notizen, Bildschirmtext) funktionieren weiter. Während der Pause ist der Punkt am Tippi-Symbol grau, im Menü steht „Tippi fortsetzen (pausiert bis …)“. Eine Pause übersteht einen Neustart von Tippi und endet von selbst.
+- **Schnellaktion „Klein + Bindestriche“ (a-b)** im Popup: aus „Bob Trevino likes it“ wird „bob-trevino-likes-it“, wie in Web-Adressen. Umlaute werden umschrieben („Über“ → „ueber“), Satzzeichen fallen weg. Gegenstück zu „Klein + Unterstriche“ (a_b); „Bindestrich“ (A-b) behält die Großbuchstaben.
+
+### Intern
+- `TippiPause` (Endzeitpunkt in `tippi.pause.until`, „bis ich fortsetze“ = distantFuture) + 5 Tests; die drei automatischen Funktionen fragen sie in ihren Startwegen ab. Kürzel `HotkeyManager(id: 8)`, ⌃⌥⌘P fest. Sichttest 19.10. (Developer-ID-Testbuild): Kürzel schaltet an/aus, Popup- und Textbaustein-Beobachter aus (Event-Tap-Zählung, `scripts/eventtaps.swift`), Autovervollständigung „off“, befristete Pause endet 1 s nach Ablauf von selbst.
+- `LocalTextTransformer.kebab` + 2 Tests; Breitengrenze im Popup-Test 600 → 640 pt (halbe 13-Zoll-Breite), die Leiste ist jetzt 602 pt breit.
+
 ## [2.28.1] — 2026-10-15
 
 Verfeinern bleibt in der Sprache deines Textes.

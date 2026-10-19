@@ -143,6 +143,17 @@ final class LocalTextTransformerTests: XCTestCase {
         XCTAssertEqual(LocalTextTransformer.slugify("Über uns"), "ueber_uns")
     }
 
+    // MARK: - kebab (Michael, 2026-10-19)
+
+    func testKebabMichaelsExample() {
+        XCTAssertEqual(LocalTextTransformer.kebab("Bob Trevino likes it"), "bob-trevino-likes-it")
+    }
+
+    func testKebabTransliteratesUmlautsAndDropsPunctuation() {
+        XCTAssertEqual(LocalTextTransformer.kebab("Über Äpfel, Größe!"), "ueber-aepfel-groesse")
+        XCTAssertEqual(LocalTextTransformer.kebab("CINEWEB  Magazin"), "cineweb-magazin")
+    }
+
     // MARK: - capitalizeUnderscore (Michael, 2026-10-14)
 
     func testCapitalizeUnderscoreJoinsCapitalizedWords() {
