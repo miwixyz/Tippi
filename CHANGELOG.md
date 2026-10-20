@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Neu
+- **Diktat in der Notch mit Gnotchi.** Läuft [Gnotchi](https://github.com/miwixyz/Gnotchi) ab Version 0.2.0 und ist dort „Tippi-Aufnahme anzeigen“ an, zeigt die Notch dein Diktat: rotes Mikrofon mit dem Pegel deiner Stimme, danach „wandelt um“. Tippis eigene Aufnahme-Pille bleibt dann weg. Mit Live-Vorschau des Texts zeigt Tippi weiter seine Pille, denn Gnotchi zeigt nie Text. Ohne Gnotchi ändert sich nichts.
+
+### Intern
+- `GnotchiBridge`/`DictationIndicator`/`GnotchiBroadcaster`: `DistributedNotificationCenter` `com.tippi.app.aufnahme`, `["v": 1, "state": recording|transcribing|idle, "level": 0…1]`, 10 Hz beim Aufnehmen, 1 Hz beim Umwandeln, `idle` bei jedem Weg zurück (über `state.didSet`). Übergabe nur, wenn ein laufendes `dev.mwlr.gnotchi` mit Team LTKJ6Z2VYB signiert ist (SecCode über die PID), Version ≥ 0.2.0 und Gnotchis Schalter `tippiRecording` nicht aus ist. Nie Text in der Meldung (jeder lokale Prozess kann sie lesen). 6 Tests; ein Test fand, dass Swift im `Any`-Kontext `0` als Ganzzahl ablegte. Gnotchi-Seite: Gnotchi SECURE-DESIGN G17.
+
 ## [2.29.0] — 2026-10-19
 
 Tippi lässt sich pausieren, und das Popup kann Text in Adress-Schreibweise bringen.

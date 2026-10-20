@@ -283,9 +283,13 @@ final class DictationController: ObservableObject {
         case transcribing
     }
 
-    @Published private(set) var state: State = .idle
+    /// Every way back to idle (success, error, cancel, hold released during the mic prompt) also ends
+    /// Gnotchi's display – otherwise Gnotchi would wait for its 3 s timeout.
+    @Published private(set) var state: State = .idle { didSet { if state == .idle { indicator.idle() } } }
 
     private let recorder: AudioRecorder
+    /// Tippi's pill or, while Gnotchi shows dictation in the notch, Gnotchi (GnotchiBridge).
+    private let indicator = DictationIndicator()
 
     /// Inject the shared `AudioRecorder` so dictation and the popup mic never
     /// run two recorders against the same audio hardware/temp file.
@@ -401,13 +405,8 @@ final class DictationController: ObservableObject {
                 preview.start(recorder: recorder)
                 livePreview = preview
             }
-            RecordingIndicatorWindowController.shared.show(
-                mode: .recording,
-                recorder: recorder,
-                preview: livePreview,
-                aiEnabled: DictationSettings.postProcessEnabled,
-                isMail: source == .mail
-            )
+            indicator.recording(recorder: recorder, preview: livePreview,
+                                aiEnabled: DictationSettings.postProcessEnabled, isMail: source == .mail)
             NSLog("Tippi: dictation recording started (\(self.source))")
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.
@@ -437,12 +436,8 @@ final class DictationController: ObservableObject {
         livePreview = nil
         _ = recorder.stop(ifStartedBy: .dictation)   // the WAV is `wavURL` either way
         state = .transcribing
-        RecordingIndicatorWindowController.shared.show(
-            mode: .transcribing,
-            recorder: recorder,
-            aiEnabled: DictationSettings.postProcessEnabled,
-            isMail: source == .mail
-        )
+        indicator.transcribing(recorder: recorder, aiEnabled: DictationSettings.postProcessEnabled,
+                               isMail: source == .mail)
         transcriptionTask = Task { [weak self] in
             await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp, notesTextView: notesTextView)
         }
@@ -597,13 +592,8 @@ final class DictationController: ObservableObject {
             ? providerOverride
             : LLMRouter.shared.effectivePreferredProviderID()
         let resolvedProviderName = LLMRouter.providerDisplayName(forID: resolvedProviderID)
-        RecordingIndicatorWindowController.shared.show(
-            mode: .transcribing,
-            recorder: recorder,
-            aiEnabled: true,
-            providerName: resolvedProviderName,
-            isMail: source == .mail
-        )
+        indicator.transcribing(recorder: recorder, aiEnabled: true, providerName: resolvedProviderName,
+                               isMail: source == .mail)
 
         do {
             // Hard 30s cap: dictation must never hang on the polish step.
