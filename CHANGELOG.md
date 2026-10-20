@@ -3,10 +3,12 @@
 ## [Unreleased]
 
 ### Neu
-- **Diktat in der Notch mit Gnotchi.** Läuft [Gnotchi](https://github.com/miwixyz/Gnotchi) ab Version 0.2.0 und ist dort „Tippi-Aufnahme anzeigen“ an, zeigt die Notch dein Diktat: rotes Mikrofon mit dem Pegel deiner Stimme, danach „wandelt um“. Tippis eigene Aufnahme-Pille bleibt dann weg. Mit Live-Vorschau des Texts zeigt Tippi weiter seine Pille, denn Gnotchi zeigt nie Text. Ohne Gnotchi ändert sich nichts.
+- **Diktat in der Notch mit Gnotchi.** Läuft [Gnotchi](https://github.com/miwixyz/Gnotchi) ab Version 0.2.0 und ist dort „Tippi-Aufnahme anzeigen“ an, zeigt die Notch dein Diktat: rotes Mikrofon mit dem Pegel deiner Stimme, danach „wandelt um“. Tippis eigene Aufnahme-Pille bleibt dann weg. Ohne Gnotchi ändert sich nichts.
+- **Live-Vorschau in der Notch (ab Gnotchi 0.3.0).** Ist die Live-Vorschau an, klappt die Insel beim Diktat auf und zeigt die letzten zwei Zeilen deines Texts. Der Text geht über eine eigene, geschützte Verbindung, die nur mit dem echten, signierten Gnotchi zustande kommt. Steht sie nicht, etwa mit Gnotchi 0.2.0, zeigt Tippi wie bisher seine eigene Pille mit dem Text.
 
 ### Intern
 - `GnotchiBridge`/`DictationIndicator`/`GnotchiBroadcaster`: `DistributedNotificationCenter` `com.tippi.app.aufnahme`, `["v": 1, "state": recording|transcribing|idle, "level": 0…1]`, 10 Hz beim Aufnehmen, 1 Hz beim Umwandeln, `idle` bei jedem Weg zurück (über `state.didSet`). Übergabe nur, wenn ein laufendes `dev.mwlr.gnotchi` mit Team LTKJ6Z2VYB signiert ist (SecCode über die PID), Version ≥ 0.2.0 und Gnotchis Schalter `tippiRecording` nicht aus ist. Nie Text in der Meldung (jeder lokale Prozess kann sie lesen). 6 Tests; ein Test fand, dass Swift im `Any`-Kontext `0` als Ganzzahl ablegte. Gnotchi-Seite: Gnotchi SECURE-DESIGN G17.
+- `GnotchiLiveText`/`GnotchiLiveLink`: Live-Vorschau-Text über den Unix-Socket `~/Library/Application Support/Gnotchi/live.sock` (Gnotchi G21), nie über distnoted. Vor dem ersten Byte: Audit-Token des lauschenden Prozesses (`LOCAL_PEERTOKEN`) gegen eine **Developer-ID**-Anforderung für `dev.mwlr.gnotchi`, dann Gnotchis `ok` binnen 0,2 s. Rahmen 4 Byte Länge + JSON `{"v":1,"text":…}`, nur die letzten 300 Zeichen. Schreibpuffer voll → Stand verworfen, Teilrahmen/Fehler → Verbindung zu. Nie Text ins Protokoll. `useGnotchi` ersetzt durch `indicatorMode` (Pille / Gnotchi / Gnotchi mit Text). 8 Tests mit Test-Server am Socket; Gegenprobe ohne Server-Prüfung → `testOpenRefusesServerThatIsNotGnotchi` rot.
 
 ## [2.29.0] — 2026-10-19
 

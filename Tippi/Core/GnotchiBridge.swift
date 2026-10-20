@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import Security
 
 /// Gnotchi – the family's notch app (github.com/miwixyz/Gnotchi) – shows Tippi's dictation in the notch
@@ -11,7 +12,8 @@ import Security
 ///
 /// Tippi hides its pill only if a running `dev.mwlr.gnotchi` is signed by the same team (code signature
 /// checked via PID, not trusted by bundle id), is at least 0.2.0, and its switch `tippiRecording` is not off.
-/// With the live transcription preview on, Tippi keeps its own pill: Gnotchi never shows text.
+/// With the live transcription preview on, the text goes to Gnotchi 0.3.0+ over a separate, verified local
+/// socket (`GnotchiLiveText`); if that link is not up, Tippi keeps its own pill.
 enum GnotchiBridge {
 
     enum State: String { case recording, transcribing, idle }
@@ -55,10 +57,6 @@ enum GnotchiBridge {
         (value as? Bool) ?? true
     }
 
-    static func useGnotchi(livePreview: Bool, gnotchiReady: Bool) -> Bool {
-        !livePreview && gnotchiReady
-    }
-
     // MARK: System
 
     /// Checked once at the start of each dictation (a few ms). If Gnotchi quits mid-dictation, that
@@ -89,13 +87,24 @@ enum GnotchiBridge {
 final class DictationIndicator {
     private var notchActive = false
     private let gnotchi = GnotchiBroadcaster()
+    /// Live-preview text to Gnotchi (0.3.0), only while a verified link is up.
+    private var liveLink: GnotchiLiveLink?
+    private var textSubscription: AnyCancellable?
 
     func recording(recorder: AudioRecorder, preview: LiveTranscriptionPreview?, aiEnabled: Bool, isMail: Bool) {
-        notchActive = GnotchiBridge.useGnotchi(livePreview: preview != nil,
-                                               gnotchiReady: GnotchiBridge.gnotchiShowsDictation())
+        closeLiveLink()
+        let ready = GnotchiBridge.gnotchiShowsDictation()
+        if ready, preview != nil { liveLink = GnotchiLiveLink.open() }
+        let mode = GnotchiLiveText.indicatorMode(livePreview: preview != nil, gnotchiReady: ready,
+                                                 liveLinkReady: liveLink != nil)
+        notchActive = mode != .tippiPill
         if notchActive {
             gnotchi.recording(recorder: recorder)
+            if let preview, let link = liveLink {
+                textSubscription = preview.$text.removeDuplicates().sink { [weak link] text in link?.send(text) }
+            }
         } else {
+            closeLiveLink()
             RecordingIndicatorWindowController.shared.show(mode: .recording, recorder: recorder, preview: preview,
                                                            aiEnabled: aiEnabled, isMail: isMail)
         }
@@ -112,9 +121,16 @@ final class DictationIndicator {
     }
 
     func idle() {
+        closeLiveLink()
         guard notchActive else { return }
         notchActive = false
         gnotchi.idle()
+    }
+
+    private func closeLiveLink() {
+        textSubscription = nil
+        liveLink?.close()
+        liveLink = nil
     }
 }
 

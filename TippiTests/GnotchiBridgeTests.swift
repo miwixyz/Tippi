@@ -43,10 +43,15 @@ final class GnotchiBridgeTests: XCTestCase {
         XCTAssertTrue(GnotchiBridge.settingAllows("unsinn"), "fremder Typ → Werkseinstellung")
     }
 
-    /// Mit Live-Vorschau bleibt Tippis Pille: Gnotchi zeigt nie Text.
-    func testLivePreviewKeepsOwnPill() {
-        XCTAssertTrue(GnotchiBridge.useGnotchi(livePreview: false, gnotchiReady: true))
-        XCTAssertFalse(GnotchiBridge.useGnotchi(livePreview: true, gnotchiReady: true))
-        XCTAssertFalse(GnotchiBridge.useGnotchi(livePreview: false, gnotchiReady: false))
+    /// Mit Live-Vorschau nur über die geprüfte Text-Verbindung (Gnotchi 0.3.0), sonst Tippis Pille.
+    func testIndicatorMode() {
+        typealias Live = GnotchiLiveText
+        XCTAssertEqual(Live.indicatorMode(livePreview: false, gnotchiReady: true, liveLinkReady: false), .gnotchi)
+        XCTAssertEqual(Live.indicatorMode(livePreview: true, gnotchiReady: true, liveLinkReady: true), .gnotchiLive)
+        XCTAssertEqual(Live.indicatorMode(livePreview: true, gnotchiReady: true, liveLinkReady: false), .tippiPill,
+                       "Gnotchi 0.2.0 oder Verbindung abgelehnt: eigene Pille")
+        XCTAssertEqual(Live.indicatorMode(livePreview: false, gnotchiReady: false, liveLinkReady: false), .tippiPill)
+        XCTAssertEqual(Live.indicatorMode(livePreview: true, gnotchiReady: false, liveLinkReady: true), .tippiPill,
+                       "Schalter in Gnotchi aus schlägt alles")
     }
 }
