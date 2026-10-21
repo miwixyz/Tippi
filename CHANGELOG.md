@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [2.30.0] — 2026-10-21
+
+Dein Diktat kann jetzt in der Notch erscheinen, mit Gnotchi.
 
 ### Neu
 - **Diktat in der Notch mit Gnotchi.** Läuft [Gnotchi](https://github.com/miwixyz/Gnotchi) ab Version 0.2.0 und ist dort „Tippi-Aufnahme anzeigen“ an, zeigt die Notch dein Diktat: rotes Mikrofon mit dem Pegel deiner Stimme, danach „wandelt um“. Tippis eigene Aufnahme-Pille bleibt dann weg. Ohne Gnotchi ändert sich nichts.
