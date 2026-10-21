@@ -11,6 +11,7 @@ Dein Diktat kann jetzt in der Notch erscheinen, mit Gnotchi.
 ### Intern
 - `GnotchiBridge`/`DictationIndicator`/`GnotchiBroadcaster`: `DistributedNotificationCenter` `com.tippi.app.aufnahme`, `["v": 1, "state": recording|transcribing|idle, "level": 0…1]`, 10 Hz beim Aufnehmen, 1 Hz beim Umwandeln, `idle` bei jedem Weg zurück (über `state.didSet`). Übergabe nur, wenn ein laufendes `dev.mwlr.gnotchi` mit Team LTKJ6Z2VYB signiert ist (SecCode über die PID), Version ≥ 0.2.0 und Gnotchis Schalter `tippiRecording` nicht aus ist. Nie Text in der Meldung (jeder lokale Prozess kann sie lesen). 6 Tests; ein Test fand, dass Swift im `Any`-Kontext `0` als Ganzzahl ablegte. Gnotchi-Seite: Gnotchi SECURE-DESIGN G17.
 - `GnotchiLiveText`/`GnotchiLiveLink`: Live-Vorschau-Text über den Unix-Socket `~/Library/Application Support/Gnotchi/live.sock` (Gnotchi G21), nie über distnoted. Vor dem ersten Byte: Audit-Token des lauschenden Prozesses (`LOCAL_PEERTOKEN`) gegen eine **Developer-ID**-Anforderung für `dev.mwlr.gnotchi`, dann Gnotchis `ok` binnen 0,2 s. Rahmen 4 Byte Länge + JSON `{"v":1,"text":…}`, nur die letzten 300 Zeichen. Schreibpuffer voll → Stand verworfen, Teilrahmen/Fehler → Verbindung zu. Nie Text ins Protokoll. `useGnotchi` ersetzt durch `indicatorMode` (Pille / Gnotchi / Gnotchi mit Text). 8 Tests mit Test-Server am Socket; Gegenprobe ohne Server-Prüfung → `testOpenRefusesServerThatIsNotGnotchi` rot.
+- 751 Tests. `rafter run` (Scan 1c6a5bd3): kein Fund im App-Code.
 
 ## [2.29.0] — 2026-10-19
 
