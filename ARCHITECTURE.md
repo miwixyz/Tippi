@@ -72,6 +72,8 @@ Tippi/
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
 │   ├── TippiPause.swift            # Pause (v2.29): Endzeitpunkt; Popup, Autocomplete, Snippets fragen ihn ab
+│   ├── GnotchiBridge.swift         # 2.30 — Aufnahmezustand an Gnotchi (distnoted, nie Text), Signaturprüfung über PID
+│   ├── GnotchiLiveText.swift       # 2.30 — Live-Text an Gnotchi über Unix-Socket, Audit-Token-Prüfung vor dem ersten Byte
 │   ├── NoteListEditing.swift       # Listen in Notizen: Erkennen, Fortsetzen, Umschalten, Abhaken (reine Textlogik)
 │   ├── CurrencyConversion.swift    # v2.19 — Betragserkennung, Kurse open.er-api.com (Cache, Drossel)
 │   ├── PasswordGenerator.swift     # v2.19 — 12 Zeichen, SystemRandomNumberGenerator
