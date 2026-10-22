@@ -18,6 +18,19 @@ enum NotesPreferences {
         static let fontName = "notes.editor.fontName.v1"
         static let fontSize = "notes.editor.fontSize.v1"
         static let favoriteIDs = "notes.favoriteIDs.v1"
+        static let sortOrder = "notes.list.sortOrder.v1"
+        static let sortReversed = "notes.list.sortReversed.v1"
+    }
+
+    /// Sortierung der Notizliste (Geändert / Erstellt / Name). Unbekannter Wert → Geändert.
+    static var sortOrder: NoteSortOrder {
+        get { store.string(forKey: Keys.sortOrder).flatMap(NoteSortOrder.init(rawValue:)) ?? .modified }
+        set { store.set(newValue.rawValue, forKey: Keys.sortOrder) }
+    }
+
+    static var sortReversed: Bool {
+        get { store.bool(forKey: Keys.sortReversed) }
+        set { store.set(newValue, forKey: Keys.sortReversed) }
     }
 
     /// `nil` when no frame has been saved yet (first launch on this

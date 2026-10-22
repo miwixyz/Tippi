@@ -9,13 +9,20 @@ struct NotesListView: View {
     // Mirrors `NotesPreferences.favoriteIDs` locally so toggling a star
     // re-renders immediately — the preference itself isn't `@Published`.
     @State private var favoriteIDs: Set<UUID> = NotesPreferences.favoriteIDs
+    // Gleiches Muster wie `favoriteIDs`: lokale Spiegel, damit ein Wechsel sofort neu sortiert.
+    @State private var sortOrder: NoteSortOrder = NotesPreferences.sortOrder
+    @State private var sortReversed: Bool = NotesPreferences.sortReversed
+
+    private var sortedNotes: [Note] {
+        NoteSortOrder.sorted(store.notes, by: sortOrder, reversed: sortReversed)
+    }
 
     private var favoriteNotes: [Note] {
-        store.notes.filter { favoriteIDs.contains($0.id) }
+        sortedNotes.filter { favoriteIDs.contains($0.id) }
     }
 
     private var otherNotes: [Note] {
-        store.notes.filter { !favoriteIDs.contains($0.id) }
+        sortedNotes.filter { !favoriteIDs.contains($0.id) }
     }
 
     var body: some View {
@@ -23,7 +30,7 @@ struct NotesListView: View {
             // No section headers at all while nothing is starred yet — the
             // common case on first use should look exactly like before.
             if favoriteNotes.isEmpty {
-                ForEach(store.notes) { row(for: $0) }
+                ForEach(sortedNotes) { row(for: $0) }
             } else {
                 Section(String(localized: "notes.section.favorites")) {
                     ForEach(favoriteNotes) { row(for: $0) }
@@ -40,8 +47,26 @@ struct NotesListView: View {
         // content itself would.
         .onAppear {
             favoriteIDs = NotesPreferences.favoriteIDs
+            sortOrder = NotesPreferences.sortOrder
+            sortReversed = NotesPreferences.sortReversed
         }
+        .onChange(of: sortOrder) { _, value in NotesPreferences.sortOrder = value }
+        .onChange(of: sortReversed) { _, value in NotesPreferences.sortReversed = value }
         .toolbar {
+            ToolbarItem {
+                Menu {
+                    Picker(String(localized: "notes.sort.by"), selection: $sortOrder) {
+                        ForEach(NoteSortOrder.allCases) { order in
+                            Text(order.label).tag(order)
+                        }
+                    }
+                    .pickerStyle(.inline)
+                    Toggle(String(localized: "notes.sort.reversed"), isOn: $sortReversed)
+                } label: {
+                    Label(String(localized: "notes.sort"), systemImage: "arrow.up.arrow.down")
+                }
+                .help(String(localized: "notes.sort.help"))
+            }
             ToolbarItem {
                 Button {
                     let note = store.create()
@@ -82,7 +107,14 @@ struct NotesListView: View {
                 Text(note.title)
                     .font(FamilyTheme.font(.callout))
                     .lineLimit(1)
-                Text(note.modifiedAt, format: .relative(presentation: .numeric))
+                Group {
+                    if sortOrder == .created {
+                        Text(String(format: String(localized: "notes.sort.createdDate"),
+                                    note.createdAt.formatted(.relative(presentation: .numeric))))
+                    } else {
+                        Text(note.modifiedAt, format: .relative(presentation: .numeric))
+                    }
+                }
                     .font(FamilyTheme.font(.caption2))
                     .foregroundStyle(.secondary)
             }

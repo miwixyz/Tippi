@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Neu
+- **Notizen sortieren.** Das Pfeilsymbol über der Notizliste sortiert nach Geändert, Erstellt oder Name (A–Z), auf Wunsch umgekehrt. Die Wahl gilt auf allen deinen Macs. Bei „Erstellt“ zeigt jede Zeile das Erstellungsdatum. TippAI sortiert gleich.
+
+### Behoben
+- **Erstellungsdatum ging beim Speichern verloren.** macOS setzte es bei jedem Speichern neu (gemessen: bei allen 29 Notizen gleich dem Änderungsdatum). Tippi und TippAI merken es sich jetzt in der gemeinsamen versteckten Datei `.notes-created.json` im Notizordner. Für ältere Notizen ist das echte Datum nicht mehr bekannt; sie bekommen einmalig ihr letztes Änderungsdatum.
+
+### Intern
+- `NoteCreationIndex` (gleiche Datei, gleiches Format und gleiche Regeln wie TippAI): `{"version":1,"created":{UUID: Unix-Sekunden}}`, höchstens 1 MiB und 20.000 Einträge, nur gültige UUIDs und Daten zwischen 2000 und morgen; kaputte Datei = leer, neuere Version wird nie überschrieben. Jede Änderung ist ein koordiniertes Lesen-Zusammenführen-Schreiben (`NSFileCoordinator` `.forMerging`), je UUID gewinnt das früheste Datum. Löschen entfernt den Eintrag. Externe Änderungen behalten das bekannte Erstellungsdatum.
+- `NoteSortOrder` + `NotesPreferences.sortOrder/sortReversed` (`NSUbiquitousKeyValueStore`). A–Z vergleicht ohne führende Markdown-Zeichen, damit die Reihenfolge der von TippAI entspricht.
+
 ## [2.30.0] — 2026-10-21
 
 Dein Diktat kann jetzt in der Notch erscheinen, mit Gnotchi.

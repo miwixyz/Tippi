@@ -100,7 +100,8 @@ final class NotesStore: ObservableObject {
             if usingiCloud {
                 Self.migrateLocalNotesIfNeeded(into: directory)
             }
-            let loaded = Self.loadAllNotes(from: directory)
+            // Erstellungsdatum aus dem mit TippAI geteilten Index (NoteCreationIndex).
+            let loaded = NoteCreationIndex.applyingIndex(to: Self.loadAllNotes(from: directory), in: directory)
             await MainActor.run {
                 guard self.refreshRevision == request else { return }
                 let changed = Set(self.noteMutationRevisions.compactMap { id, revision in
@@ -133,6 +134,7 @@ final class NotesStore: ObservableObject {
         notes.insert(note, at: 0)
         markMutation(note.id)
         persist(note)
+        updateCreationIndex(adding: [note.id: note.createdAt])
         return note
     }
 
@@ -169,6 +171,7 @@ final class NotesStore: ObservableObject {
             await previous?.value
             do {
                 try Self.deleteNoteFile(id: note.id, in: directory)
+                try? NoteCreationIndex.update(in: directory, removing: [note.id])
             } catch {
                 notesLog.error("delete failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
                 guard let self else { return }
@@ -208,7 +211,7 @@ final class NotesStore: ObservableObject {
     /// - a file that no longer parses as a note is skipped rather than dropping
     ///   the in-memory note
     func applyExternalChanges(at urls: [URL]) {
-        let incoming = urls.compactMap { Self.readNoteFile(at: $0) }
+        let incoming = NoteCreationIndex.keepingCreation(of: notes, for: urls.compactMap { Self.readNoteFile(at: $0) })
         guard !incoming.isEmpty else { return }
         let result = Self.merge(incoming, into: notes, skipping: noteBeingEdited)
         notes = result.notes
@@ -293,11 +296,6 @@ final class NotesStore: ObservableObject {
     /// cost of nothing measurable — these are single small text files, and the
     /// work still runs off the main actor.
     private var pendingWrite: Task<Void, Never>?
-
-    /// Allows isolated directory tests to observe the whole save/delete queue.
-    func waitForPendingOperations() async {
-        await pendingWrite?.value
-    }
 
     /// Called by the editor on every change until the debounce saves it.
     func noteUnsavedEdit(id: UUID, content: String) {
@@ -687,5 +685,29 @@ extension NotesStore {
     ) -> [Note] {
         guard oldDirectory.standardizedFileURL != newDirectory.standardizedFileURL else { return current }
         return current.filter { mutatedIDs.contains($0.id) }
+    }
+}
+
+// Eigene Erweiterung, damit der Klassenrumpf unter der Lint-Grenze bleibt; im selben File,
+// weil sie die private Schreibwarteschlange braucht.
+extension NotesStore {
+    /// Allows isolated directory tests to observe the whole save/delete queue.
+    func waitForPendingOperations() async {
+        await pendingWrite?.value
+    }
+
+    /// Erstellungsdatum festhalten bzw. entfernen, hinter allen laufenden Schreibvorgängen.
+    /// Scheitert es, trägt der nächste Ladevorgang das Datei-Datum nach — kein Hinweis nötig.
+    fileprivate func updateCreationIndex(adding: [UUID: Date] = [:], removing: Set<UUID> = []) {
+        let directory = currentDirectory
+        let previous = pendingWrite
+        pendingWrite = Task.detached(priority: .utility) {
+            await previous?.value
+            do {
+                try NoteCreationIndex.update(in: directory, adding: adding, removing: removing)
+            } catch {
+                notesLog.error("creation index update failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 }
