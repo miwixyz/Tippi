@@ -118,8 +118,8 @@ Tippi/
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync
 │       ├── Note.swift                      # Model, nicht Codable (1 .txt-Datei/Notiz)
 │       ├── NotesStore.swift                # iCloud-Container + lokaler Fallback, NSFileCoordinator
-│       ├── NoteCreationIndex.swift         # v2.31 — Erstellungsdatum je Notiz (.notes-created.json, mit TippAI geteilt) + NoteSortOrder
 │       │                                   #   `merge` ist rein + getestet: aktualisiert, loescht NIE
+│       ├── NoteCreationIndex.swift         # v2.31 — Erstellungsdatum je Notiz (.notes-created.json, mit TippAI geteilt) + NoteSortOrder
 │       ├── NotesLiveSync.swift             # v2.11.6 — NSMetadataQuery auf den Notes-Ordner.
 │       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
