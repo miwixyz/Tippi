@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unveröffentlicht]
+## [2.31.0] — 2026-10-22
+
+Deine Notizen lassen sich sortieren, und das Erstellungsdatum bleibt erhalten.
 
 ### Neu
 - **Notizen sortieren.** Das Pfeilsymbol über der Notizliste sortiert nach Geändert, Erstellt oder Name (A–Z), auf Wunsch umgekehrt. Die Wahl gilt auf allen deinen Macs. Bei „Erstellt“ zeigt jede Zeile das Erstellungsdatum. TippAI sortiert gleich.
@@ -11,6 +13,7 @@
 ### Intern
 - `NoteCreationIndex` (gleiche Datei, gleiches Format und gleiche Regeln wie TippAI): `{"version":1,"created":{UUID: Unix-Sekunden}}`, höchstens 1 MiB und 20.000 Einträge, nur gültige UUIDs und Daten zwischen 2000 und morgen; kaputte Datei = leer, neuere Version wird nie überschrieben. Jede Änderung ist ein koordiniertes Lesen-Zusammenführen-Schreiben (`NSFileCoordinator` `.forMerging`), je UUID gewinnt das früheste Datum. Löschen entfernt den Eintrag. Externe Änderungen behalten das bekannte Erstellungsdatum.
 - `NoteSortOrder` + `NotesPreferences.sortOrder/sortReversed` (`NSUbiquitousKeyValueStore`). A–Z vergleicht ohne führende Markdown-Zeichen, damit die Reihenfolge der von TippAI entspricht.
+- 761 Tests (10 neu).
 
 ## [2.30.0] — 2026-10-21
 

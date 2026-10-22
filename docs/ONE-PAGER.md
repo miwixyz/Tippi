@@ -58,6 +58,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Sort notes (v2.31)** — sort the note list by modified, created or name, optionally reversed. macOS reset the creation date on every save, so Tippi now keeps it in a hidden file it shares with TippAI.
 - **Dictation in the notch with Gnotchi (v2.30)** — with the free notch app [Gnotchi](https://github.com/miwixyz/Gnotchi) running, the notch shows recording, voice level and “transcribing”, and with live text the last two lines; Tippi hides its own pill. Text only travels over a local socket to the verified, Developer-ID-signed Gnotchi.
 - **Pause Tippi, url-style slugs (v2.29)** — pause what Tippi does on its own (selection popup, autocomplete, snippets) from the menu bar for 15 minutes, an hour, until tomorrow morning or until you resume, or toggle with ⌃⌥⌘P; hotkeys keep working. New quick action a-b turns `Bob Trevino likes it` into `bob-trevino-likes-it`.
 - **Capitalized + underscores, safer Refine (v2.28)** — new quick action A_B turns `all of this` into `All_Of_This`. Only the first letters change, so acronyms stay. Refine used to hand back your own one-word wish: with Gemma 4 E2B, “cooler” came back as “Cooler” in 3 of 3 runs. Now you get an error instead of that suggestion.
