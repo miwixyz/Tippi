@@ -1522,6 +1522,7 @@ private struct VoiceTab: View {
     @State private var dictationIndicatorPosition: DictationSettings.IndicatorPosition = DictationSettings.indicatorPosition
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationLayout: Bool = DictationSettings.layoutEnabled
+    @State private var dictationFitInsertion: Bool = DictationSettings.fitInsertionEnabled
     @State private var dictationLivePreview: Bool = DictationSettings.livePreviewEnabled
     @State private var dictationLiveTextSize: LiveTextSize = DictationSettings.liveTextSize
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
@@ -1563,7 +1564,7 @@ private struct VoiceTab: View {
                     Spacer()
                     Picker("", selection: $engine) {
                         Text("Whisper").tag(SpeechEngine.Kind.whisper.rawValue)
-                        Text("Parakeet v3").tag(SpeechEngine.Kind.parakeet.rawValue)
+                        Text("Parakeet").tag(SpeechEngine.Kind.parakeet.rawValue)
                     }
                     .pickerStyle(.menu)
                     .frame(width: 180)
@@ -1578,63 +1579,12 @@ private struct VoiceTab: View {
 
                 if engine == SpeechEngine.Kind.parakeet.rawValue {
                     Divider()
-                    parakeetStatusRow
+                    ParakeetModelRows()
                 }
             }
             .padding(6)
         }
         .onAppear { parakeetStatus.refreshFromDisk() }
-    }
-
-    @ViewBuilder
-    private var parakeetStatusRow: some View {
-        HStack(spacing: 8) {
-            switch parakeetStatus.phase {
-            case .notDownloaded:
-                Label(String(localized: "settings.voice.engine.status.notDownloaded"),
-                      systemImage: "exclamationmark.circle")
-                    .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.orange)
-                Spacer()
-                Button(String(localized: "settings.voice.engine.download")) {
-                    Task { await ParakeetTranscriber.shared.prewarm() }
-                }
-                .controlSize(.small)
-            case .downloading(let fraction):
-                Text(String(localized: "settings.voice.engine.status.downloading"))
-                    .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.secondary)
-                ProgressView(value: fraction)
-                    .frame(maxWidth: 160)
-                Text("\(Int(fraction * 100)) %")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                Spacer()
-            case .loading:
-                ProgressView()
-                    .controlSize(.small)
-                Text(String(localized: "settings.voice.engine.status.loading"))
-                    .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.secondary)
-                Spacer()
-            case .ready:
-                Label(String(localized: "settings.voice.engine.status.ready"),
-                      systemImage: "checkmark.circle.fill")
-                    .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.green)
-                Spacer()
-            case .failed(let message):
-                Label(message, systemImage: "xmark.circle")
-                    .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.red)
-                    .lineLimit(2)
-                Spacer()
-                Button(String(localized: "settings.voice.engine.download")) {
-                    Task { await ParakeetTranscriber.shared.prewarm() }
-                }
-                .controlSize(.small)
-            }
-        }
     }
 
     // MARK: Dictation
@@ -1713,6 +1663,12 @@ private struct VoiceTab: View {
                     Toggle(String(localized: "settings.voice.dictation.layout.enable"), isOn: $dictationLayout)
                         .onChange(of: dictationLayout) { _, new in DictationSettings.layoutEnabled = new }
                     Text(String(localized: "settings.voice.dictation.layout.body"))
+                        .font(FamilyTheme.font(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Toggle(String(localized: "settings.voice.dictation.fit.enable"), isOn: $dictationFitInsertion)
+                        .onChange(of: dictationFitInsertion) { _, new in DictationSettings.fitInsertionEnabled = new }
+                    Text(String(localized: "settings.voice.dictation.fit.body"))
                         .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

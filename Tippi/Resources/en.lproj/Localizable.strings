@@ -454,7 +454,7 @@
 "settings.providers.mlx.preset.qwen35-9b-4bit" = "Qwen 3.5 9B — largest model, not tested";
 "settings.providers.mlx.stop" = "Stop server";
 "settings.about.copyright" = "© 2026 Michael Wlr · MIT License";
-"settings.about.acknowledgements" = "Speech-to-text by whisper.cpp (MIT). Optional Parakeet engine by FluidAudio (Apache 2.0) and the NVIDIA Parakeet TDT model (CC-BY-4.0). Auto-updates by Sparkle. See NOTICES.md.";
+"settings.about.acknowledgements" = "Speech-to-text by whisper.cpp (MIT). Optional Parakeet engine by FluidAudio (Apache 2.0) with the NVIDIA Parakeet TDT model and Moondream's Parakeet Ultra (both CC-BY-4.0). Auto-updates by Sparkle. See NOTICES.md.";
 "settings.hotkeys.restartHint" = "The new combination applies right away. If it does not respond, another app probably already uses it.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
 "settings.about.feature1" = "Works in every app system-wide";
@@ -593,11 +593,13 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.systemAudio.body" = "Mutes your Mac's speakers/output for the duration of the recording (dictation, voice-command popup, translate) and restores the exact previous state afterward — if it was already muted, it stays muted. Useful when music or a video is playing while you dictate. Off by default. Some audio devices (certain USB/Bluetooth outputs) don't support muting — the option is a no-op there, without affecting the recording itself.";
 "settings.voice.model.title" = "Whisper Model";
 "settings.voice.engine.title" = "Speech engine";
-"settings.voice.engine.hint" = "Parakeet v3 is faster and more accurate for European languages. The model (~600 MB) downloads on first use.";
+"settings.voice.engine.hint" = "Parakeet is faster and more accurate for European languages. The model (~500–650 MB) downloads on first use.";
+"settings.voice.parakeetModel.title" = "Parakeet model";
+"settings.voice.parakeetModel.hint" = "v3 is the proven default. Ultra is a retrained v3 by Moondream: same speed, fewer errors in its makers' benchmarks, not yet tested on your own dictations. Each model downloads separately (Ultra ~630 MB); the other one stays on disk.";
 "settings.voice.engine.status.notDownloaded" = "Model not downloaded — dictation would download it on first use";
 "settings.voice.engine.status.downloading" = "Downloading model…";
 "settings.voice.engine.status.loading" = "Preparing model…";
-"settings.voice.engine.status.ready" = "Model ready — dictation uses Parakeet v3";
+"settings.voice.engine.status.ready" = "Model ready — dictation uses %@";
 "settings.voice.engine.download" = "Download now";
 "settings.voice.language.title" = "Language";
 "settings.voice.language.auto" = "Auto-detect";
@@ -652,6 +654,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.toast.returnPressed" = "Return pressed";
 "dictation.toast.returnWithheld" = "Return not pressed";
 "dictation.toast.notesClosedCopied" = "Notes window closed — dictation copied to the clipboard";
+"dictation.toast.fieldChangedCopied" = "Another field is active now — dictation copied to the clipboard (⌘V)";
 "settings.voice.dictation.autoReturn.title" = "Press Return after inserting";
 "settings.voice.dictation.autoReturn.body" = "Only in these apps, and only if the app is still in front when the text goes in. Handy for chats like Claude, where Return sends. Applies to every window of the app. In terminals, code editors and coding agents (Terminal, iTerm, Ghostty, VS Code, Codex …) Tippi presses Return only if AI cleanup left your dictated text unchanged — a command there can never come from the AI.";
 "settings.voice.dictation.autoReturn.empty" = "No app added — Tippi never presses Return.";
@@ -664,6 +667,8 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.dictation.postProcess.enable" = "Polish transcript with AI (removes fillers, adds punctuation)";
 "settings.voice.dictation.layout.enable" = "Line breaks and punctuation (e.g. for emails)";
 "settings.voice.dictation.layout.body" = "Fixed rules, no AI: greeting on its own line, one line per sentence, an empty line before the closing, a colon before “the following …”. A single sentence stays as it is. Never in terminals and apps with “Press Return after dictation”.";
+"settings.voice.dictation.fit.enable" = "Fit dictation to the text at the cursor";
+"settings.voice.dictation.fit.body" = "Fixed rules, no AI: a space where words would touch, a capital letter at the start of a sentence, “and”/“und” in lowercase mid-sentence, no period where your sentence goes on. Only the start and end of the dictation change. Tippi reads a little text before and after the cursor for this; never in password fields, terminals or code editors. Where an app does not show its text (some web and Electron apps), the dictation goes in unchanged.";
 "settings.voice.dictation.mail.enable" = "Dictation for emails";
 "settings.voice.dictation.mail.body" = "Its own hot key (⌃⌥⌘B by default): the same dictation, but always with line breaks and punctuation, even with the switch under Dictation off. Never presses Return.";
 "settings.voice.dictation.mail.conflict" = "Already used by “%@”. Please pick another combination. Until then the hot key is not active.";

@@ -20,6 +20,14 @@ fetched from Hugging Face on first use.
   - CoreML conversion: https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml
   - License: **CC-BY-4.0** — © NVIDIA. Use of the model is governed by the
     CC-BY-4.0 license; commercial use is permitted with attribution.
+- **Parakeet Ultra** — Moondream's post-training of NVIDIA Parakeet TDT 0.6B v3
+  (same architecture and languages), selectable as "Parakeet Ultra" under
+  Settings → Voice → Parakeet model; downloaded only when chosen
+  - Source: https://huggingface.co/moondream/parakeet-ultra
+  - CoreML conversion: https://huggingface.co/FluidInference/parakeet-ultra-coreml
+  - License: **CC-BY-4.0** — © Moondream, derived from NVIDIA Parakeet TDT
+    0.6B v3 (© NVIDIA, CC-BY-4.0). Commercial use is permitted with attribution;
+    this notice is that attribution.
 
 The default dictation engine remains whisper.cpp (bundled). Parakeet is opt-in
 under Settings → Voice → Speech engine.
@@ -71,6 +79,26 @@ dependency for that YAML parsing.
   English, parameterised with `{language}`, and aligned to Tippi's "Return
   ONLY" output convention; the underlying communicative intent and structure
   are preserved.
+- **Adapted code (v1.15.1, commit `26022b9`, added 2026-10):**
+  1. `BlitztextMac/Services/InsertionFitter.swift` — the rules that fit a
+     dictation into the text around the cursor (spacing, sentence-start
+     capital, lowercase function word mid-sentence, period before continuing
+     text) including the German/English function-word list. In Tippi:
+     `Tippi/Core/InsertionFitter.swift`, rules taken over closely; added a
+     nil-field entry point (unreadable field → text unchanged) and the
+     exclusion of terminals/code editors.
+  2. `BlitztextMac/Services/FocusedFieldReader.swift` (`field(pid:bundleID:)`)
+     — reading the text before/after the cursor via Accessibility, never from
+     password fields. In Tippi: `Tippi/Core/FocusedFieldReader.swift`, with a
+     per-element timeout instead of Blitztext's process-wide one and without
+     the browser web-tree switch.
+  3. `BlitztextMac/App/AppState.swift` (`noteTargetField`, the check before
+     pasting) and `FocusedFieldReader.FocusSpot` — the field fingerprint (role
+     + position at the end of the recording, compared before inserting, else
+     clipboard). In Tippi: `Tippi/Core/FieldFingerprint.swift`,
+     `FocusedFieldReader.focusSpot` and `DictationController+Insertion.swift`;
+     position relative to the window and an 8 pt tolerance instead of exact
+     screen coordinates.
 
 ### MIT License (Blitztext App)
 

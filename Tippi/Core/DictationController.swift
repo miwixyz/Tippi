@@ -438,8 +438,15 @@ final class DictationController: ObservableObject {
         state = .transcribing
         indicator.transcribing(recorder: recorder, aiEnabled: DictationSettings.postProcessEnabled,
                                isMail: source == .mail)
+        // The field that has the focus when the recording ends — clicking into
+        // the right field while still talking is fine; only a move during
+        // transcription/cleanup sends the text to the clipboard.
+        let targetField = notesTextView == nil
+            ? targetApp.flatMap { FocusedFieldReader.focusSpot(pid: $0.processIdentifier, textFieldOnly: true) }
+            : nil
         transcriptionTask = Task { [weak self] in
-            await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp, notesTextView: notesTextView)
+            await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp, notesTextView: notesTextView,
+                                            targetField: targetField)
         }
     }
 
@@ -447,7 +454,8 @@ final class DictationController: ObservableObject {
     /// The text goes in there natively — before, dictation always targeted the
     /// last *other* app and wrote into its focused field in the background
     /// (audit 2026-09-27; trigger and translate already handled Notes).
-    private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil) async {
+    private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil,
+                                     targetField: FocusedFieldReader.FocusSpot? = nil) async {
         do {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
@@ -485,24 +493,21 @@ final class DictationController: ObservableObject {
             // single line (Rafter 2026-09-27). Chat apps keep their paragraphs.
             let isCommandTarget = targetApp?.bundleIdentifier.map(DictationSettings.commandCapableBundleIDs.contains) ?? false
             let textToInsert = (returnDecision != .skip && isCommandTarget) ? Self.singleLine(final) : final
-            let copiedInstead = await Task { @MainActor () -> Bool in
+            // Fit the edges to the text around the cursor (space, capital, period).
+            // Read right before writing: that is where the text actually goes.
+            let fit = DictationSettings.fitWanted(toggle: DictationSettings.fitInsertionEnabled,
+                                                  targetBundleID: notesTextView == nil ? targetApp?.bundleIdentifier : nil)
+            // nil: inserted. Otherwise the text went to the clipboard; the value is the toast.
+            let copiedNotice = await Task { @MainActor () -> String? in
                 if let notesTextView {
-                    // The Notes window is kept (not released) when closed, so
-                    // `window != nil` proves nothing — visibility does. Closed
-                    // meanwhile: clipboard, never a background app.
-                    guard notesTextView.window?.isVisible == true else {
-                        TextInsertion.copy(textToInsert)
-                        return true
-                    }
-                    ReplacementWriter.writeNative(textToInsert, in: notesTextView, range: notesTextView.selectedRange())
-                } else {
-                    await TextInsertion.replace(with: textToInsert, in: targetApp)
+                    return Self.insert(textToInsert, intoNotes: notesTextView, fit: fit)
                 }
-                return false
+                return await Self.insert(textToInsert, into: targetApp, targetField: targetField, fit: fit)
             }.value
             var pressReturn = false
-            // A cancel that arrived during insertion still means "don't send".
-            if returnDecision == .press, !Task.isCancelled {
+            // A cancel that arrived during insertion still means "don't send";
+            // nothing inserted means nothing to send either.
+            if returnDecision == .press, copiedNotice == nil, !Task.isCancelled {
                 // Let the target app finish handling the insertion before Return,
                 // then re-check right before posting — the HID event goes to
                 // whatever is frontmost at that instant.
@@ -517,12 +522,11 @@ final class DictationController: ObservableObject {
             RecordingIndicatorWindowController.shared.hide()
             // Engine names are proper nouns — appended unlocalized so the user
             // can verify which engine actually transcribed.
-            let engineName = SpeechEngine.current == .parakeet ? "Parakeet v3" : "Whisper"
+            let engineName = SpeechEngine.current == .parakeet ? ParakeetModel.current.displayName : "Whisper"
             // One toast at the end: a toast shown earlier (during cleanup) would be
             // replaced by this one within milliseconds and never be read.
-            var message = copiedInstead
-                ? String(localized: "dictation.toast.notesClosedCopied")
-                : cleanupNotice ?? String(localized: "dictation.toast.inserted") + " · " + engineName
+            var message = copiedNotice
+                ?? cleanupNotice ?? String(localized: "dictation.toast.inserted") + " · " + engineName
             if pressReturn {
                 message += " · " + String(localized: "dictation.toast.returnPressed")
             } else if returnDecision != .skip {

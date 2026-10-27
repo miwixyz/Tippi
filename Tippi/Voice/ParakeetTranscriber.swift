@@ -38,6 +38,51 @@ enum SpeechEngine {
     }
 }
 
+// MARK: - Parakeet build
+
+/// Which Parakeet build transcribes (2026-10-27). Ultra is Moondream's
+/// post-training of Parakeet TDT v3: same architecture, languages, tokenizer
+/// and speed, fewer errors in FluidAudio's own benchmarks (FLEURS 24-language
+/// mean WER 14.81 % → 11.67 %, release notes of FluidAudio 0.17.3). Not
+/// measured on Michael's German yet — that is what
+/// `scripts/parakeet-vergleich.sh` is for — so v3 stays the default and Ultra
+/// is an opt-in. Both builds live in their own folder under FluidAudio's model
+/// cache; switching never deletes the other one (v3 ≈ 470 MB, Ultra ≈ 630 MB).
+enum ParakeetModel: String, CaseIterable {
+    case v3
+    case ultra
+
+    /// `.standard` in the app, a throwaway suite in tests — the test host shares
+    /// the installed app's preferences file (see `DictationSettings.store`).
+    /// Not MainActor-bound: the transcriber actor reads it before every load.
+    static var store: UserDefaults = .standard
+    static let key = "voice.parakeetModel.v1"
+
+    static var current: ParakeetModel {
+        get { ParakeetModel(rawValue: store.string(forKey: key) ?? "") ?? .v3 }
+        set { store.set(newValue.rawValue, forKey: key) }
+    }
+
+    var asrVersion: AsrModelVersion {
+        switch self {
+        case .v3: return .v3
+        case .ultra: return .ultra
+        }
+    }
+
+    /// Proper noun — shown unlocalized (engine picker, dictation toast).
+    var displayName: String {
+        switch self {
+        case .v3: return "Parakeet v3"
+        case .ultra: return "Parakeet Ultra"
+        }
+    }
+
+    var isDownloaded: Bool {
+        AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory(for: asrVersion), version: asrVersion)
+    }
+}
+
 // MARK: - Facade
 
 /// Engine-agnostic entry point with the same contract as
@@ -93,17 +138,28 @@ final class ParakeetStatus: ObservableObject {
 
     @Published var phase: Phase = .notDownloaded
 
-    /// Syncs the phase with what is on disk. No-op while a download/load is
-    /// in flight so live progress isn't clobbered.
-    func refreshFromDisk() {
-        switch phase {
-        case .downloading, .loading:
-            return
-        default:
-            break
+    /// Syncs the phase with what is on disk for the selected build. No-op while
+    /// a download/load is in flight so live progress isn't clobbered — unless
+    /// `force`: after switching builds the old build's progress is not news
+    /// about the new one (a load of the new build reports its own phases).
+    func refreshFromDisk(force: Bool = false) {
+        if !force {
+            switch phase {
+            case .downloading, .loading:
+                return
+            default:
+                break
+            }
         }
-        let onDisk = AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory())
-        phase = onDisk ? .ready : .notDownloaded
+        phase = ParakeetModel.current.isDownloaded ? .ready : .notDownloaded
+    }
+
+    /// Progress of a load only counts while its build is still the selected
+    /// one — a v3 load finishing after the switch to Ultra must not show
+    /// "ready" for Ultra.
+    func report(_ phase: Phase, for model: ParakeetModel) {
+        guard model == ParakeetModel.current else { return }
+        self.phase = phase
     }
 }
 
@@ -122,58 +178,88 @@ enum ParakeetError: LocalizedError {
 actor ParakeetTranscriber {
     static let shared = ParakeetTranscriber()
 
+    /// One build in memory at a time: the one last loaded for the selection.
     private var manager: AsrManager?
+    private var managerModel: ParakeetModel?
+    /// The load in flight and its build. Actor methods are reentrant at
+    /// `await`: without the build tag a switch v3 → Ultra during a slow load
+    /// would hand the v3 manager to an Ultra request.
     private var loadTask: Task<AsrManager, Error>?
+    private var loadTaskModel: ParakeetModel?
 
-    /// Returns the loaded ASR manager, downloading the CoreML bundle from
-    /// Hugging Face on first use (~600 MB, cached afterwards) and keeping
-    /// the model in memory for the app's lifetime.
+    /// Returns the loaded ASR manager for the selected build, downloading the
+    /// CoreML bundle from Hugging Face on first use (v3 ≈ 470 MB, Ultra ≈
+    /// 630 MB, cached afterwards) and keeping it in memory. Switching builds
+    /// loads the other one on the next request and drops the old one.
     private func loadedManager() async throws -> AsrManager {
-        if let manager { return manager }
-        if loadTask == nil {
-            loadTask = Task {
-                let onDisk = AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory())
-                await MainActor.run {
-                    ParakeetStatus.shared.phase = onDisk ? .loading : .downloading(0)
-                }
-                let models = try await AsrModels.downloadAndLoad(
-                    version: .v3,
-                    progressHandler: { progress in
-                        Task { @MainActor in
-                            switch progress.phase {
-                            case .listing, .downloading:
-                                ParakeetStatus.shared.phase = .downloading(progress.fractionCompleted)
-                            case .compiling:
-                                ParakeetStatus.shared.phase = .loading
-                            @unknown default:
-                                // Future FluidAudio phases shouldn't break the
-                                // build or strand the status — treat as loading.
-                                ParakeetStatus.shared.phase = .loading
-                            }
-                        }
-                    }
-                )
-                // downloadAndLoad finished; the CoreML model still has to be
-                // loaded into memory — surface that as a distinct loading state
-                // instead of leaving the last download/compile phase showing.
-                await MainActor.run { ParakeetStatus.shared.phase = .loading }
-                let mgr = AsrManager()
-                try await mgr.loadModels(models)
-                await MainActor.run { ParakeetStatus.shared.phase = .ready }
-                return mgr
-            }
+        let model = ParakeetModel.current
+        if let manager, managerModel == model { return manager }
+        let task: Task<AsrManager, Error>
+        if let loadTask, loadTaskModel == model {
+            task = loadTask
+        } else {
+            task = Self.makeLoadTask(for: model)
+            loadTask = task
+            loadTaskModel = model
         }
         do {
-            let mgr = try await loadTask!.value
-            manager = mgr
+            let mgr = try await task.value
+            if loadTaskModel == model {
+                loadTask = nil
+                loadTaskModel = nil
+            }
+            // Install only while still selected; an outdated build is used for
+            // this one request (it was asked for under the old selection) but
+            // never replaces the current one.
+            if managerModel != model, model == ParakeetModel.current {
+                manager = mgr
+                managerModel = model
+            }
             return mgr
         } catch {
             // Allow a retry on the next attempt (e.g. download failed offline).
-            loadTask = nil
+            if loadTaskModel == model {
+                loadTask = nil
+                loadTaskModel = nil
+            }
             await MainActor.run {
-                ParakeetStatus.shared.phase = .failed(error.localizedDescription)
+                ParakeetStatus.shared.report(.failed(error.localizedDescription), for: model)
             }
             throw error
+        }
+    }
+
+    private static func makeLoadTask(for model: ParakeetModel) -> Task<AsrManager, Error> {
+        Task {
+            let onDisk = model.isDownloaded
+            await MainActor.run {
+                ParakeetStatus.shared.report(onDisk ? .loading : .downloading(0), for: model)
+            }
+            let models = try await AsrModels.downloadAndLoad(
+                version: model.asrVersion,
+                progressHandler: { progress in
+                    Task { @MainActor in
+                        switch progress.phase {
+                        case .listing, .downloading:
+                            ParakeetStatus.shared.report(.downloading(progress.fractionCompleted), for: model)
+                        case .compiling:
+                            ParakeetStatus.shared.report(.loading, for: model)
+                        @unknown default:
+                            // Future FluidAudio phases shouldn't break the
+                            // build or strand the status — treat as loading.
+                            ParakeetStatus.shared.report(.loading, for: model)
+                        }
+                    }
+                }
+            )
+            // downloadAndLoad finished; the CoreML model still has to be
+            // loaded into memory — surface that as a distinct loading state
+            // instead of leaving the last download/compile phase showing.
+            await MainActor.run { ParakeetStatus.shared.report(.loading, for: model) }
+            let mgr = AsrManager()
+            try await mgr.loadModels(models)
+            await MainActor.run { ParakeetStatus.shared.report(.ready, for: model) }
+            return mgr
         }
     }
 
@@ -181,9 +267,9 @@ actor ParakeetTranscriber {
         _ = try? await loadedManager()
     }
 
-    /// Whether the model is in memory — the live preview waits for the load
-    /// instead of counting it as a slow pass.
-    var isLoaded: Bool { manager != nil }
+    /// Whether the selected build is in memory — the live preview waits for
+    /// the load instead of counting it as a slow pass.
+    var isLoaded: Bool { manager != nil && managerModel == ParakeetModel.current }
 
     /// Live preview (LiveTranscriptionPreview): transcribes in-memory 16 kHz
     /// mono samples with the same model, decoder setup and language hint as
@@ -192,7 +278,7 @@ actor ParakeetTranscriber {
     /// (the preview only calls it from 1 s of audio on).
     func transcribe(samples: [Float]) async throws -> String {
         let manager = try await loadedManager()
-        var decoderState = TdtDecoderState.make()
+        var decoderState = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
         let result = try await manager.transcribe(samples, decoderState: &decoderState,
                                                   language: Language(rawValue: WhisperConfig.language))
         return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -211,7 +297,7 @@ actor ParakeetTranscriber {
         let manager = try await loadedManager()
         try Task.checkCancellation()
 
-        var decoderState = TdtDecoderState.make()
+        var decoderState = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
         // Reuse the Whisper language setting as a script hint; "auto" or
         // unsupported codes fall back to Parakeet's own detection.
         let languageHint = Language(rawValue: WhisperConfig.language)
