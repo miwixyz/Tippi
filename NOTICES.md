@@ -20,6 +20,14 @@ fetched from Hugging Face on first use.
   - CoreML conversion: https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml
   - License: **CC-BY-4.0** — © NVIDIA. Use of the model is governed by the
     CC-BY-4.0 license; commercial use is permitted with attribution.
+- **Parakeet Ultra** — Moondream's post-training of NVIDIA Parakeet TDT 0.6B v3
+  (same architecture and languages), selectable as "Parakeet Ultra" under
+  Settings → Voice → Parakeet model; downloaded only when chosen
+  - Source: https://huggingface.co/moondream/parakeet-ultra
+  - CoreML conversion: https://huggingface.co/FluidInference/parakeet-ultra-coreml
+  - License: **CC-BY-4.0** — © Moondream, derived from NVIDIA Parakeet TDT
+    0.6B v3 (© NVIDIA, CC-BY-4.0). Commercial use is permitted with attribution;
+    this notice is that attribution.
 
 The default dictation engine remains whisper.cpp (bundled). Parakeet is opt-in
 under Settings → Voice → Speech engine.

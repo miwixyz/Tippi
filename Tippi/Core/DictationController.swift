@@ -517,7 +517,7 @@ final class DictationController: ObservableObject {
             RecordingIndicatorWindowController.shared.hide()
             // Engine names are proper nouns — appended unlocalized so the user
             // can verify which engine actually transcribed.
-            let engineName = SpeechEngine.current == .parakeet ? "Parakeet v3" : "Whisper"
+            let engineName = SpeechEngine.current == .parakeet ? ParakeetModel.current.displayName : "Whisper"
             // One toast at the end: a toast shown earlier (during cleanup) would be
             // replaced by this one within milliseconds and never be read.
             var message = copiedInstead

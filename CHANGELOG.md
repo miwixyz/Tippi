@@ -2,11 +2,16 @@
 
 ## [Unveröffentlicht]
 
+### Neu
+- **Parakeet Ultra zur Auswahl.** Einstellungen → Sprache → Sprach-Engine → Parakeet-Modell: neben v3 gibt es jetzt Parakeet Ultra, ein von Moondream nachtrainiertes v3 (gleich schnell, laut den Messungen der Hersteller weniger Fehler). Standard bleibt v3. Ultra wird erst geladen, wenn du es auswählst und auf „Jetzt herunterladen“ klickst oder diktierst (rund 630 MB); v3 bleibt auf dem Mac, du kannst jederzeit zurück. Die Live-Vorschau nutzt das gewählte Modell. Die Meldung nach dem Diktat nennt das Modell.
+
 ### Behoben
 - **Diktat mit lokaler KI wartete bis zu 20 Sekunden.** Nach einer längeren Pause hatte macOS das lokale MLX-Modell aus dem Speicher geräumt, und die KI-Nachbearbeitung musste es erst nach dem Sprechen zurückholen (gemessen: 20,6 s für zwei Zeilen). Tippi bereitet das Modell jetzt schon vor, während du sprichst: Es holt das Modell zurück und liest den Bereinigungs-Prompt vorab ein. Danach dauerte die Nachbearbeitung 0,6 s statt 3,1 s.
 
 ### Intern
 - `MLXProvider.prime(systemPrompt:)`: Anfrage mit `max_tokens` 1 und genau dem Diktat-Prompt, beim Diktat-Start statt nur `MLXServerManager.start()`, das bei laufendem Server nichts tat. Der Anfrage-Aufbau (`Body`) wird von `complete` und `prime` gemeinsam genutzt, damit der Prompt-Zwischenspeicher des Servers greift.
+- FluidAudio von 0.15.2 auf 0.17.x angehoben (`project.yml`: `from: 0.17.3`, aufgelöst 0.17.7). Ordner und Dateien von v3 sind unverändert, ein vorhandener v3-Download bleibt gültig. Neu: `ParakeetModel` (`voice.parakeetModel.v1`, Standard `v3`, `store` für Tests), `ParakeetTranscriber` hält genau ein Modell im Speicher und lädt bei einem Wechsel das andere nach; ein Ladevorgang trägt sein Modell mit, damit ein Wechsel mitten im Laden nicht das falsche Modell ausliefert. Decoder-Zustand mit `decoderLayerCount` des geladenen Modells. Einstellungszeilen in `UI/ParakeetModelRows.swift`. Namensnennung (CC BY 4.0) in `NOTICES.md` und unter „Über“.
+- `scripts/parakeet-vergleich.sh`: Wortfehlerrate und Rechenzeit von v3 und Ultra an Paaren `name.wav` + `name.txt`, eigenes SwiftPM-Paket unter `scripts/parakeet-vergleich/` (Wortfehler-Rechnung mit 6 Tests, `swift test`). `--eichsatz <ordner>` erzeugt synthetische Sätze mit der Stimme „Anna“, nur zum Prüfen des Werkzeugs. Lädt fehlende Modelle nur mit `--laden`.
 
 ## [2.31.0] — 2026-10-22
 

@@ -23,7 +23,7 @@ packages:
     from: 7.0.0
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio
-    from: 0.12.4
+    from: 0.17.3
   Yams:
     url: https://github.com/jpsim/Yams
     from: 5.0.0

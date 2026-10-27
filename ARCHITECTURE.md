@@ -172,7 +172,7 @@ Tippi/
 │   ├── AudioCapture.swift          # 16-kHz-Umrechnung, Sample-Speicher, WAV, Formatprüfung (2.22)
 │   ├── LiveTranscriptionPreview.swift # Live-Text im Aufnahmefenster, Schriftgröße (2.22)
 │   ├── WhisperTranscriber.swift    # whisper-cli-Wrapper
-│   ├── ParakeetTranscriber.swift   # CoreML/ANE, Default-Engine seit v1.12.1
+│   ├── ParakeetTranscriber.swift   # CoreML/ANE, Default-Engine seit v1.12.1; Modell v3 (Standard) oder Ultra
 │   └── SystemAudioMuter.swift      # optionales Mute während der Aufnahme
 └── Resources/
     ├── Assets.xcassets             # Icon, Symbole
