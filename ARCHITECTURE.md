@@ -54,7 +54,7 @@ Tippi/
 │   │                               #   `layoutWanted` (nie in Terminals/Enter-Apps), rein + getestet
 │   ├── MailDictation.swift         # 2.21 — Hotkey „Diktat für Mails" (⌃⌥⌘B, id 7): Einstellungen,
 │   │                               #   Konfliktprüfung gegen alle Tippi-Kürzel
-│   ├── DictationModes.swift        # Diktat-Modi: Tap-or-Hold-Taste + ⇧/⌃/⌘/fn → Prompt. Plätze,
+│   ├── DictationModes.swift        # Diktat-Modi: Tap-or-Hold-Taste + ⇧/⌃/⌘/andere ⌥ → Prompt. Plätze,
 │   │                               #   Belegung (JSON, versioniert), Zusatztaste aus CGEventFlags (rein)
 │   ├── DictationController+Modes.swift # Ablauf eines Modus: Prompt nach der Erkennung, 30-s-Deckel,
 │   │                               #   Rohtext-Rückfall, MLX-Vorwärmen mit dem Prompt des Modus

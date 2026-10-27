@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Einstellungen → Hotkeys → Diktat: die Diktat-Modi (`DictationModes`). Hauptschalter
-/// und vier Plätze (⇧ ⌃ ⌘ fn), jeder frei belegbar: leer, Verbessern oder ein Prompt.
+/// und vier Plätze (⇧ ⌃ ⌘ und die andere ⌥), jeder frei belegbar: leer, Verbessern oder ein Prompt.
 /// Nur mit der Diktat-Art „Einzelne Taste" (Tap or Hold) wirksam, sonst ein Hinweis.
 struct DictationModesSection: View {
     let inputMode: DictationSettings.InputMode

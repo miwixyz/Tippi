@@ -6,7 +6,10 @@ import Foundation
 // Idee nach Blitztext (MIT, siehe NOTICES.md): ein Kürzel startet das Diktat direkt
 // in einem Modus, nach dem Sprechen läuft der Prompt des Modus auf das Transkript,
 // eingefügt wird das Ergebnis. Bei Tippi ist das Kürzel die Tap-or-Hold-Taste des
-// Diktats plus eine Zusatztaste (⇧ ⌃ ⌘ fn), gehalten beim Start der Aufnahme.
+// Diktats plus eine Zusatztaste (⇧ ⌃ ⌘ oder die andere ⌥), gehalten beim Start der Aufnahme.
+// fn gibt es bewusst nicht: auf externen Tastaturen ist sie nicht nutzbar (Michael,
+// Sichttest 2026-10-27), deshalb die zweite Option-Taste, unterschieden über die
+// Gerätebits links/rechts.
 //
 // Wann die Zusatztaste zählt (entschieden 2026-10-27):
 // - Halten: im Moment, in dem die Aufnahme beginnt (Haltegrenze 400 ms nach dem
@@ -18,9 +21,10 @@ import Foundation
 // die ganze Geste (`otherKeyWhileHeld`). Eine gehaltene Zusatz-*Modifiertaste*
 // erzeugt dagegen kein keyDown, bricht also nichts ab.
 
-/// Die vier Plätze. Links/rechts ist egal.
+/// Die vier Plätze. Links/rechts ist egal, außer bei `option`: das ist die
+/// Option-Taste, die NICHT die Diktat-Taste ist (bei rechter ⌥ als Diktat-Taste die linke).
 enum DictationModeSlot: String, CaseIterable, Identifiable {
-    case shift, control, command, fn
+    case shift, control, command, option
     var id: String { rawValue }
 
     var displayName: String {
@@ -28,18 +32,19 @@ enum DictationModeSlot: String, CaseIterable, Identifiable {
         case .shift: return String(localized: "dictation.modes.slot.shift")
         case .control: return String(localized: "dictation.modes.slot.control")
         case .command: return String(localized: "dictation.modes.slot.command")
-        case .fn: return "fn"
+        case .option: return String(localized: "dictation.modes.slot.option")
         }
     }
 
     /// IOKit-Gerätebits (`NX_DEVICE*`) für links und rechts, wie in
-    /// `HotkeyManager.isModifierPressed`. fn hat keine.
+    /// `HotkeyManager.isModifierPressed`. Bei `option` beide; das Bit der Diktat-Taste
+    /// selbst nimmt `slot(in:trigger:)` heraus.
     fileprivate var deviceBits: UInt64 {
         switch self {
         case .shift: return 0x0002 | 0x0004
         case .control: return 0x0001 | 0x2000
         case .command: return 0x0008 | 0x0010
-        case .fn: return 0
+        case .option: return 0x0020 | 0x0040
         }
     }
 
@@ -48,7 +53,7 @@ enum DictationModeSlot: String, CaseIterable, Identifiable {
         case .shift: return .maskShift
         case .control: return .maskControl
         case .command: return .maskCommand
-        case .fn: return .maskSecondaryFn
+        case .option: return .maskAlternate
         }
     }
 }
@@ -117,7 +122,7 @@ enum DictationModes {
         .shift: .improve,
         .control: .prompt(id: "defuse"),
         .command: .prompt(id: "addEmojis"),
-        .fn: .empty,
+        .option: .empty,
     ]
 
     static func assignment(for slot: DictationModeSlot) -> DictationModeAssignment {

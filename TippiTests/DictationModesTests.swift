@@ -53,9 +53,22 @@ final class DictationModesTests: XCTestCase {
         XCTAssertEqual(DictationModes.slot(in: flags(cmdR), trigger: .rightOption), .command)
     }
 
-    func testFnUsesSecondaryFnFlag() {
+    func testOtherOptionKeyIsTheFourthSlot() {
+        // Rechte ⌥ ist die Diktat-Taste; die linke dazu = Platz `option`.
+        let bothOptions = rightOption | 0x0020
+        XCTAssertEqual(DictationModes.slot(in: flags(bothOptions), trigger: .rightOption), .option)
+        // Spiegelbildlich mit linker ⌥ als Diktat-Taste.
+        let leftOption = CGEventFlags.maskAlternate.rawValue | 0x0020
+        XCTAssertEqual(DictationModes.slot(in: flags(leftOption | 0x0040), trigger: .leftOption), .option)
+        // Die Diktat-Taste allein ist nie der Platz `option`.
+        XCTAssertNil(DictationModes.slot(in: flags(rightOption), trigger: .rightOption))
+        XCTAssertNil(DictationModes.slot(in: flags(leftOption), trigger: .leftOption))
+    }
+
+    func testFnIsNoLongerASlot() {
+        // fn ist auf externen Tastaturen nicht nutzbar (Sichttest 2026-10-27).
         let fnHeld = rightOption | CGEventFlags.maskSecondaryFn.rawValue
-        XCTAssertEqual(DictationModes.slot(in: flags(fnHeld), trigger: .rightOption), .fn)
+        XCTAssertNil(DictationModes.slot(in: flags(fnHeld), trigger: .rightOption))
     }
 
     func testTwoExtraKeysAreAmbiguousAndGivePlainDictation() {
@@ -63,11 +76,11 @@ final class DictationModesTests: XCTestCase {
         XCTAssertNil(DictationModes.slot(in: flags(both), trigger: .rightOption))
     }
 
-    func testCapsLockAndLeftOptionAreNoSlot() {
+    func testCapsLockIsNoSlot() {
         let caps = rightOption | CGEventFlags.maskAlphaShift.rawValue
-        let leftOption = rightOption | 0x0020
         XCTAssertNil(DictationModes.slot(in: flags(caps), trigger: .rightOption))
-        XCTAssertNil(DictationModes.slot(in: flags(leftOption), trigger: .rightOption))
+        // Die linke ⌥ dazu ist seit 2026-10-27 der vierte Platz (statt fn).
+        XCTAssertEqual(DictationModes.slot(in: flags(rightOption | 0x0020), trigger: .rightOption), .option)
     }
 
     func testWithoutDeviceBitsTheGenericFlagCounts() {
@@ -92,7 +105,7 @@ final class DictationModesTests: XCTestCase {
         XCTAssertEqual(DictationModes.assignment(for: .shift), .improve)
         XCTAssertEqual(DictationModes.assignment(for: .control), .prompt(id: "defuse"))
         XCTAssertEqual(DictationModes.assignment(for: .command), .prompt(id: "addEmojis"))
-        XCTAssertEqual(DictationModes.assignment(for: .fn), .empty)
+        XCTAssertEqual(DictationModes.assignment(for: .option), .empty)
     }
 
     func testDefaultPromptsExistAsBuiltIns() {
@@ -102,10 +115,10 @@ final class DictationModesTests: XCTestCase {
     }
 
     func testSaveAndLoadRoundTrip() throws {
-        DictationModes.setAssignment(.prompt(id: "custom-ABC"), for: .fn)
+        DictationModes.setAssignment(.prompt(id: "custom-ABC"), for: .option)
         DictationModes.setAssignment(.empty, for: .shift)
         DictationModes.isEnabled = false
-        XCTAssertEqual(DictationModes.assignment(for: .fn), .prompt(id: "custom-ABC"))
+        XCTAssertEqual(DictationModes.assignment(for: .option), .prompt(id: "custom-ABC"))
         XCTAssertEqual(DictationModes.assignment(for: .shift), .empty)
         XCTAssertEqual(DictationModes.assignment(for: .control), .prompt(id: "defuse"))
         XCTAssertFalse(DictationModes.isEnabled)
@@ -114,18 +127,18 @@ final class DictationModesTests: XCTestCase {
         let json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual(json["version"] as? Int, 1)
         let slots = try XCTUnwrap(json["slots"] as? [String: String])
-        XCTAssertEqual(slots["fn"], "prompt:custom-ABC")
+        XCTAssertEqual(slots["option"], "prompt:custom-ABC")
         XCTAssertEqual(slots["shift"], "empty")
     }
 
     func testBrokenOrNewerDataFallsBackToDefaults() {
         XCTAssertEqual(DictationModes.decode(Data("kaputt".utf8)), DictationModes.defaultAssignments)
-        let newer = Data(#"{"version":2,"slots":{"fn":"improve"}}"#.utf8)
+        let newer = Data(#"{"version":2,"slots":{"option":"improve"}}"#.utf8)
         XCTAssertEqual(DictationModes.decode(newer), DictationModes.defaultAssignments)
-        let unknownToken = Data(#"{"version":1,"slots":{"shift":"irgendwas","fn":"improve"}}"#.utf8)
+        let unknownToken = Data(#"{"version":1,"slots":{"shift":"irgendwas","option":"improve"}}"#.utf8)
         let decoded = DictationModes.decode(unknownToken)
         XCTAssertEqual(decoded[.shift], .improve)   // Werksbelegung für den unlesbaren Platz
-        XCTAssertEqual(decoded[.fn], .improve)
+        XCTAssertEqual(decoded[.option], .improve)
     }
 
     func testStorageTokens() {
@@ -144,9 +157,9 @@ final class DictationModesTests: XCTestCase {
         let improve = DictationModes.resolve(.improve, slot: .shift, lookup: { _ in nil })
         XCTAssertEqual(improve?.action, .improve)
         XCTAssertEqual(improve?.slot, .shift)
-        XCTAssertNil(DictationModes.resolve(.empty, slot: .fn, lookup: { _ in nil }))
+        XCTAssertNil(DictationModes.resolve(.empty, slot: .option, lookup: { _ in nil }))
 
-        let mode = DictationModes.resolve(.prompt(id: "custom-X"), slot: .fn,
+        let mode = DictationModes.resolve(.prompt(id: "custom-X"), slot: .option,
                                           lookup: { $0 == "custom-X" ? self.sample : nil })
         XCTAssertEqual(mode?.title, "Mein Prompt")
         XCTAssertEqual(mode?.symbol, "star")
@@ -154,10 +167,10 @@ final class DictationModesTests: XCTestCase {
     }
 
     func testDeletedPromptMeansEmptySlot() {
-        DictationModes.setAssignment(.prompt(id: "custom-gone"), for: .fn)
-        XCTAssertNil(DictationModes.resolve(DictationModes.assignment(for: .fn), slot: .fn, lookup: { _ in nil }))
+        DictationModes.setAssignment(.prompt(id: "custom-gone"), for: .option)
+        XCTAssertNil(DictationModes.resolve(DictationModes.assignment(for: .option), slot: .option, lookup: { _ in nil }))
         // Die Belegung bleibt gespeichert, falls der Prompt (iCloud) später ankommt.
-        XCTAssertEqual(DictationModes.assignment(for: .fn), .prompt(id: "custom-gone"))
+        XCTAssertEqual(DictationModes.assignment(for: .option), .prompt(id: "custom-gone"))
     }
 
     func testSourceOnlyWithTapOrHoldAndMainSwitch() {
