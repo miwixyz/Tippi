@@ -7,6 +7,19 @@ extension DictationController {
     /// Läuft nach dem Sprechen ein KI-Schritt? Für die Anzeige.
     var aiStepPlanned: Bool { source.dictationMode != nil || DictationSettings.postProcessEnabled }
 
+    /// Die Zusatztaste kam erst während des Haltens dazu. Im Sichttest 2026-10-27
+    /// kam sie zweimal knapp nach dem Aufnahmestart (Haltegrenze 400 ms), und der
+    /// Modus ging verloren — ⇧ und ⌃ landen in der natürlichen Bewegung oft nach
+    /// der Diktat-Taste. Nur vom normalen Diktat in einen Modus, nie zwischen
+    /// Modi (ein Loslassen der Zusatztaste wirft nichts zurück) und nur während
+    /// der Aufnahme; danach entscheidet nichts mehr.
+    func adoptLateMode(_ late: DictationSource) {
+        guard case .recording = state, source == .standard, late.dictationMode != nil else { return }
+        source = late
+        indicator.recording(recorder: recorder, preview: livePreview, aiEnabled: aiStepPlanned, source: source)
+        _ = warmModeProviderIfNeeded()
+    }
+
     /// Statt `postProcessIfEnabled`: ohne Modus genau das, mit Modus dessen Prompt.
     /// „Verbessern" ist die normale Glättung, aber unabhängig vom Schalter und ohne
     /// Mindestlänge — der Nutzer hat den Modus ausdrücklich gewählt.

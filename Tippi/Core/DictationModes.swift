@@ -1,5 +1,8 @@
 import CoreGraphics
 import Foundation
+import os
+
+private let modesLog = Logger(subsystem: "com.tippi.app", category: "modes")
 
 // MARK: - Diktat-Modi
 //
@@ -231,8 +234,17 @@ enum DictationModes {
     /// Einstieg für `AppDelegate`: die Flags beim Start der Geste → Quelle des Diktats.
     /// Modi gibt es nur mit Tap-or-Hold und eingeschaltetem Hauptschalter.
     static func source(for flags: CGEventFlags) -> DictationSource {
-        guard isEnabled, DictationSettings.mode == .tapOrHold,
-              let slot = slot(in: flags, trigger: DictationSettings.tapOrHoldModifier),
+        let trigger = DictationSettings.tapOrHoldModifier
+        let slot = slot(in: flags, trigger: trigger)
+        // Messpunkt (Sichttest 2026-10-27: ⌃ wurde nicht erkannt): nur Tasten-Bits,
+        // kein Inhalt, deshalb öffentlich. `log stream --predicate 'category == "modes"'`.
+        modesLog.info("""
+            gesture flags=0x\(String(flags.rawValue, radix: 16), privacy: .public) \
+            trigger=\(String(describing: trigger), privacy: .public) \
+            slot=\(slot?.rawValue ?? "none", privacy: .public) \
+            enabled=\(isEnabled, privacy: .public) tapOrHold=\(DictationSettings.mode == .tapOrHold, privacy: .public)
+            """)
+        guard isEnabled, DictationSettings.mode == .tapOrHold, let slot,
               let mode = resolve(assignment(for: slot), slot: slot, lookup: DemoPrompt.resolve(id:)) else {
             return .standard
         }

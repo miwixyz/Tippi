@@ -17,6 +17,10 @@ enum HotkeyEvent {
     /// held alongside the trigger from them (`DictationModes.slot`).
     case doubleTap(modifiers: CGEventFlags)
     case holdBegan(modifiers: CGEventFlags)
+    /// Another modifier went down or up while the hold is running. Lets a
+    /// dictation mode's extra key count when it arrives after the hold threshold
+    /// (Sichttest 2026-10-27: pressed 0.1–0.5 s too late twice, mode lost).
+    case holdModifiersChanged(modifiers: CGEventFlags)
     case holdEnded
 }
 
@@ -276,7 +280,10 @@ final class HotkeyManager: ObservableObject {
 
         case .tapOrHold(let modifier, let holdThresholdMs):
             latestFlags = flags
-            guard keyCode == modifier.keyCode else { return }
+            guard keyCode == modifier.keyCode else {
+                if holdInProgress { onEvent?(.holdModifiersChanged(modifiers: flags)) }
+                return
+            }
             let pressed = isModifierPressed(group: modifier, flags: flags)
             if pressed {
                 // Ignore repeat/duplicate press events while a gesture is running.

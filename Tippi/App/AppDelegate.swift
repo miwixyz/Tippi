@@ -1454,6 +1454,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                             source: DictationModes.source(for: modifiers))
                     case .holdBegan(let modifiers):
                         await self.dictationController.beginHoldRecording(source: DictationModes.source(for: modifiers))
+                    case .holdModifiersChanged(let modifiers):
+                        self.dictationController.adoptLateMode(DictationModes.source(for: modifiers))
                     case .holdEnded:
                         self.dictationController.endHoldRecording(
                             targetApp: target, notesTextView: Self.focusedNotesTextView())

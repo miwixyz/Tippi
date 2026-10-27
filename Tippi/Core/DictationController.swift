@@ -315,11 +315,11 @@ final class DictationController: ObservableObject {
     /// swallowed while another app owned the event tap). Without this, "record
     /// while held" can mean "record until the disk is full".
     private var holdWatchdog: Timer?
-    private var livePreview: LiveTranscriptionPreview?   // nil: setting off or Whisper
+    private(set) var livePreview: LiveTranscriptionPreview?   // nil: setting off or Whisper
 
     /// Which hot key started the running recording — the mail hot key always lays
     /// the text out (`DictationLayout.layoutWanted`). Set at start, not at stop.
-    private(set) var source: DictationSource = .standard
+    var source: DictationSource = .standard
 
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion. A press while
