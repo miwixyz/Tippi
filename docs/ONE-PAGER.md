@@ -58,6 +58,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Dictation modes (v2.32)** — hold an extra key with the dictation key: ⇧ Improve, control Defuse, ⌘ Add emojis, the other ⌥ your own prompt. Local MLX dictation is prepared while you speak (cleanup 0.6 s instead of 3.1 s), dictation fits the text at the cursor, and Apple Intelligence joins as an on-device provider.
 - **Sort notes (v2.31)** — sort the note list by modified, created or name, optionally reversed. macOS reset the creation date on every save, so Tippi now keeps it in a hidden file it shares with TippAI.
 - **Dictation in the notch with Gnotchi (v2.30)** — with the free notch app [Gnotchi](https://github.com/miwixyz/Gnotchi) running, the notch shows recording, voice level and “transcribing”, and with live text the last two lines; Tippi hides its own pill. Text only travels over a local socket to the verified, Developer-ID-signed Gnotchi.
 - **Pause Tippi, url-style slugs (v2.29)** — pause what Tippi does on its own (selection popup, autocomplete, snippets) from the menu bar for 15 minutes, an hour, until tomorrow morning or until you resume, or toggle with ⌃⌥⌘P; hotkeys keep working. New quick action a-b turns `Bob Trevino likes it` into `bob-trevino-likes-it`.

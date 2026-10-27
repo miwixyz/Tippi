@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
-<meta name="tippi:documented-version" content="2.31.0">
+<meta name="tippi:documented-version" content="2.32.0">
 <title>Tippi: AI writing for macOS, one app instead of eight</title>
 <meta name="description" content="AI writing right at your cursor in any Mac app, plus dictation, translation, snippets, emoji, notes and screen text. One app instead of eight. Open source, BYOK, 8 AI providers, fully local option.">
 <link rel="canonical" href="https://tippi.mwlr.dev/">
@@ -63,7 +63,7 @@
   <div class="wrap">
     <img src="mascot-224.png" class="mascot" alt="Tippi mascot" width="112" height="112">
 
-    <div><p class="news"><span data-lang="en">New in 2.31: sort your notes by date modified, date created or name. Saving a note no longer resets its creation date, and TippAI sorts the same way.</span><span data-lang="de">Neu in 2.31: Sortiere deine Notizen nach Änderung, Erstellung oder Name. Beim Speichern geht das Erstellungsdatum nicht mehr verloren, und TippAI sortiert genauso.</span></p></div>
+    <div><p class="news"><span data-lang="en">New in 2.32: dictation modes. Hold an extra key while you dictate and the text arrives improved, calmed down or with emojis. Local AI dictation is fast again.</span><span data-lang="de">Neu in 2.32: Diktat-Modi. Halte beim Diktieren eine Zusatztaste, und der Text kommt verbessert, entschärft oder mit Emojis an. Diktat mit lokaler KI ist wieder schnell.</span></p></div>
 
     <h1 data-lang="en">Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
     <h1 data-lang="de">Text markieren.<br><span class="accent">⌥⌘T drücken.</span> KI macht den Rest.</h1>
@@ -287,6 +287,27 @@
     <p class="lead" data-lang="de">Gebaut um sich in deinen Workflow einzufügen, nicht ihn zu ersetzen.</p>
 
     <div class="features">
+      <div class="card feature">
+        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><line x1="12" y1="17" x2="12" y2="22"></line><path d="M17 3l2 2-2 2"></path></svg></div>
+        <h3 data-lang="en">Dictation modes</h3>
+        <h3 data-lang="de">Diktat-Modi</h3>
+        <p data-lang="en">Hold one extra key with your dictation key: ⇧ improves the text, control calms an angry message, ⌘ adds emojis, the other ⌥ runs a prompt you pick.</p>
+        <p data-lang="de">Halte zur Diktat-Taste eine Zusatztaste: ⇧ verbessert, control macht aus Ärger eine sachliche Nachricht, ⌘ setzt Emojis, die andere ⌥ startet deinen Prompt.</p>
+      </div>
+      <div class="card feature">
+        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="9" y2="12"></line><line x1="15" y1="12" x2="20" y2="12"></line><line x1="12" y1="9" x2="12" y2="15"></line><line x1="4" y1="17" x2="16" y2="17"></line></svg></div>
+        <h3 data-lang="en">Dictation that fits the sentence</h3>
+        <h3 data-lang="de">Diktat, das in den Satz passt</h3>
+        <p data-lang="en">Dictate into the middle of a sentence and Tippi fixes the edges: a space where words would stick, lowercase mid-sentence, no stray period. It uses fixed rules, not AI.</p>
+        <p data-lang="de">Diktierst du mitten in einen Satz, passt Tippi die Ränder an: Leerzeichen, wo Wörter kleben, Kleinschreibung im Satz, kein überflüssiger Punkt. Das machen feste Regeln, keine KI.</p>
+      </div>
+      <div class="card feature">
+        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><rect x="9" y="9" width="6" height="6" rx="1"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg></div>
+        <h3 data-lang="en">Apple Intelligence on board</h3>
+        <h3 data-lang="de">Apple Intelligence an Bord</h3>
+        <p data-lang="en">On macOS 26 and later, Apple's on-device model works as a provider. You need no key and no download, and your text stays on the Mac. It does well at cleanup and emojis.</p>
+        <p data-lang="de">Ab macOS 26 kann Apples Modell auf dem Mac als Anbieter arbeiten. Du brauchst keinen Schlüssel und keinen Download, dein Text bleibt auf dem Mac. Stark bei Bereinigen und Emojis.</p>
+      </div>
       <div class="card feature">
         <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
         <h3 data-lang="en">System-wide hotkey</h3>
