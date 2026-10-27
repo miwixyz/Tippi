@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Behoben
+- **Diktat mit lokaler KI wartete bis zu 20 Sekunden.** Nach einer längeren Pause hatte macOS das lokale MLX-Modell aus dem Speicher geräumt, und die KI-Nachbearbeitung musste es erst nach dem Sprechen zurückholen (gemessen: 20,6 s für zwei Zeilen). Tippi bereitet das Modell jetzt schon vor, während du sprichst: Es holt das Modell zurück und liest den Bereinigungs-Prompt vorab ein. Danach dauerte die Nachbearbeitung 0,6 s statt 3,1 s.
+
+### Intern
+- `MLXProvider.prime(systemPrompt:)`: Anfrage mit `max_tokens` 1 und genau dem Diktat-Prompt, beim Diktat-Start statt nur `MLXServerManager.start()`, das bei laufendem Server nichts tat. Der Anfrage-Aufbau (`Body`) wird von `complete` und `prime` gemeinsam genutzt, damit der Prompt-Zwischenspeicher des Servers greift.
+
 ## [2.31.0] — 2026-10-22
 
 Deine Notizen lassen sich sortieren, und das Erstellungsdatum bleibt erhalten.

@@ -1,5 +1,19 @@
 import Foundation
 
+/// Request body of `mlx_lm.server`'s OpenAI-compatible chat endpoint. Shared by
+/// `complete` and `prime`: the prompt cache only helps if both render the system
+/// prompt identically, so they must not drift apart.
+private struct Message: Encodable { let role: String; let content: String }
+private struct ChatTemplateKwargs: Encodable { let enable_thinking: Bool }
+private struct Body: Encodable {
+    let model: String
+    let messages: [Message]
+    let stream: Bool
+    let max_tokens: Int
+    let temperature: Double
+    let chat_template_kwargs: ChatTemplateKwargs
+}
+
 struct MLXProvider: LLMProvider {
     let id           = "mlx"
     let displayName  = "MLX (local)"
@@ -21,7 +35,6 @@ struct MLXProvider: LLMProvider {
         request.timeoutInterval = 90  // startup is handled separately; keep running requests bounded
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        struct Message: Encodable { let role: String; let content: String }
         // enable_thinking=false suppresses the chain-of-thought preamble of
         // thinking models so they return usable text in `content` instead of a
         // "Thinking Process:…" monologue in `reasoning`.
@@ -43,15 +56,7 @@ struct MLXProvider: LLMProvider {
         // kwarg. That was true of Gemma 3 and is no longer true — right
         // behaviour, stale reason, which is the kind of note that gets trusted
         // later without rechecking.
-        struct ChatTemplateKwargs: Encodable { let enable_thinking: Bool }
-        struct Body: Encodable {
-            let model: String
-            let messages: [Message]
-            let stream: Bool
-            let max_tokens: Int
-            let temperature: Double
-            let chat_template_kwargs: ChatTemplateKwargs
-        }
+        //
         // Use the HuggingFace repo ID we explicitly started the server with —
         // NOT whatever /v1/models reports first.
         //
@@ -112,6 +117,47 @@ struct MLXProvider: LLMProvider {
         let text = (first.message.content ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw LLMError.invalidResponse }
         return text
+    }
+
+    /// Primes the server for an upcoming request with `systemPrompt`: one
+    /// throwaway completion (`max_tokens` 1) with exactly that system prompt.
+    /// `mlx_lm.server` keeps the prompt cache of its last request, so the real
+    /// request afterwards only has to prefill the user text; the same call also
+    /// pages the weights back in after macOS swapped them out during a long idle
+    /// period. Fired when dictation starts, so the cost lands while the user is
+    /// still speaking.
+    ///
+    /// Measured 2026-10-27 (Mac mini, gemma-4-e4b-it-4bit, dictation prompt):
+    /// prime 3.1 s with a cold prefix, the real request afterwards 0.59 s with
+    /// 606 of 624 prompt tokens cached. Without it, the first dictation polish
+    /// after ~2 h idle took 20.6 s, all of it after recording had ended.
+    /// `MLXServerManager.start()` returns immediately for a running server, so
+    /// it never covered that case. Best-effort: all errors are ignored.
+    static func prime(systemPrompt: String) async {
+        guard let port = try? await MLXServerManager.shared.start(),
+              let url = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 90
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let resolvedModel = await MainActor.run { MLXServerManager.activeModel }
+        let body = Body(
+            model: resolvedModel,
+            messages: [
+                Message(role: "system", content: systemPrompt),
+                Message(role: "user", content: ".")
+            ],
+            stream: false,
+            max_tokens: 1,
+            temperature: 0,
+            chat_template_kwargs: ChatTemplateKwargs(enable_thinking: false)
+        )
+        guard let data = try? JSONEncoder().encode(body) else { return }
+        request.httpBody = data
+        guard let (_, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode) else { return }
+        await MainActor.run { MLXServerManager.shared.markWarm() }
     }
 
     private func maxTokens(for userText: String) -> Int {

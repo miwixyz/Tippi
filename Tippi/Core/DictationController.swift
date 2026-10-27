@@ -558,8 +558,14 @@ final class DictationController: ObservableObject {
         let override = DictationSettings.postProcessProviderOverride
         let provider = override.isEmpty ? LLMRouter.shared.effectivePreferredProviderID() : override
         guard provider == "mlx" else { return }
+        // Not just start(): for an already running server that is a no-op, yet
+        // the first polish after a long idle still paid the weight page-in and
+        // the full prompt prefill after recording ended (20.6 s measured
+        // 2026-10-27). prime() starts the server if needed AND sends the exact
+        // cleanup prompt, so the real request only prefills the transcript.
+        let prompt = DictationSettings.effectivePostProcessPrompt
         Task.detached(priority: .utility) {
-            try? await MLXServerManager.shared.start()
+            await MLXProvider.prime(systemPrompt: prompt)
         }
     }
 
