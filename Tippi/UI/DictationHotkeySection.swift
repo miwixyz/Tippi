@@ -61,6 +61,9 @@ struct DictationHotkeySection: View {
                 }
 
                 Divider().padding(.vertical, 4)
+                DictationModesSection(inputMode: dictationMode, trigger: dictationTapOrHoldModifier)
+
+                Divider().padding(.vertical, 4)
                 MailDictationHotkeyControls()
             }
         }

@@ -107,6 +107,12 @@ dependency for that YAML parsing.
   plain-language messages. Lives in `Tippi/LLM/AppleIntelligenceModel.swift`;
   Tippi adds the macOS 27 `LanguageModelError` mapping, the
   `permissiveContentTransformations` guardrails and English/German strings.
+- **Dictation modes (idea only, no code copied):** a hot key that starts
+  dictation directly in a mode and runs that mode's prompt on the transcript
+  follows Blitztext's workflows (`BlitztextMac/Features/Workflows/`). Tippi's
+  implementation (`Tippi/Core/DictationModes.swift`,
+  `Tippi/Core/DictationController+Modes.swift`) is its own: the tap-or-hold
+  dictation key plus one held modifier picks one of four user-assignable slots.
 
 ### MIT License (Blitztext App)
 

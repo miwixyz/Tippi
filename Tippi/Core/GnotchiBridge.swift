@@ -91,7 +91,7 @@ final class DictationIndicator {
     private var liveLink: GnotchiLiveLink?
     private var textSubscription: AnyCancellable?
 
-    func recording(recorder: AudioRecorder, preview: LiveTranscriptionPreview?, aiEnabled: Bool, isMail: Bool) {
+    func recording(recorder: AudioRecorder, preview: LiveTranscriptionPreview?, aiEnabled: Bool, source: DictationSource) {
         closeLiveLink()
         let ready = GnotchiBridge.gnotchiShowsDictation()
         if ready, preview != nil { liveLink = GnotchiLiveLink.open() }
@@ -106,17 +106,17 @@ final class DictationIndicator {
         } else {
             closeLiveLink()
             RecordingIndicatorWindowController.shared.show(mode: .recording, recorder: recorder, preview: preview,
-                                                           aiEnabled: aiEnabled, isMail: isMail)
+                                                           aiEnabled: aiEnabled, source: source)
         }
     }
 
     /// Also used when the AI polish starts (then with the provider name for Tippi's pill).
-    func transcribing(recorder: AudioRecorder, aiEnabled: Bool, providerName: String? = nil, isMail: Bool) {
+    func transcribing(recorder: AudioRecorder, aiEnabled: Bool, providerName: String? = nil, source: DictationSource) {
         if notchActive {
             gnotchi.transcribing()
         } else {
             RecordingIndicatorWindowController.shared.show(mode: .transcribing, recorder: recorder, aiEnabled: aiEnabled,
-                                                           providerName: providerName, isMail: isMail)
+                                                           providerName: providerName, source: source)
         }
     }
 

@@ -54,6 +54,10 @@ Tippi/
 │   │                               #   `layoutWanted` (nie in Terminals/Enter-Apps), rein + getestet
 │   ├── MailDictation.swift         # 2.21 — Hotkey „Diktat für Mails" (⌃⌥⌘B, id 7): Einstellungen,
 │   │                               #   Konfliktprüfung gegen alle Tippi-Kürzel
+│   ├── DictationModes.swift        # Diktat-Modi: Tap-or-Hold-Taste + ⇧/⌃/⌘/fn → Prompt. Plätze,
+│   │                               #   Belegung (JSON, versioniert), Zusatztaste aus CGEventFlags (rein)
+│   ├── DictationController+Modes.swift # Ablauf eines Modus: Prompt nach der Erkennung, 30-s-Deckel,
+│   │                               #   Rohtext-Rückfall, MLX-Vorwärmen mit dem Prompt des Modus
 │   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
 │   │                               #   Ergebnis geschrieben wird (Notizfenster /
 │   │                               #   Accessibility / blind) + ReplacementWriter.
@@ -150,6 +154,7 @@ Tippi/
 │   │                                      #   2026-09-28): Schalter, Modell, zwei Übernahme-Tasten, Ausschlussliste
 │   ├── DictationHotkeySection.swift       # Diktat-Hotkey, seit 2026-09-28 unter Einstellungen → Hotkeys;
 │   │                                      #   2.21: „Diktat für Mails" (MailDictationHotkeyControls)
+│   ├── DictationModesSection.swift        # Diktat-Modi: Hauptschalter + vier Plätze, in DictationHotkeySection
 │   ├── HotkeyRecorderField.swift          # Tasten-Recorder; ohne `validator` globale Hotkeys (⌘/⌃ Pflicht),
 │   │                                      #   mit `validator` z. B. die Übernahme-Tasten
 │   ├── DictationAutoReturnSection.swift   # v2.16 — App-Liste „Nach dem Einfügen Enter drücken“

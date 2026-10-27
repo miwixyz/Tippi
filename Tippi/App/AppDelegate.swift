@@ -1445,12 +1445,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // same app, and the tap path needs the app that was frontmost
                     // when the key fired.
                     let target = self.resolvedSourceAppForCapture()
+                    // An extra modifier held at that moment picks a dictation mode
+                    // (`DictationModes`); `toggle` uses it only to start, not to stop.
                     switch event {
-                    case .doubleTap:
+                    case .doubleTap(let modifiers):
                         await self.dictationController.toggle(
-                            targetApp: target, notesTextView: Self.focusedNotesTextView())
-                    case .holdBegan:
-                        await self.dictationController.beginHoldRecording()
+                            targetApp: target, notesTextView: Self.focusedNotesTextView(),
+                            source: DictationModes.source(for: modifiers))
+                    case .holdBegan(let modifiers):
+                        await self.dictationController.beginHoldRecording(source: DictationModes.source(for: modifiers))
                     case .holdEnded:
                         self.dictationController.endHoldRecording(
                             targetApp: target, notesTextView: Self.focusedNotesTextView())
