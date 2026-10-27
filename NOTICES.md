@@ -79,6 +79,19 @@ dependency for that YAML parsing.
   English, parameterised with `{language}`, and aligned to Tippi's "Return
   ONLY" output convention; the underlying communicative intent and structure
   are preserved.
+- **Adapted code (v1.15.1, commit `26022b9`, added 2026-10):**
+  1. `BlitztextMac/Services/InsertionFitter.swift` — the rules that fit a
+     dictation into the text around the cursor (spacing, sentence-start
+     capital, lowercase function word mid-sentence, period before continuing
+     text) including the German/English function-word list. In Tippi:
+     `Tippi/Core/InsertionFitter.swift`, rules taken over closely; added a
+     nil-field entry point (unreadable field → text unchanged) and the
+     exclusion of terminals/code editors.
+  2. `BlitztextMac/Services/FocusedFieldReader.swift` (`field(pid:bundleID:)`)
+     — reading the text before/after the cursor via Accessibility, never from
+     password fields. In Tippi: `Tippi/Core/FocusedFieldReader.swift`, with a
+     per-element timeout instead of Blitztext's process-wide one and without
+     the browser web-tree switch.
 
 ### MIT License (Blitztext App)
 

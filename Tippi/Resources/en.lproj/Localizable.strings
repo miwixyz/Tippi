@@ -666,6 +666,8 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.dictation.postProcess.enable" = "Polish transcript with AI (removes fillers, adds punctuation)";
 "settings.voice.dictation.layout.enable" = "Line breaks and punctuation (e.g. for emails)";
 "settings.voice.dictation.layout.body" = "Fixed rules, no AI: greeting on its own line, one line per sentence, an empty line before the closing, a colon before “the following …”. A single sentence stays as it is. Never in terminals and apps with “Press Return after dictation”.";
+"settings.voice.dictation.fit.enable" = "Fit dictation to the text at the cursor";
+"settings.voice.dictation.fit.body" = "Fixed rules, no AI: a space where words would touch, a capital letter at the start of a sentence, “and”/“und” in lowercase mid-sentence, no period where your sentence goes on. Only the start and end of the dictation change. Tippi reads a little text before and after the cursor for this; never in password fields, terminals or code editors. Where an app does not show its text (some web and Electron apps), the dictation goes in unchanged.";
 "settings.voice.dictation.mail.enable" = "Dictation for emails";
 "settings.voice.dictation.mail.body" = "Its own hot key (⌃⌥⌘B by default): the same dictation, but always with line breaks and punctuation, even with the switch under Dictation off. Never presses Return.";
 "settings.voice.dictation.mail.conflict" = "Already used by “%@”. Please pick another combination. Until then the hot key is not active.";

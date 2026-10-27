@@ -641,6 +641,8 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.voice.dictation.postProcess.enable" = "Transkript per KI glätten (Füllwörter raus, Satzzeichen rein)";
 "settings.voice.dictation.layout.enable" = "Absätze und Satzzeichen setzen (z. B. für Mails)";
 "settings.voice.dictation.layout.body" = "Feste Regeln, ohne KI: Anrede in eine eigene Zeile, jeder Satz eine Zeile, Grußformel mit Leerzeile davor, Doppelpunkt vor „folgende …“. Ein einzelner Satz bleibt, wie er ist. Nie in Terminals und Apps mit „Enter nach dem Diktat“.";
+"settings.voice.dictation.fit.enable" = "Diktat passend zum Text am Cursor einfügen";
+"settings.voice.dictation.fit.body" = "Feste Regeln, ohne KI: ein Leerzeichen, wo Wörter sonst aneinanderkleben, ein Großbuchstabe am Satzanfang, „und“/„and“ mitten im Satz klein, kein Punkt, wo dein Satz weitergeht. Es ändern sich nur Anfang und Ende des Diktats. Dafür liest Tippi ein Stück Text vor und hinter dem Cursor, nie in Passwortfeldern, Terminals oder Code-Editoren. Wo eine App ihren Text nicht zeigt (manche Web- und Electron-Apps), kommt das Diktat unverändert hinein.";
 "settings.voice.dictation.mail.enable" = "Diktat für Mails";
 "settings.voice.dictation.mail.body" = "Eigener Hotkey (ab Werk ⌃⌥⌘B): gleiches Diktat, aber immer mit Absätzen und Satzzeichen, auch wenn der Schalter unter Diktat aus ist. Drückt nie Enter.";
 "settings.voice.dictation.mail.conflict" = "Schon belegt von „%@“. Bitte eine andere Kombination wählen. Solange ist der Hotkey nicht aktiv.";

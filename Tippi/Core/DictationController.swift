@@ -485,6 +485,10 @@ final class DictationController: ObservableObject {
             // single line (Rafter 2026-09-27). Chat apps keep their paragraphs.
             let isCommandTarget = targetApp?.bundleIdentifier.map(DictationSettings.commandCapableBundleIDs.contains) ?? false
             let textToInsert = (returnDecision != .skip && isCommandTarget) ? Self.singleLine(final) : final
+            // Fit the edges to the text around the cursor (space, capital, period).
+            // Read right before writing: that is where the text actually goes.
+            let fit = DictationSettings.fitWanted(toggle: DictationSettings.fitInsertionEnabled,
+                                                  targetBundleID: notesTextView == nil ? targetApp?.bundleIdentifier : nil)
             let copiedInstead = await Task { @MainActor () -> Bool in
                 if let notesTextView {
                     // The Notes window is kept (not released) when closed, so
@@ -494,9 +498,14 @@ final class DictationController: ObservableObject {
                         TextInsertion.copy(textToInsert)
                         return true
                     }
-                    ReplacementWriter.writeNative(textToInsert, in: notesTextView, range: notesTextView.selectedRange())
+                    let range = notesTextView.selectedRange()
+                    let field = fit ? FocusedFieldReader.slice(notesTextView.string,
+                                                               range: CFRange(location: range.location, length: range.length)) : nil
+                    ReplacementWriter.writeNative(InsertionFitter.fit(textToInsert, around: field),
+                                                  in: notesTextView, range: range)
                 } else {
-                    await TextInsertion.replace(with: textToInsert, in: targetApp)
+                    let field = fit ? targetApp.flatMap { FocusedFieldReader.text(pid: $0.processIdentifier) } : nil
+                    await TextInsertion.replace(with: InsertionFitter.fit(textToInsert, around: field), in: targetApp)
                 }
                 return false
             }.value
