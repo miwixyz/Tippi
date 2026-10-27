@@ -54,7 +54,7 @@ dependency for that YAML parsing.
 - **Source:** https://github.com/jpsim/Yams
 - **License:** MIT
 
-## Blitztext App — "Defuse" and "Add emojis" mode prompts
+## Blitztext App — "Defuse" and "Add emojis" mode prompts, Apple Intelligence access
 
 - **Source repository:** https://github.com/cmagnussen/blitztext-app
 - **Original maintainer:** Christian Magnussen / Blackboat Internet GmbH
@@ -71,6 +71,14 @@ dependency for that YAML parsing.
   English, parameterised with `{language}`, and aligned to Tippi's "Return
   ONLY" output convention; the underlying communicative intent and structure
   are preserved.
+- **Adapted code:** the Apple Intelligence access in
+  `BlitztextShared/AI/TextRewriter.swift` — the `SystemLanguageModel`
+  availability check with one user-facing sentence per unavailability reason,
+  the `LanguageModelSession` call with greedy sampling, and the mapping of
+  `GenerationError` cases (context window, guardrails, unsupported language) to
+  plain-language messages. Lives in `Tippi/LLM/AppleIntelligenceModel.swift`;
+  Tippi adds the macOS 27 `LanguageModelError` mapping, the
+  `permissiveContentTransformations` guardrails and English/German strings.
 
 ### MIT License (Blitztext App)
 

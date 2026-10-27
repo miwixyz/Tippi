@@ -325,6 +325,7 @@ for p in ${PROVIDERS}; do
         Gemini)    needle_en="Gemini";    needle_de="Gemini";;
         Ollama)    needle_en="Ollama";    needle_de="Ollama";;
         MLX)       needle_en="MLX";       needle_de="MLX";;
+        AppleIntelligence) needle_en="Apple Intelligence"; needle_de="Apple Intelligence";;
         *)         needle_en="${p}";      needle_de="${p}";;
     esac
     grep -q "settings.help.apiBody.*${needle_en}" "${EN_STRINGS}" || {

@@ -125,12 +125,15 @@ Tippi/
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
 │       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
 │                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
-├── LLM/                            # 7 Provider + Router
+├── LLM/                            # 8 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
 │   ├── LLMRouter.swift             # Registry, Routing, Fallback
 │   ├── ProviderModelPresets.swift  # kuratierte Modell-Listen + retiredModels-Migration
 │   ├── ModelAvailabilityChecker.swift  # Live-Katalog-Abgleich beim Start
-│   └── {OpenAI,Anthropic,Gemini,Mistral,OpenRouter,Ollama,MLX}Provider.swift
+│   ├── AppleIntelligenceModel.swift  # Apples Modell auf dem Gerät (FoundationModels, ab macOS 26):
+│   │                               #   Verfügbarkeit, Anfrage, Fehler → Klartext; ohne andere Tippi-Typen,
+│   │                               #   damit scripts/apple-intelligence-messung/ genau diese Datei misst
+│   └── {OpenAI,Anthropic,Gemini,Mistral,OpenRouter,Ollama,MLX,AppleIntelligence}Provider.swift
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):
 │   │                               #   Akzent, accentFill, glassTint, Plus Jakarta Sans, Schrift-Registrierung

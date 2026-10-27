@@ -2,10 +2,17 @@
 
 ## [Unveröffentlicht]
 
+### Neu
+- **Apple Intelligence als Anbieter.** Ab macOS 26 kann Tippi Apples eigenes Modell direkt auf dem Mac nutzen: nichts zu installieren, kein Schlüssel, dein Text verlässt den Mac nicht. Unter Einstellungen → Anbieter steht, ob es bereit ist oder was fehlt (zum Beispiel „Apple Intelligence ist aus“ mit dem Weg in die Systemeinstellungen). Im Test auf dem Mac mini hat es Diktate in 0,5 bis 1,3 Sekunden bereinigt und Emojis gut gesetzt. Bei „Dampf ablassen“ und „Verbessern“ hat es Inhalte erfunden. Dafür besser ein Cloud- oder MLX-Modell nehmen.
+
 ### Behoben
 - **Diktat mit lokaler KI wartete bis zu 20 Sekunden.** Nach einer längeren Pause hatte macOS das lokale MLX-Modell aus dem Speicher geräumt, und die KI-Nachbearbeitung musste es erst nach dem Sprechen zurückholen (gemessen: 20,6 s für zwei Zeilen). Tippi bereitet das Modell jetzt schon vor, während du sprichst: Es holt das Modell zurück und liest den Bereinigungs-Prompt vorab ein. Danach dauerte die Nachbearbeitung 0,6 s statt 3,1 s.
 
 ### Intern
+- `AppleIntelligenceProvider` (id `apple`, ein Preset `system`) über `AppleIntelligenceModel` (FoundationModels, schwach gelinkt, alles hinter `@available(macOS 26)`): eine Sitzung pro Anfrage, Inhaltsfilter `permissiveContentTransformations` (mit Apples Standardfilter wurden 2 von 3 „Dampf ablassen“-Texten abgelehnt), Diktat-Hinweis 0.1 → `greedy`, sonst Temperatur 0.3. Kein `maximumResponseTokens`, damit nie eine halbe Antwort zurückkommt; ein volles Kontextfenster wirft „Text zu lang“ (gemessen, auch wenn es erst beim Schreiben der Antwort voll wird). Fehler von macOS 26 (`GenerationError`) und 27 (`LanguageModelError`) werden auf `AppleIntelligenceError` mit Klartext (en + de) abgebildet. Nicht verfügbar (aus, Modell lädt, macOS zu alt) gilt im Router wie ein nicht laufender lokaler Server; Statuszeile in der Menüleiste.
+- `scripts/apple-intelligence-messung/`: schickt Diktat-Bereinigung, „Verbessern“, „Dampf ablassen“, „Emojis einfügen“ und zwei Kontextfenster-Grenzfälle live aus dem Code an Apple Intelligence und misst Zeit, Ergebnis und Ablehnung.
+- `release.sh` kennt den Anbieternamen „Apple Intelligence“; die Anbieterzahl in „Über“ war falsch („9 Cloud + 2 lokal“) und lautet jetzt 5 Cloud + 3 lokal.
+- 767 Tests (6 neu).
 - `MLXProvider.prime(systemPrompt:)`: Anfrage mit `max_tokens` 1 und genau dem Diktat-Prompt, beim Diktat-Start statt nur `MLXServerManager.start()`, das bei laufendem Server nichts tat. Der Anfrage-Aufbau (`Body`) wird von `complete` und `prime` gemeinsam genutzt, damit der Prompt-Zwischenspeicher des Servers greift.
 
 ## [2.31.0] — 2026-10-22

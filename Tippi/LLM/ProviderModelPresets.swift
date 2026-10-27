@@ -53,6 +53,7 @@ enum ProviderModelPresets {
         case "gemini":     return gemini
         case "mistral":    return mistral
         case "openrouter": return openRouter
+        case "apple":      return appleIntelligence
         default:           return []   // Ollama / MLX use their own pickers
         }
     }
@@ -171,6 +172,14 @@ enum ProviderModelPresets {
         Preset(id: "anthropic/claude-haiku-5.5",   label: "Claude Haiku 5.5 (via OpenRouter) — newest",     isFastest: false, isReasoning: false),
         Preset(id: "openai/gpt-6-luna",            label: "GPT-6 Luna (via OpenRouter) — cheap",            isFastest: false, isReasoning: false),
         Preset(id: "~google/gemini-flash-latest",  label: "Gemini Flash latest (via OpenRouter)",           isFastest: false, isReasoning: false),
+    ]
+
+    // MARK: - Apple Intelligence
+    //
+    // The system decides which on-device model runs; there is nothing to pick.
+    // One preset so the dictation-polish override lands on a valid id.
+    static let appleIntelligence: [Preset] = [
+        Preset(id: "system", label: "Apple Intelligence (system model) ⭐", isFastest: true, isReasoning: false),
     ]
 
     /// Default model for dictation polish on a given provider — picks the

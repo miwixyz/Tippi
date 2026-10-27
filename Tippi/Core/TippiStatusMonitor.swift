@@ -130,6 +130,16 @@ final class TippiStatusMonitor: ObservableObject {
             }
         case "ollama":
             new = ollamaReachable ? .ready : .warming
+        case "apple":
+            switch AppleIntelligenceModel.unavailableReason {
+            case nil:            new = .ready
+            case .modelNotReady: new = .warming   // the system is still downloading it
+            case let reason?:
+                new = .error(Problem(
+                    headline: String(localized: "status.error.appleUnavailable"),
+                    action: reason.localizedDescription
+                ))
+            }
         default:
             new = .ready   // cloud provider — instantly ready
         }
