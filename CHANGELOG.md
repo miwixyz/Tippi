@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.32.0] — 2026-10-27
+
+- _Add release notes here._
+
 ## [Unveröffentlicht]
 
 ### Neu
