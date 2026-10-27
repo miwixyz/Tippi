@@ -47,6 +47,13 @@ Tippi/
 │   ├── ScreenOCRSettings.swift     # v2.12 — Hotkey + Voreinstellungen (ab Werk AUS)
 │   ├── RecognizedTextJoiner.swift  # v2.12.2 — OCR-Zeilen zu Absätzen, Layout vs. Bedeutung
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
+│   ├── InsertionFitter.swift       # 2.32 — Diktat passend zum Text am Cursor (Leerzeichen, Groß/Klein,
+│   │                               #   Punkt), feste Regeln nach Blitztext (MIT), rein + getestet
+│   ├── FocusedFieldReader.swift    # 2.32 — Text vor/hinter dem Cursor + Feld-Fingerabdruck über die
+│   │                               #   Bedienungshilfen, nie aus Passwortfeldern, 0,25 s je Element
+│   ├── FieldFingerprint.swift      # 2.32 — „dasselbe Feld?“: Rolle + Position relativ zum Fenster, 8 pt
+│   ├── DictationController+Insertion.swift # 2.32 — letzter Schritt des Diktats: Fokus-Schutz, Einfügen
+│   │                               #   mit InsertionFitter, Messpunkt `insert-fit`
 │   ├── DictationAutoReturn.swift   # v2.16 — Enter nach dem Diktat, pro App. In Terminals /
 │   │                               #   Code-Editoren nur bei von der KI unverändertem Text
 │   ├── DictationLayout.swift       # 2.21 — „Absätze und Satzzeichen" im Diktat, rein regelbasiert
@@ -137,6 +144,8 @@ Tippi/
 │   ├── AppleIntelligenceModel.swift  # Apples Modell auf dem Gerät (FoundationModels, ab macOS 26):
 │   │                               #   Verfügbarkeit, Anfrage, Fehler → Klartext; ohne andere Tippi-Typen,
 │   │                               #   damit scripts/apple-intelligence-messung/ genau diese Datei misst
+│   ├── AppleIntelligenceProvider.swift # 2.32 — Anbieter `apple` (ein Preset „System“), nicht verfügbar
+│   │                               #   = wie ein nicht laufender lokaler Server
 │   └── {OpenAI,Anthropic,Gemini,Mistral,OpenRouter,Ollama,MLX,AppleIntelligence}Provider.swift
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):
@@ -155,6 +164,7 @@ Tippi/
 │   ├── DictationHotkeySection.swift       # Diktat-Hotkey, seit 2026-09-28 unter Einstellungen → Hotkeys;
 │   │                                      #   2.21: „Diktat für Mails" (MailDictationHotkeyControls)
 │   ├── DictationModesSection.swift        # Diktat-Modi: Hauptschalter + vier Plätze, in DictationHotkeySection
+│   ├── ParakeetModelRows.swift            # 2.32 — Einstellungszeilen „Parakeet-Modell“ (v3 / Ultra, Laden)
 │   ├── HotkeyRecorderField.swift          # Tasten-Recorder; ohne `validator` globale Hotkeys (⌘/⌃ Pflicht),
 │   │                                      #   mit `validator` z. B. die Übernahme-Tasten
 │   ├── DictationAutoReturnSection.swift   # v2.16 — App-Liste „Nach dem Einfügen Enter drücken“

@@ -60,6 +60,14 @@ Decide by the sheet, not by a single example. Variants that were measured and ru
 out are listed in the script header (raw completion with the chat model; Gemma base
 models that don't load in mlx-lm) — don't retry them without a new reason.
 
+**Speech recognition, v3 against Ultra:** `bash scripts/parakeet-vergleich.sh <folder> --modelle v3,ultra --sprache de --texte` transcribes pairs `name.wav` + `name.txt` (16 kHz mono, reference text) with both Parakeet models and prints word error rate and time per file. Missing models are only downloaded with `--laden`. `--eichsatz <folder>` creates synthetic sentences with the system voice to check the tool itself — never decide on those. Measured 2026-10-27 on eight own German sentences: v3 11.5 %, Ultra 13.7 %.
+
+**Apple Intelligence with Tippi's prompts:** `scripts/apple-intelligence-messung/main.swift` reads the dictation cleanup prompt and the built-in prompts live from the code and sends them to the on-device model (time, result, refused yes/no). Run it on a Mac with Apple Intelligence switched on.
+
+**Dictation modes and insertion, what really happened:** `log stream --predicate 'subsystem == "com.tippi.app" AND (category == "modes" OR category == "insert-fit")' --info` shows the modifier bits Tippi saw, the slot it picked, and whether the field at the cursor was readable. No text is logged.
+
+**Careful:** `make build` stops a running Tippi (`pkill -x Tippi`), including the installed release. Restart it afterwards with `open -a /Applications/Tippi.app`.
+
 For a number instead of a judgement, `scripts/autocomplete-messung/` cuts real text
 at random points (half of them mid-word) and counts how often the suggestion hits the
 actual next word:
