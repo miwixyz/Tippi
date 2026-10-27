@@ -92,6 +92,13 @@ dependency for that YAML parsing.
      password fields. In Tippi: `Tippi/Core/FocusedFieldReader.swift`, with a
      per-element timeout instead of Blitztext's process-wide one and without
      the browser web-tree switch.
+  3. `BlitztextMac/App/AppState.swift` (`noteTargetField`, the check before
+     pasting) and `FocusedFieldReader.FocusSpot` — the field fingerprint (role
+     + position at the end of the recording, compared before inserting, else
+     clipboard). In Tippi: `Tippi/Core/FieldFingerprint.swift`,
+     `FocusedFieldReader.focusSpot` and `DictationController+Insertion.swift`;
+     position relative to the window and an 8 pt tolerance instead of exact
+     screen coordinates.
 
 ### MIT License (Blitztext App)
 

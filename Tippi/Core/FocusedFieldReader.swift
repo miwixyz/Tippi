@@ -38,7 +38,43 @@ enum FocusedFieldReader {
         )
     }
 
+    /// The focused element of `pid` and its fingerprint (`FieldFingerprint`).
+    /// `textFieldOnly`: nil unless the element reports a text cursor — taken
+    /// at the end of the recording, where there must be a real field to
+    /// protect; at insertion time anything focused counts (a button that took
+    /// the focus is "another field" too).
+    struct FocusSpot {
+        let element: AXUIElement
+        let fingerprint: FieldFingerprint
+
+        func isSameField(as other: FocusSpot) -> Bool {
+            FieldFingerprint.isSameField(fingerprint, other.fingerprint,
+                                         sameElement: CFEqual(element, other.element))
+        }
+    }
+
+    static func focusSpot(pid: pid_t, textFieldOnly: Bool) -> FocusSpot? {
+        guard let focused = focusedElement(pid: pid),
+              !textFieldOnly || selectedRange(focused) != nil else { return nil }
+        let position = point(focused, kAXPositionAttribute)
+        let windowPosition = element(focused, kAXWindowAttribute).flatMap { point($0, kAXPositionAttribute) }
+        let offset = position.flatMap { p in windowPosition.map { CGPoint(x: p.x - $0.x, y: p.y - $0.y) } }
+        return FocusSpot(element: focused,
+                         fingerprint: FieldFingerprint(role: string(focused, kAXRoleAttribute),
+                                                       offsetInWindow: offset, screenPosition: position))
+    }
+
     // MARK: - Accessibility helpers
+
+    static func point(_ element: AXUIElement, _ name: String) -> CGPoint? {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, name as CFString, &ref) == .success,
+              let raw = ref, CFGetTypeID(raw) == AXValueGetTypeID() else { return nil }
+        var point = CGPoint.zero
+        // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
+        guard AXValueGetValue(raw as! AXValue, .cgPoint, &point) else { return nil }
+        return point
+    }
 
     static func focusedElement(pid: pid_t) -> AXUIElement? {
         guard AXIsProcessTrusted() else { return nil }
