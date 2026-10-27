@@ -749,6 +749,8 @@ private struct ProviderRow: View {
     @State private var mlxAdvancedExpanded = false
 
     private var isMLX: Bool { provider.id == "mlx" }
+    /// No model to pick and nothing to save — the system owns the model.
+    private var isAppleIntelligence: Bool { provider.id == "apple" }
 
     // MARK: - MLX model presets
 
@@ -837,6 +839,8 @@ private struct ProviderRow: View {
 
             if isMLX {
                 mlxModelPicker
+            } else if isAppleIntelligence {
+                AppleIntelligenceStatusRow()
             } else {
                 curatedModelPicker
             }
@@ -915,21 +919,25 @@ private struct ProviderRow: View {
             }
             // ────────────────────────────────────────────────────────────
 
-            HStack {
-                if let saveError {
-                    Text(saveError)
-                        .font(FamilyTheme.font(.caption))
-                        .foregroundStyle(.red)
-                } else if savedFlash {
-                    Text(String(localized: "settings.providers.savedFlash"))
-                        .font(FamilyTheme.font(.caption))
-                        .foregroundStyle(.green)
-                }
-                Spacer()
-                Button(String(localized: "settings.providers.save"), action: save)
-                    .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
-                    .disabled(saveDisabled)
+            if !isAppleIntelligence { saveRow }
+        }
+    }
+
+    private var saveRow: some View {
+        HStack {
+            if let saveError {
+                Text(saveError)
+                    .font(FamilyTheme.font(.caption))
+                    .foregroundStyle(.red)
+            } else if savedFlash {
+                Text(String(localized: "settings.providers.savedFlash"))
+                    .font(FamilyTheme.font(.caption))
+                    .foregroundStyle(.green)
             }
+            Spacer()
+            Button(String(localized: "settings.providers.save"), action: save)
+                .buttonStyle(.borderedProminent).tint(FamilyTheme.accentFill)
+                .disabled(saveDisabled)
         }
     }
 
@@ -1163,7 +1171,36 @@ private struct ProviderRow: View {
         case "openrouter": return String(localized: "settings.providers.hint.openrouter")
         case "ollama":    return String(localized: "settings.providers.hint.ollama")
         case "mlx":       return String(localized: "settings.providers.hint.mlx")
+        case "apple":     return String(localized: "settings.providers.hint.apple")
         default:          return ""
+        }
+    }
+}
+
+/// Whether Apple Intelligence can answer right now, and if not, what to do.
+/// Read on appear: the state changes in System Settings, not in Tippi.
+private struct AppleIntelligenceStatusRow: View {
+    @State private var reason: AppleIntelligenceError? = AppleIntelligenceModel.unavailableReason
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            Text(reason?.localizedDescription ?? String(localized: "settings.providers.apple.ready"))
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+        }
+        .onAppear { reason = AppleIntelligenceModel.unavailableReason }
+    }
+
+    private var color: Color {
+        switch reason {
+        case nil:            return .green
+        case .modelNotReady: return .orange
+        default:             return .red
         }
     }
 }

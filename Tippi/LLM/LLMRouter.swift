@@ -31,7 +31,8 @@ struct LLMRouter {
         MistralProvider(),
         OpenRouterProvider(),
         OllamaProvider(),
-        MLXProvider()
+        MLXProvider(),
+        AppleIntelligenceProvider()
     ]
 
     private var providers: [LLMProvider] { Self.allProviders }
@@ -362,6 +363,11 @@ struct LLMRouter {
 
     private func isUnavailableLocalProvider(_ provider: LLMProvider, error: Error) -> Bool {
         guard !provider.requiresAPIKey else { return false }
+
+        // Apple Intelligence off / not downloaded yet / macOS too old.
+        if let appleError = error as? AppleIntelligenceError, appleError.isUnavailability {
+            return true
+        }
 
         if let mlxError = error as? MLXError {
             switch mlxError {

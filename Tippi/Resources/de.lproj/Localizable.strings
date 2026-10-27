@@ -12,6 +12,7 @@
 "status.error.mlxFailed" = "Lokaler Server fehlgeschlagen";
 "status.error.mlxStopped" = "Lokaler Server läuft nicht";
 "status.error.mlxStopped.action" = "Einstellungen ▸ MLX (local) öffnen und auf „Server starten“ klicken.";
+"status.error.appleUnavailable" = "Apple Intelligence nicht verfügbar";
 "menu.trigger" = "Tippi auslösen…";
 "menu.translate" = "Übersetzen…";
 "menu.notes" = "Notizen…";
@@ -166,6 +167,16 @@
 "preview.truncated.empty" = "Die Antwort wurde abgeschnitten, bevor Text ankam (Längen-Limit). Versuche einen kürzeren Eingabetext.";
 "llm.error.empty" = "Die KI hat keinen Text geliefert — an deiner Auswahl wurde nichts geändert.";
 "llm.error.echo" = "Das Modell hat nur deine Anweisung wiederholt — an deinem Text wurde nichts geändert. Schreib sie als ganzen Satz (z. B. „Schreib den Text lockerer“) oder nimm ein größeres Modell.";
+"llm.apple.error.requiresNewerMacOS" = "Apple Intelligence braucht macOS 26 oder neuer.";
+"llm.apple.error.deviceNotEligible" = "Dieser Mac unterstützt Apple Intelligence nicht.";
+"llm.apple.error.notEnabled" = "Apple Intelligence ist aus – Systemeinstellungen → Apple Intelligence & Siri.";
+"llm.apple.error.modelNotReady" = "Apple Intelligence lädt sein Modell noch – in ein paar Minuten nochmal versuchen.";
+"llm.apple.error.unavailable" = "Apple Intelligence ist gerade nicht verfügbar.";
+"llm.apple.error.textTooLong" = "Der Text ist zu lang für Apple Intelligence auf dem Mac. Weniger Text markieren oder einen anderen Anbieter wählen.";
+"llm.apple.error.rejected" = "Apple Intelligence hat den Text abgelehnt.";
+"llm.apple.error.unsupportedLanguage" = "Apple Intelligence kann diese Sprache auf dem Mac nicht bearbeiten.";
+"llm.apple.error.busy" = "Apple Intelligence ist gerade ausgelastet – gleich nochmal versuchen.";
+"llm.apple.error.failed" = "Apple Intelligence konnte den Text nicht bearbeiten.";
 
 /* Übersetzungs-Fenster */
 "translate.panel.placeholder" = "Text zum Übersetzen eingeben…";
@@ -442,6 +453,8 @@
 "settings.providers.hint.openrouter" = "Key bei openrouter.ai. Ein Zugang für 300+ Modelle aller großen Anbieter (OpenAI, Anthropic, Google, Meta, xAI, DeepSeek, …) — Modellname im Format „anbieter/modell“ eintragen, z. B. „openai/gpt-4o-mini“. Kosten = Anbieter-Originalpreis ohne Aufschlag bis 1 Mio. Anfragen/Monat, danach 5 %. Löst nicht automatisch das „Modell-ID veraltet“-Problem — OpenRouter erbt Namensänderungen der Original-Anbieter.";
 "settings.providers.hint.ollama" = "Ollama installieren von ollama.com. Modell vorher laden: `ollama pull llama3.3`. Läuft lokal, kein Key, keine Cloud.";
 "settings.providers.hint.mlx" = "Tippi startet mlx_lm.server automatisch. Voreingestellt ist Gemma 4 E2B — es war im Test sowohl das genaueste als auch das schnellste Modell. Qwen 3.5 2B lädt am wenigsten herunter, macht dafür mehr Fehler. Was genau gemessen wurde, steht in der Hilfe unter „Welches lokale Modell fürs Diktat?“. Keine Cloud, kein Schlüssel.";
+"settings.providers.hint.apple" = "Apples eigenes Modell direkt auf dem Mac — braucht macOS 26 oder neuer und eingeschaltete Apple Intelligence in den Systemeinstellungen. Nichts zu installieren, kein Schlüssel, dein Text verlässt den Mac nicht. Deutlich kleiner als die Cloud-Modelle: Im Test hat es Diktate schnell und gut bereinigt und Emojis gut gesetzt, bei „Dampf ablassen“ und „Verbessern“ aber Inhalte erfunden — dafür lieber ein Cloud- oder MLX-Modell nehmen.";
+"settings.providers.apple.ready" = "Bereit – läuft auf diesem Mac";
 "settings.providers.mlx.port" = "Port";
 "settings.providers.mlx.custom" = "Eigenes Modell…";
 "settings.providers.advanced" = "Erweitert";
@@ -460,7 +473,7 @@
 "settings.tab.help" = "Hilfe";
 "settings.about.description" = "Text in einer beliebigen App markieren, ⌥⌘T drücken — KI transformiert ihn direkt an Ort und Stelle.";
 "settings.about.feature1" = "Funktioniert systemweit in jeder App";
-"settings.about.feature2" = "Bring Your Own Key — 7 KI-Anbieter (9 Cloud + 2 lokal)";
+"settings.about.feature2" = "Bring Your Own Key — 8 KI-Anbieter (5 Cloud + 3 lokal)";
 "settings.about.feature3" = "Keine Telemetrie, keine Cloud-Speicherung";
 "settings.about.feature4" = "Eigene Prompts für deinen Workflow";
 "settings.help.whatsNewTitle" = "Was ist neu";
@@ -516,7 +529,7 @@ Zwei Dateien dürfen dasselbe Kürzel definieren. Wirksam ist dann nur eines; da
 "settings.help.importExportTitle" = "Prompts teilen & importieren";
 "settings.help.importExportBody" = "Exportiere deine eigenen Prompts als .tippipack-Datei — zum Teilen oder als Backup.\n\nAlle exportieren — klick auf Alle exportieren oben im Prompts-Tab.\nEinzeln exportieren — klick auf das ↑-Symbol neben einem Prompt.\nImportieren — klick auf Importieren, wähle eine .tippipack-Datei, dann: Hinzufügen (bestehende behalten) oder Ersetzen (bestehende überschreiben).\n\nImportierte Prompts bekommen immer neue IDs — keine Konflikte mit vorhandenen.";
 "settings.help.apiTitle" = "KI-Anbieter & API-Keys";
-"settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt 7 Anbieter — OpenAI, Anthropic, Gemini, Mistral und OpenRouter (300+ Modelle über einen Key) als Cloud-BYOK-Anbieter sowie Ollama und MLX (beide komplett lokal, kostenlos, ohne Key). Keys werden sicher im macOS-Schlüsselbund gespeichert.\n\nStandard-Anbieter: Tippi probiert deinen gewählten Standard zuerst; ohne Key fällt es auf den nächsten konfigurierten zurück. Ohne expliziten Standard nimmt es automatisch den ersten Anbieter, für den du einen Key hinterlegt hast — eine frische Installation hängt so nie an einem kalten lokalen Modell. Optionaler Fallback (Tab Anbieter): schlägt dein Anbieter fehl (Rate-Limit, Server- oder Netzwerkfehler), kann Tippi den nächsten konfigurierten Anbieter versuchen — standardmäßig aus, da dein Text dann an einen zweiten Anbieter geht.";
+"settings.help.apiBody" = "API-Key im Tab Anbieter eintragen. Tippi unterstützt 8 Anbieter — OpenAI, Anthropic, Gemini, Mistral und OpenRouter (300+ Modelle über einen Key) als Cloud-BYOK-Anbieter sowie Ollama, MLX und Apple Intelligence (alle komplett lokal, kostenlos, ohne Key; Apple Intelligence ab macOS 26). Keys werden sicher im macOS-Schlüsselbund gespeichert.\n\nStandard-Anbieter: Tippi probiert deinen gewählten Standard zuerst; ohne Key fällt es auf den nächsten konfigurierten zurück. Ohne expliziten Standard nimmt es automatisch den ersten Anbieter, für den du einen Key hinterlegt hast — eine frische Installation hängt so nie an einem kalten lokalen Modell. Optionaler Fallback (Tab Anbieter): schlägt dein Anbieter fehl (Rate-Limit, Server- oder Netzwerkfehler), kann Tippi den nächsten konfigurierten Anbieter versuchen — standardmäßig aus, da dein Text dann an einen zweiten Anbieter geht.";
 
 "settings.help.linksTitle" = "Links & Ressourcen";
 "settings.help.linksBody" = "[GitHub-Repository](https://github.com/miwixyz/Tippi) — public, MIT-Lizenz, Quellcode, Issues, Releases.\n\n[Landing Page](https://miwixyz.github.io/Tippi/) — zweisprachig EN/DE, Features, Screenshots, Download.\n\n[One-Pager](https://github.com/miwixyz/Tippi/blob/main/docs/ONE-PAGER.md) — für Hacker News, Reddit, Weiterleitung; Tippi in 60 Sekunden.\n\n[Changelog](https://github.com/miwixyz/Tippi/blob/main/CHANGELOG.md) — jede Änderung, jede Version.\n\n[Aktuelles Release](https://github.com/miwixyz/Tippi/releases/latest) — DMG-Download, Release Notes, Prüfsummen.";

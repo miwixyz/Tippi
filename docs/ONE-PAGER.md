@@ -21,8 +21,8 @@ That's it. That's the product.
 | Most AI assistants | Tippi |
 |---|---|
 | Open a new tab, paste your text, copy the answer back | Works in every app, right at your cursor |
-| Locked to one provider | **7 providers** — pick what works for you |
-| Cloud-only, your data leaves your Mac | **Two local engines** (MLX, Ollama) — fully offline option |
+| Locked to one provider | **8 providers** — pick what works for you |
+| Cloud-only, your data leaves your Mac | **Three local engines** (MLX, Ollama, Apple Intelligence) — fully offline option |
 | Subscription | **Free, open-source (MIT)**, bring your own key |
 | Telemetry, analytics, "anonymized" data | **Zero telemetry**, no analytics, no crash reports |
 | One utility per menu-bar icon | **One app instead of eight** — see below |
@@ -44,7 +44,7 @@ covers that whole row:
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
 | Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |
-| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 7 providers — in place, no app switch |
+| AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 8 providers — in place, no app switch |
 | Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |
 
 Several of those are cheap or free — the saving isn't mainly money. It's eight

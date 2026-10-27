@@ -12,6 +12,7 @@
 "status.error.mlxFailed" = "Local server failed";
 "status.error.mlxStopped" = "Local server is not running";
 "status.error.mlxStopped.action" = "Open Settings ▸ MLX (local) and click “Start server”.";
+"status.error.appleUnavailable" = "Apple Intelligence not available";
 "menu.trigger" = "Trigger Tippi…";
 "menu.translate" = "Translate…";
 "menu.notes" = "Notes…";
@@ -166,6 +167,16 @@
 "preview.truncated.empty" = "The response was cut off before any text arrived (output length limit). Try a shorter input.";
 "llm.error.empty" = "The AI returned no text — your selection was not changed.";
 "llm.error.echo" = "The model only repeated your instruction — your text was not changed. Write it as a full sentence (e.g. \"Make the text more casual\") or pick a larger model.";
+"llm.apple.error.requiresNewerMacOS" = "Apple Intelligence needs macOS 26 or later.";
+"llm.apple.error.deviceNotEligible" = "This Mac doesn't support Apple Intelligence.";
+"llm.apple.error.notEnabled" = "Apple Intelligence is turned off — System Settings → Apple Intelligence & Siri.";
+"llm.apple.error.modelNotReady" = "Apple Intelligence is still downloading its model — try again in a few minutes.";
+"llm.apple.error.unavailable" = "Apple Intelligence isn't available right now.";
+"llm.apple.error.textTooLong" = "The text is too long for Apple Intelligence on this Mac. Select less text or pick another provider.";
+"llm.apple.error.rejected" = "Apple Intelligence declined this text.";
+"llm.apple.error.unsupportedLanguage" = "Apple Intelligence can't handle this language on this Mac.";
+"llm.apple.error.busy" = "Apple Intelligence is busy — try again in a moment.";
+"llm.apple.error.failed" = "Apple Intelligence couldn't process the text.";
 
 /* Translate Quick Panel */
 "translate.panel.placeholder" = "Type text to translate…";
@@ -441,6 +452,8 @@
 "settings.providers.hint.openrouter" = "Get a key at openrouter.ai. One account for 300+ models across every major vendor (OpenAI, Anthropic, Google, Meta, xAI, DeepSeek, …) — enter the model as \"vendor/model\", e.g. \"openai/gpt-4o-mini\". Pass-through pricing (no markup up to 1M requests/month, 5% beyond). Doesn't automatically solve the \"model id went stale\" problem — OpenRouter inherits whatever renames the underlying vendor makes.";
 "settings.providers.hint.ollama" = "Install Ollama from ollama.com. Pull a model first: `ollama pull llama3.3`. Runs locally, no key, no cloud.";
 "settings.providers.hint.mlx" = "Tippi starts mlx_lm.server automatically. The default is Gemma 4 E2B — in testing it was both the most accurate and the fastest. Qwen 3.5 2B downloads the least but makes more mistakes. What exactly was measured is in Help under \"Which local model for dictation?\". No cloud, no key.";
+"settings.providers.hint.apple" = "Apple's own model, right on your Mac — needs macOS 26 or later and Apple Intelligence switched on in System Settings. Nothing to install, no key, your text never leaves the Mac. Much smaller than the cloud models: in testing it cleaned up dictation quickly and well and placed emojis well, but with \"Defuse\" and \"Improve\" it made things up — use a cloud or MLX model for those.";
+"settings.providers.apple.ready" = "Ready — runs on this Mac";
 "settings.providers.mlx.port" = "Port";
 "settings.providers.mlx.custom" = "Custom…";
 "settings.providers.advanced" = "Advanced";
@@ -458,7 +471,7 @@
 "settings.hotkeys.restartHint" = "The new combination applies right away. If it does not respond, another app probably already uses it.";
 "settings.about.description" = "Select text in any app, press ⌥⌘T, and let AI transform it — right where you are.";
 "settings.about.feature1" = "Works in every app system-wide";
-"settings.about.feature2" = "Bring Your Own Key — 7 AI providers (9 cloud + 2 local)";
+"settings.about.feature2" = "Bring Your Own Key — 8 AI providers (5 cloud + 3 local)";
 "settings.about.feature3" = "No telemetry, no cloud storage";
 "settings.about.feature4" = "Custom prompts for your workflow";
 "settings.tab.help" = "Help";
@@ -515,7 +528,7 @@ Two files may define the same trigger. Only one of them takes effect; the other 
 "settings.help.importExportTitle" = "Share & import prompts";
 "settings.help.importExportBody" = "Export your custom prompts as a .tippipack file to share them with teammates or keep a backup.\n\nExport all — click \"Export All\" at the top of the Prompts tab.\nExport one — click the ↑ icon next to any prompt.\nImport — click \"Import\", select a .tippipack file, then choose Merge (keeps your existing prompts) or Replace (replaces them).\n\nImported prompts always get fresh IDs, so they never conflict with existing ones.";
 "settings.help.apiTitle" = "AI providers & keys";
-"settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 7 providers — OpenAI, Anthropic, Gemini, Mistral and OpenRouter (300+ models behind one key) as cloud BYOK providers, plus Ollama and MLX (both fully local, free, no key needed). Keys are stored securely in the macOS Keychain.\n\nDefault provider: Tippi tries your chosen default first; if it has no key it falls through to the next configured one. With no explicit default it automatically uses the first provider you've added a key for, so a fresh install never stalls on a cold local model. Optional fallback (Providers tab): if your provider fails (rate limit, server or network error) Tippi can retry the next configured provider — off by default since it sends your text to a second provider.";
+"settings.help.apiBody" = "Add your API key in the Providers tab. Tippi supports 8 providers — OpenAI, Anthropic, Gemini, Mistral and OpenRouter (300+ models behind one key) as cloud BYOK providers, plus Ollama, MLX and Apple Intelligence (all fully local, free, no key needed; Apple Intelligence needs macOS 26 or later). Keys are stored securely in the macOS Keychain.\n\nDefault provider: Tippi tries your chosen default first; if it has no key it falls through to the next configured one. With no explicit default it automatically uses the first provider you've added a key for, so a fresh install never stalls on a cold local model. Optional fallback (Providers tab): if your provider fails (rate limit, server or network error) Tippi can retry the next configured provider — off by default since it sends your text to a second provider.";
 
 "settings.help.linksTitle" = "Links & resources";
 "settings.help.linksBody" = "[GitHub repository](https://github.com/miwixyz/Tippi) — public, MIT-licensed, source code, issues, releases.\n\n[Landing page](https://miwixyz.github.io/Tippi/) — bilingual EN/DE, features, screenshots, download.\n\n[One-pager](https://github.com/miwixyz/Tippi/blob/main/docs/ONE-PAGER.md) — for Hacker News, Reddit, sharing with friends; what Tippi is in 60 seconds.\n\n[Changelog](https://github.com/miwixyz/Tippi/blob/main/CHANGELOG.md) — every change, every version.\n\n[Latest release](https://github.com/miwixyz/Tippi/releases/latest) — DMG download, release notes, checksums.";
