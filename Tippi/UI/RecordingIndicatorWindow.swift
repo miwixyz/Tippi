@@ -60,14 +60,15 @@ private struct RecordingIndicatorView: View {
     /// Display name of the AI provider handling cleanup (e.g. "Mistral", "Claude").
     /// nil = generic AI badge. Shown only when aiEnabled is true.
     let providerName: String?
-    /// Started with the mail dictation hot key: envelope instead of microphone.
-    let isMail: Bool
+    /// Mail hot key: envelope instead of microphone. Dictation mode: its symbol and name.
+    let source: DictationSource
+    private var isMail: Bool { source == .mail }
 
     var body: some View {
         HStack(spacing: 8) {
             switch mode {
             case .recording:
-                Image(systemName: isMail ? "envelope.fill" : "mic.fill")
+                Image(systemName: source.dictationMode?.symbol ?? (isMail ? "envelope.fill" : "mic.fill"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.accentColor)
                 WaveformBars(level: recorder.level)
@@ -75,14 +76,15 @@ private struct RecordingIndicatorView: View {
                     // Monospaced digits: without them the pill twitches on every
                     // tick as glyph widths change, and the window is sized once.
                     .font(.subheadline.weight(.medium).monospacedDigit())
-                Text(String(localized: isMail ? "dictation.indicator.recordingMail" : "dictation.indicator.recording"))
+                Text(source.dictationMode?.title
+                     ?? String(localized: isMail ? "dictation.indicator.recordingMail" : "dictation.indicator.recording"))
                     .font(FamilyTheme.font(.subheadline, weight: .medium))
             case .transcribing:
                 ProgressView()
                     .controlSize(.small)
-                Text(aiEnabled
+                Text(source.dictationMode?.title ?? (aiEnabled
                      ? String(localized: "dictation.indicator.aiPolishing")
-                     : String(localized: "dictation.indicator.transcribing"))
+                     : String(localized: "dictation.indicator.transcribing")))
                     .font(FamilyTheme.font(.subheadline, weight: .medium))
             }
             if aiEnabled {
@@ -237,10 +239,10 @@ final class RecordingIndicatorWindowController {
     private var generation = 0
 
     func show(mode: Mode, recorder: AudioRecorder, preview: LiveTranscriptionPreview? = nil,
-              aiEnabled: Bool = false, providerName: String? = nil, isMail: Bool = false) {
+              aiEnabled: Bool = false, providerName: String? = nil, source: DictationSource = .standard) {
         generation &+= 1
         let pill = RecordingIndicatorView(
-            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, isMail: isMail)
+            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, source: source)
         let live = mode == .recording ? preview : nil
         let textSize = DictationSettings.liveTextSize
         // Fixed, separately measured size — same layout-loop fix as the toast, see `fixedSizeContent` (2026-10-07).

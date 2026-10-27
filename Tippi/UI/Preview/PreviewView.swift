@@ -664,21 +664,12 @@ struct PreviewView: View {
 
     private func performNonStreaming(systemPrompt: String, userText: String, input: String,
                                      allowLocalFallback: Bool, instruction: String?) {
-        let providerOverride = PromptProviderOverride.providerID(for: prompt.id)
-        let modelOverride = PromptProviderOverride.modelOverride(for: prompt.id)
+        let promptID = prompt.id
         task = Task { @MainActor in
             do {
-                let result: CompletionResult
-                if !providerOverride.isEmpty {
-                    result = try await LLMRouter.shared.complete(
-                        systemPrompt: systemPrompt,
-                        userText: userText,
-                        forceProviderID: providerOverride,
-                        forceModel: modelOverride
-                    )
-                } else {
-                    result = try await LLMRouter.shared.complete(systemPrompt: systemPrompt, userText: userText)
-                }
+                // Same routing dictation modes use — one place decides it.
+                let result = try await PromptProviderOverride.complete(
+                    promptID: promptID, systemPrompt: systemPrompt, userText: userText)
                 guard !Task.isCancelled else { return }
                 _ = try LLMError.notEcho(LLMError.nonEmpty(result.text), of: instruction)
                 logToHistory(result: result, input: input)

@@ -71,6 +71,12 @@ dependency for that YAML parsing.
   English, parameterised with `{language}`, and aligned to Tippi's "Return
   ONLY" output convention; the underlying communicative intent and structure
   are preserved.
+- **Dictation modes (idea only, no code copied):** a hot key that starts
+  dictation directly in a mode and runs that mode's prompt on the transcript
+  follows Blitztext's workflows (`BlitztextMac/Features/Workflows/`). Tippi's
+  implementation (`Tippi/Core/DictationModes.swift`,
+  `Tippi/Core/DictationController+Modes.swift`) is its own: the tap-or-hold
+  dictation key plus one held modifier picks one of four user-assignable slots.
 
 ### MIT License (Blitztext App)
 

@@ -2,11 +2,16 @@
 
 ## [Unveröffentlicht]
 
+### Neu
+- **Diktat-Modi.** Halte zur Diktat-Taste (Art „Einzelne Sondertaste“) eine Zusatztaste, und Tippi wendet nach dem Sprechen gleich einen Prompt auf deinen Text an, bevor er eingefügt wird. Ab Werk: ⇧ = Verbessern (die Diktat-Bereinigung, auch wenn sie sonst aus ist), ⌃ = Dampf ablassen, ⌘ = Emojis einfügen, fn = frei. Jeden Platz kannst du unter Einstellungen → Hotkeys beim Diktat mit einem beliebigen mitgelieferten oder eigenen Prompt belegen oder leeren, alles zusammen mit „Diktat-Modi“ abschalten. Die Aufnahme-Anzeige zeigt den Modus. Die Idee stammt aus Blitztext.
+
 ### Behoben
 - **Diktat mit lokaler KI wartete bis zu 20 Sekunden.** Nach einer längeren Pause hatte macOS das lokale MLX-Modell aus dem Speicher geräumt, und die KI-Nachbearbeitung musste es erst nach dem Sprechen zurückholen (gemessen: 20,6 s für zwei Zeilen). Tippi bereitet das Modell jetzt schon vor, während du sprichst: Es holt das Modell zurück und liest den Bereinigungs-Prompt vorab ein. Danach dauerte die Nachbearbeitung 0,6 s statt 3,1 s.
 
 ### Intern
 - `MLXProvider.prime(systemPrompt:)`: Anfrage mit `max_tokens` 1 und genau dem Diktat-Prompt, beim Diktat-Start statt nur `MLXServerManager.start()`, das bei laufendem Server nichts tat. Der Anfrage-Aufbau (`Body`) wird von `complete` und `prime` gemeinsam genutzt, damit der Prompt-Zwischenspeicher des Servers greift.
+- Diktat-Modi: `DictationModes` (Plätze, Belegung als JSON `{"version":1,"slots":{…}}` unter `dictation.modes.assignments.v1`, Hauptschalter `dictation.modes.enabled.v1`, reine Erkennung der Zusatztaste aus den `CGEventFlags` mit Gerätebits links/rechts und `maskSecondaryFn`, genau eine Zusatztaste zählt). `HotkeyEvent.doubleTap`/`.holdBegan` tragen die Flags im Auslöse-Moment; `DictationSource.mode`. Ablauf in `DictationController+Modes.swift`: gleicher 30-s-Deckel und Rohtext-Rückfall wie die Glättung, MLX-Vorwärmen mit dem Prompt des Modus. `PromptProviderOverride.complete` ist jetzt die eine Stelle für die Anbieterwahl eines Prompts (Pop-up ohne Streaming und Diktat-Modi). `DictationIndicator` bekommt die Quelle statt `isMail`.
+- 777 Tests (16 neu).
 
 ## [2.31.0] — 2026-10-22
 

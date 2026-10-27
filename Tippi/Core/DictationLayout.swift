@@ -17,6 +17,8 @@ enum DictationSource: Equatable {
     case standard
     /// „Diktat für Mails": layout always.
     case mail
+    /// Diktat-Taste plus Zusatztaste (`DictationModes`): Prompt des Modus statt Glättung.
+    case mode(DictationMode)
 }
 
 enum DictationLayout {

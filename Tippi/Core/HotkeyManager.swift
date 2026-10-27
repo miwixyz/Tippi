@@ -11,8 +11,12 @@ enum HotkeyEvent {
     /// ordinary keypress reliably (a deliberate press runs 100–500 ms and easily
     /// crosses the hold threshold), which made a single-tap toggle fire when it
     /// shouldn't and stay silent when it should.
-    case doubleTap
-    case holdBegan
+    ///
+    /// `modifiers`: the modifier flags at the moment the gesture fired (second
+    /// release / hold threshold reached) — dictation modes read the extra key
+    /// held alongside the trigger from them (`DictationModes.slot`).
+    case doubleTap(modifiers: CGEventFlags)
+    case holdBegan(modifiers: CGEventFlags)
     case holdEnded
 }
 
@@ -34,6 +38,9 @@ final class HotkeyManager: ObservableObject {
     private var otherKeyWhileHeld = false
     /// When the previous tap was released, for double-tap detection.
     private var lastTapReleaseAt: CFTimeInterval = 0
+    /// Modifier state from the latest flagsChanged of ANY key, for the hold timer:
+    /// an extra key pressed after the trigger produces its own event.
+    private var latestFlags: CGEventFlags = []
     /// Gap allowed between the two taps. Matches the existing `.doubleTap`
     /// trigger's default so both gestures feel the same.
     private let doubleTapWindowMs = 400
@@ -268,6 +275,7 @@ final class HotkeyManager: ObservableObject {
             return // handled by Carbon
 
         case .tapOrHold(let modifier, let holdThresholdMs):
+            latestFlags = flags
             guard keyCode == modifier.keyCode else { return }
             let pressed = isModifierPressed(group: modifier, flags: flags)
             if pressed {
@@ -296,7 +304,7 @@ final class HotkeyManager: ObservableObject {
                         // heard on release. Found by audit 2026-09-19.
                         guard !self.otherKeyWhileHeld else { return }
                         self.holdInProgress = true
-                        self.onEvent?(.holdBegan)
+                        self.onEvent?(.holdBegan(modifiers: self.latestFlags))
                     }
                 }
             } else {
@@ -318,7 +326,7 @@ final class HotkeyManager: ObservableObject {
                     let now = CFAbsoluteTimeGetCurrent()
                     if (now - lastTapReleaseAt) * 1000 < Double(doubleTapWindowMs) {
                         lastTapReleaseAt = 0
-                        onEvent?(.doubleTap)
+                        onEvent?(.doubleTap(modifiers: flags))
                     } else {
                         lastTapReleaseAt = now
                     }

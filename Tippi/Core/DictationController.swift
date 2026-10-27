@@ -287,9 +287,9 @@ final class DictationController: ObservableObject {
     /// Gnotchi's display – otherwise Gnotchi would wait for its 3 s timeout.
     @Published private(set) var state: State = .idle { didSet { if state == .idle { indicator.idle() } } }
 
-    private let recorder: AudioRecorder
+    let recorder: AudioRecorder
     /// Tippi's pill or, while Gnotchi shows dictation in the notch, Gnotchi (GnotchiBridge).
-    private let indicator = DictationIndicator()
+    let indicator = DictationIndicator()
 
     /// Inject the shared `AudioRecorder` so dictation and the popup mic never
     /// run two recorders against the same audio hardware/temp file.
@@ -319,7 +319,7 @@ final class DictationController: ObservableObject {
 
     /// Which hot key started the running recording — the mail hot key always lays
     /// the text out (`DictationLayout.layoutWanted`). Set at start, not at stop.
-    private var source: DictationSource = .standard
+    private(set) var source: DictationSource = .standard
 
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion. A press while
@@ -341,9 +341,9 @@ final class DictationController: ObservableObject {
     /// Starts recording for the hold gesture. Deliberately a no-op unless idle:
     /// a duplicate `.holdBegan` must never stack a second recorder onto the same
     /// audio hardware.
-    func beginHoldRecording() async {
+    func beginHoldRecording(source: DictationSource = .standard) async {
         guard case .idle = state else { return }
-        source = .standard
+        self.source = source
         holdReleasedWhileStarting = false
         await start()
         // Only arm the watchdog if recording actually began — `start()` returns
@@ -406,7 +406,7 @@ final class DictationController: ObservableObject {
                 livePreview = preview
             }
             indicator.recording(recorder: recorder, preview: livePreview,
-                                aiEnabled: DictationSettings.postProcessEnabled, isMail: source == .mail)
+                                aiEnabled: aiStepPlanned, source: source)
             NSLog("Tippi: dictation recording started (\(self.source))")
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.
@@ -421,7 +421,7 @@ final class DictationController: ObservableObject {
             // kernel compile) AFTER transcription already finished — squarely in
             // the perceived-latency path. Mirrors WhisperBar's "model loads
             // while you are still speaking" fix (changelog v1.16.0/v1.17.0).
-            warmPostProcessProviderIfNeeded()
+            if !warmModeProviderIfNeeded() { warmPostProcessProviderIfNeeded() }
         } catch {
             ToastWindowController.shared.show(message: error.localizedDescription)
             NSLog("Tippi: dictation start failed — \(error.localizedDescription)")
@@ -436,8 +436,7 @@ final class DictationController: ObservableObject {
         livePreview = nil
         _ = recorder.stop(ifStartedBy: .dictation)   // the WAV is `wavURL` either way
         state = .transcribing
-        indicator.transcribing(recorder: recorder, aiEnabled: DictationSettings.postProcessEnabled,
-                               isMail: source == .mail)
+        indicator.transcribing(recorder: recorder, aiEnabled: aiStepPlanned, source: source)
         transcriptionTask = Task { [weak self] in
             await self?.transcribeAndInsert(wavURL: wavURL, targetApp: targetApp, notesTextView: notesTextView)
         }
@@ -451,7 +450,7 @@ final class DictationController: ObservableObject {
         do {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
-            let (polished, cleanupNotice) = await postProcessIfEnabled(raw)
+            let (polished, cleanupNotice) = await processTranscript(raw, appName: targetApp?.localizedName ?? "")
             // Layout is a rule, after the polish or alone. Never in terminals or apps
             // on the Return list: a line break there can send a command or a message.
             let targetID = notesTextView == nil ? targetApp?.bundleIdentifier : nil
@@ -574,8 +573,9 @@ final class DictationController: ObservableObject {
     /// On any failure (no provider, network error, empty input) returns the
     /// raw transcript unchanged so dictation never breaks because of LLM
     /// trouble.
-    private func postProcessIfEnabled(_ raw: String) async -> (text: String, notice: String?) {
-        guard DictationSettings.postProcessEnabled else { return (raw, nil) }
+    /// `forced`: the mode „Verbessern" — runs with the switch off and skips the minimum length.
+    func postProcessIfEnabled(_ raw: String, forced: Bool = false) async -> (text: String, notice: String?) {
+        guard DictationSettings.postProcessEnabled || forced else { return (raw, nil) }
 
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return (raw, nil) }
@@ -583,7 +583,7 @@ final class DictationController: ObservableObject {
         // Short-circuit very short utterances ("ja", "ok", "danke") — the
         // LLM round-trip would dominate perceived latency without adding
         // meaningful cleanup.
-        guard trimmed.count >= DictationSettings.postProcessMinChars else {
+        guard forced || trimmed.count >= DictationSettings.postProcessMinChars else {
             NSLog("Tippi: dictation post-process skipped — \(trimmed.count) chars < min \(DictationSettings.postProcessMinChars)")
             return (raw, nil)
         }
@@ -598,8 +598,7 @@ final class DictationController: ObservableObject {
             ? providerOverride
             : LLMRouter.shared.effectivePreferredProviderID()
         let resolvedProviderName = LLMRouter.providerDisplayName(forID: resolvedProviderID)
-        indicator.transcribing(recorder: recorder, aiEnabled: true, providerName: resolvedProviderName,
-                               isMail: source == .mail)
+        indicator.transcribing(recorder: recorder, aiEnabled: true, providerName: resolvedProviderName, source: source)
 
         do {
             // Hard 30s cap: dictation must never hang on the polish step.
@@ -682,18 +681,18 @@ final class DictationController: ObservableObject {
 
     /// Thrown by the 30 s cap — distinct from `CancellationError`, which means
     /// the user cancelled and must not be reported as a cleanup failure.
-    private struct CleanupTimeout: Error {}
+    struct CleanupTimeout: Error {}
 
     /// Toast text when cleanup failed and the raw transcript went in instead —
     /// so an unpolished dictation is explained, not a silent mystery.
-    private static func cleanupFailedNotice(_ reason: String) -> String {
+    static func cleanupFailedNotice(_ reason: String) -> String {
         String(format: String(localized: "dictation.toast.cleanupFailed"), reason)
     }
 
     /// Never the raw provider response body in a toast: it is foreign text on
     /// screen (screen shares) in a window that looks like Tippi's own. The full
     /// error stays in the log.
-    private static func cleanupFailureReason(_ error: Error) -> String {
+    static func cleanupFailureReason(_ error: Error) -> String {
         if error is CleanupTimeout {
             return String(localized: "dictation.toast.cleanupTimeout")
         }

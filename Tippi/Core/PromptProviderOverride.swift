@@ -38,6 +38,25 @@ enum PromptProviderOverride {
         }
     }
 
+    /// The provider a run of this prompt goes to: its override, else the global default.
+    static func effectiveProviderID(for promptID: String) -> String {
+        let override = providerID(for: promptID)
+        return override.isEmpty ? LLMRouter.shared.effectivePreferredProviderID() : override
+    }
+
+    /// One non-streaming completion routed exactly like the popup routes this prompt
+    /// (`PreviewView.performNonStreaming`, and dictation modes): the override if set,
+    /// otherwise the router's normal resolution.
+    static func complete(promptID: String, systemPrompt: String, userText: String) async throws -> CompletionResult {
+        let providerOverride = providerID(for: promptID)
+        guard !providerOverride.isEmpty else {
+            return try await LLMRouter.shared.complete(systemPrompt: systemPrompt, userText: userText)
+        }
+        return try await LLMRouter.shared.complete(systemPrompt: systemPrompt, userText: userText,
+                                                   forceProviderID: providerOverride,
+                                                   forceModel: modelOverride(for: promptID))
+    }
+
     private static func key(_ promptID: String, _ suffix: String) -> String {
         "prompt.providerOverride.\(promptID).\(suffix)"
     }
