@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.32.1] — 2026-10-28
+
+### Geändert
+- **Claude Haiku 5.5 ist jetzt der Standard für Anthropic.** Wer bei Anthropic kein eigenes Modell gewählt hat, bekommt ab jetzt Haiku 5.5 statt Haiku 4.5. Haiku 5.5 ist günstiger und kaum langsamer (gemessen 0,85 s statt 0,67 s pro Diktat). Wer Haiku 4.5 ausdrücklich gewählt hat, behält es. Es bleibt wählbar, solange Anthropic es anbietet.
+- **Diktat-Bereinigung entfernt „also“ und „genau“ als Füllwörter.** Am Satzanfang oder -ende fallen sie jetzt weg, „genau das“ oder „genau richtig“ bleibt stehen. Bisher ließ Haiku 5.5 sie oft stehen, Haiku 4.5 ein „Genau,“ am Satzanfang. Gilt für alle Anbieter, sofern du den Bereinigungs-Prompt nicht selbst geändert hast.
+
+### Intern
+- `scripts/diktat-pruefstand.py`: prüft die Diktat-Bereinigung (`defaultPostProcessPrompt`, live aus dem Code) mit 12 Steuer- und 6 verdeckten Abnahmefällen (`scripts/diktat-pruefstand-abnahme.json`), Anfrage wie `AnthropicProvider`. Grund: `modell-pruefstand.py` prüft nur die eingebauten Prompts und stand bei beiden Haiku-Modellen auf 20/20, obwohl Haiku 5.5 beim echten Diktat Füllwörter stehen ließ. Ergebnis 2026-10-28: Haiku 5.5 zweimal 18/18, Haiku 4.5 17/18 (schrieb „punkt acht“ klein).
+
 ## [2.32.0] — 2026-10-27
 
 Diktat-Modi: Halte zur Diktat-Taste eine Zusatztaste, und dein Diktat kommt gleich verbessert, entschärft oder mit Emojis an. Dazu ist das Diktat mit lokaler KI wieder schnell und passt sich dem Text am Cursor an.
