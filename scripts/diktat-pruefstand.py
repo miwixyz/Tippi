@@ -83,10 +83,17 @@ def anfrage(modell, system, text):
     return body
 
 
+# Gilt für jeden Fall: Vorrede oder Anführungszeichen statt nur des Textes (Gegenprobe 2026-10-28:
+# ohne diese Zeile rutschte „Hier ist der bereinigte Text: …“ durch).
+VORREDE = re.compile(r"^\s*(hier ist|here is|here's|bereinigt|cleaned|output:)|^\s*[\"„“'«]", re.IGNORECASE)
+
+
 def pruefe(fall, out):
     fehl = [f"„{w}“ steht noch da" for w in fall.get("nie", [])
             if re.search(r"(?<!\w)" + re.escape(w) + r"(?!\w)", out, re.IGNORECASE)]
     fehl += [f"„{w}“ fehlt" for w in fall.get("muss", []) if w not in out]
+    if VORREDE.search(out):
+        fehl.append("Vorrede oder Anführungszeichen statt nur des Textes")
     return fehl
 
 
