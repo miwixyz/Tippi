@@ -1,0 +1,11 @@
+{
+  "hinweis": "Abnahmefälle für scripts/diktat-pruefstand.py — beim Anpassen des Glättungs-Prompts NICHT ansehen. Angelegt 2026-10-28 vor dem ersten Lauf.",
+  "faelle": [
+    {"text": "also genau ich ruf dich dann später noch mal an", "nie": ["also", "genau"], "muss": ["später"]},
+    {"text": "die präsentation war genau richtig so", "muss": ["genau richtig"]},
+    {"text": "um punkt zwölf gibt es mittagessen in der kantine", "muss": ["Punkt zwölf", "Kantine"], "nie": ["pünktlich"]},
+    {"text": "ähm also kannst du mir bitte noch den link schicken", "nie": ["ähm", "also", "hier ist"], "muss": ["Link", "?"]},
+    {"text": "das ist halt der springende punkt bei der sache", "nie": ["halt"], "muss": ["springende Punkt"]},
+    {"text": "uh i also need the the slides for tomorrow", "nie": ["uh", "the the"], "muss": ["also need the slides"]}
+  ]
+}

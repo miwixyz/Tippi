@@ -3,7 +3,7 @@ import Foundation
 struct AnthropicProvider: LLMProvider {
     let id = "anthropic"
     let displayName = "Anthropic Claude"
-    let defaultModel = "claude-haiku-4-5"  // still the measured best for polish, 2026-10-09
+    let defaultModel = "claude-haiku-5-5"  // default since 2026-10-28, scripts/diktat-pruefstand.py
     let requiresAPIKey = true
 
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!

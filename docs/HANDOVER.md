@@ -1,6 +1,6 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 27. Oktober 2026 · Version: **2.32.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 28. Oktober 2026 · Version: **2.32.1** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
@@ -113,7 +113,7 @@ Tippi/
 ├── LLM/
 │   ├── LLMProvider.swift           Protocol + LLMError
 │   ├── OpenAIProvider.swift        gpt-6-luna (reasoning_effort none), /v1/chat/completions
-│   ├── AnthropicProvider.swift     claude-haiku-4-5, /v1/messages
+│   ├── AnthropicProvider.swift     claude-haiku-5-5, /v1/messages
 │   ├── GeminiProvider.swift        gemini-flash-latest, generativelanguage.googleapis.com
 │   ├── MistralProvider.swift       mistral-small-latest, OpenAI-kompatibel
 │   ├── OllamaProvider.swift        llama3.3, localhost:11434
@@ -160,6 +160,7 @@ Tippi/
 scripts/
 ├── release.sh                      Vollautomatische Build-Notarisierungs-Release-Pipeline
 ├── modell-pruefstand.py            Prüfstand vor jedem Wechsel des Anthropic-Standardmodells: eingebaute Prompts aus DemoPrompt.swift, 12 Steuer- + 8 verdeckte Abnahmefälle (modell-pruefstand-abnahme.json), Exit 0/1
+├── diktat-pruefstand.py            Prüfstand der Diktat-Glättung (defaultPostProcessPrompt aus DictationController.swift): 12 Steuer- + 6 verdeckte Abnahmefälle (diktat-pruefstand-abnahme.json), Füllwörter und Wörter, die bleiben müssen
 └── prepare-binary.sh               Build-Skript für whisper-cli (whisper.cpp v1.7.4, statisch)
 
 docs/
@@ -311,7 +312,7 @@ Zwei getrennte Sync-Mechanismen, nicht einer — bewusst, weil sie unterschiedli
 | Provider | Default Modell | API Endpoint | Auth | Notes |
 |----------|----------------|--------------|------|-------|
 | OpenAI | `gpt-6-luna` | `https://api.openai.com/v1/chat/completions` | `Authorization: Bearer <key>` | Schnell, günstig, gute deutsche Sprache |
-| Anthropic | `claude-haiku-4-5` | `https://api.anthropic.com/v1/messages` | `x-api-key: <key>` + `anthropic-version: 2023-06-01` | Beste Prosa-Qualität |
+| Anthropic | `claude-haiku-5-5` | `https://api.anthropic.com/v1/messages` | `x-api-key: <key>` + `anthropic-version: 2023-06-01` | Beste Prosa-Qualität |
 | Google | `gemini-flash-latest` | `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` | Header `x-goog-api-key: <key>` (nicht Query-Param — Tabelle war hier veraltet) | Großzügiges Free-Tier. 2.5-Generation seit 2026-09 teils HTTP 404 („no longer available to new users") |
 | Mistral | `mistral-small-latest` | `https://api.mistral.ai/v1/chat/completions` | `Authorization: Bearer <key>` | EU-Hosting (Paris) |
 | **OpenRouter** | `openai/gpt-6-luna` | `https://openrouter.ai/api/v1/chat/completions` | `Authorization: Bearer <key>` | Unified Gateway, 300+ Modelle, Modell-IDs im Format `vendor/model` |

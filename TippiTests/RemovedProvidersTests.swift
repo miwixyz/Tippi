@@ -61,8 +61,12 @@ final class RemovedProvidersTests: XCTestCase {
         XCTAssertTrue(AnthropicProvider.acceptsTemperature("claude-haiku-4-5"))
     }
 
-    func testHaiku45StaysTheDefaultPolishModel() {
-        XCTAssertEqual(ProviderModelPresets.defaultPolishModel(for: "anthropic"), "claude-haiku-4-5")
-        XCTAssertTrue(ProviderModelPresets.presets(for: "anthropic").contains { $0.id == "claude-haiku-5-5" })
+    /// 2026-10-28: Haiku 5.5 became the default (scripts/diktat-pruefstand.py 18/18).
+    /// Haiku 4.5 is still active, so it stays selectable and is not migrated.
+    func testHaiku55IsTheDefaultPolishModelAndHaiku45StaysSelectable() {
+        XCTAssertEqual(ProviderModelPresets.defaultPolishModel(for: "anthropic"), "claude-haiku-5-5")
+        XCTAssertEqual(AnthropicProvider().defaultModel, "claude-haiku-5-5")
+        XCTAssertTrue(ProviderModelPresets.presets(for: "anthropic").contains { $0.id == "claude-haiku-4-5" })
+        XCTAssertFalse(ProviderModelPresets.retiredModels.contains { $0.deadID == "claude-haiku-4-5" })
     }
 }

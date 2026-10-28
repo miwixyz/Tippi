@@ -100,9 +100,13 @@ enum ProviderModelPresets {
     // with the default polish prompt — same latency (1.0–1.7 s) with effort `low` + thinking
     // disabled (AnthropicProvider sends both), but it kept fillers ("also", "genau") and read
     // "punkt" as "Pünktlich". Opus 5.5 always thinks (adaptive) → isReasoning.
+    // 2026-10-28: Haiku 5.5 is the ⭐ default. The polish prompt now names German
+    // filler-"also"/"genau" explicitly; scripts/diktat-pruefstand.py: Haiku 5.5 18/18
+    // twice (0.85 s), Haiku 4.5 17/18 (0.67 s). Haiku 4.5 is still active (no retirement
+    // date), so stored `claude-haiku-4-5` selections are left alone — not in retiredModels.
     static let anthropic: [Preset] = [
-        Preset(id: "claude-haiku-4-5",  label: "Claude Haiku 4.5 — fastest, cheapest ⭐", isFastest: true,  isReasoning: false),
-        Preset(id: "claude-haiku-5-5",  label: "Claude Haiku 5.5 — newest, cheaper",      isFastest: false, isReasoning: false),
+        Preset(id: "claude-haiku-5-5",  label: "Claude Haiku 5.5 — fast, cheapest ⭐",    isFastest: true,  isReasoning: false),
+        Preset(id: "claude-haiku-4-5",  label: "Claude Haiku 4.5 — previous default",     isFastest: false, isReasoning: false),
         Preset(id: "claude-sonnet-5",   label: "Claude Sonnet 5 — balanced",              isFastest: false, isReasoning: false),
         Preset(id: "claude-opus-5-5",   label: "Claude Opus 5.5 — premium",               isFastest: false, isReasoning: true),
     ]
