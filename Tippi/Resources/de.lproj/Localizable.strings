@@ -223,6 +223,8 @@
 "settings.snippets.loadError" = "Die Kürzel-Datei konnte nicht gelesen werden. Speichern ist gesperrt, damit der vorhandene Inhalt nicht überschrieben wird. Eine Kopie liegt daneben mit der Endung „.unreadable-…“.";
 "settings.snippets.importedLoadError" = "Die Datei mit den importierten Espanso-Kürzeln konnte nicht gelesen werden. Import und Freigaben sind gesperrt, damit nichts verloren geht. Eine Kopie liegt daneben mit der Endung „.unreadable-…“.";
 "settings.snippets.new" = "Neues Kürzel";
+"settings.snippets.edit" = "Kürzel bearbeiten";
+"settings.snippets.delete" = "Kürzel löschen";
 "settings.snippets.reference" = "Espanso-Dateien (Import-Kandidaten)";
 "settings.snippets.importRequiredHint" = "Diese Dateien werden nicht mehr direkt ausgeführt. Importiere eine Datei, damit ihre Kürzel wirken.";
 "settings.snippets.reloadFile" = "Erneut laden";
@@ -399,6 +401,9 @@
 "settings.prompts.editor.chainHint" = "Führt mehrere Prompts nacheinander aus — die Ausgabe jedes Schritts wird zur Eingabe des nächsten. Mindestens 2 Schritte nötig.";
 "settings.prompts.editor.chainEmpty" = "Noch keine Schritte — unten Prompts hinzufügen.";
 "settings.prompts.editor.chainAddStep" = "Schritt hinzufügen";
+"settings.prompts.editor.chainMoveUp" = "Schritt nach oben";
+"settings.prompts.editor.chainMoveDown" = "Schritt nach unten";
+"settings.prompts.editor.chainRemoveStep" = "Schritt entfernen";
 "settings.prompts.editor.chainMissing" = "Gelöschter Prompt";
 "settings.prompts.listHint" = "Alle Prompts in einer Liste, in der Reihenfolge des Popups. Am Griff ziehen zum Sortieren — die ersten neun erreichst du mit den Zifferntasten 1–9. Jeder Prompt lässt sich bearbeiten, eingebaute jederzeit auf das Original zurücksetzen.";
 "settings.prompts.dragHint" = "Ziehen zum Sortieren";
@@ -503,6 +508,7 @@
 "settings.help.category.misc" = "Verlauf & Sonstiges";
 "settings.help.category.troubleshooting" = "Fehlerbehebung";
 "settings.help.searchPlaceholder" = "Hilfe durchsuchen";
+"settings.help.searchClear" = "Suche leeren";
 "settings.help.noResults" = "Keine Treffer.";
 "settings.help.selectionPopupTitle" = "Auto-Popup bei Textauswahl";
 "settings.help.selectionPopupBody" = "Wie PopClip: markierst du irgendwo Text, erscheint automatisch eine kleine Leiste mit den lokalen Schnellaktionen daneben — kein Hotkey nötig. Seit 2.23.1 nur nach einer Markierung, die du selbst machst (Maus ziehen, Doppel- oder Dreifachklick, Shift-Klick) — nicht mehr, wenn eine App beim Anklicken eines Feldes dessen Inhalt selbst markiert. Ein einfacher Klick irgendwo schließt sie. Funktioniert auch in Tippis eigenem Notizen-Fenster.\n\nAktivieren: Einstellungen → Allgemein → \"Auto-Popup bei Textauswahl\". Standardmäßig aus, weil es sonst bei jeder Textmarkierung im ganzen System erscheinen würde.\n\nPosition wählbar: unterhalb, oberhalb, rechts oder links der Auswahl — falls eine andere App (z.B. Safaris \"Nachschlagen\" oder Pages' Formatierungsleiste) an derselben Stelle schon ein eigenes Popup zeigt, einfach ausweichen.\n\nKlick auf ein Symbol wendet die Aktion sofort an und ersetzt die Auswahl — genau dieselben Aktionen wie im Hotkey-Popup. Obere Reihe: Formatierung, Markieren, Aufzählung, Anführungszeichen und Klammern. Untere Reihe: Groß-/Kleinschreibung, Underscore, Umlaute umwandeln, Zeilen verbinden, Wortzahl — und direkt ablesbar, wie viele Zeichen markiert sind.\n\nGetrennt durch eine Trennlinie am Ende der oberen Reihe: das Übersetzen-Symbol — öffnet das Übersetzungsfenster mit der Auswahl vorausgefüllt, statt sie direkt zu ersetzen.\n\nDie Leiste geht von selbst zu, wenn du eine Aktion ausführst, woanders klickst, Escape drückst, in eine andere App wechselst, die Maus deutlich von Markierung und Leiste wegbewegst oder sie fünf Sekunden nicht benutzt. Für dieselbe Markierung kommt sie danach erst wieder, wenn du den Text neu markierst — ein Klick daneben holt sie nicht zurück.";
@@ -677,6 +683,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.voice.dictation.customWords.label" = "Eigene Wörter";
 "settings.voice.dictation.customWords.hint" = "Begriffe, die bei der Erkennung regelmäßig falsch geschrieben werden — Marken, Produkt- und Eigennamen, Fachbegriffe. Tippi setzt genau diese Schreibweise durch, wenn der Begriff vorkommt. Es fügt nie neue Wörter ein und ändert keine anderen Wörter.\n\nHört die Erkennung ein anderes echtes Wort, trag es mit Pfeil ein: „Tipi → Tippi“ (auch -> oder =>; mehrere Varianten mit Komma). Tippi tauscht dann genau dieses Wort aus. Die KI darf das absichtlich nicht raten, weil „Tipi“ ein echtes Wort ist.";
 "settings.voice.dictation.customWords.empty" = "Keine eigenen Wörter";
+"settings.voice.dictation.customWords.remove" = "Wort entfernen";
 "settings.voice.dictation.customWords.placeholder" = "Wort in gewünschter Schreibweise";
 "settings.voice.dictation.customWords.add" = "Hinzufügen";
 "settings.voice.dictation.postProcess.providerLabel" = "Glätten via:";

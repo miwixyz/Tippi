@@ -26,11 +26,10 @@ struct AppListEditor: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Button {
+                    Button(String(localized: "settings.autocomplete.remove"), systemImage: "minus.circle") {
                         onRemove(bundleID)
-                    } label: {
-                        Image(systemName: "minus.circle")
                     }
+                    .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .help(String(localized: "settings.autocomplete.remove"))
                 }

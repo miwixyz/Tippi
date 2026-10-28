@@ -57,6 +57,7 @@ struct EmojiPickerView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text(String(localized: "emoji.search.clear")))
                 .help(String(localized: "emoji.search.clear"))
             }
         }

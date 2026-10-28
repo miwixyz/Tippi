@@ -83,12 +83,11 @@ struct MLXSetupSheet: View {
                             .padding(6)
                             .background(.quaternary.opacity(0.4))
                             .cornerRadius(4)
-                        Button {
+                        Button(String(localized: "mlx.install.copyCommand"), systemImage: "doc.on.doc") {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(manualCommands, forType: .string)
-                        } label: {
-                            Image(systemName: "doc.on.doc")
                         }
+                        .labelStyle(.iconOnly)
                         .buttonStyle(.borderless)
                         .help(String(localized: "mlx.install.copyCommand"))
                     }

@@ -126,6 +126,7 @@ struct NotesListView: View {
                     .foregroundStyle(isFavorite ? Color.yellow : Color.secondary.opacity(0.5))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text(String(localized: isFavorite ? "notes.unfavorite" : "notes.favorite")))
             .help(String(localized: isFavorite ? "notes.unfavorite" : "notes.favorite"))
         }
         .tag(note.id)

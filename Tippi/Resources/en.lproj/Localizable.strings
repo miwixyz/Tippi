@@ -223,6 +223,8 @@
 "settings.snippets.loadError" = "The snippet file could not be read. Saving is disabled so the existing contents are not overwritten. A copy was kept alongside it with a “.unreadable-…” suffix.";
 "settings.snippets.importedLoadError" = "The file with imported Espanso snippets could not be read. Importing and approvals are blocked so nothing gets lost. A copy was kept alongside it with a “.unreadable-…” suffix.";
 "settings.snippets.new" = "New snippet";
+"settings.snippets.edit" = "Edit snippet";
+"settings.snippets.delete" = "Delete snippet";
 "settings.snippets.reference" = "Espanso files (import candidates)";
 "settings.snippets.importRequiredHint" = "These files are no longer executed directly. Import a file to make its shortcuts work.";
 "settings.snippets.reloadFile" = "Reload";
@@ -399,6 +401,9 @@
 "settings.prompts.editor.chainHint" = "Runs several prompts in order — each step's output becomes the next step's input. Needs at least 2 steps.";
 "settings.prompts.editor.chainEmpty" = "No steps yet — add prompts below.";
 "settings.prompts.editor.chainAddStep" = "Add step";
+"settings.prompts.editor.chainMoveUp" = "Move step up";
+"settings.prompts.editor.chainMoveDown" = "Move step down";
+"settings.prompts.editor.chainRemoveStep" = "Remove step";
 "settings.prompts.editor.chainMissing" = "Deleted prompt";
 "settings.prompts.listHint" = "All prompts in one list, in popup order. Drag the handle to reorder — the first nine are reachable with the digit keys 1–9. Every prompt can be edited; built-in ones can be reset to the original at any time.";
 "settings.prompts.dragHint" = "Drag to reorder";
@@ -502,6 +507,7 @@
 "settings.help.category.misc" = "History & More";
 "settings.help.category.troubleshooting" = "Troubleshooting";
 "settings.help.searchPlaceholder" = "Search help";
+"settings.help.searchClear" = "Clear search";
 "settings.help.noResults" = "No results.";
 "settings.help.selectionPopupTitle" = "Auto-Popup on Text Selection";
 "settings.help.selectionPopupBody" = "Like PopClip: select text anywhere and a small bar with the local quick actions appears right next to it automatically — no hotkey needed. Since 2.23.1 only after a selection you made yourself (drag, double- or triple-click, shift-click) — no longer when an app selects a field's content just because you clicked it. A plain click anywhere closes it. Works in Tippi's own Notes window too.\n\nEnable: Settings → General → \"Auto-popup on text selection\". Off by default, since otherwise it would appear for every text selection system-wide.\n\nPosition is configurable: below, above, right, or left of the selection — if another app (Safari's \"Look Up\", Pages' formatting bar, …) already shows its own popup in the same spot, just move Tippi's out of the way.\n\nClicking an icon applies the action immediately and replaces the selection — the exact same actions as the hotkey popup. Top row: formatting, highlight, bullet list, quotation marks and brackets. Bottom row: uppercase/lowercase, underscore, convert umlauts, join lines, word count — plus the number of selected characters, shown right away.\n\nSeparated by a divider at the end of the top row: the translate icon — opens the Translate Quick Panel with the selection pre-filled instead of replacing it directly.\n\nThe bar closes by itself when you run an action, click elsewhere, press Escape, switch to another app, move the pointer well away from the selection and the bar, or leave it unused for five seconds. For that same selection it only comes back when you select the text again — a click next to it does not bring it back.";
@@ -702,6 +708,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.voice.dictation.customWords.label" = "Custom words";
 "settings.voice.dictation.customWords.hint" = "Terms transcription keeps spelling wrong — brands, product and proper names, jargon. Tippi enforces exactly this spelling wherever the term appears. It never inserts new words and never changes other words to match.\n\nIf transcription hears a different real word, add it with an arrow: “Tipi → Tippi” (-> or => work too; several variants separated by commas). Tippi then swaps exactly that word. The AI is deliberately not allowed to guess this, because “Tipi” is a real word.";
 "settings.voice.dictation.customWords.empty" = "No custom words";
+"settings.voice.dictation.customWords.remove" = "Remove word";
 "settings.voice.dictation.customWords.placeholder" = "Word, spelled the way you want it";
 "settings.voice.dictation.customWords.add" = "Add";
 "settings.voice.dictation.postProcess.providerLabel" = "Polish via:";

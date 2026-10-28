@@ -138,6 +138,7 @@ struct SelectionActionBarView: View {
                     .frame(width: Self.iconSide, height: Self.iconSide)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text(String(localized: "currency.back")))
             .help(String(localized: "currency.back"))
 
             ForEach(currencyTargets, id: \.self) { code in

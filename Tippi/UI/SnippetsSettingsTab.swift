@@ -185,18 +185,18 @@ struct SnippetsTab: View {
                             .lineLimit(1)
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Button {
+                        Button(String(localized: "settings.snippets.edit"), systemImage: "pencil") {
                             editingSnippet = snippet
-                        } label: {
-                            Image(systemName: "pencil")
                         }
+                        .labelStyle(.iconOnly)
                         .buttonStyle(.plain)
-                        Button(role: .destructive) {
+                        .help(String(localized: "settings.snippets.edit"))
+                        Button(String(localized: "settings.snippets.delete"), systemImage: "trash", role: .destructive) {
                             pendingDeletion = PendingSnippetDeletion(trigger: snippet.trigger) { store.removeSnippet(snippet) }
-                        } label: {
-                            Image(systemName: "trash")
                         }
+                        .labelStyle(.iconOnly)
                         .buttonStyle(.plain)
+                        .help(String(localized: "settings.snippets.delete"))
                     }
                 }
                 Button {
@@ -317,19 +317,19 @@ struct SnippetsTab: View {
                                         .onTapGesture { store.pendingShellApproval = snippet }
                                 }
                             }
-                            Button {
+                            Button(String(localized: "settings.snippets.edit"), systemImage: "pencil") {
                                 editingImported = snippet
-                            } label: {
-                                Image(systemName: "pencil")
                             }
+                            .labelStyle(.iconOnly)
                             .buttonStyle(.plain)
+                            .help(String(localized: "settings.snippets.edit"))
                             .disabled(store.importedSnippetsLoadError != nil)
-                            Button(role: .destructive) {
+                            Button(String(localized: "settings.snippets.delete"), systemImage: "trash", role: .destructive) {
                                 pendingDeletion = PendingSnippetDeletion(trigger: snippet.trigger) { store.removeImportedSnippet(snippet) }
-                            } label: {
-                                Image(systemName: "trash")
                             }
+                            .labelStyle(.iconOnly)
                             .buttonStyle(.plain)
+                            .help(String(localized: "settings.snippets.delete"))
                         }
                     }
                 }
@@ -374,13 +374,14 @@ struct SnippetsTab: View {
                         Text(word)
                             .font(.system(.body, design: .monospaced))
                         Spacer()
-                        Button(role: .destructive) {
+                        Button(String(localized: "settings.voice.dictation.customWords.remove"),
+                               systemImage: "trash", role: .destructive) {
                             dictationCustomWords.removeAll { $0 == word }
                             DictationSettings.customWords = dictationCustomWords
-                        } label: {
-                            Image(systemName: "trash")
                         }
+                        .labelStyle(.iconOnly)
                         .buttonStyle(.plain)
+                        .help(String(localized: "settings.voice.dictation.customWords.remove"))
                     }
                 }
             }

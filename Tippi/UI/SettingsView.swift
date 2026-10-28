@@ -1426,13 +1426,13 @@ private struct HelpTab: View {
             TextField(String(localized: "settings.help.searchPlaceholder"), text: $searchText)
                 .textFieldStyle(.plain)
             if !searchText.isEmpty {
-                Button {
+                Button(String(localized: "settings.help.searchClear"), systemImage: "xmark.circle.fill") {
                     searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
                 }
+                .labelStyle(.iconOnly)
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .help(String(localized: "settings.help.searchClear"))
             }
         }
         .padding(8)

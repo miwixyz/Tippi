@@ -536,22 +536,28 @@ private struct PromptEditor: View {
             Text(step?.title ?? String(localized: "settings.prompts.editor.chainMissing"))
                 .foregroundStyle(step == nil ? Color.red : Color.primary)
             Spacer()
-            Button {
+            Button(String(localized: "settings.prompts.editor.chainMoveUp"), systemImage: "arrow.up") {
                 guard index > 0 else { return }
                 pipeline.swapAt(index, index - 1)
-            } label: { Image(systemName: "arrow.up") }
+            }
+                .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
+                .help(String(localized: "settings.prompts.editor.chainMoveUp"))
                 .disabled(index == 0)
-            Button {
+            Button(String(localized: "settings.prompts.editor.chainMoveDown"), systemImage: "arrow.down") {
                 guard index < pipeline.count - 1 else { return }
                 pipeline.swapAt(index, index + 1)
-            } label: { Image(systemName: "arrow.down") }
+            }
+                .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
+                .help(String(localized: "settings.prompts.editor.chainMoveDown"))
                 .disabled(index == pipeline.count - 1)
             Button {
                 pipeline.remove(at: index)
             } label: { Image(systemName: "trash").foregroundStyle(.red) }
                 .buttonStyle(.borderless)
+                .accessibilityLabel(Text(String(localized: "settings.prompts.editor.chainRemoveStep")))
+                .help(String(localized: "settings.prompts.editor.chainRemoveStep"))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
