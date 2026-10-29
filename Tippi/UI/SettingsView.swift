@@ -7,8 +7,18 @@ import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var selection: SettingsTab = .general
+    @State private var selection: SettingsTab
     @ObservedObject private var navigation = SettingsNavigation.shared
+    /// Panes that are actually built. Tippi itself mounts all of them (see the
+    /// ZStack below). The debug-only picture copy mounts exactly one pane without
+    /// real content, so opening its window never loads API keys, snippets or
+    /// history (docs/SECURE-DESIGN-befehlskanal.md B5).
+    private let mountedTabs: [SettingsTab]
+
+    init(mountedTabs: [SettingsTab] = SettingsTab.allCases, initialTab: SettingsTab = .general) {
+        self.mountedTabs = mountedTabs
+        _selection = State(initialValue: initialTab)
+    }
 
     /// Sidebar navigation rather than a row of tabs.
     ///
@@ -63,7 +73,7 @@ struct SettingsView: View {
             // Panes are cheap; the panes with real work in them are not
             // reconstructible. Keeping them mounted restores the old contract.
             ZStack {
-                ForEach(SettingsTab.allCases, id: \.self) { tab in
+                ForEach(mountedTabs, id: \.self) { tab in
                     pane(for: tab)
                         .padding(.horizontal, 4)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

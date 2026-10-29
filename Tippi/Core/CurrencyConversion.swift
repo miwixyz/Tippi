@@ -346,7 +346,7 @@ final class ExchangeRateService {
     }
 
     private static var cacheURL: URL? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+        BildKopie.applicationSupport
             .appendingPathComponent("Tippi", isDirectory: true)
             .appendingPathComponent("exchange-rates.json")
     }

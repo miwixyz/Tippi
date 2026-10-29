@@ -74,8 +74,7 @@ enum WhisperConfig {
 
     /// App-managed model storage: ~/Library/Application Support/com.tippi.app/Models/
     static var appModelDirectory: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return support.appendingPathComponent("com.tippi.app/Models", isDirectory: true)
+        BildKopie.applicationSupport.appendingPathComponent("com.tippi.app/Models", isDirectory: true)
     }
 
     /// Best available model: first app-support model, then ~/.cache/whisper/ (Homebrew default).

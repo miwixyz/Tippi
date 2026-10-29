@@ -185,6 +185,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
         #if DEBUG
+        if startedAsBildKopie() { return }
         // PRÜFSTAND (nur Debug, nur mit Umgebungsvariable): Diktat-Ende in einer Notiz nachspielen.
         if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_DICTATION"] != nil {
             Task { @MainActor in await self.reproNotesDictation() }
@@ -294,7 +295,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MLXServerManager.autoStartIfPreferred()
     }
 
+    #if DEBUG
+    /// Bild-Testkopie (docs/SECURE-DESIGN-befehlskanal.md B3): nur Schrift, Hell/Dunkel und der Befehlskanal.
+    /// Keine Hotkeys, Event-Taps, Bedienungshilfen, Mikrofon, Modelle, Gnotchi, Sparkle, iCloud, Menüleiste —
+    /// sonst kämpft die Kopie mit dem echten Tippi um Tasten und Freigaben.
+    private func startedAsBildKopie() -> Bool {
+        guard BildKopie.isActive else { return false }
+        FamilyTheme.app = .tippi
+        FamilyTheme.registerFonts()
+        AppearanceSettings.apply()
+        DebugBridge.start()
+        return true
+    }
+    #endif
+
     func applicationWillTerminate(_ notification: Notification) {
+        // Bild-Testkopie: nichts aufräumen — MLX-Server und temporäre Aufnahmen gehören dem echten Tippi.
+        guard !BildKopie.isActive else { return }
         // The mlx_lm.server child process would otherwise outlive the app,
         // holding the model in RAM and blocking the port.
         MLXServerManager.shared.stop()
@@ -1091,6 +1108,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showSettingsWindow() {
+        // Bild-Testkopie: das volle Fenster lädt alle Reiter (Anbieter, Snippets, Verlauf) — nur über den Kanal.
+        guard !BildKopie.isActive else { return }
         NSApp.activate()
 
         if settingsWindowController == nil {
@@ -1149,7 +1168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ///
     /// Returns `false`: we handled it, AppKit must not try its own default.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if Self.isRunningUnitTests { return false }
+        if Self.isRunningUnitTests || BildKopie.isActive { return false }
         showNotesWindow()
         return false
     }

@@ -19,7 +19,7 @@ enum KeychainError: LocalizedError {
 /// Items are scoped to `com.tippi.app` and the account `provider.<name>`,
 /// accessible only while the device is unlocked and **not** synced via iCloud.
 enum KeychainStore {
-    static let service = "com.tippi.app"
+    static let service = BildKopie.keychainService("com.tippi.app")
 
     static func setAPIKey(_ key: String, for provider: String) throws {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)

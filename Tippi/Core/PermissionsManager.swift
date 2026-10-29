@@ -17,6 +17,9 @@ final class PermissionsManager: ObservableObject {
     @Published private(set) var notificationsAllowed: Bool?
 
     init() {
+        // Bild-Testkopie: `checkInputMonitoring` erzeugt zur Prüfung einen Event-Tap (10× beim Start) — die
+        // Kopie startet keinen (docs/SECURE-DESIGN-befehlskanal.md B3, gemessen 2026-10-29).
+        guard !BildKopie.isActive else { return }
         refresh()
         beginStartupPoll()
         observeActivation()

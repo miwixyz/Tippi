@@ -48,12 +48,8 @@ final class HistoryStore: @unchecked Sendable {
             if let databaseURL {
                 dbURL = databaseURL
             } else {
-                let supportDir = try FileManager.default.url(
-                    for: .applicationSupportDirectory,
-                    in: .userDomainMask,
-                    appropriateFor: nil,
-                    create: true
-                ).appendingPathComponent("Tippi", isDirectory: true)
+                // Bild-Testkopie: eigener leerer Ersatzordner (BildKopie).
+                let supportDir = BildKopie.applicationSupport.appendingPathComponent("Tippi", isDirectory: true)
                 try FileManager.default.createDirectory(
                     at: supportDir,
                     withIntermediateDirectories: true
@@ -314,7 +310,7 @@ final class HistoryStore: @unchecked Sendable {
 
     // MARK: - Keychain-backed encryption key
 
-    private static let keychainService = "com.tippi.app"
+    private static let keychainService = BildKopie.keychainService("com.tippi.app")
     private static let keychainAccount = "history.encryption.key"
 
     private static func encryptionKey() throws -> SymmetricKey {

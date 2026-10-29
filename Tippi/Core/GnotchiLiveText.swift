@@ -25,8 +25,8 @@ enum GnotchiLiveText {
         + #"certificate leaf[subject.OU] = "LTKJ6Z2VYB""#
 
     static var socketPath: String? {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("Gnotchi/live.sock").path
+        // Bild-Testkopie: Pfad im leeren Ersatzordner — keine Verbindung zu Gnotchi (BildKopie).
+        BildKopie.applicationSupport.appendingPathComponent("Gnotchi/live.sock").path
     }
 
     enum IndicatorMode: Equatable { case tippiPill, gnotchi, gnotchiLive }

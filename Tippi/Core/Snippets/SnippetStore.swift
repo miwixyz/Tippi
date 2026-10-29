@@ -134,8 +134,9 @@ final class SnippetStore: ObservableObject {
         reloadEspansoFiles()
     }
 
+    /// Bild-Testkopie: eigener leerer Ersatz — sie liest nie Tippis oder Espansos Snippets (BildKopie).
     private static var systemAppSupportDirectory: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        BildKopie.applicationSupport
     }
 
     private var tippiSupportDirectory: URL {

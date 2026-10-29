@@ -344,7 +344,8 @@ final class NotesStore: ObservableObject {
     /// Ubiquity container if iCloud is available and entitled, else the local
     /// fallback directory. Both are created on demand.
     private nonisolated static func resolveStorageDirectory() -> (url: URL, isUsingiCloud: Bool) {
-        if let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) {
+        // Bild-Testkopie: nie in den iCloud-Container `iCloud~dev~mwlr~Tippi` (BildKopie).
+        if !BildKopie.isActive, let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) {
             let dir = container.appendingPathComponent("Documents/Notes", isDirectory: true)
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             return (dir, true)
@@ -353,8 +354,7 @@ final class NotesStore: ObservableObject {
     }
 
     private nonisolated static var localFallbackDirectory: URL {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = base.appendingPathComponent("Tippi/Notes", isDirectory: true)
+        let dir = BildKopie.applicationSupport.appendingPathComponent("Tippi/Notes", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

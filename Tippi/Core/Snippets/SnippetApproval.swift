@@ -32,7 +32,7 @@ enum SnippetApprovalSigner {
     /// Default Keychain service. Overridable so tests can use a throwaway
     /// service instead of touching the real one — deleting the production key
     /// during a test run would silently revoke every approval on this Mac.
-    static let defaultService = "com.tippi.app.snippet-approval"
+    static let defaultService = BildKopie.keychainService("com.tippi.app.snippet-approval")
     private static let keychainAccount = "hmac-key-v1"
     private static let keyByteCount = 32
 

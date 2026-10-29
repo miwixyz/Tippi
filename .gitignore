@@ -48,6 +48,8 @@ graphify-out/
 .claude/
 build-check/
 build-test/
+# Bild-Testkopie + tippictl (scripts/bild-test.sh)
+build-dev/
 
 # Coverage-Artefakt aus Test-Laeufen (Audit 2026-09-27)
 *.profraw
