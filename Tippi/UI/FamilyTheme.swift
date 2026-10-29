@@ -20,12 +20,28 @@ import AppKit
 extension Color {
     /// Farbe mit getrenntem Wert für Hell und Dunkel, als echte dynamische Systemfarbe
     /// (reagiert auf NSApp.appearance / Trait-Wechsel ohne Neuzeichnen von Hand).
-    init(light: UInt32, dark: UInt32) {
+    ///
+    /// `lightHC`/`darkHC` (optional, ab 2026-10-29): Werte für die Systemeinstellung „Kontrast erhöhen“
+    /// (Mac: Bedienungshilfen → Anzeige; iPhone: „Kontrast erhöhen“). Ziel 7 : 1 für Text/Akzent,
+    /// 3 : 1 für Linien. Fehlen sie, gilt der normale Wert – kein View muss davon wissen.
+    init(light: UInt32, dark: UInt32, lightHC: UInt32? = nil, darkHC: UInt32? = nil) {
+        let hcLight = lightHC ?? light, hcDark = darkHC ?? dark
         #if canImport(UIKit)
-        self.init(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) })
+        self.init(uiColor: UIColor { traits in
+            let high = traits.accessibilityContrast == .high
+            if traits.userInterfaceStyle == .dark { return UIColor(hex: high ? hcDark : dark) }
+            return UIColor(hex: high ? hcLight : light)
+        })
         #elseif canImport(AppKit)
+        // Kontrast: direkt die Systemeinstellung fragen. Über NSAppearance-Namen lässt es sich nicht
+        // verlässlich erkennen – `NSAppearance(named: .accessibilityHighContrastAqua)` liefert schlicht
+        // „Aqua“ (gemessen 29.10.). macOS zeichnet nach dem Umschalten neu und ruft den Block erneut auf.
         self.init(nsColor: NSColor(name: nil) { appearance in
-            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor(hex: dark) : NSColor(hex: light)
+            let high = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+            if appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+                return NSColor(hex: high ? hcDark : dark)
+            }
+            return NSColor(hex: high ? hcLight : light)
         })
         #endif
     }
@@ -61,10 +77,10 @@ enum FamilyTheme {
     // für Text auf Weiß bzw. auf der dunklen Karte, gerechnet 2026-09-29).
     static var accent: Color {
         switch app {
-        case .tippi:  Color(light: 0x3E5998, dark: 0x98AEE1)   // Schieferblau
-        case .kalli:  Color(light: 0x3E4D98, dark: 0x98A4E1)   // Schieferindigo
-        case .tippAI: Color(light: 0x413E98, dark: 0x9B98E1)   // Schieferviolett
-        case .qotti:  Color(light: 0x3E6E98, dark: 0x98BFE1)   // Schiefer-Himmelblau
+        case .tippi:  Color(light: 0x3E5998, dark: 0x98AEE1, lightHC: 0x2F4474, darkHC: 0x99AFE1)   // Schieferblau
+        case .kalli:  Color(light: 0x3E4D98, dark: 0x98A4E1, lightHC: 0x33407E, darkHC: 0xA1ACE4)   // Schieferindigo
+        case .tippAI: Color(light: 0x413E98, dark: 0x9B98E1, lightHC: 0x3D3A8F, darkHC: 0xACAAE6)   // Schieferviolett
+        case .qotti:  Color(light: 0x3E6E98, dark: 0x98BFE1, lightHC: 0x284763)   // Schiefer-Himmelblau
         }
     }
     /// Füllung für Flächen mit WEISSER Schrift (`.borderedProminent`, gefüllte Kapseln).
@@ -73,10 +89,10 @@ enum FamilyTheme {
     /// Diese Werte halten Weiß ≥ 4,6 : 1. Einsatz: `.tint(FamilyTheme.accentFill)`.
     static var accentFill: Color {
         switch app {
-        case .tippi:  Color(light: 0x3E5998, dark: 0x5172BD)
-        case .kalli:  Color(light: 0x3E4D98, dark: 0x5C6DC1)
-        case .tippAI: Color(light: 0x413E98, dark: 0x6B67C5)
-        case .qotti:  Color(light: 0x3E6E98, dark: 0x4179AA)
+        case .tippi:  Color(light: 0x3E5998, dark: 0x5172BD, lightHC: 0x3D5795, darkHC: 0x395697)
+        case .kalli:  Color(light: 0x3E4D98, dark: 0x5C6DC1, darkHC: 0x4052A9)
+        case .tippAI: Color(light: 0x413E98, dark: 0x6B67C5, darkHC: 0x4D49B9)
+        case .qotti:  Color(light: 0x3E6E98, dark: 0x4179AA, lightHC: 0x345C80, darkHC: 0x315C81)
         }
     }
 
@@ -94,7 +110,7 @@ enum FamilyTheme {
     static let backgroundBottom = Color(light: 0xD9DDE8, dark: 0x1F2433)
     /// Feste Inhaltsfläche (Karte, Editor, Liste). Nie transparent.
     static let card        = Color(light: 0xFFFFFF, dark: 0x1B2130)
-    static let cardStroke  = Color(light: 0xE2E5EE, dark: 0x2A3142)
+    static let cardStroke  = Color(light: 0xE2E5EE, dark: 0x2A3142, lightHC: 0x8C93A8, darkHC: 0x6B7491)
     /// Tönung für große Glasflächen (siehe `familyTintedGlass`). Mitte des Verlaufs,
     /// 78 % Deckkraft — ruhig, aber das Glas bleibt als Glas erkennbar.
     static let glassTint = Color(light: 0xF3F5F9, dark: 0x161A25).opacity(0.78)
@@ -104,12 +120,12 @@ enum FamilyTheme {
 
     // Text
     static let textPrimary   = Color(light: 0x1E2433, dark: 0xECEFF6)
-    static let textSecondary = Color(light: 0x56607E, dark: 0xA3ACC8)   // Michaels Referenzton
+    static let textSecondary = Color(light: 0x56607E, dark: 0xA3ACC8, lightHC: 0x3E455B, darkHC: 0xA6AECA)   // Michaels Referenzton
 
     // Status (sparsam — Farbe trägt nie allein die Bedeutung)
-    static let success = Color(light: 0x1F8A6B, dark: 0x6FE0C1)
-    static let warning = Color(light: 0xB25E09, dark: 0xF5B35C)
-    static let danger  = Color(light: 0xC23B4E, dark: 0xFF8A9A)
+    static let success = Color(light: 0x1F8A6B, dark: 0x6FE0C1, lightHC: 0x114D3C)
+    static let warning = Color(light: 0xB25E09, dark: 0xF5B35C, lightHC: 0x6B3805)
+    static let danger  = Color(light: 0xC23B4E, dark: 0xFF8A9A, lightHC: 0x7C2632, darkHC: 0xFF8E9D)
 
     // MARK: Schrift — Plus Jakarta Sans (Michael, 2026-09-29), SIL OFL 1.1
     //
