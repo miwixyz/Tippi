@@ -590,8 +590,15 @@ gh release view "v${VERSION}" >/dev/null
 # 10. Generate appcast.xml — DMGs are hosted on GitHub Releases, not Gist
 echo "▶ [9/9] Generating appcast.xml..."
 if [ -f "${APPCAST_TOOL}" ]; then
+    # Versionshinweise fürs Update-Fenster: Abschnitt aus CHANGELOG.md als HTML neben dem DMG,
+    # Sparkle zeigt ihn mit --embed-release-notes an (wie TippAI, Michael 29.10.).
+    for archive in "${DIST_DIR}"/*.dmg; do
+        python3 -I scripts/release-notes.py "${VERSION}" CHANGELOG.md "${archive%.dmg}.html" || {
+            echo "✗ Versionshinweise für ${VERSION} nicht erzeugt (CHANGELOG-Abschnitt fehlt?)"; exit 1; }
+    done
     "${APPCAST_TOOL}" "${DIST_DIR}" \
         --download-url-prefix "${GH_RELEASE_URL}/" \
+        --embed-release-notes \
         -o appcast.xml 2>/dev/null
     # Der Appcast liegt in einem Gist, und dafuer braucht das Token den
     # 'gist'-Scope. Ein GITHUB_TOKEN aus der Umgebung ueberschreibt gh's
