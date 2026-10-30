@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.32.1. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.33.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -47,6 +47,7 @@ Tippi/
 │   ├── ScreenOCRSettings.swift     # v2.12 — Hotkey + Voreinstellungen (ab Werk AUS)
 │   ├── RecognizedTextJoiner.swift  # v2.12.2 — OCR-Zeilen zu Absätzen, Layout vs. Bedeutung
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
+│   ├── TextInsertion+PasteCheck.swift # Clipboard-Paste: auf Feld warten, Ankunft prüfen (Messpunkt „paste check“)
 │   ├── InsertionFitter.swift       # 2.32 — Diktat passend zum Text am Cursor (Leerzeichen, Groß/Klein,
 │   │                               #   Punkt), feste Regeln nach Blitztext (MIT), rein + getestet
 │   ├── FocusedFieldReader.swift    # 2.32 — Text vor/hinter dem Cursor + Feld-Fingerabdruck über die

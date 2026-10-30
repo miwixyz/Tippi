@@ -2,7 +2,21 @@
 
 ## [2.33.0] — 2026-10-30
 
-- _Add release notes here._
+### Neu
+- **Das Update-Fenster zeigt, was neu ist.** Bietet Tippi ein Update an, stehen die Neuerungen der Version jetzt direkt im Fenster, ohne Umweg über die Website.
+- **„Kontrast erhöhen“ gilt auch in Tippi.** Ist in den Systemeinstellungen unter Bedienungshilfen → Anzeige „Kontrast erhöhen“ an, nutzt Tippi für Akzente, Text und Statusfarben kräftigere Farben (Kontrast mindestens 7 : 1, Rahmen 3 : 1). Ohne den Schalter bleibt alles wie bisher.
+- **Symbol-Knöpfe haben Namen.** 14 Knöpfe, die nur ein Symbol zeigen (z. B. Kürzel bearbeiten und löschen, Schritte einer Kette verschieben, Suche leeren), nennen VoiceOver jetzt, was sie tun, und zeigen beim Darüberfahren einen Hinweis.
+
+### Behoben
+- **Ersetzen in Apple Mail kam manchmal nicht an.** Mail lässt Tippi den Text nicht direkt austauschen, deshalb fügt Tippi dort über die Zwischenablage ein. Das ⌘V kam manchmal zu früh, bevor Mail das Schreibfeld wieder bereit hatte: Das Fenster schloss sich, und nichts passierte. Tippi wartet jetzt bis zu einer Sekunde auf das Schreibfeld und prüft danach, ob der Text angekommen ist. Erst dann legt es deine alte Zwischenablage zurück. Kommt der Text nachweislich nicht an, bleibt er in der Zwischenablage und Tippi sagt es dir („Einfügen kam nicht an“), mit ⌘V holst du ihn dann selbst. Gilt für alle Apps, in die Tippi über die Zwischenablage einfügt.
+
+### Intern
+- `TextInsertion+PasteCheck.swift`: `preparePasteTarget` (bis 1 s auf ein fokussiertes Element mit `kAXSelectedTextRange`), `awaitPasteEffect` (bis 1 s auf eine Änderung von `kAXValue`), `pasteOutcome` (`landed`/`notLanded`/`unknown`; nur ein lesbarer, unveränderter Wert zählt als nicht angekommen). Ohne lesbaren Wert wird die Zwischenablage nach 1 s statt 0,4 s zurückgelegt. Messpunkt `category == "insert"`, Zeile `paste check` mit Wartezeit, Rolle und Ergebnis, ohne Text. Anlass: Im Protokoll vom 30.10. liefen alle 9 Ersetzen-Versuche in Mail über diesen Weg, Erfolg und Fehlschlag sahen gleich aus.
+- `scripts/release-notes.py`: macht aus dem CHANGELOG-Abschnitt der Version (ohne „Intern“) ein HTML neben dem Archiv, `generate_appcast --embed-release-notes` bettet es in den Appcast ein.
+- `FamilyTheme`: `Color(light:dark:)` kennt `lightHC`/`darkHC` (`NSWorkspace.accessibilityDisplayShouldIncreaseContrast`).
+- Testkopie mit Befehlskanal (`BildKopie`, Kennung `dev.mwlr.tippi.bild`, nur Debug-Build): Bildschirmfotos einzelner Einstellungs-Reiter für Doku, ohne Hotkeys, Diktat, iCloud und Sparkle.
+- `scripts/diktat-pruefstand.py`: Vorrede und Anführungszeichen um die Antwort zählen als Fehler.
+- 834 Tests (12 neu).
 
 ## [2.32.1] — 2026-10-28
 
