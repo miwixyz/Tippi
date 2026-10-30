@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.33.0] — 2026-10-30
+
+- _Add release notes here._
+
 ## [2.32.1] — 2026-10-28
 
 ### Geändert
