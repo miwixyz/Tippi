@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.33.0</title>
+            <pubDate>Fri, 30 Oct 2026 15:11:03 +0100</pubDate>
+            <sparkle:version>606</sparkle:version>
+            <sparkle:shortVersionString>2.33.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Das Update-Fenster zeigt, was neu ist.</b> Bietet Tippi ein Update an, stehen die Neuerungen der Version jetzt direkt im Fenster, ohne Umweg über die Website.</li><li><b>„Kontrast erhöhen“ gilt auch in Tippi.</b> Ist in den Systemeinstellungen unter Bedienungshilfen → Anzeige „Kontrast erhöhen“ an, nutzt Tippi für Akzente, Text und Statusfarben kräftigere Farben (Kontrast mindestens 7 : 1, Rahmen 3 : 1). Ohne den Schalter bleibt alles wie bisher.</li><li><b>Symbol-Knöpfe haben Namen.</b> 14 Knöpfe, die nur ein Symbol zeigen (z. B. Kürzel bearbeiten und löschen, Schritte einer Kette verschieben, Suche leeren), nennen VoiceOver jetzt, was sie tun, und zeigen beim Darüberfahren einen Hinweis.</li></ul><h3>Behoben</h3><ul><li><b>Ersetzen in Apple Mail kam manchmal nicht an.</b> Mail lässt Tippi den Text nicht direkt austauschen, deshalb fügt Tippi dort über die Zwischenablage ein. Das ⌘V kam manchmal zu früh, bevor Mail das Schreibfeld wieder bereit hatte: Das Fenster schloss sich, und nichts passierte. Tippi wartet jetzt bis zu einer Sekunde auf das Schreibfeld und prüft danach, ob der Text angekommen ist. Erst dann legt es deine alte Zwischenablage zurück. Kommt der Text nachweislich nicht an, bleibt er in der Zwischenablage und Tippi sagt es dir („Einfügen kam nicht an“), mit ⌘V holst du ihn dann selbst. Gilt für alle Apps, in die Tippi über die Zwischenablage einfügt.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.33.0/Tippi-2.33.0.dmg" length="24957541" type="application/octet-stream" sparkle:edSignature="apmTKKsEsMgpAqrrXP4S98UO6ZZ+//coxSc2Dkr0LeWpBa1nuZD+IU+1218SCvyb/89rz7hrC0R4m0irv04AAQ=="/>
+        </item>
+        <item>
             <title>2.32.1</title>
             <pubDate>Wed, 28 Oct 2026 11:10:35 +0100</pubDate>
             <sparkle:version>596</sparkle:version>
@@ -19,15 +29,6 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.32.0/Tippi-2.32.0.dmg" length="24945759" type="application/octet-stream" sparkle:edSignature="9KcqgXALPMmM0WuXpK/wEB2L9TCt7iAq9aUtdHLPxKIi4l8yy2StYOZGh0v88mDL43Yt6ybM8PdbHqqIUgaSDQ=="/>
-        </item>
-        <item>
-            <title>2.31.0</title>
-            <pubDate>Thu, 22 Oct 2026 18:52:05 +0200</pubDate>
-            <sparkle:version>577</sparkle:version>
-            <sparkle:shortVersionString>2.31.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.31.0/Tippi-2.31.0.dmg" length="16225894" type="application/octet-stream" sparkle:edSignature="s0S9NuTs2Ctp5vQg8YCqx5Q97xNG6ctpzfJ/RKVej0Myt7uNDCFdtxCMgjTrdbogEUYqTtF9ZQsrSnP3De/IDw=="/>
         </item>
     </channel>
 </rss>
