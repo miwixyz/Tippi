@@ -39,6 +39,7 @@ Tippi/
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
+│   ├── BildKopie.swift             # 2.33 — nur Debug: erkennt die Bild-Testkopie (`dev.mwlr.tippi.bild`), schaltet Hotkeys, Diktat, iCloud, Sparkle ab
 │   ├── InputAnchor.swift           # rein + unit-getestet: Prompt-Pop-up an Auswahlende/Cursor,
 │   │                               #   Maus nur als Rückfall; unter dem Anker, sonst darüber, pro Bildschirm
 │   ├── ScreenTextCapture.swift     # v2.12 — ScreenCaptureKit + Vision-OCR, nur RAM
@@ -137,6 +138,10 @@ Tippi/
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
 │       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
 │                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
+├── Debug/                          # 2.33 — nur Debug-Build (`#if DEBUG`), Befehlskanal der Bild-Testkopie, docs/SECURE-DESIGN-befehlskanal.md
+│   ├── DebugSocketServer.swift     # Unix-Socket debug.sock, nur für das Developer-ID-signierte tippictl
+│   ├── DebugCommand.swift          # Befehle status · snapshot <reiter> · appearance
+│   └── DebugBridge.swift           # führt die Befehle in der App aus (je ein Einstellungs-Reiter)
 ├── LLM/                            # 8 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
 │   ├── LLMRouter.swift             # Registry, Routing, Fallback
