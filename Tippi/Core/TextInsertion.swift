@@ -173,6 +173,7 @@ enum TextInsertion {
         snapshot.markOwnedChange(on: pb)
 
         try? await Task.sleep(nanoseconds: 40_000_000)
+        let target = await preparePasteTarget(pid: expectedPID)
         guard isExpectedFrontmost(targetPID: expectedPID,
                                   frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier) else {
             // Do not post ⌘V into a different app. The result stays on the
@@ -181,7 +182,12 @@ enum TextInsertion {
             return snapshot
         }
         simulatePaste()
-        try? await Task.sleep(nanoseconds: 400_000_000)
+        let (outcome, effectMs) = await awaitPasteEffect(on: target)
+        logPasteCheck(target, outcome: outcome, effectMs: effectMs)
+        if outcome == .notLanded {
+            reportPasteNotLanded()
+            return snapshot
+        }
 
         if restoreClipboard { snapshot.restore() }
         return snapshot
@@ -204,13 +210,19 @@ enum TextInsertion {
         snapshot.markOwnedChange(on: pb)
 
         try? await Task.sleep(nanoseconds: 40_000_000)
+        let target = await preparePasteTarget(pid: expectedPID)
         guard isExpectedFrontmost(targetPID: expectedPID,
                                   frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier) else {
             insertLog.error("rich paste withheld: target app is no longer frontmost")
             return
         }
         simulatePaste()
-        try? await Task.sleep(nanoseconds: 400_000_000)
+        let (outcome, effectMs) = await awaitPasteEffect(on: target)
+        logPasteCheck(target, outcome: outcome, effectMs: effectMs)
+        if outcome == .notLanded {
+            reportPasteNotLanded()
+            return
+        }
 
         snapshot.restore()
     }
@@ -331,7 +343,7 @@ enum TextInsertion {
         return out as? String
     }
 
-    private static func axStringValue(_ element: AXUIElement) -> String? {
+    static func axStringValue(_ element: AXUIElement) -> String? {
         var valueRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef) == .success else {
             return nil
@@ -478,7 +490,7 @@ enum TextInsertion {
         return nil
     }
 
-    private static func focusedElement(in appElement: AXUIElement) -> AXUIElement? {
+    static func focusedElement(in appElement: AXUIElement) -> AXUIElement? {
         var focusedRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(
             appElement,

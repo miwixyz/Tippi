@@ -674,6 +674,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.toast.returnWithheld" = "Return not pressed";
 "dictation.toast.notesClosedCopied" = "Notes window closed — dictation copied to the clipboard";
 "dictation.toast.fieldChangedCopied" = "Another field is active now — dictation copied to the clipboard (⌘V)";
+"insert.toast.pasteNotLanded" = "Paste did not arrive — text is on the clipboard (⌘V)";
 "settings.voice.dictation.autoReturn.title" = "Press Return after inserting";
 "settings.voice.dictation.autoReturn.body" = "Only in these apps, and only if the app is still in front when the text goes in. Handy for chats like Claude, where Return sends. Applies to every window of the app. In terminals, code editors and coding agents (Terminal, iTerm, Ghostty, VS Code, Codex …) Tippi presses Return only if AI cleanup left your dictated text unchanged — a command there can never come from the AI.";
 "settings.voice.dictation.autoReturn.empty" = "No app added — Tippi never presses Return.";

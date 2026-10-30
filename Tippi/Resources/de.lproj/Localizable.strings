@@ -649,6 +649,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "dictation.toast.returnWithheld" = "Enter nicht gedrückt";
 "dictation.toast.notesClosedCopied" = "Notizen-Fenster geschlossen — Diktat in die Zwischenablage kopiert";
 "dictation.toast.fieldChangedCopied" = "Inzwischen ist ein anderes Feld aktiv — Diktat in die Zwischenablage kopiert (⌘V)";
+"insert.toast.pasteNotLanded" = "Einfügen kam nicht an — Text liegt in der Zwischenablage (⌘V)";
 "settings.voice.dictation.autoReturn.title" = "Nach dem Einfügen Enter drücken";
 "settings.voice.dictation.autoReturn.body" = "Nur in diesen Apps, und nur wenn die App beim Einfügen noch vorne ist. Praktisch für Chats wie Claude, wo Enter abschickt. Gilt für alle Fenster der App. In Terminals, Code-Editoren und Coding-Agenten (Terminal, iTerm, Ghostty, VS Code, Codex …) drückt Tippi nur Enter, wenn die KI-Bereinigung den diktierten Text nicht verändert hat — ein Befehl kann dort nie von der KI stammen.";
 "settings.voice.dictation.autoReturn.empty" = "Keine App eingetragen — Tippi drückt nie Enter.";
