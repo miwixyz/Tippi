@@ -122,7 +122,7 @@ enum ReplacementWriter {
                 // The AX write was silently discarded (Electron/Chromium). The
                 // selection has collapsed, so it can no longer be replaced —
                 // insert at the current cursor position as a best effort.
-                await TextInsertion.insertViaClipboard(plainText, into: app)
+                await TextInsertion.insertViaClipboard(plainText, into: app, restoring: range, of: element)
             case .unavailable:
                 await writeFallback(plainText, attributed: attributed, in: app)
             }

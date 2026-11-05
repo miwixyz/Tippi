@@ -90,6 +90,50 @@ extension TextInsertion {
             "paste check: focus=\(target.element == nil ? "missing" : "found", privacy: .public) wait=\(target.focusWaitMs, privacy: .public)ms role=\(target.role, privacy: .public) value=\(target.valueBefore == nil ? "unreadable" : "readable", privacy: .public) → \(String(describing: outcome), privacy: .public) after \(effectMs, privacy: .public)ms")
     }
 
+    /// ⌘V über den Menüpunkt „Einsetzen“ statt über eine Taste (Messung 2026-11-05: Helium
+    /// ignorierte das synthetische ⌘V nach dem Prompt-Fenster). Der Punkt wird am
+    /// Tastenkürzel erkannt (Befehlstaste + V), nicht am Namen — sprachunabhängig.
+    @discardableResult
+    static func pasteViaMenu(pid: pid_t) -> Bool {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, 0.25)
+        guard let bar = FocusedFieldReader.element(app, kAXMenuBarAttribute) else { return false }
+        for barItem in children(of: bar) {
+            for menu in children(of: barItem) {
+                for item in children(of: menu) {
+                    guard FocusedFieldReader.string(item, kAXMenuItemCmdCharAttribute)?.uppercased() == "V",
+                          menuModifiers(item) == 0 else { continue }
+                    let result = AXUIElementPerformAction(item, kAXPressAction as CFString)
+                    pasteLog.notice("paste via menu: press code=\(result.rawValue, privacy: .public)")
+                    return result == .success
+                }
+            }
+        }
+        pasteLog.notice("paste via menu: no item with ⌘V found")
+        return false
+    }
+
+    private static func children(of element: AXUIElement) -> [AXUIElement] {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &ref) == .success else { return [] }
+        return (ref as? [AXUIElement]) ?? []
+    }
+
+    private static func menuModifiers(_ item: AXUIElement) -> Int? {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(item, kAXMenuItemCmdModifiersAttribute as CFString, &ref) == .success else { return nil }
+        return (ref as? NSNumber)?.intValue
+    }
+
+    /// Messpunkt 2026-11-05 (Helium: ⌘V kam nicht an): wer vorn liegt, was markiert ist.
+    static func logPasteState(_ stage: String, _ target: PasteTarget) {
+        let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "nil"
+        let range = target.element.flatMap { FocusedFieldReader.selectedRange($0) }
+        let sel = range.map { "loc=\($0.location) len=\($0.length)" } ?? "unreadable"
+        let keys = NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue
+        pasteLog.notice("paste state \(stage, privacy: .public): front=\(front, privacy: .public) selection=\(sel, privacy: .public) heldModifiers=\(keys, privacy: .public)")
+    }
+
     /// The ⌘V provably went nowhere: keep the result on the clipboard and say so,
     /// instead of putting the old clipboard back and losing the text.
     static func reportPasteNotLanded() {

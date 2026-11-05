@@ -140,6 +140,19 @@ enum TextInsertion {
         await paste(text: text, expectedPID: app?.processIdentifier)
     }
 
+    /// Wie `insertViaClipboard`, markiert die Auswahl vorher aber neu — so wie
+    /// `pasteFormatting`. Messung 2026-11-05 (Helium): nach dem verworfenen AX-Schreibversuch
+    /// kam das ⌘V trotz scheinbar intakter Markierung nicht an; der Format-Weg, der die
+    /// Markierung per AX setzt, landete. Scheitert das Markieren, bleibt es beim alten Weg.
+    static func insertViaClipboard(_ text: String, into app: NSRunningApplication?,
+                                   restoring range: CFRange, of element: AXUIElement) async {
+        if AXIsProcessTrusted() {
+            let failure = restoreSelection(element, range: range)
+            insertLog.notice("insertViaClipboard: selection restore \(failure == nil ? "ok" : "failed", privacy: .public)")
+        }
+        await insertViaClipboard(text, into: app)
+    }
+
     static func copy(_ text: String) {
         let pb = NSPasteboard.general
         pb.clearContents()
@@ -181,12 +194,21 @@ enum TextInsertion {
             insertLog.error("paste withheld: target app is no longer frontmost")
             return snapshot
         }
+        logPasteState("before ⌘V", target)
         simulatePaste()
         let (outcome, effectMs) = await awaitPasteEffect(on: target)
         logPasteCheck(target, outcome: outcome, effectMs: effectMs)
         if outcome == .notLanded {
-            reportPasteNotLanded()
-            return snapshot
+            // Messung 2026-11-05 (Helium nach dem Prompt-Fenster): das Tasten-⌘V kommt nicht an,
+            // auch ein zweites nicht. Rückfall: denselben Befehl über das Menü auslösen.
+            logPasteState("menu fallback", target)
+            let pressed = expectedPID.map { pasteViaMenu(pid: $0) } ?? false
+            let (second, secondMs) = pressed ? await awaitPasteEffect(on: target) : (PasteOutcome.notLanded, 0)
+            logPasteCheck(target, outcome: second, effectMs: secondMs)
+            if second == .notLanded {
+                reportPasteNotLanded()
+                return snapshot
+            }
         }
 
         if restoreClipboard { snapshot.restore() }
