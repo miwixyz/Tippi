@@ -48,6 +48,7 @@ Tippi/
 │   ├── ScreenOCRSettings.swift     # v2.12 — Hotkey + Voreinstellungen (ab Werk AUS)
 │   ├── RecognizedTextJoiner.swift  # v2.12.2 — OCR-Zeilen zu Absätzen, Layout vs. Bedeutung
 │   ├── TextInsertion.swift         # Replace / Append / Copy / Clipboard-Paste
+│   ├── ChromiumAccessibility.swift # 2.33.1 — Chromium-/Electron-Apps: Bedienungshilfen-Baum selbst anfordern (Messpunkt „ax wake“)
 │   ├── TextInsertion+PasteCheck.swift # Clipboard-Paste: auf Feld warten, Ankunft prüfen (Messpunkt „paste check“)
 │   ├── InsertionFitter.swift       # 2.32 — Diktat passend zum Text am Cursor (Leerzeichen, Groß/Klein,
 │   │                               #   Punkt), feste Regeln nach Blitztext (MIT), rein + getestet
