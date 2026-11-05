@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.33.1</title>
+            <pubDate>Thu, 05 Nov 2026 12:18:48 +0100</pubDate>
+            <sparkle:version>612</sparkle:version>
+            <sparkle:shortVersionString>2.33.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Tippi funktioniert jetzt in Helium, Edge und anderen Chromium-Apps.</b> Diese Browser und Electron-Apps (z. B. die Claude-App) geben ihre Bedienungshilfen-Daten erst heraus, wenn ein Programm sie anfordert. Vorher sah Tippi dort kein Textfeld: keine Auswahlleiste, kein Prompt-Fenster, keine Autovervollständigung. Tippi fordert die Daten jetzt selbst an, einmal je App-Start, du musst in Helium nicht mehr <code>chrome://accessibility</code> einschalten. In den ersten zwei Sekunden nach dem ersten Zugriff kann das Feld noch leer wirken.</li><li><b>Einfügen aus dem Prompt-Fenster kam in Helium nicht an.</b> Das ⌘V, das Tippi sendet, ignoriert Helium dort. Kommt der Text nicht an, löst Tippi jetzt „Einsetzen“ über das Bearbeiten-Menü der App aus. Der Menüpunkt wird am Tastenkürzel erkannt, nicht am Namen, funktioniert also in jeder Sprache.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.33.1/Tippi-2.33.1.dmg" length="24967487" type="application/octet-stream" sparkle:edSignature="6OYSJxMin8HOnP+llMVCRFIKXPfgn32CJVf8tPZTGM5RGSk9ECdOYOg/8P8e0V39hNH/Gv9/Hkf2TwaFabVkBw=="/>
+        </item>
+        <item>
             <title>2.33.0</title>
             <pubDate>Fri, 30 Oct 2026 15:11:03 +0100</pubDate>
             <sparkle:version>606</sparkle:version>
@@ -20,15 +30,6 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.32.1/Tippi-2.32.1.dmg" length="24946993" type="application/octet-stream" sparkle:edSignature="0nsgGSUxYZLruL8giie5kze6vm8g+PQXZwdcN53MKptfSb8EBPBXudN07KM+GkLTmtYL/Sz7efoHr8CtsYQ8Dw=="/>
-        </item>
-        <item>
-            <title>2.32.0</title>
-            <pubDate>Tue, 27 Oct 2026 19:02:22 +0100</pubDate>
-            <sparkle:version>592</sparkle:version>
-            <sparkle:shortVersionString>2.32.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.32.0/Tippi-2.32.0.dmg" length="24945759" type="application/octet-stream" sparkle:edSignature="9KcqgXALPMmM0WuXpK/wEB2L9TCt7iAq9aUtdHLPxKIi4l8yy2StYOZGh0v88mDL43Yt6ybM8PdbHqqIUgaSDQ=="/>
         </item>
     </channel>
 </rss>
