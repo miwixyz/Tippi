@@ -2,7 +2,16 @@
 
 ## [2.33.1] — 2026-11-05
 
-- _Add release notes here._
+### Behoben
+- **Tippi funktioniert jetzt in Helium, Edge und anderen Chromium-Apps.** Diese Browser und Electron-Apps (z. B. die Claude-App) geben ihre Bedienungshilfen-Daten erst heraus, wenn ein Programm sie anfordert. Vorher sah Tippi dort kein Textfeld: keine Auswahlleiste, kein Prompt-Fenster, keine Autovervollständigung. Tippi fordert die Daten jetzt selbst an, einmal je App-Start, du musst in Helium nicht mehr `chrome://accessibility` einschalten. In den ersten zwei Sekunden nach dem ersten Zugriff kann das Feld noch leer wirken.
+- **Einfügen aus dem Prompt-Fenster kam in Helium nicht an.** Das ⌘V, das Tippi sendet, ignoriert Helium dort. Kommt der Text nicht an, löst Tippi jetzt „Einsetzen“ über das Bearbeiten-Menü der App aus. Der Menüpunkt wird am Tastenkürzel erkannt, nicht am Namen, funktioniert also in jeder Sprache.
+
+### Intern
+- `ChromiumAccessibility.swift`: `wake(_:pid:)` setzt `AXManualAccessibility` (Electron) und, wenn die App es ablehnt (−25205, Helium), `AXEnhancedUserInterface` nur bei erkannten Chromium-Apps (`Helper (Renderer)` im Bundle); einmal je Prozess, Aufruf hinter jedem `AXUIElementCreateApplication`. Messpunkt `category == "capture"`, Zeile `ax wake`.
+- `TextInsertion+PasteCheck.swift`: `pasteViaMenu(pid:)` (Kürzel Befehlstaste+V, `AXPress`), Rückfall nach `notLanded`; `logPasteState` schreibt vorderste App, Markierung und gehaltene Modifier vor dem ⌘V. Ursache des ignorierten Tasten-⌘V in Helium ungeklärt.
+- `insertViaClipboard(_:into:restoring:of:)` setzt die Markierung vor dem Einfügen neu (kein Effekt in Helium, bleibt als gleicher Weg wie `pasteFormatting`).
+- Gemessen am 05.11. in Helium, Edge und der Claude-App; Chrome und Obsidian nicht.
+- 834 Tests (keine neuen: die Wege hängen an echten Apps und sind am System gemessen).
 
 ## [2.33.0] — 2026-10-30
 
