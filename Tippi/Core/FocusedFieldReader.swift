@@ -79,6 +79,7 @@ enum FocusedFieldReader {
     static func focusedElement(pid: pid_t) -> AXUIElement? {
         guard AXIsProcessTrusted() else { return nil }
         let app = AXUIElementCreateApplication(pid)
+        ChromiumAccessibility.wake(app, pid: pid)
         AXUIElementSetMessagingTimeout(app, timeout)
         guard let focused = element(app, kAXFocusedUIElementAttribute) else { return nil }
         AXUIElementSetMessagingTimeout(focused, timeout)

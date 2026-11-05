@@ -406,6 +406,7 @@ final class AutocompleteController: ObservableObject {
     private func readFocusedField(in app: NSRunningApplication) -> Field? {
         guard AXIsProcessTrusted() else { skip("not trusted (Bedienungshilfen)"); return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
         // Eine hängende App darf das Tippen nicht einfrieren.
         AXUIElementSetMessagingTimeout(appElement, 0.25)
         let focused = Self.element(appElement, kAXFocusedUIElementAttribute)

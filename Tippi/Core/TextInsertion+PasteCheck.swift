@@ -51,6 +51,7 @@ extension TextInsertion {
         }
         let start = CFAbsoluteTimeGetCurrent()
         let appElement = AXUIElementCreateApplication(pid)
+        ChromiumAccessibility.wake(appElement, pid: pid)
         AXUIElementSetMessagingTimeout(appElement, 0.1)
         var element: AXUIElement?
         while true {

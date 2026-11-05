@@ -354,6 +354,7 @@ enum TextInsertion {
     private static func replaceSelectionViaAccessibility(with text: String, in app: NSRunningApplication) -> Bool {
         guard AXIsProcessTrusted() else { return false }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
         AXUIElementSetMessagingTimeout(appElement, 0.25)
 
         if let focused = focusedElement(in: appElement),

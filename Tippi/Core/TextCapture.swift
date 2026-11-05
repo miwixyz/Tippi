@@ -76,6 +76,7 @@ enum TextCapture {
     ) -> (element: AXUIElement, range: CFRange)? {
         guard AXIsProcessTrusted() else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
         guard let focused = focusedElement(in: appElement) else { return nil }
 
         var rangeRef: CFTypeRef?
@@ -175,6 +176,7 @@ enum TextCapture {
         guard AXIsProcessTrusted() else { return [] }
         let deadline = CFAbsoluteTimeGetCurrent() + 0.15
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
         AXUIElementSetMessagingTimeout(appElement, 0.25)
         guard let focused = focusedElement(in: appElement) else { return [] }
         AXUIElementSetMessagingTimeout(focused, 0.25)
@@ -229,6 +231,7 @@ enum TextCapture {
     private static func readViaAccessibility(in app: NSRunningApplication) -> String? {
         guard AXIsProcessTrusted() else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
 
         if let focused = focusedElement(in: appElement),
            let text = selectedText(from: focused), !text.isEmpty {
@@ -262,6 +265,7 @@ enum TextCapture {
     private static func readViaAccessibilityCopyAction(in app: NSRunningApplication) async -> String? {
         guard AXIsProcessTrusted() else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
         guard let focused = focusedElement(in: appElement) else { return nil }
 
         let pb = NSPasteboard.general
