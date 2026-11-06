@@ -31,7 +31,7 @@ final class GlobalKeyMonitor: ObservableObject {
         // (same check the capture/insertion paths use); otherwise the hotkey
         // would silently never fire while isActive falsely reported true.
         guard AXIsProcessTrusted() else {
-            lastError = String(localized: "error.accessibility.hotkey")
+            lastError = AccessibilityListName.text("error.accessibility.hotkey")
             NSLog("Tippi: GlobalKeyMonitor — not trusted (Accessibility permission missing)")
             self.onTrigger = nil
             return

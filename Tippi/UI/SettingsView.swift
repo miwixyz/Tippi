@@ -516,7 +516,7 @@ private struct HotkeysTab: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(String(localized: "settings.hotkeys.tipHeader"))
                             .font(FamilyTheme.font(.headline))
-                        Text(String(localized: "settings.hotkeys.tip1"))
+                        Text(AccessibilityListName.text("settings.hotkeys.tip1"))
                             .font(FamilyTheme.font(.caption))
                             .foregroundStyle(.secondary)
                         Text(String(localized: "settings.hotkeys.tip2"))
@@ -1336,7 +1336,7 @@ private struct HelpTab: View {
         HelpEntry(id: "espansoImport", icon: "square.and.arrow.down", category: .snippets,
                   title: String(localized: "settings.help.espansoImportTitle"), body: String(localized: "settings.help.espansoImportBody")),
         HelpEntry(id: "snippets", icon: "text.badge.checkmark", category: .snippets,
-                  title: String(localized: "settings.help.snippetsTitle"), body: String(localized: "settings.help.snippetsBody")),
+                  title: String(localized: "settings.help.snippetsTitle"), body: AccessibilityListName.text("settings.help.snippetsBody")),
         HelpEntry(id: "localModels", icon: "cpu", category: .providers,
                   title: String(localized: "settings.help.localModelsTitle"), body: String(localized: "settings.help.localModelsBody")),
         HelpEntry(id: "icloudSync", icon: "icloud", category: .misc,
@@ -1369,7 +1369,7 @@ private struct HelpTab: View {
                   title: String(localized: "settings.help.linksTitle"), body: String(localized: "settings.help.linksBody")),
 
         HelpEntry(id: "trouble", icon: "exclamationmark.triangle", category: .troubleshooting,
-                  title: String(localized: "settings.help.troubleTitle"), body: String(localized: "settings.help.troubleBody")),
+                  title: String(localized: "settings.help.troubleTitle"), body: AccessibilityListName.text("settings.help.troubleBody")),
     ]
 
     private var groups: [HelpGroup] {

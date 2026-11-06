@@ -26,7 +26,7 @@ struct PermissionsTab: View {
                     Button(String(localized: "settings.permissions.recheck")) { permissions.refresh() }
                         .controlSize(.small)
                 }
-                row(symbol: "hand.raised", title: "settings.permissions.accessibility",
+                row(symbol: "hand.raised", title: AccessibilityListName.name(),
                     purpose: "settings.permissions.accessibility.purpose",
                     granted: permissions.accessibilityGranted,
                     grant: {
@@ -34,7 +34,7 @@ struct PermissionsTab: View {
                         permissions.openAccessibilitySettings()
                         bringSystemSettingsToFront()
                     })
-                row(symbol: "keyboard", title: "settings.permissions.inputMonitoring",
+                row(symbol: "keyboard", title: String(localized: "settings.permissions.inputMonitoring"),
                     purpose: "settings.permissions.inputMonitoring.purpose",
                     granted: permissions.inputMonitoringGranted,
                     grant: {
@@ -44,7 +44,7 @@ struct PermissionsTab: View {
                             bringSystemSettingsToFront()
                         }
                     })
-                row(symbol: "mic", title: "settings.permissions.microphone",
+                row(symbol: "mic", title: String(localized: "settings.permissions.microphone"),
                     purpose: "settings.permissions.microphone.purpose",
                     granted: permissions.microphoneGranted,
                     grant: {
@@ -57,14 +57,14 @@ struct PermissionsTab: View {
                             bringSystemSettingsToFront()
                         }
                     })
-                row(symbol: "rectangle.dashed", title: "settings.permissions.screenRecording",
+                row(symbol: "rectangle.dashed", title: String(localized: "settings.permissions.screenRecording"),
                     purpose: "settings.permissions.screenRecording.purpose",
                     granted: permissions.screenRecordingGranted,
                     grant: {
                         permissions.requestScreenRecording()
                         bringSystemSettingsToFront()
                     })
-                row(symbol: "bell", title: "settings.permissions.notifications",
+                row(symbol: "bell", title: String(localized: "settings.permissions.notifications"),
                     purpose: "settings.permissions.notifications.purpose",
                     granted: permissions.notificationsAllowed == true,
                     grant: {
@@ -81,7 +81,7 @@ struct PermissionsTab: View {
         .onAppear { permissions.refresh() }
     }
 
-    private func row(symbol: String, title: String.LocalizationValue, purpose: String.LocalizationValue,
+    private func row(symbol: String, title: String, purpose: String.LocalizationValue,
                      granted: Bool, grant: @escaping () -> Void) -> some View {
         GroupBox {
             HStack(alignment: .top, spacing: 12) {
@@ -90,7 +90,7 @@ struct PermissionsTab: View {
                     .foregroundStyle(.tint)
                     .frame(width: 26)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: title)).font(FamilyTheme.font(.headline))
+                    Text(title).font(FamilyTheme.font(.headline))
                     Text(String(localized: purpose))
                         .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)

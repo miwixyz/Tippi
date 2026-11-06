@@ -106,11 +106,11 @@ private struct AccessibilityStep: View {
                 .font(.system(size: 56))
                 .foregroundStyle(permissions.accessibilityGranted ? Color.green : Color.orange)
 
-            Text(String(localized: "setup.accessibility.title"))
+            Text(AccessibilityListName.text("setup.accessibility.title"))
                 .font(FamilyTheme.font(.title))
                 .bold()
 
-            Text(String(localized: "setup.accessibility.body"))
+            Text(AccessibilityListName.text("setup.accessibility.body"))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

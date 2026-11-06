@@ -476,7 +476,7 @@ struct SnippetsTab: View {
             }
         } else if monitor?.isActive == true && !AXIsProcessTrusted() {
             VStack(alignment: .leading, spacing: 6) {
-                Label(String(localized: "error.accessibility.snippets"),
+                Label(AccessibilityListName.text("error.accessibility.snippets"),
                       systemImage: "exclamationmark.triangle.fill")
                     .font(FamilyTheme.font(.caption))
                     .foregroundStyle(.orange)

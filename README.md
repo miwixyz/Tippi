@@ -142,7 +142,7 @@ your text for anything that touches AI.
 1. Download the DMG from **[the latest release](https://github.com/miwixyz/Tippi/releases/latest)** (or pick an older version from [Releases](https://github.com/miwixyz/Tippi/releases))
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
-4. Follow the in-app setup wizard (grant Accessibility permission, optionally enter an API key)
+4. Follow the in-app setup wizard (grant the Device Control and Data Access permission, called Accessibility before macOS 27; optionally enter an API key)
 
 Tippi checks for updates automatically at launch. You can also trigger a check manually via the menu bar icon → "Check for Updates…".
 
@@ -172,7 +172,7 @@ open build/Build/Products/Release/Tippi.app
 
 ### 1. Grant permissions
 
-Tippi needs **Accessibility** permission to read selected text from other apps and paste results back. The wizard guides you to System Settings → Privacy & Security → Accessibility. Toggle **Tippi** on.
+Tippi needs the **Device Control and Data Access** permission (called **Accessibility** before macOS 27) to read selected text from other apps and paste results back. The wizard guides you to System Settings → Privacy & Security → Device Control and Data Access (Accessibility before macOS 27). Toggle **Tippi** on.
 
 For Voice Input, macOS will also prompt for **Microphone** access on first use.
 
@@ -295,7 +295,7 @@ This route always works because macOS does the binding, not Tippi.
 
 On **macOS 27** the Accessibility pane is called **Device Control and Data Access** (German: *Gerätesteuerung und Datenzugriff*).
 
-1. **System Settings → Privacy & Security → Accessibility** → enable **Tippi**. If Tippi is not listed, add it via **+** → `build/Build/Products/Release/Tippi.app`.
+1. **System Settings → Privacy & Security → Device Control and Data Access** (Accessibility before macOS 27) → enable **Tippi**. If Tippi is not listed, add it via **+** → `build/Build/Products/Release/Tippi.app`.
 2. Make sure only **one** `Tippi.app` with bundle ID `com.tippi.app` exists. A second copy (e.g. an old release in `/Applications`) creates a LaunchServices conflict that can bind the grant to the wrong bundle. Remove duplicates.
 3. Launch via `open` / Finder, **not** the inner `Contents/MacOS/Tippi` binary — a direct-binary launch breaks the bundle's TCC identity on macOS 26.
 4. If quick actions still fail in TextEdit: grant **Automation** → Tippi may control **System Events** (AppleScript fallback).

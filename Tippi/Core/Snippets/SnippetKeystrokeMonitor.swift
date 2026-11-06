@@ -69,7 +69,7 @@ final class SnippetKeystrokeMonitor: ObservableObject {
         lastError = nil
 
         guard AXIsProcessTrusted() else {
-            lastError = String(localized: "error.accessibility.snippets")
+            lastError = AccessibilityListName.text("error.accessibility.snippets")
             monitorLog.notice("SnippetKeystrokeMonitor — not trusted (Accessibility permission missing)")
             return
         }

@@ -71,7 +71,7 @@ final class SelectionPopupMonitor: ObservableObject {
         if ProcessInfo.processInfo.environment["TIPPI_REPRO_NOTES_SELECTION"] != nil { trusted = true }
         #endif
         guard trusted else {
-            lastError = String(localized: "error.accessibility.selection")
+            lastError = AccessibilityListName.text("error.accessibility.selection")
             selectionPopupLog.debug("SelectionPopupMonitor — not trusted (Accessibility permission missing)")
             return
         }

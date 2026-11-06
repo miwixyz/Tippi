@@ -119,7 +119,7 @@ for anything that touches AI.
 
 1. Download the latest DMG from [GitHub Releases](https://github.com/miwixyz/Tippi/releases)
 2. Drag **Tippi.app** to `/Applications`
-3. Launch — the setup wizard takes 30 seconds (grant Accessibility, add one API key OR install MLX with one click). For dictation on a single key, macOS also asks for Input Monitoring
+3. Launch — the setup wizard takes 30 seconds (grant Device Control and Data Access, called Accessibility before macOS 27; add one API key OR install MLX with one click). For dictation on a single key, macOS also asks for Input Monitoring
 4. Select any text, press **⌥⌘T**
 
 ---
@@ -129,7 +129,7 @@ for anything that touches AI.
 - macOS 15 Sequoia or later
 - Apple Silicon (M1 / M2 / M3 / M4 / M5)
 - At least one AI provider — bring your own key for cloud, or run fully locally with MLX / Ollama
-- Accessibility permission; Microphone access for dictation; additionally Input Monitoring if you use the single-key dictation hot key — without it the key is ignored silently
+- Device Control and Data Access permission (Accessibility before macOS 27); Microphone access for dictation; additionally Input Monitoring if you use the single-key dictation hot key — without it the key is ignored silently
 
 ---
 

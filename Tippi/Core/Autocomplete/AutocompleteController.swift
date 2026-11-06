@@ -89,7 +89,7 @@ final class AutocompleteController: ObservableObject {
         guard bridge.tap == nil else { return }
         lastError = nil
         guard AXIsProcessTrusted() else {
-            lastError = String(localized: "autocomplete.error.accessibility")
+            lastError = AccessibilityListName.text("autocomplete.error.accessibility")
             return
         }
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
@@ -107,7 +107,7 @@ final class AutocompleteController: ObservableObject {
             callback: autocompleteTapCallback,
             userInfo: Unmanaged.passUnretained(bridge).toOpaque()
         ) else {
-            lastError = String(localized: "autocomplete.error.tap")
+            lastError = AccessibilityListName.text("autocomplete.error.tap")
             autocompleteLog.error("tapCreate failed")
             return
         }
