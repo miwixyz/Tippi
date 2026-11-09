@@ -2,7 +2,19 @@
 
 ## [2.34.0] — 2026-11-09
 
-- _Add release notes here._
+### Neu
+- **Schnellnotizen in der Menüleiste.** Markiere im Notizfenster bis zu drei Notizen per Rechtsklick → „Als Schnellnotiz markieren“. Ein Klick auf das Tippi-Symbol in der Menüleiste öffnet sie dann als Tabs, direkt zum Schreiben, ohne das Notizfenster. Das gewohnte Menü kommt per Rechtsklick auf das Symbol oder über „⋯“ unten im Fenster. „Im Notizfenster öffnen“ springt zur gewählten Notiz, über den Griff unten rechts machst du das Fenster größer. Ohne markierte Notiz öffnet der Klick wie bisher das Menü.
+
+### Behoben
+- **Die Freigabe-Liste heißt ab macOS 27 „Gerätesteuerung und Datenzugriff“.** Einrichtung, Fehlermeldungen, Hilfe und der Tab Berechtigungen nennen jetzt den Namen, den dein macOS zeigt. Vor macOS 27 bleibt es „Bedienungshilfen“. Die falsche Angabe „ab macOS 26“ ist weg.
+- Die Scrollleiste im Notiz-Editor erscheint nur noch beim Scrollen.
+
+### Intern
+- `QuickNotesView.swift`: randloses, nicht aktivierendes Panel (Muster `TranslateQuickPanel`), deckende Textfläche, Glas nur in Tab- und Fußleiste (Design-Regel G1). Markierungen als geordnete UUID-Liste im iCloud-KVS (`notes.quickNoteIDs.v1`, höchstens 3, gelöschte Notizen geben ihren Platz frei), Größe in `notes.quickNotes.size.v1`.
+- Menüleisten-Symbol: Das Menü hängt nicht mehr fest am `NSStatusItem`. Linksklick → Panel, Rechts- oder control-Klick → Menü.
+- Bild-Testkopie: `tippictl snapshot schnellnotizen` zeigt Demo-Texte aus einem eigenen Speicher, nie echte Notizen.
+- Website: Impressum und Datenschutz mit neuer Anschrift.
+- 846 Tests (8 neue für Schnellnotizen).
 
 ## [2.33.1] — 2026-11-05
 

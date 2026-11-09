@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.33.1. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.34.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -184,6 +184,7 @@ Tippi/
 │   │   ├── NotesRootView.swift             # Split View
 │   │   ├── NotesListView.swift             # Liste + Neu/Löschen (Bestätigungsdialog)
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
+│   │   ├── QuickNotesView.swift            # v2.34 — Schnellnotizen: Panel unter dem Menüleisten-Symbol, bis zu 3 Tabs
 │   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck, Listen-Verdrahtung
 │   ├── SettingsView.swift          # Seitenleiste + die meisten der 11 Bereiche (großes File, private structs)
 │   ├── CurrencyFavoritesSection.swift # v2.19 — Lieblingswährungen + Quellenhinweis Exchange Rate API;
