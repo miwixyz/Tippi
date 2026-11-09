@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.34.0</title>
+            <pubDate>Mon, 09 Nov 2026 15:56:12 +0100</pubDate>
+            <sparkle:version>619</sparkle:version>
+            <sparkle:shortVersionString>2.34.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Schnellnotizen in der Menüleiste.</b> Markiere im Notizfenster bis zu drei Notizen per Rechtsklick → „Als Schnellnotiz markieren“. Ein Klick auf das Tippi-Symbol in der Menüleiste öffnet sie dann als Tabs, direkt zum Schreiben, ohne das Notizfenster. Das gewohnte Menü kommt per Rechtsklick auf das Symbol oder über „⋯“ unten im Fenster. „Im Notizfenster öffnen“ springt zur gewählten Notiz, über den Griff unten rechts machst du das Fenster größer. Ohne markierte Notiz öffnet der Klick wie bisher das Menü.</li></ul><h3>Behoben</h3><ul><li><b>Die Freigabe-Liste heißt ab macOS 27 „Gerätesteuerung und Datenzugriff“.</b> Einrichtung, Fehlermeldungen, Hilfe und der Tab Berechtigungen nennen jetzt den Namen, den dein macOS zeigt. Vor macOS 27 bleibt es „Bedienungshilfen“. Die falsche Angabe „ab macOS 26“ ist weg.</li><li>Die Scrollleiste im Notiz-Editor erscheint nur noch beim Scrollen.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.34.0/Tippi-2.34.0.dmg" length="24980904" type="application/octet-stream" sparkle:edSignature="rwo7efur6Cw0PZYn1FTv1Wh+LX/6kGGx9xAPU3DGPt0hgMoWyMKk6MefurJoLJsB+qiLxDXnX6Mbkt8xFPHmCg=="/>
+        </item>
+        <item>
             <title>2.33.1</title>
             <pubDate>Thu, 05 Nov 2026 12:18:48 +0100</pubDate>
             <sparkle:version>612</sparkle:version>
@@ -21,15 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Das Update-Fenster zeigt, was neu ist.</b> Bietet Tippi ein Update an, stehen die Neuerungen der Version jetzt direkt im Fenster, ohne Umweg über die Website.</li><li><b>„Kontrast erhöhen“ gilt auch in Tippi.</b> Ist in den Systemeinstellungen unter Bedienungshilfen → Anzeige „Kontrast erhöhen“ an, nutzt Tippi für Akzente, Text und Statusfarben kräftigere Farben (Kontrast mindestens 7 : 1, Rahmen 3 : 1). Ohne den Schalter bleibt alles wie bisher.</li><li><b>Symbol-Knöpfe haben Namen.</b> 14 Knöpfe, die nur ein Symbol zeigen (z. B. Kürzel bearbeiten und löschen, Schritte einer Kette verschieben, Suche leeren), nennen VoiceOver jetzt, was sie tun, und zeigen beim Darüberfahren einen Hinweis.</li></ul><h3>Behoben</h3><ul><li><b>Ersetzen in Apple Mail kam manchmal nicht an.</b> Mail lässt Tippi den Text nicht direkt austauschen, deshalb fügt Tippi dort über die Zwischenablage ein. Das ⌘V kam manchmal zu früh, bevor Mail das Schreibfeld wieder bereit hatte: Das Fenster schloss sich, und nichts passierte. Tippi wartet jetzt bis zu einer Sekunde auf das Schreibfeld und prüft danach, ob der Text angekommen ist. Erst dann legt es deine alte Zwischenablage zurück. Kommt der Text nachweislich nicht an, bleibt er in der Zwischenablage und Tippi sagt es dir („Einfügen kam nicht an“), mit ⌘V holst du ihn dann selbst. Gilt für alle Apps, in die Tippi über die Zwischenablage einfügt.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.33.0/Tippi-2.33.0.dmg" length="24957541" type="application/octet-stream" sparkle:edSignature="apmTKKsEsMgpAqrrXP4S98UO6ZZ+//coxSc2Dkr0LeWpBa1nuZD+IU+1218SCvyb/89rz7hrC0R4m0irv04AAQ=="/>
-        </item>
-        <item>
-            <title>2.32.1</title>
-            <pubDate>Wed, 28 Oct 2026 11:10:35 +0100</pubDate>
-            <sparkle:version>596</sparkle:version>
-            <sparkle:shortVersionString>2.32.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.32.1/Tippi-2.32.1.dmg" length="24946993" type="application/octet-stream" sparkle:edSignature="0nsgGSUxYZLruL8giie5kze6vm8g+PQXZwdcN53MKptfSb8EBPBXudN07KM+GkLTmtYL/Sz7efoHr8CtsYQ8Dw=="/>
         </item>
     </channel>
 </rss>
