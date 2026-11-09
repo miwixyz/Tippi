@@ -84,6 +84,7 @@ Tippi/
 │   ├── ProblemNotifier.swift       # v2.11.5 — meldet Ausfaelle ungefragt, einmal pro neuem
 │   │                               #   Problem (der Monitor rechnet alle 3 s neu)
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
+│   ├── AccessibilityListName.swift # v2.34 — Name der Freigabe-Liste je macOS-Version (ab 27 „Gerätesteuerung und Datenzugriff“), Platzhalter in allen Texten
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
 │   ├── TippiPause.swift            # Pause (v2.29): Endzeitpunkt; Popup, Autocomplete, Snippets fragen ihn ab
 │   ├── GnotchiBridge.swift         # 2.30 — Aufnahmezustand an Gnotchi (distnoted, nie Text), Signaturprüfung über PID
