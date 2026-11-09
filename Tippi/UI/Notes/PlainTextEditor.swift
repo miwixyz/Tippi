@@ -41,6 +41,8 @@ struct PlainTextEditor: NSViewRepresentable {
         let scrollView = NSScrollView()
         scrollView.documentView = textView
         scrollView.hasVerticalScroller = true
+        // Only while scrolling/needed — a permanent grey bar looked heavy in the quick-notes popover (2026-11-09).
+        scrollView.autohidesScrollers = true
         scrollView.drawsBackground = false
         textView.drawsBackground = false
 

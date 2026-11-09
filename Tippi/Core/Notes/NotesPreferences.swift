@@ -18,6 +18,8 @@ enum NotesPreferences {
         static let fontName = "notes.editor.fontName.v1"
         static let fontSize = "notes.editor.fontSize.v1"
         static let favoriteIDs = "notes.favoriteIDs.v1"
+        static let quickNoteIDs = "notes.quickNoteIDs.v1"
+        static let quickNotesSize = "notes.quickNotes.size.v1"
         static let sortOrder = "notes.list.sortOrder.v1"
         static let sortReversed = "notes.list.sortReversed.v1"
     }
@@ -102,6 +104,72 @@ enum NotesPreferences {
     /// unit-testable without touching the real `NSUbiquitousKeyValueStore`.
     static func parseFavoriteIDs(from raw: [String]) -> Set<UUID> {
         Set(raw.compactMap(UUID.init(uuidString:)))
+    }
+
+    // MARK: - Quick notes (Menüleiste)
+
+    /// How many notes can sit as tabs behind the menu bar icon (Michael, 2026-11-09).
+    static let maxQuickNotes = 3
+
+    /// Notes shown as tabs when the menu bar icon is clicked, in tab order.
+    /// Same storage idea as `favoriteIDs`, but an ordered array: the order a
+    /// note was marked is the order of its tab.
+    static var quickNoteIDs: [UUID] {
+        get { parseQuickNoteIDs(from: store.array(forKey: Keys.quickNoteIDs) as? [String] ?? []) }
+        set { store.set(newValue.map(\.uuidString), forKey: Keys.quickNoteIDs) }
+    }
+
+    /// Marks or unmarks a note. Returns `false` when the note could not be
+    /// marked because all slots are taken. `existing` = IDs of notes that still
+    /// exist, so a deleted note never blocks a slot.
+    @discardableResult
+    static func toggleQuickNote(_ id: UUID, existing: Set<UUID>) -> Bool {
+        guard let next = toggledQuickNotes(quickNoteIDs, toggling: id, existing: existing) else { return false }
+        quickNoteIDs = next
+        return true
+    }
+
+    /// Pure logic behind `toggleQuickNote`, unit-testable without touching the
+    /// real `NSUbiquitousKeyValueStore`. `nil` = full, nothing changed.
+    static func toggledQuickNotes(_ ids: [UUID], toggling id: UUID, existing: Set<UUID>,
+                                  max: Int = maxQuickNotes) -> [UUID]? {
+        var live = ids.filter { existing.contains($0) }
+        if let index = live.firstIndex(of: id) {
+            live.remove(at: index)
+            return live
+        }
+        guard live.count < max else { return nil }
+        live.append(id)
+        return live
+    }
+
+    /// Drops non-UUIDs and duplicates, keeps order, caps at `max`.
+    static func parseQuickNoteIDs(from raw: [String], max: Int = maxQuickNotes) -> [UUID] {
+        var seen = Set<UUID>()
+        let ids = raw.compactMap(UUID.init(uuidString:)).filter { seen.insert($0).inserted }
+        return Array(ids.prefix(max))
+    }
+
+    /// Popover size, set with its resize grip. Synced like the Notes window frame.
+    static var quickNotesSize: CGSize {
+        get {
+            guard let string = store.string(forKey: Keys.quickNotesSize) else { return defaultQuickNotesSize }
+            return clampedQuickNotesSize(NSSizeFromString(string))
+        }
+        set { store.set(NSStringFromSize(clampedQuickNotesSize(newValue)), forKey: Keys.quickNotesSize) }
+    }
+
+    static let defaultQuickNotesSize = CGSize(width: 520, height: 440)
+
+    /// Keeps the popover usable: never smaller than three readable tabs, never
+    /// larger than a typical screen half.
+    static func clampedQuickNotesSize(_ size: CGSize) -> CGSize {
+        CGSize(width: min(max(size.width, 360), 1000), height: min(max(size.height, 260), 900))
+    }
+
+    /// The marked notes that still exist, in tab order.
+    static func quickNotes(ids: [UUID], in notes: [Note]) -> [Note] {
+        ids.compactMap { id in notes.first { $0.id == id } }
     }
 
     /// Resolves the two stored values into an actual font, falling back to

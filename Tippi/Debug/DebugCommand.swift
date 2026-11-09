@@ -18,9 +18,12 @@ struct DebugCommand: Equatable, Sendable {
     static let settingsWindow = "einstellungen"
     static let helpWindow = "hilfe"
     static let aboutWindow = "ueber"
+    /// Schnellnotiz-Fenster (2026-11-09) — nur mit festen Demo-Texten aus einem eigenen Speicher im Ordner der
+    /// Kopie, nie aus `NotesStore.shared`. Darum mit B5 vereinbar: es kann keinen echten Inhalt zeigen.
+    static let quickNotesWindow = "schnellnotizen"
     /// Fenster, von denen ein Bild erlaubt ist (B5). Anbieter, Prompts, Snippets, Verlauf, Diktat,
     /// Autovervollständigung, Notizen zeigen im echten Tippi echte Inhalte und fehlen bewusst.
-    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow]
+    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow, quickNotesWindow]
     static let appearances: Set<String> = ["light", "dark", "system"]
 
     /// Größte Nachricht (4 Byte Länge + JSON). Größer → Verbindung zu.

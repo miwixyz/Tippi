@@ -108,6 +108,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var autocompleteMenuItem: NSMenuItem?
 
     private var statusItem: NSStatusItem?
+    /// The regular Tippi menu. Not assigned to `statusItem.menu` permanently:
+    /// a left click opens the quick notes instead, as long as one is marked.
+    private var statusMenu: NSMenu?
+    private let quickNotesPopover = QuickNotesPopoverController()
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
     /// refreshed when the user picks a language from its submenu.
     private var dictationLanguageMenuItem: NSMenuItem?
@@ -869,8 +873,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             entry.target = self
         }
 
-        item.menu = menu
+        statusMenu = menu
         statusItem = item
+        item.button?.target = self
+        item.button?.action = #selector(statusItemClicked(_:))
+        // Mouse-down like a regular status menu, so the menu opens as fast as before.
+        item.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
+        quickNotesPopover.onShowMenu = { [weak self] in self?.showStatusMenu() }
+        quickNotesPopover.onOpenInNotes = { [weak self] id in
+            NotesRootView.requestSelection(of: id)
+            self?.showNotesWindow()
+        }
 
         // Enable layer backing on the button so CAAnimations work.
         item.button?.wantsLayer = true
@@ -891,6 +904,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] status in self?.updateStatusBadge(status) }
             .store(in: &cancellables)
         TippiStatusMonitor.shared.start()
+    }
+
+    /// Left click: quick notes, if any are marked. Right click or control-click,
+    /// or nothing marked: the regular menu — unchanged for everyone who never
+    /// marks a quick note.
+    @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
+        let event = NSApp.currentEvent
+        let wantsMenu = event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true
+        if !wantsMenu, quickNotesPopover.toggle(relativeTo: sender) { return }
+        showStatusMenu()
+    }
+
+    /// Opens the regular menu from the status item. Assigning the menu only for
+    /// this one click keeps the native look (highlighted icon, keyboard nav).
+    private func showStatusMenu() {
+        guard let item = statusItem, let menu = statusMenu else { return }
+        if quickNotesPopover.isShown { quickNotesPopover.close() }
+        item.menu = menu
+        item.button?.performClick(nil)
+        item.menu = nil
     }
 
     /// Adds the colored status-dot sublayer to the menubar button (once).

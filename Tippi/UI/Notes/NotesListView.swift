@@ -9,6 +9,8 @@ struct NotesListView: View {
     // Mirrors `NotesPreferences.favoriteIDs` locally so toggling a star
     // re-renders immediately — the preference itself isn't `@Published`.
     @State private var favoriteIDs: Set<UUID> = NotesPreferences.favoriteIDs
+    // Same mirror pattern: tabs behind the menu bar icon (max. 3).
+    @State private var quickNoteIDs: [UUID] = NotesPreferences.quickNoteIDs
     // Gleiches Muster wie `favoriteIDs`: lokale Spiegel, damit ein Wechsel sofort neu sortiert.
     @State private var sortOrder: NoteSortOrder = NotesPreferences.sortOrder
     @State private var sortReversed: Bool = NotesPreferences.sortReversed
@@ -47,6 +49,7 @@ struct NotesListView: View {
         // content itself would.
         .onAppear {
             favoriteIDs = NotesPreferences.favoriteIDs
+            quickNoteIDs = NotesPreferences.quickNoteIDs
             sortOrder = NotesPreferences.sortOrder
             sortReversed = NotesPreferences.sortReversed
         }
@@ -102,6 +105,9 @@ struct NotesListView: View {
     @ViewBuilder
     private func row(for note: Note) -> some View {
         let isFavorite = favoriteIDs.contains(note.id)
+        let isQuickNote = quickNoteIDs.contains(note.id)
+        let quickNotesFull = NotesPreferences.quickNotes(ids: quickNoteIDs, in: store.notes).count
+            >= NotesPreferences.maxQuickNotes
         HStack(alignment: .top, spacing: 4) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(note.title)
@@ -119,6 +125,12 @@ struct NotesListView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 4)
+            if isQuickNote {
+                Image(systemName: "menubar.rectangle")
+                    .foregroundStyle(.secondary)
+                    .help(String(localized: "notes.quick.badge"))
+                    .accessibilityLabel(Text(String(localized: "notes.quick.badge")))
+            }
             Button {
                 toggleFavorite(note)
             } label: {
@@ -139,12 +151,27 @@ struct NotesListView: View {
                     systemImage: isFavorite ? "star.slash" : "star"
                 )
             }
+            Button {
+                toggleQuickNote(note)
+            } label: {
+                Label(
+                    String(localized: isQuickNote ? "notes.quick.remove"
+                           : quickNotesFull ? "notes.quick.full" : "notes.quick.add"),
+                    systemImage: "menubar.rectangle"
+                )
+            }
+            .disabled(!isQuickNote && quickNotesFull)
             Button(role: .destructive) {
                 noteToDelete = note
             } label: {
                 Label(String(localized: "notes.delete"), systemImage: "trash")
             }
         }
+    }
+
+    private func toggleQuickNote(_ note: Note) {
+        NotesPreferences.toggleQuickNote(note.id, existing: Set(store.notes.map(\.id)))
+        quickNoteIDs = NotesPreferences.quickNoteIDs
     }
 
     private func toggleFavorite(_ note: Note) {

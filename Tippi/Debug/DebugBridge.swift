@@ -128,11 +128,47 @@ final class DebugBridge {
         return win
     }
 
+    /// Inhalt des Schnellnotiz-Popovers mit drei festen Demo-Notizen. Eigener `NotesStore` in einem Unterordner
+    /// der Kopie — nie `NotesStore.shared`, damit das Bild keinen echten Inhalt zeigen kann (B5).
+    private func quickNotesWindow() -> NSWindow {
+        let id = DebugCommand.quickNotesWindow
+        if let win = windows[id] { return win }
+        let store = NotesStore(directory: directory.appendingPathComponent("Schnellnotizen-Demo", isDirectory: true),
+                               refreshOnInit: false)
+        let texts = ["Einkauf\n- Milch\n- Brot\n- Kaffee",
+                     "Ideen für den Newsletter\nKinostarts im Dezember",
+                     "Telefonnummern Handwerker\nElektriker: 089 000000"]
+        let ids = texts.map { text -> UUID in
+            var note = store.create()
+            note.content = text
+            store.save(note)
+            return note.id
+        }
+        let view = QuickNotesView(store: store, noteIDs: ids, onOpenInNotes: { _ in }, onShowMenu: {})
+        let win = NSWindow(contentViewController: NSHostingController(rootView: view))
+        // Borderless + clear like the real panel, so the glass in the picture is the real glass.
+        win.styleMask = [.borderless]
+        win.backgroundColor = .clear
+        win.isOpaque = false
+        win.hasShadow = true
+        win.identifier = NSUserInterfaceItemIdentifier(id)
+        win.isReleasedWhenClosed = false
+        win.center()
+        windows[id] = win
+        return win
+    }
+
     /// Öffnet das eigene Fenster, wartet kurz und nimmt NUR dieses Fenster per ScreenCaptureKit auf. Das Fenster
     /// öffnet auch ohne Freigabe – `status` zeigt dann, dass es sich ohne Absturz aufbaut.
     private func snapshot(window id: String, id answerID: String) async -> [String: Any] {
-        guard let tab = Self.tab(for: id) else { return ["ok": false, "fehler": "Fenster nicht erlaubt"] }
-        let win = window(id, tab: tab)
+        let win: NSWindow
+        if id == DebugCommand.quickNotesWindow {
+            win = quickNotesWindow()
+        } else if let tab = Self.tab(for: id) {
+            win = window(id, tab: tab)
+        } else {
+            return ["ok": false, "fehler": "Fenster nicht erlaubt"]
+        }
         NSApp.activate()
         win.makeKeyAndOrderFront(nil)
         win.orderFrontRegardless()

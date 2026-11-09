@@ -763,6 +763,15 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "notes.favorite" = "Add to Favorites";
 "notes.unfavorite" = "Remove from Favorites";
 "notes.section.favorites" = "Favorites";
+
+/* Schnellnotizen in der Menüleiste (2026-11-09) */
+"notes.quick.add" = "Mark as Quick Note";
+"notes.quick.remove" = "Remove Quick Note";
+"notes.quick.full" = "Mark as Quick Note (all 3 in use)";
+"notes.quick.badge" = "Quick note – opens when you click the Tippi icon in the menu bar";
+"quicknotes.openInNotes" = "Open in Notes";
+"quicknotes.showMenu" = "Tippi Menu";
+"quicknotes.resize" = "Resize (drag)";
 "notes.sort" = "Sort";
 "notes.sort.help" = "Sort notes by modification, creation or name";
 "notes.sort.by" = "Sort by";

@@ -15,6 +15,15 @@ struct NotesRootView: View {
     /// behavior) — this view only owns the toolbar icon's on/off state.
     var onTogglePin: () -> Void = {}
 
+    /// Note to select next — set before the window is shown, read on appear
+    /// (new window) or on `.selectNote` (window already open).
+    static var requestedNoteID: UUID?
+
+    static func requestSelection(of id: UUID) {
+        requestedNoteID = id
+        NotificationCenter.default.post(name: .selectNote, object: nil)
+    }
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             NotesListView(store: store, selectedNoteID: $selectedNoteID)
@@ -33,8 +42,18 @@ struct NotesRootView: View {
         }
         .onAppear {
             store.refresh()
-            if selectedNoteID == nil {
+            if let requested = Self.requestedNoteID {
+                selectedNoteID = requested
+                Self.requestedNoteID = nil
+            } else if selectedNoteID == nil {
                 selectedNoteID = store.notes.first?.id
+            }
+        }
+        // „Im Notizfenster öffnen“ from the quick-notes popover while this window already exists.
+        .onReceive(NotificationCenter.default.publisher(for: .selectNote)) { _ in
+            if let requested = Self.requestedNoteID {
+                selectedNoteID = requested
+                Self.requestedNoteID = nil
             }
         }
         .frame(minWidth: 480, minHeight: 320)

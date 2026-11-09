@@ -47,4 +47,6 @@ extension Notification.Name {
     /// Posted by the menu command „Seitenleiste ein-/ausblenden" (⌃⌘S);
     /// `NotesRootView` toggles its list column.
     static let toggleNotesSidebar = Notification.Name("TippiToggleNotesSidebar")
+    /// Posted after `NotesRootView.requestSelection(of:)` — selects that note.
+    static let selectNote = Notification.Name("TippiSelectNote")
 }

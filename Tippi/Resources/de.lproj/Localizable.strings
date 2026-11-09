@@ -765,6 +765,15 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "notes.favorite" = "Zu Favoriten hinzufügen";
 "notes.unfavorite" = "Aus Favoriten entfernen";
 "notes.section.favorites" = "Favoriten";
+
+/* Schnellnotizen in der Menüleiste (2026-11-09) */
+"notes.quick.add" = "Als Schnellnotiz markieren";
+"notes.quick.remove" = "Schnellnotiz aufheben";
+"notes.quick.full" = "Als Schnellnotiz markieren (3 von 3 belegt)";
+"notes.quick.badge" = "Schnellnotiz – erscheint beim Klick auf das Tippi-Symbol in der Menüleiste";
+"quicknotes.openInNotes" = "Im Notizfenster öffnen";
+"quicknotes.showMenu" = "Tippi-Menü";
+"quicknotes.resize" = "Größe ändern (ziehen)";
 "notes.sort" = "Sortieren";
 "notes.sort.help" = "Notizen nach Änderung, Erstellung oder Name sortieren";
 "notes.sort.by" = "Sortieren nach";

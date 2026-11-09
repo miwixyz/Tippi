@@ -3,7 +3,7 @@
 // `scripts/bild-test.sh` baut und signiert es nach build-dev/tippictl.
 //
 //   tippictl status
-//   tippictl snapshot einstellungen|hilfe|ueber
+//   tippictl snapshot einstellungen|hilfe|ueber|schnellnotizen
 //   tippictl appearance light|dark|system
 //
 // Prüft vor dem Senden, dass am Socket wirklich die signierte Bild-Testkopie lauscht.
@@ -11,7 +11,7 @@ import Darwin
 import Foundation
 import Security
 
-let usage = "Nutzung: tippictl status | snapshot einstellungen|hilfe|ueber | appearance light|dark|system"
+let usage = "Nutzung: tippictl status | snapshot einstellungen|hilfe|ueber|schnellnotizen | appearance light|dark|system"
 let args = Array(CommandLine.arguments.dropFirst())
 guard let cmd = args.first else { print(usage); exit(64) }
 var message: [String: Any] = ["v": 1, "cmd": cmd]
