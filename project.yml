@@ -17,7 +17,7 @@ settings:
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
-    from: 2.0.0
+    from: 2.10.1   # GHSA-hg88-v3cw-3qrh + GHSA-g3hp-f6mg-559v betreffen <= 2.9.1 (2026-11-11)
   GRDB:
     url: https://github.com/groue/GRDB.swift
     from: 7.0.0
