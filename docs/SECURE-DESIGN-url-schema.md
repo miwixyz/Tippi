@@ -10,7 +10,7 @@ Eigene Datei statt `docs/SECURE-DESIGN.md`, weil Tippi je Funktion eine `SECURE-
 `CFBundleURLTypes` mit dem Schema `tippi` in `Tippi/Resources/Info.plist`. Der AppDelegate nimmt URLs über
 `application(_:open:)` an und gibt sie an `TippiURLCommand.parse(_:)`. Genau **eine** Aktion ist erlaubt:
 das Schnellnotiz-Panel unter dem Menüleisten-Symbol öffnen, so wie ein Linksklick aufs Symbol. Ist keine
-Schnellnotiz markiert, öffnet sich wie beim Klick das normale Tippi-Menü.
+Schnellnotiz markiert, öffnet sich das Notizfenster (nicht das Menü, siehe U5).
 
 ## U2 – Vertrauensgrenze
 
@@ -50,6 +50,13 @@ Restrisiko hingenommen; das Panel schließt bei Esc und bei jedem Klick in eine 
 
 Läuft Tippi nicht, startet macOS es über das Schema. Kommt die URL vor dem Aufbau des Menüleisten-Symbols an,
 merkt sich Tippi nur „Panel offen wünschen“ (ein Bool, kein URL-Inhalt) und öffnet es, sobald das Symbol steht.
+
+Gemessen 2026-11-12 am Developer-ID-Testbuild: Auch dann sind die Notizen noch nicht geladen (`NotesStore.refresh`
+läuft im Hintergrund), die Liste ist leer, und „keine Schnellnotiz markiert“ wäre falsch. Deshalb wartet der
+URL-Weg bei leerer Liste bis zu 3 s darauf, weitere Aufrufe in der Zeit werden verworfen. Der erste Entwurf
+öffnete als Rückfall das Menü per `performClick`. Beim Kaltstart lag es außerhalb des Bildschirms
+(Fensterliste: y = −74) und hielt den Hauptfaden fest, selbst „Beenden“ lief in eine Zeitüberschreitung (−1712).
+Deshalb öffnet der Rückfall jetzt das Notizfenster.
 
 ## U6 – Testkopien und Schema-Besitz
 

@@ -115,6 +115,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// `tippi://schnellnotiz` arrived before the status item existed (cold
     /// start through the URL). Only a flag — the URL itself is not kept.
     private var pendingQuickNotesOpen = false
+    /// Waiting for the notes to load after `tippi://schnellnotiz`; further
+    /// calls in that time are dropped instead of stacking up.
+    private var quickNotesURLWaiting = false
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
     /// refreshed when the user picks a language from its submenu.
     private var dictationLanguageMenuItem: NSMenuItem?
@@ -941,18 +944,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         guard wantsQuickNotes else { return }
         if statusItem?.button == nil {
+            appDelegateLog.notice("URL quick notes: deferred until the status item exists")
             pendingQuickNotesOpen = true
             return
         }
         openQuickNotesFromURL()
     }
 
-    /// Same result as a left click on the menu bar icon, except that an open
-    /// panel stays open.
+    /// Opens the quick notes panel like a left click on the menu bar icon; an
+    /// open panel stays open. Notes load in the background at launch, so on a
+    /// cold start through the URL the list is still empty — wait up to 3 s for
+    /// it before deciding nothing is marked. With nothing marked the Notes
+    /// window opens. Never the status menu: opened from code during launch it
+    /// sat off-screen and blocked the main thread (measured 2026-11-12).
     private func openQuickNotesFromURL() {
-        guard let button = statusItem?.button else { return }
-        if quickNotesPopover.open(relativeTo: button) { return }
-        showStatusMenu()
+        guard !quickNotesURLWaiting, let button = statusItem?.button else { return }
+        if quickNotesPopover.open(relativeTo: button) {
+            appDelegateLog.notice("URL quick notes: panel shown \(self.quickNotesPopover.isShown, privacy: .public)")
+            return
+        }
+        guard NotesStore.shared.notes.isEmpty else {
+            appDelegateLog.notice("URL quick notes: none marked, showing the Notes window")
+            showNotesWindow()
+            return
+        }
+        quickNotesURLWaiting = true
+        Task { @MainActor [weak self] in
+            for _ in 0..<15 where NotesStore.shared.notes.isEmpty {
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+            guard let self else { return }
+            self.quickNotesURLWaiting = false
+            guard let button = self.statusItem?.button else { return }
+            if self.quickNotesPopover.open(relativeTo: button) {
+                appDelegateLog.notice("URL quick notes: panel shown after notes loaded")
+            } else {
+                appDelegateLog.notice("URL quick notes: none marked, showing the Notes window")
+                self.showNotesWindow()
+            }
+        }
     }
 
     /// Left click: quick notes, if any are marked. Right click or control-click,
