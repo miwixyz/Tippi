@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [Unveröffentlicht]
 
 ### Neu
 - **Schnellnotizen von anderen Apps aus öffnen.** Die Adresse `tippi://schnellnotiz` öffnet das Schnellnotiz-Fenster unter dem Tippi-Symbol, genau wie ein Klick darauf. Ist keine Schnellnotiz markiert, öffnet sich das Notizfenster. Porter nutzt das für seinen Notizen-Knopf. Die Adresse kann nichts anderes und nimmt keinen Text an.
