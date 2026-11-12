@@ -58,6 +58,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Open quick notes from other apps (v2.36)** — `tippi://schnellnotiz` opens the quick notes panel, for example from a button in Porter. Nothing else, no parameters.
 - **Remember dictation corrections (v2.35)** — confirm how Tippi should write a phrase it keeps mishearing, such as “Google Fonds” → “Google Fonts”. The optional rules stay on this Mac.
 - **Quick notes in the menu bar (v2.34)** — mark up to three notes and the Tippi menu bar icon opens them as tabs, ready to type; right-click the icon for the usual menu. On macOS 27 permission hints use the list's new name, "Device Control and Data Access".
 - **Paste that checks it arrived (v2.33)** — Apple Mail won't let Tippi replace text directly, so Tippi pastes there. It now waits for the text field before ⌘V and checks the text got in; if it didn't, the text stays on the clipboard and Tippi says so. Also new: the update window lists what's new, "Increase contrast" gets stronger colors, and icon buttons have VoiceOver names.

@@ -2,10 +2,6 @@
 
 ## [2.36.0] — 2026-11-12
 
-- _Add release notes here._
-
-## [Unveröffentlicht]
-
 ### Neu
 - **Schnellnotizen von anderen Apps aus öffnen.** Die Adresse `tippi://schnellnotiz` öffnet das Schnellnotiz-Fenster unter dem Tippi-Symbol, genau wie ein Klick darauf. Ist keine Schnellnotiz markiert, öffnet sich das Notizfenster. Porter nutzt das für seinen Notizen-Knopf. Die Adresse kann nichts anderes und nimmt keinen Text an.
 
@@ -15,6 +11,9 @@
 ### Intern
 - `CFBundleURLTypes` mit Schema `tippi`; `AppDelegate.application(_:open:)` gibt jede URL an `TippiURLCommand.parse` (Allowlist: nur `tippi://schnellnotiz`, keine Query, kein Fragment, kein weiterer Pfad). Abgelehntes wird ohne URL-Inhalt protokolliert. Design: `docs/SECURE-DESIGN-url-schema.md`.
 - `QuickNotesPopoverController.open(relativeTo:)` öffnet nur, schließt nie, damit wiederholte Aufrufe nicht flackern.
+- Diktatkorrekturen: direktes Schreiben über Bedienungshilfen ins zum Diktatende erfasste Feld (`TextInsertion+DictationCorrection.swift`), wirkungslos → bisheriger Einfügeweg ohne Korrektur, unklar → kein zweites Einfügen.
+- Geprüft am Developer-ID-Testbuild: Kaltstart über `tippi://schnellnotiz` → Panel nach rund 2,5 s, zweiter Aufruf lässt es offen, `tippi://einstellungen` wird abgelehnt.
+- 856 Tests (7 neue).
 
 ## [2.35.0] — 2026-11-12
 

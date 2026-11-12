@@ -52,6 +52,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **Open quick notes from other apps (v2.36)** — `tippi://schnellnotiz` opens the quick notes panel under the menu bar icon, the same as a click on it; with no quick note marked, the Notes window opens. The URL does nothing else and accepts no parameters. Saved dictation corrections now only apply when Tippi can verify the write into the captured text field.
 - **Remember dictation corrections (v2.35)** — if “Google Fonts” regularly comes out as “Google Fonds”, confirm that correction once in the Tippi menu. Tippi uses it in later regular dictations. The feature is off by default, and you can edit or delete each rule under Dictionary & Snippets → Custom words.
 - **Quick notes in the menu bar (v2.34)** — mark up to three notes as quick notes (right-click in the note list) and a click on Tippi's menu bar icon opens them as tabs, ready to type, without the Notes window. Right-click the icon, or use the "⋯" button, for the usual menu; drag the corner grip to resize. With no quick note marked, the icon behaves exactly as before. Other apps can open the quick notes via `tippi://schnellnotiz` (with none marked, the Notes window opens; the URL accepts no parameters). On macOS 27 every permission hint now uses the list's new name, "Device Control and Data Access".
 - **Clipboard paste waits and checks, update window shows what's new (v2.33)** — where an app won't let Tippi replace text directly (Apple Mail), the ⌘V now waits up to a second for the text field and checks that the text arrived before your old clipboard comes back; if it provably didn't, the result stays on the clipboard and Tippi tells you. The update window lists the changes of the new version. With macOS "Increase contrast" Tippi uses stronger colors, and icon-only buttons have names for VoiceOver.
@@ -141,7 +142,7 @@ your text for anything that touches AI.
 
 ### From the latest release
 
-1. Download **[Tippi 2.35.0 for macOS](https://github.com/miwixyz/Tippi/releases/download/v2.35.0/Tippi-2.35.0.dmg)** or pick another version from [Releases](https://github.com/miwixyz/Tippi/releases).
+1. Download **[Tippi 2.36.0 for macOS](https://github.com/miwixyz/Tippi/releases/download/v2.36.0/Tippi-2.36.0.dmg)** or pick another version from [Releases](https://github.com/miwixyz/Tippi/releases).
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant the Device Control and Data Access permission, called Accessibility before macOS 27; optionally enter an API key)
@@ -507,6 +508,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.32.0 | ✅ Done | **Dictation modes** — extra key with the dictation trigger picks Improve, Defuse, Add emojis or your own prompt; local MLX warmed while you speak (20 s → <1 s), dictation fits the text at the cursor, Apple Intelligence as provider, Parakeet Ultra selectable. |
 | v2.32.1 | ✅ Done | **Haiku 5.5 as the Anthropic default** — cleanup prompt names German filler "also"/"genau"; new `scripts/diktat-pruefstand.py` checks dictation cleanup (Haiku 5.5 18/18, Haiku 4.5 17/18) |
 | v2.34.0 | ✅ Done | **Quick notes in the menu bar** — up to three notes as tabs behind the Tippi icon; permission hints use the macOS 27 name |
+| v2.36.0 | ✅ Done | **Quick notes from other apps** — `tippi://schnellnotiz`; dictation corrections only with a verified text field |
 | v2.35.0 | ✅ Done | **Remember dictation corrections** — confirm a phrase after dictation and reuse it on this Mac. Sparkle security update. |
 | v2.33.1 | ✅ Done | **Works in Chromium apps** — Helium, Edge and Electron apps hand out their accessibility data only on request; Tippi now asks, and pastes through the Edit menu when ⌘V does not arrive |
 | v2.33.0 | ✅ Done | **Paste that arrives** — clipboard fallback waits for the text field and checks the result (Apple Mail), update window shows release notes, "Increase contrast" colors, VoiceOver names for icon buttons |
