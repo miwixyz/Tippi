@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
-<meta name="tippi:documented-version" content="2.34.0">
+<meta name="tippi:documented-version" content="2.35.0">
 <title>Tippi: AI writing for macOS, one app instead of eight</title>
 <meta name="description" content="AI writing right at your cursor in any Mac app, plus dictation, translation, snippets, emoji, notes and screen text. One app instead of eight. Open source, BYOK, 8 AI providers, fully local option.">
 <link rel="canonical" href="https://tippi.mwlr.dev/">
@@ -63,7 +63,7 @@
   <div class="wrap">
     <img src="mascot-224.png" class="mascot" alt="Tippi mascot" width="112" height="112">
 
-    <div><p class="news"><span data-lang="en">New in 2.34: mark up to three notes as quick notes, and a click on the Tippi icon in the menu bar opens them as tabs, ready to type. The usual menu is a right-click away.</span><span data-lang="de">Neu in 2.34: Markiere bis zu drei Notizen als Schnellnotiz, dann öffnet ein Klick auf das Tippi-Symbol in der Menüleiste sie als Tabs, direkt zum Schreiben. Das gewohnte Menü kommt per Rechtsklick.</span></p></div>
+    <div><p class="news"><span data-lang="en">New in 2.35: Tippi can remember a dictation correction such as “Google Fonds” → “Google Fonts”. Turn it on in Settings, then confirm a phrase from the Tippi menu.</span><span data-lang="de">Neu in 2.35: Tippi kann sich Diktatkorrekturen wie „Google Fonds“ → „Google Fonts“ merken. Schalte die Funktion ein und bestätige nach dem Diktat eine Wortgruppe im Tippi-Menü.</span></p></div>
 
     <h1 data-lang="en">Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
     <h1 data-lang="de">Text markieren.<br><span class="accent">⌥⌘T drücken.</span> KI macht den Rest.</h1>
@@ -366,10 +366,10 @@
       </div>
       <div class="card feature">
         <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="7" x2="16" y2="7"></line><line x1="9" y1="11" x2="14" y2="11"></line></svg></div>
-        <h3 data-lang="en">Your own dictionary</h3>
-        <h3 data-lang="de">Eigenes Wörterbuch</h3>
-        <p data-lang="en">List brands, names and jargon once, and dictation keeps your spelling, like iPhone instead of Iphone. An entry like <code>Tipi → Tippi</code> fixes a word that is often misheard.</p>
-        <p data-lang="de">Trag Marken, Namen und Fachbegriffe einmal ein, und das Diktat behält deine Schreibweise, etwa iPhone statt Iphone. Ein Eintrag wie <code>Tipi → Tippi</code> korrigiert ein oft falsch gehörtes Wort.</p>
+        <h3 data-lang="en">Remember dictation corrections</h3>
+        <h3 data-lang="de">Diktatkorrekturen merken</h3>
+        <p data-lang="en">Does “Google Fonts” keep coming out as “Google Fonds”? After dictating, confirm the correct phrase in the Tippi menu. The optional rule stays on this Mac.</p>
+        <p data-lang="de">Schreibt Tippi immer wieder „Google Fonds“ statt „Google Fonts“? Bestätige nach dem Diktat die richtige Wortgruppe im Tippi-Menü. Die Regel bleibt auf diesem Mac.</p>
       </div>
       <div class="card feature">
         <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"></path><path d="M4 21l3-7 3 7"></path><path d="M4.5 19h5"></path></svg></div>
@@ -536,6 +536,15 @@
     <p class="lead" data-lang="de">Dein Text erreicht ausschließlich den KI-Anbieter, den du selbst konfiguriert hast.</p>
 
     <div class="privacy-grid">
+      <div class="privacy-item">
+        <div class="check"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <strong data-lang="en">Dictation corrections stay on this Mac</strong>
+          <strong data-lang="de">Diktatkorrekturen bleiben auf diesem Mac</strong>
+          <p data-lang="en">Off by default. Tippi stores only the phrases you confirm. The last dictation excerpt stays in memory for up to five minutes.</p>
+          <p data-lang="de">Ab Werk aus. Tippi speichert nur die Wortgruppen, die du bestätigst. Der letzte Diktatausschnitt bleibt bis zu fünf Minuten im Arbeitsspeicher.</p>
+        </div>
+      </div>
       <div class="privacy-item">
         <div class="check"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div>

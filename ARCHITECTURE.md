@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.34.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.35.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -77,6 +77,7 @@ Tippi/
 │   ├── PromptLibrary.swift         # Änderungen an eingebauten Prompts + EINE Reihenfolge über
 │   │                               #   eingebaute und eigene (beides per iCloud); DemoPrompt.all nutzt sie
 │   ├── CustomWordVariants.swift    # „Tipi → Tippi“ in Eigene Wörter: deterministische Ersetzung
+│   ├── DictationCorrections.swift  # Optional: bestätigte lokale Wortgruppen und flüchtiges letztes Diktat
 │   │                               #   direkt nach der Erkennung (SpeechTranscriber), vor der KI
 │   ├── AppearanceSettings.swift    # System/Hell/Dunkel → NSApp.appearance + die drei Panels
 │   ├── TippiStatusMonitor.swift    # Ampel für die Menüleiste. `Status.error` traegt seit
@@ -193,6 +194,7 @@ Tippi/
 │   ├── PermissionsSettingsTab.swift # Berechtigungen-Tab: Status + Erteilen je Recht (v2.18)
 │   ├── PromptsSettingsTab.swift    # Prompts-Tab: eine Liste, Ziehen zum Sortieren, Editor für alle
 │   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
+│   ├── DictationCorrectionWindow.swift # Editor für bestätigte Wortgruppen und Verwaltung in Eigene Wörter
 │   └── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
 ├── Voice/
 │   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate), AVAudioEngine seit 2.22

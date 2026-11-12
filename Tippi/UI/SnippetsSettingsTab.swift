@@ -93,6 +93,7 @@ struct SnippetsTab: View {
     private var customWordsPane: some View {
         Form {
             customWordsSection
+            DictationCorrectionsSection()
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)

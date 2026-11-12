@@ -397,6 +397,7 @@ final class DictationController: ObservableObject {
         isStarting = true
         defer { isStarting = false }
 
+        DictationCorrections.shared.forgetRecent()
         guard await AudioRecorder.requestPermission() else {
             ToastWindowController.shared.show(message: String(localized: "dictation.toast.micDenied"))
             return
@@ -465,15 +466,9 @@ final class DictationController: ObservableObject {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
             let (polished, cleanupNotice) = await processTranscript(raw, appName: targetApp?.localizedName ?? "")
-            // Layout is a rule, after the polish or alone. Never in terminals or apps
-            // on the Return list: a line break there can send a command or a message.
             let targetID = notesTextView == nil ? targetApp?.bundleIdentifier : nil
-            let layoutExcluded = targetID.map {
-                DictationSettings.commandCapableBundleIDs.contains($0) || DictationSettings.autoReturnBundleIDs.contains($0)
-            } ?? false
-            let final = DictationLayout.layoutWanted(source: source, toggle: DictationSettings.layoutEnabled,
-                                                     targetIsTerminal: layoutExcluded)
-                ? DictationLayout.format(polished) : polished
+            let (final, correctionExcerpt) = prepareInsertion(polished, targetID: targetID,
+                                                               field: targetField, isNotes: notesTextView != nil)
             try Task.checkCancellation()
             // Decided BEFORE insertion: the clipboard fallback activates the target
             // app itself, so "frontmost" afterwards is true by construction.
@@ -509,6 +504,9 @@ final class DictationController: ObservableObject {
                 }
                 return await Self.insert(textToInsert, into: targetApp, targetField: targetField, fit: fit)
             }.value
+            if let correctionExcerpt, copiedNotice == nil, !Task.isCancelled {
+                DictationCorrections.shared.offer(correctionExcerpt)
+            }
             var pressReturn = false
             // A cancel that arrived during insertion still means "don't send";
             // nothing inserted means nothing to send either.

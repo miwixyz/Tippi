@@ -1,9 +1,11 @@
 # Tippi — Handover-Dokumentation
 
-Stand: 9. November 2026 · Version: **2.34.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
+Stand: 12. November 2026 · Version: **2.35.0** (`docs/HANDOFF-CLAUDE.md` ist ein historischer Stand von v1.7.3, keine aktuelle Anleitung)
 Autor: Michael Wildenauer
 
 Dieses Dokument ist der **operative Einstieg und die technische Übergabe** für Tippi. Der aktuelle Stand steht oben und in §7; ältere Fachabschnitte sind Hintergrundwissen und müssen vor einer Änderung gegen den Code geprüft werden.
+
+**Diktatkorrekturen (v2.35.0):** Der Editor öffnet sich aus dem Tippi-Menü nach einem normalen Diktat. Bestätigte Wortgruppen bleiben in den lokalen App-Einstellungen und greifen nach der optionalen KI-Nachbearbeitung. Sie werden in „Wörterbuch & Snippets → Eigene Wörter“ verwaltet. Datengrenzen und Geltungsbereich stehen in [SECURE-DESIGN-dictation-corrections.md](SECURE-DESIGN-dictation-corrections.md).
 
 ### Aktueller Übergabestand nach v2.21.0
 

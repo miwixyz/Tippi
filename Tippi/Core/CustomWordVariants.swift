@@ -100,7 +100,10 @@ enum CustomWordVariants {
     /// variant beats its own first word, and a replacement can never be picked
     /// up again by another rule (`A → B`, `B → C` does not chain to C).
     static func apply(to text: String, entries: [String]) -> String {
-        let rules = rules(from: entries)
+        apply(to: text, rules: rules(from: entries))
+    }
+
+    static func apply(to text: String, rules: [Rule]) -> String {
         guard !rules.isEmpty, !text.isEmpty else { return text }
 
         var pairs: [(variant: String, target: String)] = []

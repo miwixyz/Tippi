@@ -115,6 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
     /// refreshed when the user picks a language from its submenu.
     private var dictationLanguageMenuItem: NSMenuItem?
+    private var dictationCorrectionMenuItem: NSMenuItem?
     /// Disabled menu header showing the readiness status in words ("Ready" /
     /// "Loading model…" / "Error"), colored to match. Mirrors the colored
     /// badge on the icon. Backed by a custom `NSView` (`StatusMenuRowView`)
@@ -839,6 +840,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(languageItem)
         dictationLanguageMenuItem = languageItem
 
+        let correctionItem = NSMenuItem(
+            title: String(localized: "dictation.corrections.action"),
+            action: #selector(rememberDictationCorrection),
+            keyEquivalent: ""
+        )
+        correctionItem.image = menuIcon("character.book.closed")
+        correctionItem.isHidden = true
+        menu.addItem(correctionItem)
+        dictationCorrectionMenuItem = correctionItem
+
         menu.addItem(.separator())
 
         let welcomeItem = menu.addItem(
@@ -921,9 +932,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showStatusMenu() {
         guard let item = statusItem, let menu = statusMenu else { return }
         if quickNotesPopover.isShown { quickNotesPopover.close() }
+        dictationCorrectionMenuItem?.isHidden = DictationCorrections.shared.recent == nil
         item.menu = menu
         item.button?.performClick(nil)
         item.menu = nil
+    }
+
+    @objc private func rememberDictationCorrection() {
+        guard DictationCorrections.shared.recent != nil else { return }
+        DictationCorrectionWindow.shared.present()
     }
 
     /// Adds the colored status-dot sublayer to the menubar button (once).

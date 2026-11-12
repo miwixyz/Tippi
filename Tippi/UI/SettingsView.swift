@@ -1333,6 +1333,8 @@ private struct HelpTab: View {
 
         HelpEntry(id: "customWords", icon: "character.book.closed", category: .snippets,
                   title: String(localized: "settings.help.customWordsTitle"), body: String(localized: "settings.help.customWordsBody")),
+        HelpEntry(id: "dictationCorrections", icon: "character.book.closed", category: .snippets,
+                  title: String(localized: "dictation.corrections.action"), body: String(localized: "settings.help.dictationCorrectionsBody")),
         HelpEntry(id: "espansoImport", icon: "square.and.arrow.down", category: .snippets,
                   title: String(localized: "settings.help.espansoImportTitle"), body: String(localized: "settings.help.espansoImportBody")),
         HelpEntry(id: "snippets", icon: "text.badge.checkmark", category: .snippets,

@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.35.0] — 2026-11-12
+
+### Neu
+- **Korrektur merken.** Wenn Tippi immer wieder „Google Fonds“ statt „Google Fonts“ schreibt, kannst du diese Korrektur für künftige Diktate speichern. Schalte die Funktion unter „Wörterbuch & Snippets → Eigene Wörter“ ein und wähle nach dem Diktat im Tippi-Menü „Korrektur merken …“. Tippis Regeln bleiben auf diesem Mac und lassen sich bearbeiten oder löschen.
+
+### Sicherheit
+- Sparkle für App-Updates auf mindestens 2.10.1 aktualisiert. Damit sind GHSA-hg88-v3cw-3qrh und GHSA-g3hp-f6mg-559v behoben.
+
+### Intern
+- 849 Tests. Zusätzlich zwei synthetische Diktate mit Parakeet Ultra in einer isolierten App-Fassung geprüft: vor der bestätigten Regel „Google Fonds“, danach „Google Fonts“.
+
 ## [2.34.0] — 2026-11-09
 
 ### Neu

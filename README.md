@@ -52,6 +52,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **Remember dictation corrections (v2.35)** — if “Google Fonts” regularly comes out as “Google Fonds”, confirm that correction once in the Tippi menu. Tippi uses it in later regular dictations. The feature is off by default, and you can edit or delete each rule under Dictionary & Snippets → Custom words.
 - **Quick notes in the menu bar (v2.34)** — mark up to three notes as quick notes (right-click in the note list) and a click on Tippi's menu bar icon opens them as tabs, ready to type, without the Notes window. Right-click the icon, or use the "⋯" button, for the usual menu; drag the corner grip to resize. With no quick note marked, the icon behaves exactly as before. On macOS 27 every permission hint now uses the list's new name, "Device Control and Data Access".
 - **Clipboard paste waits and checks, update window shows what's new (v2.33)** — where an app won't let Tippi replace text directly (Apple Mail), the ⌘V now waits up to a second for the text field and checks that the text arrived before your old clipboard comes back; if it provably didn't, the result stays on the clipboard and Tippi tells you. The update window lists the changes of the new version. With macOS "Increase contrast" Tippi uses stronger colors, and icon-only buttons have names for VoiceOver.
 - **Claude Haiku 5.5 as the Anthropic default (v2.32.1)** — cheaper than Haiku 4.5 and barely slower (0.85 s vs 0.67 s per dictation, measured); dictation cleanup now also drops German filler "also"/"genau". A Haiku 4.5 you picked yourself stays.
@@ -140,7 +141,7 @@ your text for anything that touches AI.
 
 ### From the latest release
 
-1. Download the DMG from **[the latest release](https://github.com/miwixyz/Tippi/releases/latest)** (or pick an older version from [Releases](https://github.com/miwixyz/Tippi/releases))
+1. Download **[Tippi 2.35.0 for macOS](https://github.com/miwixyz/Tippi/releases/download/v2.35.0/Tippi-2.35.0.dmg)** or pick another version from [Releases](https://github.com/miwixyz/Tippi/releases).
 2. Open the DMG, drag **Tippi.app** to `/Applications`
 3. Launch Tippi from your Applications folder
 4. Follow the in-app setup wizard (grant the Device Control and Data Access permission, called Accessibility before macOS 27; optionally enter an API key)
@@ -223,6 +224,8 @@ Press **⌥⌘T** with no text selected. A small popup with a mic button appears
 Parakeet v3, the default speech engine, downloads its model on first use. If you switch to Whisper, download a Whisper model first: Settings → Dictation → Download Model.
 
 ### 4b. Dictation mode (v1.7+)
+
+**Remember a correction (optional):** Enable it under Settings → Dictionary & Snippets → Custom words. After a regular dictation in a text field, open Tippi’s menu and choose **Remember Correction**. Enter the phrase as it was recognised, then its correct form, for example `Google Fonds → Google Fonts`. Include nearby words when the phrase could mean something else. Confirmed pairs stay on this Mac and can be edited or removed in Settings. They apply to later regular dictations, including with AI cleanup off.
 
 A faster path for pure dictation, with no popup. Enable it in **Settings → Hotkeys → Enable dictation hot key** and pick a hotkey (default **⌃⌥⌘M**). Then, in any text field: press the hotkey to start recording — a floating pill appears with a live waveform driven by your mic level — press again to stop. Tippi transcribes locally (Parakeet v3 or Whisper) and inserts the text at the cursor.
 
@@ -471,6 +474,7 @@ Tippi is designed so your text never reaches anything except the AI provider you
 
 - **No telemetry, ever** — no analytics endpoint, no crash reporter
 - **No request history by default**: neither the input nor the output is written to disk unless you turn on the opt-in encrypted local History (AES-GCM, key in your Keychain)
+- **Remembered dictation corrections** are off by default. Only the phrases you confirm are saved, in settings on this Mac. The latest dictation excerpt is held in memory for up to five minutes.
 - **API keys**: macOS Keychain, accessible only to Tippi (no iCloud sync)
 - **Logs**: only crash-level logs to `~/Library/Logs/Tippi/`, content strings redacted
 - **App-container excluded from Spotlight indexing**
@@ -503,6 +507,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.32.0 | ✅ Done | **Dictation modes** — extra key with the dictation trigger picks Improve, Defuse, Add emojis or your own prompt; local MLX warmed while you speak (20 s → <1 s), dictation fits the text at the cursor, Apple Intelligence as provider, Parakeet Ultra selectable. |
 | v2.32.1 | ✅ Done | **Haiku 5.5 as the Anthropic default** — cleanup prompt names German filler "also"/"genau"; new `scripts/diktat-pruefstand.py` checks dictation cleanup (Haiku 5.5 18/18, Haiku 4.5 17/18) |
 | v2.34.0 | ✅ Done | **Quick notes in the menu bar** — up to three notes as tabs behind the Tippi icon; permission hints use the macOS 27 name |
+| v2.35.0 | ✅ Done | **Remember dictation corrections** — confirm a phrase after dictation and reuse it on this Mac. Sparkle security update. |
 | v2.33.1 | ✅ Done | **Works in Chromium apps** — Helium, Edge and Electron apps hand out their accessibility data only on request; Tippi now asks, and pastes through the Edit menu when ⌘V does not arrive |
 | v2.33.0 | ✅ Done | **Paste that arrives** — clipboard fallback waits for the text field and checks the result (Apple Mail), update window shows release notes, "Increase contrast" colors, VoiceOver names for icon buttons |
 | v2.28.1 | ✅ Done | **Refine keeps the text's language** — Gemma 4 E4B rewrote German text in English for “cooler” (3/3); Tippi now detects the language (`NLLanguageRecognizer`, confidence ≥ 0.8) and names it in the refine prompt: German stays German (6/6), “in English” still translates. Unsure snippets (“ok”) get no language line. 731 tests |

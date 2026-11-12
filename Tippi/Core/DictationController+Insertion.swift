@@ -11,6 +11,24 @@ private let insertLog = Logger(subsystem: "com.tippi.app", category: "insert-fit
 /// Both return nil when the text was written, otherwise the toast for "copied
 /// to the clipboard instead".
 extension DictationController {
+    /// Corrections follow cleanup so stored phrases never feed a provider.
+    /// Both they and layout skip targets where Return can execute or send text.
+    func prepareInsertion(_ polished: String, targetID: String?, field: FocusedFieldReader.FocusSpot?,
+                          isNotes: Bool) -> (text: String, correctionExcerpt: String?) {
+        let targetExcluded = targetID.map {
+            DictationSettings.commandCapableBundleIDs.contains($0) || DictationSettings.autoReturnBundleIDs.contains($0)
+        } ?? false
+        let corrections = DictationCorrections.shared
+        let canCorrect = corrections.enabled && source == .standard && !targetExcluded && (isNotes
+            || (targetID != nil && field.map {
+                $0.fingerprint.role != nil && !FocusedFieldReader.isSecure($0.element)
+            } == true))
+        let corrected = canCorrect ? corrections.apply(to: polished) : polished
+        let layout = DictationLayout.layoutWanted(source: source, toggle: DictationSettings.layoutEnabled,
+                                                   targetIsTerminal: targetExcluded)
+        return (layout ? DictationLayout.format(corrected) : corrected, canCorrect ? corrected : nil)
+    }
+
     static func insert(_ text: String, intoNotes textView: NSTextView, fit: Bool) -> String? {
         // The Notes window is kept (not released) when closed, so
         // `window != nil` proves nothing — visibility does. Closed

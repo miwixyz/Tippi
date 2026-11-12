@@ -58,6 +58,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Remember dictation corrections (v2.35)** — confirm how Tippi should write a phrase it keeps mishearing, such as “Google Fonds” → “Google Fonts”. The optional rules stay on this Mac.
 - **Quick notes in the menu bar (v2.34)** — mark up to three notes and the Tippi menu bar icon opens them as tabs, ready to type; right-click the icon for the usual menu. On macOS 27 permission hints use the list's new name, "Device Control and Data Access".
 - **Paste that checks it arrived (v2.33)** — Apple Mail won't let Tippi replace text directly, so Tippi pastes there. It now waits for the text field before ⌘V and checks the text got in; if it didn't, the text stays on the clipboard and Tippi says so. Also new: the update window lists what's new, "Increase contrast" gets stronger colors, and icon buttons have VoiceOver names.
 - **Dictation modes (v2.32)** — hold an extra key with the dictation key: ⇧ Improve, control Defuse, ⌘ Add emojis, the other ⌥ your own prompt. Local MLX dictation is prepared while you speak (cleanup 0.6 s instead of 3.1 s), dictation fits the text at the cursor, and Apple Intelligence joins as an on-device provider.
