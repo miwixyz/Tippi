@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.36.0] — 2026-11-12
+
+- _Add release notes here._
+
 ## [Unveröffentlicht]
 
 ### Neu
