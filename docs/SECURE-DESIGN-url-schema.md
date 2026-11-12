@@ -54,7 +54,12 @@ merkt sich Tippi nur „Panel offen wünschen“ (ein Bool, kein URL-Inhalt) und
 ## U6 – Testkopien und Schema-Besitz
 
 Jede Tippi-Fassung mit dieser Info.plist meldet `tippi` bei LaunchServices an (Release, `make build`,
-`Tippi Bild`). Nach einem Sichttest die Testkopie mit `lsregister -u` abmelden, sonst startet Porters Knopf
+`Tippi Bild`). **Auch `make test`:** Gemessen 2026-11-12 stand danach
+`~/Library/Developer/Xcode/DerivedData/Tippi-*/Build/Products/Debug/Tippi.app` (echte Kennung `com.tippi.app`,
+Debug) als einziger Besitzer von `tippi:` in LaunchServices. Ein `tippi://`-Aufruf hätte diese Fassung gestartet,
+neben dem installierten Release ohne Schema. Nach dem Release mit Schema gewinnt meist die neuere Version in
+`/Applications`. Prüfen:
+`lsregister -dump | grep -B40 "bindings:.*tippi:" | grep "^path:"`. Nach einem Sichttest die Testkopie mit `lsregister -u` abmelden, sonst startet Porters Knopf
 später womöglich eine gelöschte oder alte Kopie.
 
 ## Abgelehnt
