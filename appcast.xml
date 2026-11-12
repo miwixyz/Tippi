@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.35.0</title>
+            <pubDate>Thu, 12 Nov 2026 14:39:03 +0100</pubDate>
+            <sparkle:version>622</sparkle:version>
+            <sparkle:shortVersionString>2.35.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Korrektur merken.</b> Wenn Tippi immer wieder „Google Fonds“ statt „Google Fonts“ schreibt, kannst du diese Korrektur für künftige Diktate speichern. Schalte die Funktion unter „Wörterbuch &amp; Snippets → Eigene Wörter“ ein und wähle nach dem Diktat im Tippi-Menü „Korrektur merken …“. Tippis Regeln bleiben auf diesem Mac und lassen sich bearbeiten oder löschen.</li></ul><h3>Sicherheit</h3><ul><li>Sparkle für App-Updates auf mindestens 2.10.1 aktualisiert. Damit sind GHSA-hg88-v3cw-3qrh und GHSA-g3hp-f6mg-559v behoben.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.35.0/Tippi-2.35.0.dmg" length="24999634" type="application/octet-stream" sparkle:edSignature="fWgXc0qAFDdd0ZQ6Dv45vLTUU8y7L9CuBdQ+jbEoBZ3u6RQWVi+oKk889uEMwj5SBkDrxsFLhqM6w2haFpbLAA=="/>
+        </item>
+        <item>
             <title>2.34.0</title>
             <pubDate>Mon, 09 Nov 2026 15:56:12 +0100</pubDate>
             <sparkle:version>619</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Tippi funktioniert jetzt in Helium, Edge und anderen Chromium-Apps.</b> Diese Browser und Electron-Apps (z. B. die Claude-App) geben ihre Bedienungshilfen-Daten erst heraus, wenn ein Programm sie anfordert. Vorher sah Tippi dort kein Textfeld: keine Auswahlleiste, kein Prompt-Fenster, keine Autovervollständigung. Tippi fordert die Daten jetzt selbst an, einmal je App-Start, du musst in Helium nicht mehr <code>chrome://accessibility</code> einschalten. In den ersten zwei Sekunden nach dem ersten Zugriff kann das Feld noch leer wirken.</li><li><b>Einfügen aus dem Prompt-Fenster kam in Helium nicht an.</b> Das ⌘V, das Tippi sendet, ignoriert Helium dort. Kommt der Text nicht an, löst Tippi jetzt „Einsetzen“ über das Bearbeiten-Menü der App aus. Der Menüpunkt wird am Tastenkürzel erkannt, nicht am Namen, funktioniert also in jeder Sprache.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.33.1/Tippi-2.33.1.dmg" length="24967487" type="application/octet-stream" sparkle:edSignature="6OYSJxMin8HOnP+llMVCRFIKXPfgn32CJVf8tPZTGM5RGSk9ECdOYOg/8P8e0V39hNH/Gv9/Hkf2TwaFabVkBw=="/>
-        </item>
-        <item>
-            <title>2.33.0</title>
-            <pubDate>Fri, 30 Oct 2026 15:11:03 +0100</pubDate>
-            <sparkle:version>606</sparkle:version>
-            <sparkle:shortVersionString>2.33.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Das Update-Fenster zeigt, was neu ist.</b> Bietet Tippi ein Update an, stehen die Neuerungen der Version jetzt direkt im Fenster, ohne Umweg über die Website.</li><li><b>„Kontrast erhöhen“ gilt auch in Tippi.</b> Ist in den Systemeinstellungen unter Bedienungshilfen → Anzeige „Kontrast erhöhen“ an, nutzt Tippi für Akzente, Text und Statusfarben kräftigere Farben (Kontrast mindestens 7 : 1, Rahmen 3 : 1). Ohne den Schalter bleibt alles wie bisher.</li><li><b>Symbol-Knöpfe haben Namen.</b> 14 Knöpfe, die nur ein Symbol zeigen (z. B. Kürzel bearbeiten und löschen, Schritte einer Kette verschieben, Suche leeren), nennen VoiceOver jetzt, was sie tun, und zeigen beim Darüberfahren einen Hinweis.</li></ul><h3>Behoben</h3><ul><li><b>Ersetzen in Apple Mail kam manchmal nicht an.</b> Mail lässt Tippi den Text nicht direkt austauschen, deshalb fügt Tippi dort über die Zwischenablage ein. Das ⌘V kam manchmal zu früh, bevor Mail das Schreibfeld wieder bereit hatte: Das Fenster schloss sich, und nichts passierte. Tippi wartet jetzt bis zu einer Sekunde auf das Schreibfeld und prüft danach, ob der Text angekommen ist. Erst dann legt es deine alte Zwischenablage zurück. Kommt der Text nachweislich nicht an, bleibt er in der Zwischenablage und Tippi sagt es dir („Einfügen kam nicht an“), mit ⌘V holst du ihn dann selbst. Gilt für alle Apps, in die Tippi über die Zwischenablage einfügt.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.33.0/Tippi-2.33.0.dmg" length="24957541" type="application/octet-stream" sparkle:edSignature="apmTKKsEsMgpAqrrXP4S98UO6ZZ+//coxSc2Dkr0LeWpBa1nuZD+IU+1218SCvyb/89rz7hrC0R4m0irv04AAQ=="/>
         </item>
     </channel>
 </rss>
