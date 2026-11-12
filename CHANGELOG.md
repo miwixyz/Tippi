@@ -2,8 +2,15 @@
 
 ## [Unveröffentlicht]
 
+### Neu
+- **Schnellnotizen von anderen Apps aus öffnen.** Die Adresse `tippi://schnellnotiz` öffnet das Schnellnotiz-Fenster unter dem Tippi-Symbol, genau wie ein Klick darauf. Ist keine Schnellnotiz markiert, öffnet sich das Notizfenster. Porter nutzt das für seinen Notizen-Knopf. Die Adresse kann nichts anderes und nimmt keinen Text an.
+
 ### Behoben
 - Diktatkorrekturen setzen ein sicher erkanntes und bestätigtes Textfeld voraus. „Korrektur merken“ zeigt die Wortgruppe vor Anwendung bereits gemerkter Regeln. Satzzeichen und gleich geschriebene Unicode-Varianten werden berücksichtigt. Ein abgelaufener Timer kann kein neueres Diktat löschen.
+
+### Intern
+- `CFBundleURLTypes` mit Schema `tippi`; `AppDelegate.application(_:open:)` gibt jede URL an `TippiURLCommand.parse` (Allowlist: nur `tippi://schnellnotiz`, keine Query, kein Fragment, kein weiterer Pfad). Abgelehntes wird ohne URL-Inhalt protokolliert. Design: `docs/SECURE-DESIGN-url-schema.md`.
+- `QuickNotesPopoverController.open(relativeTo:)` öffnet nur, schließt nie, damit wiederholte Aufrufe nicht flackern.
 
 ## [2.35.0] — 2026-11-12
 
