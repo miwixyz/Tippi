@@ -22,10 +22,11 @@ final class DictationCorrections: ObservableObject {
             self.replacement = replacement
         }
 
-        private static func phrase(_ value: String) -> String? {
+        private static func phrase(_ input: String) -> String? {
+            let value = input.precomposedStringWithCanonicalMapping
             guard value.utf8.count <= 160, value.unicodeScalars.allSatisfy({
                 CharacterSet.alphanumerics.contains($0) || CharacterSet.nonBaseCharacters.contains($0)
-                    || " -–.'’".unicodeScalars.contains($0)
+                    || CharacterSet.punctuationCharacters.contains($0) || " +&".unicodeScalars.contains($0)
             }), value.contains(where: \.isLetter) else { return nil }
             return value.trimmingCharacters(in: .whitespaces)
         }
@@ -33,6 +34,10 @@ final class DictationCorrections: ObservableObject {
         var variant: CustomWordVariants.Rule {
             .init(variants: [heard], target: replacement)
         }
+    }
+
+    enum SaveProblem: String {
+        case duplicate, limit, noExcerpt, noMatch, deleted
     }
 
     @Published private(set) var enabled: Bool
@@ -44,10 +49,12 @@ final class DictationCorrections: ObservableObject {
     init(defaults: UserDefaults) {
         self.defaults = defaults
         enabled = defaults.bool(forKey: Self.enabledKey)
-        let rows = defaults.array(forKey: Self.rulesKey) as? [[String: String]] ?? []
-        rules = rows.prefix(Self.maxRules).compactMap { row in
-            guard let heard = row["heard"], let replacement = row["replacement"] else { return nil }
-            return Rule(heard: heard, replacement: replacement)
+        let rows = defaults.array(forKey: Self.rulesKey) ?? []
+        rules = rows.prefix(Self.maxRules).reduce(into: []) { result, value in
+            guard let row = value as? [String: String], let heard = row["heard"],
+                  let replacement = row["replacement"], let rule = Rule(heard: heard, replacement: replacement),
+                  !result.contains(where: { $0.heard.caseInsensitiveCompare(rule.heard) == .orderedSame }) else { return }
+            result.append(rule)
         }
     }
 
@@ -66,31 +73,46 @@ final class DictationCorrections: ObservableObject {
     func offer(_ transcript: String) {
         guard enabled, !transcript.isEmpty else { return }
         forgetRecent()
-        recent = String(transcript.suffix(1_500))
+        var excerpt = transcript.suffix(1_500)
+        if excerpt.startIndex != transcript.startIndex,
+           !transcript[transcript.index(before: excerpt.startIndex)].isWhitespace {
+            excerpt = excerpt.drop(while: { !$0.isWhitespace })
+        }
+        guard excerpt.contains(where: { !$0.isWhitespace }) else { return }
+        recent = String(excerpt)
         expiry = Task { [weak self] in
             do { try await Task.sleep(for: .seconds(300)) } catch { return }
+            guard !Task.isCancelled else { return }
             self?.forgetRecent()
         }
     }
 
     func apply(to text: String) -> String {
-        guard enabled else { return text }
-        return CustomWordVariants.apply(to: text, rules: rules.map(\.variant))
+        guard enabled, !rules.isEmpty else { return text }
+        return Self.applyRules(rules, to: text)
     }
 
-    func canSave(_ rule: Rule, editing original: Rule? = nil) -> Bool {
+    private static func applyRules(_ rules: [Rule], to text: String) -> String {
+        let canonical = text.precomposedStringWithCanonicalMapping
+        let corrected = CustomWordVariants.apply(to: canonical, rules: rules.map(\.variant))
+        return corrected == canonical ? text : corrected
+    }
+
+    func saveProblem(_ rule: Rule, editing original: Rule? = nil) -> SaveProblem? {
         let hasConflict = rules.contains {
             $0 != original && $0.heard.caseInsensitiveCompare(rule.heard) == .orderedSame
         }
-        guard !hasConflict else { return false }
-        if let original { return rules.contains(original) }
-        guard enabled, rules.count < Self.maxRules, let recent else { return false }
-        return CustomWordVariants.apply(to: recent, rules: [rule.variant]) != recent
+        if hasConflict { return .duplicate }
+        if let original { return rules.contains(original) ? nil : .deleted }
+        guard enabled, let recent else { return .noExcerpt }
+        guard rules.count < Self.maxRules else { return .limit }
+        let previous = Self.applyRules(rules, to: recent)
+        return Self.applyRules(rules + [rule], to: recent) == previous ? .noMatch : nil
     }
 
     @discardableResult
     func save(_ rule: Rule, editing original: Rule? = nil) -> Bool {
-        guard canSave(rule, editing: original) else { return false }
+        guard saveProblem(rule, editing: original) == nil else { return false }
         if let original, let index = rules.firstIndex(of: original) {
             rules[index] = rule
         } else {

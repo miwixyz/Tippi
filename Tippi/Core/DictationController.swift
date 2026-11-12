@@ -467,8 +467,7 @@ final class DictationController: ObservableObject {
             try Task.checkCancellation()
             let (polished, cleanupNotice) = await processTranscript(raw, appName: targetApp?.localizedName ?? "")
             let targetID = notesTextView == nil ? targetApp?.bundleIdentifier : nil
-            let (final, correctionExcerpt) = prepareInsertion(polished, targetID: targetID,
-                                                               field: targetField, isNotes: notesTextView != nil)
+            let (final, correction) = prepareInsertion(polished, targetID: targetID, isNotes: notesTextView != nil)
             try Task.checkCancellation()
             // Decided BEFORE insertion: the clipboard fallback activates the target
             // app itself, so "frontmost" afterwards is true by construction.
@@ -497,20 +496,19 @@ final class DictationController: ObservableObject {
             // Read right before writing: that is where the text actually goes.
             let fit = DictationSettings.fitWanted(toggle: DictationSettings.fitInsertionEnabled,
                                                   targetBundleID: notesTextView == nil ? targetApp?.bundleIdentifier : nil)
-            // nil: inserted. Otherwise the text went to the clipboard; the value is the toast.
-            let copiedNotice = await Task { @MainActor () -> String? in
+            let insertion = await Task { @MainActor in
                 if let notesTextView {
-                    return Self.insert(textToInsert, intoNotes: notesTextView, fit: fit)
+                    return Self.insert(textToInsert, correction: correction, intoNotes: notesTextView, fit: fit)
                 }
-                return await Self.insert(textToInsert, into: targetApp, targetField: targetField, fit: fit)
+                return await Self.insert(textToInsert, correction: correction, into: targetApp, targetField: targetField, fit: fit)
             }.value
-            if let correctionExcerpt, copiedNotice == nil, !Task.isCancelled {
-                DictationCorrections.shared.offer(correctionExcerpt)
+            if let excerpt = insertion.excerpt, !Task.isCancelled {
+                DictationCorrections.shared.offer(excerpt)
             }
             var pressReturn = false
             // A cancel that arrived during insertion still means "don't send";
             // nothing inserted means nothing to send either.
-            if returnDecision == .press, copiedNotice == nil, !Task.isCancelled {
+            if returnDecision == .press, insertion.notice == nil, !Task.isCancelled {
                 // Let the target app finish handling the insertion before Return,
                 // then re-check right before posting — the HID event goes to
                 // whatever is frontmost at that instant.
@@ -528,7 +526,7 @@ final class DictationController: ObservableObject {
             let engineName = SpeechEngine.current == .parakeet ? ParakeetModel.current.displayName : "Whisper"
             // One toast at the end: a toast shown earlier (during cleanup) would be
             // replaced by this one within milliseconds and never be read.
-            var message = copiedNotice
+            var message = insertion.notice
                 ?? cleanupNotice ?? String(localized: "dictation.toast.inserted") + " · " + engineName
             if pressReturn {
                 message += " · " + String(localized: "dictation.toast.returnPressed")

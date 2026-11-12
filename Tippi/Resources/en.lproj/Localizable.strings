@@ -872,7 +872,7 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.corrections.title" = "Remembered Dictation Corrections";
 "dictation.corrections.toggle" = "Remember dictation corrections";
 "dictation.corrections.hint" = "After a regular dictation, choose “Remember Correction…” from the Tippi menu. Confirmed corrections apply on this Mac.";
-"dictation.corrections.last" = "Last Dictation";
+"dictation.corrections.last" = "Dictation before saved corrections";
 "dictation.corrections.heard" = "Recognised phrase";
 "dictation.corrections.replacement" = "Correct phrase";
 "dictation.corrections.editorHint" = "Enter at least two words from the dictation, for example “Google Fonds”, and their correct form, “Google Fonts”. Include nearby words when names sound alike.";
@@ -880,4 +880,11 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.corrections.save" = "Remember Correction";
 "dictation.corrections.edit" = "Edit";
 "dictation.corrections.remove" = "Delete";
-"settings.help.dictationCorrectionsBody" = "Enable “Remember dictation corrections” under “Dictionary & Snippets → Custom words”. After a regular dictation, choose “Remember Correction…” from the Tippi menu and confirm a phrase such as “Google Fonds → Google Fonts”. Tippi replaces it in future regular dictations, including with AI cleanup off. Rules stay on this Mac and can be edited or deleted individually. The last dictation excerpt is available from the menu for five minutes. The feature is inactive in terminals and apps configured to send automatically.";
+"settings.help.dictationCorrectionsBody" = "Enable “Remember dictation corrections” under “Dictionary & Snippets → Custom words”. After a regular dictation, choose “Remember Correction…” from the Tippi menu and confirm a phrase such as “Google Fonds → Google Fonts”. Tippi replaces it in future regular dictations, including with AI cleanup off. Rules stay on this Mac and can be edited or deleted individually. The last dictation excerpt is available from the menu for five minutes. The feature is inactive in terminals and apps configured to send automatically. The feature works in Tippi’s Notes editor and in text fields where Accessibility confirms direct insertion.";
+"dictation.corrections.validation.invalid" = "Use at least two recognised words and two short, different phrases, each on a single line.";
+"dictation.corrections.validation.duplicate" = "There is already a rule for this recognised phrase. You can edit it in Settings.";
+"dictation.corrections.validation.limit" = "There are already 100 saved rules. Delete one in Settings first.";
+"dictation.corrections.validation.noExcerpt" = "The dictation excerpt is no longer available. Dictate again.";
+"dictation.corrections.validation.noMatch" = "This phrase would not make a new correction here. Check the spelling and your existing rules.";
+"dictation.corrections.validation.deleted" = "This rule has been deleted.";
+"dictation.toast.correctionWriteUnverified" = "Insertion could not be confirmed. Check the text field.";

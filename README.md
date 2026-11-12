@@ -225,7 +225,7 @@ Parakeet v3, the default speech engine, downloads its model on first use. If you
 
 ### 4b. Dictation mode (v1.7+)
 
-**Remember a correction (optional):** Enable it under Settings → Dictionary & Snippets → Custom words. After a regular dictation in a text field, open Tippi’s menu and choose **Remember Correction**. Enter the phrase as it was recognised, then its correct form, for example `Google Fonds → Google Fonts`. Include nearby words when the phrase could mean something else. Confirmed pairs stay on this Mac and can be edited or removed in Settings. They apply to later regular dictations, including with AI cleanup off.
+**Remember a correction (optional):** Enable it under Settings → Dictionary & Snippets → Custom words. After a regular dictation in a supported text field, open Tippi’s menu and choose **Remember Correction**. Enter the phrase shown before saved corrections, then its correct form, for example `Google Fonds → Google Fonts`. Include nearby words when the phrase could mean something else. Confirmed pairs stay on this Mac and can be edited or removed in Settings. They apply to later regular dictations, including with AI cleanup off. Supported fields include Tippi’s Notes editor and fields where macOS Accessibility can verify direct insertion.
 
 A faster path for pure dictation, with no popup. Enable it in **Settings → Hotkeys → Enable dictation hot key** and pick a hotkey (default **⌃⌥⌘M**). Then, in any text field: press the hotkey to start recording — a floating pill appears with a live waveform driven by your mic level — press again to stop. Tippi transcribes locally (Parakeet v3 or Whisper) and inserts the text at the cursor.
 

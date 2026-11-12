@@ -59,6 +59,11 @@ private struct DictationCorrectionEditor: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            if let validationMessage {
+                Text(verbatim: validationMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             HStack {
                 Spacer()
                 Button(String(localized: "dictation.corrections.cancel"), action: dismiss)
@@ -67,7 +72,7 @@ private struct DictationCorrectionEditor: View {
                     if let rule, corrections.save(rule, editing: original) { dismiss() }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(rule.map { !corrections.canSave($0, editing: original) } ?? true)
+                .disabled(rule == nil || validationMessage != nil)
             }
         }
         .padding(20)
@@ -80,6 +85,13 @@ private struct DictationCorrectionEditor: View {
 
     private var rule: DictationCorrections.Rule? {
         .init(heard: heard, replacement: replacement)
+    }
+
+    private var validationMessage: String? {
+        guard !heard.isEmpty, !replacement.isEmpty else { return nil }
+        guard let rule else { return String(localized: "dictation.corrections.validation.invalid") }
+        guard let problem = corrections.saveProblem(rule, editing: original) else { return nil }
+        return String(localized: String.LocalizationValue("dictation.corrections.validation.\(problem.rawValue)"))
     }
 }
 

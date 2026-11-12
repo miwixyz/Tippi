@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Behoben
+- Diktatkorrekturen setzen ein sicher erkanntes und bestätigtes Textfeld voraus. „Korrektur merken“ zeigt die Wortgruppe vor Anwendung bereits gemerkter Regeln. Satzzeichen und gleich geschriebene Unicode-Varianten werden berücksichtigt. Ein abgelaufener Timer kann kein neueres Diktat löschen.
+
 ## [2.35.0] — 2026-11-12
 
 ### Neu

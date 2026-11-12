@@ -1,4 +1,5 @@
 import AppKit
+import Carbon
 import os
 
 private let insertLog = Logger(subsystem: "com.tippi.app", category: "insert-fit")
@@ -8,45 +9,62 @@ private let insertLog = Logger(subsystem: "com.tippi.app", category: "insert-fit
 /// the focus when the recording ended (`FieldFingerprint`). Out of
 /// `DictationController.swift` (SwiftLint `file_length`).
 ///
-/// Both return nil when the text was written, otherwise the toast for "copied
-/// to the clipboard instead".
 extension DictationController {
-    /// Corrections follow cleanup so stored phrases never feed a provider.
-    /// Both they and layout skip targets where Return can execute or send text.
-    func prepareInsertion(_ polished: String, targetID: String?, field: FocusedFieldReader.FocusSpot?,
-                          isNotes: Bool) -> (text: String, correctionExcerpt: String?) {
-        let targetExcluded = targetID.map {
-            DictationSettings.commandCapableBundleIDs.contains($0) || DictationSettings.autoReturnBundleIDs.contains($0)
-        } ?? false
-        let corrections = DictationCorrections.shared
-        let canCorrect = corrections.enabled && source == .standard && !targetExcluded && (isNotes
-            || (targetID != nil && field.map {
-                $0.fingerprint.role != nil && !FocusedFieldReader.isSecure($0.element)
-            } == true))
-        let corrected = canCorrect ? corrections.apply(to: polished) : polished
-        let layout = DictationLayout.layoutWanted(source: source, toggle: DictationSettings.layoutEnabled,
-                                                   targetIsTerminal: targetExcluded)
-        return (layout ? DictationLayout.format(corrected) : corrected, canCorrect ? corrected : nil)
+    struct CorrectionDraft {
+        let text: String
+        let excerpt: String
     }
 
-    static func insert(_ text: String, intoNotes textView: NSTextView, fit: Bool) -> String? {
+    struct InsertionOutcome {
+        var notice: String?
+        var excerpt: String?
+    }
+
+    /// Corrections follow cleanup so stored phrases never feed a provider.
+    /// Both they and layout skip targets where Return can execute or send text.
+    func prepareInsertion(_ polished: String, targetID: String?, isNotes: Bool) -> (String, CorrectionDraft?) {
+        let targetExcluded = targetID.map(Self.excludesCorrections) ?? false
+        let layout = DictationLayout.layoutWanted(source: source, toggle: DictationSettings.layoutEnabled,
+                                                   targetIsTerminal: targetExcluded)
+        let original = layout ? DictationLayout.format(polished) : polished
+        let corrections = DictationCorrections.shared
+        guard corrections.enabled, source == .standard, !targetExcluded, isNotes || targetID != nil else {
+            return (original, nil)
+        }
+        let corrected = corrections.apply(to: polished)
+        let final = corrected == polished ? original : (layout ? DictationLayout.format(corrected) : corrected)
+        return (original, CorrectionDraft(text: final, excerpt: polished))
+    }
+
+    private static func excludesCorrections(_ targetID: String) -> Bool {
+        DictationSettings.commandCapableBundleIDs.contains(targetID) || DictationSettings.autoReturnBundleIDs.contains(targetID)
+    }
+
+    static func insert(_ text: String, correction: CorrectionDraft?, intoNotes textView: NSTextView,
+                       fit: Bool) -> InsertionOutcome {
         // The Notes window is kept (not released) when closed, so
         // `window != nil` proves nothing — visibility does. Closed
         // meanwhile: clipboard, never a background app.
-        guard textView.window?.isVisible == true else {
+        guard let window = textView.window, window.isVisible else {
             TextInsertion.copy(text)
-            return String(localized: "dictation.toast.notesClosedCopied")
+            return InsertionOutcome(notice: String(localized: "dictation.toast.notesClosedCopied"))
         }
+        let eligible = window.isKeyWindow && window.firstResponder === textView
+            && !IsSecureEventInputEnabled() && DictationCorrections.shared.enabled
+        let correction = eligible ? correction : nil
         let range = textView.selectedRange()
         let field = fit
             ? FocusedFieldReader.slice(textView.string, range: CFRange(location: range.location, length: range.length))
             : nil
-        ReplacementWriter.writeNative(InsertionFitter.fit(text, around: field), in: textView, range: range)
-        return nil
+        let fitted = InsertionFitter.fit(correction?.text ?? text, around: field)
+        guard ReplacementWriter.writeNative(fitted, in: textView, range: range) else {
+            return InsertionOutcome(notice: String(localized: "dictation.toast.correctionWriteUnverified"))
+        }
+        return InsertionOutcome(excerpt: correction?.excerpt)
     }
 
-    static func insert(_ text: String, into targetApp: NSRunningApplication?,
-                       targetField: FocusedFieldReader.FocusSpot?, fit: Bool) async -> String? {
+    static func insert(_ text: String, correction: CorrectionDraft?, into targetApp: NSRunningApplication?,
+                       targetField: FocusedFieldReader.FocusSpot?, fit: Bool) async -> InsertionOutcome {
         // Same app, other field: never write there. Only a proven different
         // field counts; an app that doesn't tell gets the text as before.
         if let targetField, let pid = targetApp?.processIdentifier,
@@ -54,14 +72,27 @@ extension DictationController {
            !now.isSameField(as: targetField) {
             TextInsertion.copy(text)
             NSLog("Tippi: dictation not inserted — focus moved to another field (\(now.fingerprint.role ?? "?"))")
-            return String(localized: "dictation.toast.fieldChangedCopied")
+            return InsertionOutcome(notice: String(localized: "dictation.toast.fieldChangedCopied"))
         }
         // Read right before writing: that is where the text actually goes.
         let field = fit ? targetApp.flatMap { FocusedFieldReader.text(pid: $0.processIdentifier) } : nil
+        if let correction, let targetApp, let targetField, let id = targetApp.bundleIdentifier,
+           DictationCorrections.shared.enabled, !excludesCorrections(id) {
+            let corrected = InsertionFitter.fit(correction.text, around: field)
+            switch TextInsertion.writeDictationCorrection(corrected, pid: targetApp.processIdentifier,
+                                                          captured: targetField.element) {
+            case .written:
+                return InsertionOutcome(excerpt: correction.excerpt)
+            case .unverified:
+                return InsertionOutcome(notice: String(localized: "dictation.toast.correctionWriteUnverified"))
+            case .notWritten:
+                break
+            }
+        }
         let fitted = InsertionFitter.fit(text, around: field)
         logFit(fit: fit, field: field, original: text, fitted: fitted)
         await TextInsertion.replace(with: fitted, in: targetApp)
-        return nil
+        return InsertionOutcome()
     }
 
     /// Messpunkt (Sichttest 2026-10-27: „wird.Bitte“ ohne Leerzeichen): ob das Feld

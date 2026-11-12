@@ -78,6 +78,7 @@ Tippi/
 │   │                               #   eingebaute und eigene (beides per iCloud); DemoPrompt.all nutzt sie
 │   ├── CustomWordVariants.swift    # „Tipi → Tippi“ in Eigene Wörter: deterministische Ersetzung
 │   ├── DictationCorrections.swift  # Optional: bestätigte lokale Wortgruppen und flüchtiges letztes Diktat
+│   ├── TextInsertion+DictationCorrection.swift # Direkter Schreibversuch ins bestätigte ungeschützte AX-Textfeld
 │   │                               #   direkt nach der Erkennung (SpeechTranscriber), vor der KI
 │   ├── AppearanceSettings.swift    # System/Hell/Dunkel → NSApp.appearance + die drei Panels
 │   ├── TippiStatusMonitor.swift    # Ampel für die Menüleiste. `Status.error` traegt seit

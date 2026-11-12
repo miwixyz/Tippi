@@ -56,4 +56,46 @@ final class DictationCorrectionsTests: XCTestCase {
         corrections.setEnabled(true)
         XCTAssertEqual(corrections.apply(to: "Google Fonds öffnen"), "Google Fonts öffnen")
     }
+
+    func testPunctuationAndEquivalentUnicodeWorkInTheSameRule() throws {
+        let corrections = DictationCorrections(defaults: suites.make())
+        corrections.setEnabled(true)
+        let recognised = "Hallo, Mu\u{308}ller."
+        corrections.offer(recognised)
+        let rule = try XCTUnwrap(DictationCorrections.Rule(heard: "Hallo, Müller", replacement: "Hallo, Möller"))
+        XCTAssertTrue(corrections.save(rule))
+        XCTAssertEqual(corrections.apply(to: recognised), "Hallo, Möller.")
+    }
+
+    func testCoveredPhraseDoesNotSaveAnIneffectiveRule() throws {
+        let corrections = DictationCorrections(defaults: suites.make())
+        corrections.setEnabled(true)
+        corrections.offer("Nimm Google Fonds.")
+        let broad = try XCTUnwrap(DictationCorrections.Rule(heard: "Nimm Google Fonds", replacement: "Öffne Google Fonts"))
+        let covered = try XCTUnwrap(DictationCorrections.Rule(heard: "Google Fonds", replacement: "Google Funds"))
+        let fromCorrected = try XCTUnwrap(DictationCorrections.Rule(heard: "Öffne Google Fonts", replacement: "Lade Google Fonts"))
+        XCTAssertTrue(corrections.save(broad))
+        XCTAssertEqual(corrections.saveProblem(covered), .noMatch)
+        XCTAssertEqual(corrections.saveProblem(fromCorrected), .noMatch)
+    }
+
+    func testClippingCannotCreateAPhraseThatWasNotInTheDictation() throws {
+        let corrections = DictationCorrections(defaults: suites.make())
+        corrections.setEnabled(true)
+        corrections.offer("GGoogle Fonds " + String(repeating: "x", count: 1_487))
+        let rule = try XCTUnwrap(DictationCorrections.Rule(heard: "Google Fonds", replacement: "Google Fonts"))
+        XCTAssertEqual(corrections.saveProblem(rule), .noMatch)
+    }
+
+    func testUnverifiedDirectWritesMustNotRetry() {
+        let expected = TextInsertion.expectedCorrectionValue(before: "A😀B", range: CFRange(location: 1, length: 2), text: "X")
+        XCTAssertEqual(expected, "AXB")
+        XCTAssertNil(TextInsertion.expectedCorrectionValue(before: "A", range: CFRange(location: 1, length: .max), text: "X"))
+        XCTAssertEqual(TextInsertion.correctionWriteResult(before: "A😀B", expected: "AXB", after: "AXB",
+                                                           acknowledged: true), .written)
+        XCTAssertEqual(TextInsertion.correctionWriteResult(before: "A😀B", expected: "AXB", after: "A😀B",
+                                                           acknowledged: true), .notWritten)
+        XCTAssertEqual(TextInsertion.correctionWriteResult(before: "A😀B", expected: "AXB", after: nil,
+                                                           acknowledged: true), .unverified)
+    }
 }

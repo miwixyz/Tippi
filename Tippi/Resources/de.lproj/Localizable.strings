@@ -874,7 +874,7 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "dictation.corrections.title" = "Gemerkte Diktatkorrekturen";
 "dictation.corrections.toggle" = "Diktatkorrekturen merken";
 "dictation.corrections.hint" = "Nach einem normalen Diktat findest du „Korrektur merken …“ im Tippi-Menü. Bestätigte Korrekturen gelten nur auf diesem Mac.";
-"dictation.corrections.last" = "Letztes Diktat";
+"dictation.corrections.last" = "Diktat vor gemerkten Korrekturen";
 "dictation.corrections.heard" = "Erkannte Wortgruppe";
 "dictation.corrections.replacement" = "Richtige Wortgruppe";
 "dictation.corrections.editorHint" = "Gib mindestens zwei Wörter aus dem Diktat ein, etwa „Google Fonds“. Schreibe daneben die richtige Form „Google Fonts“. Wähle bei ähnlich klingenden Namen genug Kontext.";
@@ -882,4 +882,11 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "dictation.corrections.save" = "Korrektur merken";
 "dictation.corrections.edit" = "Bearbeiten";
 "dictation.corrections.remove" = "Löschen";
-"settings.help.dictationCorrectionsBody" = "Aktiviere „Diktatkorrekturen merken“ unter „Wörterbuch & Snippets → Eigene Wörter“. Wähle nach einem normalen Diktat im Tippi-Menü „Korrektur merken …“ und bestätige eine Wortgruppe, zum Beispiel „Google Fonds → Google Fonts“. Tippi ersetzt sie in künftigen normalen Diktaten, auch wenn die KI-Nachbearbeitung aus ist. Regeln bleiben auf diesem Mac und sind einzeln bearbeitbar und löschbar. Der letzte Diktatausschnitt ist fünf Minuten im Menü verfügbar. In Terminals und Apps mit automatischem Senden greift die Funktion nicht.";
+"settings.help.dictationCorrectionsBody" = "Aktiviere „Diktatkorrekturen merken“ unter „Wörterbuch & Snippets → Eigene Wörter“. Wähle nach einem normalen Diktat im Tippi-Menü „Korrektur merken …“ und bestätige eine Wortgruppe, zum Beispiel „Google Fonds → Google Fonts“. Tippi ersetzt sie in künftigen normalen Diktaten, auch wenn die KI-Nachbearbeitung aus ist. Regeln bleiben auf diesem Mac und sind einzeln bearbeitbar und löschbar. Der letzte Diktatausschnitt ist fünf Minuten im Menü verfügbar. In Terminals und Apps mit automatischem Senden greift die Funktion nicht. Die Funktion greift im Tippi-Notizeditor und in Textfeldern, in denen die Bedienungshilfen das direkte Einfügen bestätigen.";
+"dictation.corrections.validation.invalid" = "Nutze zwei oder mehr erkannte Wörter und kurze, unterschiedliche Wortgruppen auf jeweils einer Zeile.";
+"dictation.corrections.validation.duplicate" = "Für diese erkannte Wortgruppe gibt es schon eine Regel. Du kannst sie in den Einstellungen bearbeiten.";
+"dictation.corrections.validation.limit" = "Es sind bereits 100 Regeln gespeichert. Lösche zuerst eine Regel in den Einstellungen.";
+"dictation.corrections.validation.noExcerpt" = "Der Diktatausschnitt ist nicht mehr verfügbar. Diktiere erneut.";
+"dictation.corrections.validation.noMatch" = "Die Wortgruppe ergibt an dieser Stelle keine neue Korrektur. Prüfe die Schreibweise und bestehende Regeln.";
+"dictation.corrections.validation.deleted" = "Diese Regel wurde inzwischen gelöscht.";
+"dictation.toast.correctionWriteUnverified" = "Einfügen konnte nicht bestätigt werden — prüfe das Textfeld.";

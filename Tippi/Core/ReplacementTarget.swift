@@ -149,7 +149,8 @@ enum ReplacementWriter {
     /// `shouldChangeText`/`didChangeText` (the correct way to make a
     /// programmatic edit look identical to a user-typed one) so undo and the
     /// SwiftUI text binding both update correctly.
-    static func writeNative(_ text: String, in textView: NSTextView, range: NSRange) {
+    @discardableResult
+    static func writeNative(_ text: String, in textView: NSTextView, range: NSRange) -> Bool {
         // The range was captured when the trigger fired; an AI round-trip takes
         // seconds, and the user can edit — or delete — the very note being
         // rewritten while it runs. `NSTextView` does not bounds-check this:
@@ -167,11 +168,12 @@ enum ReplacementWriter {
         else {
             replacementLog.notice(
                 "writeNative → skipped (captured range \(range.location, privacy: .public)/\(range.length, privacy: .public) no longer fits a \(length, privacy: .public)-character document)")
-            return
+            return false
         }
-        guard textView.shouldChangeText(in: range, replacementString: text) else { return }
+        guard textView.shouldChangeText(in: range, replacementString: text) else { return false }
         textView.replaceCharacters(in: range, with: text)
         textView.didChangeText()
+        return true
     }
 
     private static func writeFallback(
