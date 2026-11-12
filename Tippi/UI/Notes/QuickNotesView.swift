@@ -168,7 +168,14 @@ final class QuickNotesPopoverController {
             return true
         }
         if Date().timeIntervalSince(lastClose) < 0.3 { return true }
+        return open(relativeTo: button)
+    }
 
+    /// Opens the panel, never closes it — for `tippi://schnellnotiz`, so a
+    /// repeated call cannot make it flicker. Returns `false` when no quick
+    /// note is marked, like `toggle`.
+    func open(relativeTo button: NSStatusBarButton) -> Bool {
+        if panel != nil { return true }
         let store = NotesStore.shared
         let ids = NotesPreferences.quickNoteIDs
         guard !NotesPreferences.quickNotes(ids: ids, in: store.notes).isEmpty,

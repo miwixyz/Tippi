@@ -36,6 +36,19 @@
     <string>Tippi reads selected text from your active application and inserts AI-improved results back. No data is stored or sent anywhere except to the AI provider you configured.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Tippi uses your microphone to transcribe speech into text locally using Whisper. Audio is processed on-device and never sent to any server.</string>
+    <!-- tippi://schnellnotiz opens the quick notes panel (Porter's button,
+         2026-11-12). Allowlist, no parameters: docs/SECURE-DESIGN-url-schema.md -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.tippi.app</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>tippi</string>
+            </array>
+        </dict>
+    </array>
     <key>CFBundleLocalizations</key>
     <array>
         <string>en</string>

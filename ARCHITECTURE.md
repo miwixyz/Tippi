@@ -40,6 +40,8 @@ Tippi/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
 │   ├── BildKopie.swift             # 2.33 — nur Debug: erkennt die Bild-Testkopie (`dev.mwlr.tippi.bild`), schaltet Hotkeys, Diktat, iCloud, Sparkle ab
+│   ├── TippiURLCommand.swift       # URL-Schema `tippi://`: Allowlist, nur `tippi://schnellnotiz` → Panel
+│   │                               #   (rein + getestet, docs/SECURE-DESIGN-url-schema.md)
 │   ├── InputAnchor.swift           # rein + unit-getestet: Prompt-Pop-up an Auswahlende/Cursor,
 │   │                               #   Maus nur als Rückfall; unter dem Anker, sonst darüber, pro Bildschirm
 │   ├── ScreenTextCapture.swift     # v2.12 — ScreenCaptureKit + Vision-OCR, nur RAM

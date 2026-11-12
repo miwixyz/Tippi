@@ -112,6 +112,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// a left click opens the quick notes instead, as long as one is marked.
     private var statusMenu: NSMenu?
     private let quickNotesPopover = QuickNotesPopoverController()
+    /// `tippi://schnellnotiz` arrived before the status item existed (cold
+    /// start through the URL). Only a flag — the URL itself is not kept.
+    private var pendingQuickNotesOpen = false
     /// Menubar "Dictation language" entry. Stored so the checkmark can be
     /// refreshed when the user picks a language from its submenu.
     private var dictationLanguageMenuItem: NSMenuItem?
@@ -915,6 +918,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] status in self?.updateStatusBadge(status) }
             .store(in: &cancellables)
         TippiStatusMonitor.shared.start()
+
+        if pendingQuickNotesOpen {
+            pendingQuickNotesOpen = false
+            DispatchQueue.main.async { [weak self] in self?.openQuickNotesFromURL() }
+        }
+    }
+
+    /// `tippi://…` from another app or a web page. Untrusted: only the one
+    /// allowlisted command runs, everything else is dropped and logged without
+    /// its content. See docs/SECURE-DESIGN-url-schema.md.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        if Self.isRunningUnitTests || BildKopie.isActive { return }
+        var wantsQuickNotes = false
+        for url in urls {
+            if TippiURLCommand.parse(url) == .openQuickNotes {
+                wantsQuickNotes = true
+            } else {
+                let schemeMatches = url.scheme?.lowercased() == TippiURLCommand.scheme
+                appDelegateLog.notice("URL refused (tippi scheme: \(schemeMatches, privacy: .public))")
+            }
+        }
+        guard wantsQuickNotes else { return }
+        if statusItem?.button == nil {
+            pendingQuickNotesOpen = true
+            return
+        }
+        openQuickNotesFromURL()
+    }
+
+    /// Same result as a left click on the menu bar icon, except that an open
+    /// panel stays open.
+    private func openQuickNotesFromURL() {
+        guard let button = statusItem?.button else { return }
+        if quickNotesPopover.open(relativeTo: button) { return }
+        showStatusMenu()
     }
 
     /// Left click: quick notes, if any are marked. Right click or control-click,
