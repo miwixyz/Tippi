@@ -2,7 +2,13 @@
 
 ## [2.37.0] — 2026-11-13
 
-- _Add release notes here._
+### Neu
+- **Ruhigere, lebendigere Bedienelemente.** Die Leiste beim Markieren von Text zeigt unter dem Zeiger einen weichen Schatten, der von Symbol zu Symbol gleitet, und ein gedrücktes Symbol federt kurz nach. Die Reiter der Schnellnotizen sind jetzt eine Pille, die beim Wechsel zum neuen Reiter gleitet und sich dabei leicht dehnt. Dieselbe Optik bekommen Porter, TippAI, Gnotchi und Kalli.
+
+### Intern
+- Neue Datei `Tippi/UI/GlassEffects.swift` (gleich in TippAI und Gnotchi): `SlidingPicker` (Pille auf zwei Federn, vordere Kante straff, hintere weich), `glassGhostHost`/`glassGhostItem` (gleitender Hover-Schatten), `GlassPressStyle`. Vorbild Porter 0.6 bzw. vividsites „Tab Indicator“ und „Liquid Glass Pill“.
+- Metal-Toolchain auf dem MacBook nachinstalliert (mlx-swift braucht sie zum Bauen).
+- 858 Tests (2 neue).
 
 ## [2.36.0] — 2026-11-12
 

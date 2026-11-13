@@ -21,13 +21,12 @@ struct QuickNotesView: View {
     var body: some View {
         VStack(spacing: 0) {
             if notes.count > 1 {
-                Picker("", selection: $selectedID) {
-                    ForEach(notes) { note in
-                        Text(Self.tabTitle(note.title)).tag(Optional(note.id))
-                    }
+                // Gleitende Pille statt Segment-Umschalter (Porter-Optik, 13.11.2026).
+                SlidingPicker(notes.map { Optional($0.id) }, selection: $selectedID) { id, selected in
+                    Text(Self.tabTitle(notes.first { $0.id == id }?.title ?? ""))
+                        .font(FamilyTheme.font(12, weight: selected ? .semibold : .medium))
+                        .lineLimit(1)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .frame(maxWidth: .infinity)

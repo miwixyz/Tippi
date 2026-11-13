@@ -58,6 +58,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Calmer, livelier controls (v2.37)** — a soft hover shadow glides across the selection bar; quick notes tabs are a gliding pill.
 - **Open quick notes from other apps (v2.36)** — `tippi://schnellnotiz` opens the quick notes panel, for example from a button in Porter. Nothing else, no parameters.
 - **Remember dictation corrections (v2.35)** — confirm how Tippi should write a phrase it keeps mishearing, such as “Google Fonds” → “Google Fonts”. The optional rules stay on this Mac.
 - **Quick notes in the menu bar (v2.34)** — mark up to three notes and the Tippi menu bar icon opens them as tabs, ready to type; right-click the icon for the usual menu. On macOS 27 permission hints use the list's new name, "Device Control and Data Access".

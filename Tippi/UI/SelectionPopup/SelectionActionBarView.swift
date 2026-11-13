@@ -88,7 +88,8 @@ struct SelectionActionBarView: View {
                         .font(.system(size: 14))
                         .frame(width: Self.iconSide, height: Self.iconSide)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glassPress)
+                .glassGhostItem()
                 .help(String(localized: "selectionPopup.translate"))
             }
             if showsCurrencies {
@@ -112,12 +113,16 @@ struct SelectionActionBarView: View {
                                 .minimumScaleFactor(0.7)
                                 .frame(width: Self.iconSide, height: Self.iconSide)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.glassPress)
+                        .glassGhostItem()
                         .help(String(localized: "currency.convert"))
                     }
                 }
             }
         }
+        // Porter-Optik (13.11.2026): weicher Schatten gleitet unter dem Zeiger von Symbol
+        // zu Symbol, Drücken staucht das Symbol (`glassPress`).
+        .glassGhostHost(radius: 7)
         .padding(.horizontal, Self.horizontalPadding)
         .padding(.vertical, Self.verticalPadding)
         .frame(width: Self.width, height: Self.height, alignment: .leading)
@@ -137,7 +142,8 @@ struct SelectionActionBarView: View {
                     .font(.system(size: 13))
                     .frame(width: Self.iconSide, height: Self.iconSide)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.glassPress)
+            .glassGhostItem()
             .accessibilityLabel(Text(String(localized: "currency.back")))
             .help(String(localized: "currency.back"))
 
@@ -151,7 +157,8 @@ struct SelectionActionBarView: View {
                         .padding(.horizontal, 6)
                         .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.12)))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glassPress)
+                .glassGhostItem()
                 .help(String(format: String(localized: "currency.convertTo"), code))
             }
         }
@@ -173,7 +180,8 @@ struct SelectionActionBarView: View {
             }
             .frame(width: Self.countWidth, height: Self.iconSide)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glassPress)
+        .glassGhostItem()
         .help(String(format: String(localized: "local.action.characterCount.result"), count))
     }
 
@@ -196,7 +204,8 @@ struct SelectionActionBarView: View {
                     .frame(width: Self.iconSide, height: Self.iconSide)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glassPress)
+        .glassGhostItem()
         .help(action.title)
     }
 }
