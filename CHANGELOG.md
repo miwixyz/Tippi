@@ -2,7 +2,14 @@
 
 ## [2.38.0] — 2026-11-13
 
-- _Add release notes here._
+### Neu
+- **Datei-Aufgaben aus Porter.** Nutzt du Porter, zeigt das Notizfenster unten in der Liste den Abschnitt „Datei-Aufgaben“: die offenen Aufgaben, die du in Porter an Dateien und Ordner gehängt hast, die neueste zuerst. Ein Klick öffnet die Datei in Porter, ohne Porter zeigt Tippi sie im Finder. Tippi liest Porters Liste in iCloud Drive nur und ändert sie nie; abhaken und bearbeiten geht in Porter. Wer Porter nicht nutzt, sieht den Abschnitt nicht.
+
+### Intern
+- Neu: `Tippi/Core/Notes/PorterFileTasks.swift` (liest `iCloud Drive/Porter/Notizen.json` koordiniert, abseits des Hauptthreads, höchstens 5 MB; Schlüssel nur `~`, `~/…` oder absolut; öffnet nur mit Porter oder im Finder, ein laufendes Porter zuerst), `Tippi/UI/Notes/FileTasksSection.swift`. Design: `docs/SECURE-DESIGN-datei-aufgaben.md`.
+- Bild-Testkopie: `tippictl snapshot dateiaufgaben` mit festen Demo-Zeilen.
+- Sichttest: Lief Porter aus einem anderen Ordner, startete der Klick ein zweites Porter aus `/Applications`; behoben und gegengeprüft.
+- 870 Tests (12 neue, Beispielliste aus Porters eigenem Encoder).
 
 ## [2.37.0] — 2026-11-13
 

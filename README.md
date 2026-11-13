@@ -52,6 +52,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **File tasks from Porter (v2.38)** — if you use Porter, the Notes window lists the open tasks you attached to files and folders there, newest first. A click opens the file in Porter (without Porter, in Finder). Tippi only reads Porter's list in iCloud Drive and never changes it.
 - **Calmer, livelier controls (v2.37)** — in the selection bar a soft hover shadow glides from icon to icon and pressed icons spring back; the quick notes tabs are a pill that glides to the tab you pick.
 - **Open quick notes from other apps (v2.36)** — `tippi://schnellnotiz` opens the quick notes panel under the menu bar icon, the same as a click on it; with no quick note marked, the Notes window opens. The URL does nothing else and accepts no parameters. Saved dictation corrections now only apply when Tippi can verify the write into the captured text field.
 - **Remember dictation corrections (v2.35)** — if “Google Fonts” regularly comes out as “Google Fonds”, confirm that correction once in the Tippi menu. Tippi uses it in later regular dictations. The feature is off by default, and you can edit or delete each rule under Dictionary & Snippets → Custom words.
@@ -509,6 +510,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.32.0 | ✅ Done | **Dictation modes** — extra key with the dictation trigger picks Improve, Defuse, Add emojis or your own prompt; local MLX warmed while you speak (20 s → <1 s), dictation fits the text at the cursor, Apple Intelligence as provider, Parakeet Ultra selectable. |
 | v2.32.1 | ✅ Done | **Haiku 5.5 as the Anthropic default** — cleanup prompt names German filler "also"/"genau"; new `scripts/diktat-pruefstand.py` checks dictation cleanup (Haiku 5.5 18/18, Haiku 4.5 17/18) |
 | v2.34.0 | ✅ Done | **Quick notes in the menu bar** — up to three notes as tabs behind the Tippi icon; permission hints use the macOS 27 name |
+| v2.38.0 | ✅ Done | **File tasks from Porter** — open tasks attached to files in Porter, listed in the Notes window; a click opens the file in Porter |
 | v2.37.0 | ✅ Done | **Calmer, livelier controls** — gliding hover shadow and press spring in the selection bar; quick notes tabs as a gliding pill (same look as Porter, TippAI, Gnotchi, Kalli) |
 | v2.36.0 | ✅ Done | **Quick notes from other apps** — `tippi://schnellnotiz`; dictation corrections only with a verified text field |
 | v2.35.0 | ✅ Done | **Remember dictation corrections** — confirm a phrase after dictation and reuse it on this Mac. Sparkle security update. |

@@ -58,6 +58,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **File tasks from Porter (v2.38)** — open tasks you attached to files in Porter, listed in the Notes window; a click opens the file in Porter. Read-only.
 - **Calmer, livelier controls (v2.37)** — a soft hover shadow glides across the selection bar; quick notes tabs are a gliding pill.
 - **Open quick notes from other apps (v2.36)** — `tippi://schnellnotiz` opens the quick notes panel, for example from a button in Porter. Nothing else, no parameters.
 - **Remember dictation corrections (v2.35)** — confirm how Tippi should write a phrase it keeps mishearing, such as “Google Fonds” → “Google Fonts”. The optional rules stay on this Mac.
