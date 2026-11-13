@@ -162,6 +162,8 @@ Tippi/
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):
 │   │                               #   Akzent, accentFill, glassTint, Plus Jakarta Sans, Schrift-Registrierung
+│   ├── GlassEffects.swift          # v2.37 — Bewegung der App-Familie (wie Porter, TippAI, Gnotchi):
+│   │                               #   SlidingPicker (gleitende Pille), gleitender Hover-Schatten, GlassPressStyle
 │   ├── NonKeyPanelChrome.swift     # NonKeyPanel + ClickableHostingView, geteilt von
 │   │                               #   Aktionsleiste und Emoji-Vorschlagsliste
 │   ├── PromptPopup/                # Popup am Cursor + DemoPrompt (24 Built-ins + 1 Kette)
