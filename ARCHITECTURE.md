@@ -142,6 +142,9 @@ Tippi/
 │       ├── NotesLiveSync.swift             # v2.11.6 — NSMetadataQuery auf den Notes-Ordner.
 │       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
+│       ├── PorterFileTasks.swift           # 2.38 — Datei-Aufgaben: liest Porters iCloud-Liste
+│       │                                   #   `Porter/Notizen.json` NUR (nie schreiben), Klick → Porter/Finder.
+│       │                                   #   Design: docs/SECURE-DESIGN-datei-aufgaben.md
 │       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
 │                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
 ├── Debug/                          # 2.33 — nur Debug-Build (`#if DEBUG`), Befehlskanal der Bild-Testkopie, docs/SECURE-DESIGN-befehlskanal.md
@@ -190,6 +193,7 @@ Tippi/
 │   │   ├── NotesWindowController.swift     # NSWindow, aktivierend (kein Panel wie Preview/Translate)
 │   │   ├── NotesRootView.swift             # Split View
 │   │   ├── NotesListView.swift             # Liste + Neu/Löschen (Bestätigungsdialog)
+│   │   ├── FileTasksSection.swift          # 2.38 — Abschnitt „Datei-Aufgaben“ unter den Notizen
 │   │   ├── NotesEditorView.swift           # Autosave debounced, Wort-/Zeichenzähler
 │   │   ├── QuickNotesView.swift            # v2.34 — Schnellnotizen: Panel unter dem Menüleisten-Symbol, bis zu 3 Tabs
 │   │   └── PlainTextEditor.swift           # NSViewRepresentable — Paste-Erkennung, Spellcheck, Listen-Verdrahtung

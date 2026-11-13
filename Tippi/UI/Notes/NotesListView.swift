@@ -14,6 +14,13 @@ struct NotesListView: View {
     // Gleiches Muster wie `favoriteIDs`: lokale Spiegel, damit ein Wechsel sofort neu sortiert.
     @State private var sortOrder: NoteSortOrder = NotesPreferences.sortOrder
     @State private var sortReversed: Bool = NotesPreferences.sortReversed
+    @State private var fileTasks: PorterFileTasks.State?
+
+    private func reloadFileTasks() async {
+        fileTasks = await Task.detached(priority: .utility) {
+            PorterFileTasks.isRelevant() ? PorterFileTasks.load() : nil
+        }.value
+    }
 
     private var sortedNotes: [Note] {
         NoteSortOrder.sorted(store.notes, by: sortOrder, reversed: sortReversed)
@@ -41,8 +48,17 @@ struct NotesListView: View {
                     ForEach(otherNotes) { row(for: $0) }
                 }
             }
+            if let fileTasks {
+                FileTasksSection(state: fileTasks)
+            }
         }
         .scrollContentBackground(.hidden)
+        // Datei-Aufgaben: beim Öffnen und beim Zurückkehren zu Tippi neu lesen, abseits des
+        // Hauptthreads (koordiniertes Lesen kann auf iCloud warten). `nil` = Bereich ausblenden.
+        .task { await reloadFileTasks() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await reloadFileTasks() }
+        }
         // Re-reads on the same trigger `NotesRootView` already refreshes note
         // content on (window appear) — a star set on another Mac shouldn't
         // need a full app relaunch here to catch up, any more than a note's

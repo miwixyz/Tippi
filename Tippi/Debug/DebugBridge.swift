@@ -158,12 +158,46 @@ final class DebugBridge {
         return win
     }
 
+    /// Abschnitt „Datei-Aufgaben“ mit festen Demo-Zeilen (links) und dem Leer-Zustand (rechts). Liest nie Porters
+    /// Liste — das Bild kann keinen echten Pfad und keinen echten Notiztext zeigen (B5).
+    private func fileTasksWindow() -> NSWindow {
+        let id = DebugCommand.fileTasksWindow
+        if let win = windows[id] { return win }
+        let now = Date()
+        let demo: [PorterFileTasks.Item] = [
+            .init(key: "~/Desktop/Angebot Kino.pdf", url: URL(filePath: "/Users/demo/Desktop/Angebot Kino.pdf"),
+                  text: "Angebot prüfen\nbis Freitag", modified: now),
+            .init(key: "~/Projekte", url: URL(filePath: "/Users/demo/Projekte"), text: "Ordner aufräumen",
+                  modified: now.addingTimeInterval(-3600)),
+            .init(key: "/Volumes/Daten/Trailer_final_v3_mit_Untertiteln.mov",
+                  url: URL(filePath: "/Volumes/Daten/Trailer_final_v3_mit_Untertiteln.mov"), text: "",
+                  modified: now.addingTimeInterval(-7200))
+        ]
+        let view = HStack(spacing: 0) {
+            List { FileTasksSection(state: .tasks(demo)) }
+            List { FileTasksSection(state: .empty) }
+            List { FileTasksSection(state: .unreadable) }
+        }
+        .listStyle(.sidebar)
+        .frame(width: 720, height: 220)
+        let win = NSWindow(contentViewController: NSHostingController(rootView: view))
+        win.styleMask = [.titled, .closable]
+        win.title = String(localized: "fileTasks.section")
+        win.identifier = NSUserInterfaceItemIdentifier(id)
+        win.isReleasedWhenClosed = false
+        win.center()
+        windows[id] = win
+        return win
+    }
+
     /// Öffnet das eigene Fenster, wartet kurz und nimmt NUR dieses Fenster per ScreenCaptureKit auf. Das Fenster
     /// öffnet auch ohne Freigabe – `status` zeigt dann, dass es sich ohne Absturz aufbaut.
     private func snapshot(window id: String, id answerID: String) async -> [String: Any] {
         let win: NSWindow
         if id == DebugCommand.quickNotesWindow {
             win = quickNotesWindow()
+        } else if id == DebugCommand.fileTasksWindow {
+            win = fileTasksWindow()
         } else if let tab = Self.tab(for: id) {
             win = window(id, tab: tab)
         } else {

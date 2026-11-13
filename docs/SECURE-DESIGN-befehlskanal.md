@@ -93,6 +93,8 @@ Schlüsselbund), Snippets, Verlauf, Diktat (Modellordner), Autovervollständigun
     Schnellaktionen/Auswahlleiste – nur Einstellungen der eigenen Domäne, keine Inhalte.
   - `hilfe` → Reiter **Hilfe**: fester Hilfetext aus `Localizable.strings`, Suchfeld leer.
   - `ueber` → Reiter **Über**: Name, Version, Links.
+  - `dateiaufgaben` (2026-11-13) → Abschnitt „Datei-Aufgaben“ mit drei festen Demo-Zeilen aus dem Code, dazu
+    Leer- und Nicht-lesbar-Zustand. Liest nie Porters Liste (`docs/SECURE-DESIGN-datei-aufgaben.md`).
 - **Gesperrt**, mit Grund: Anbieter (API-Schlüssel-Felder), Prompts (eigene Prompts = Nutzerinhalt), Wörterbuch &
   Snippets (Snippets, Espanso-Import), Verlauf (diktierte/umgeschriebene Texte), Diktat (Modelle, Wörterbuch,
   Mikrofonliste), Autovervollständigung (MLX-Status, Modellordner), Kurzbefehle und Berechtigungen (keine Inhalte,
