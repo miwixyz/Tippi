@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.39.2</title>
+            <pubDate>Sat, 14 Nov 2026 17:00:26 +0100</pubDate>
+            <sparkle:version>658</sparkle:version>
+            <sparkle:shortVersionString>2.39.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Das Schnellnotiz-Fenster landet nicht mehr unter dem Bildschirmrand.</b> Auf einem MacBook mit Notch öffnete es sich bei der Sprachnotiz außerhalb des Bildschirms: offen, aber unsichtbar. Gemessen lag es mit dem oberen Rand bei 973 Punkten auf einem 956 Punkte hohen Bildschirm. Liegt das Menüleisten-Symbol auf keinem Bildschirm, öffnet es jetzt oben in der Mitte, und es wird immer ganz in den sichtbaren Bereich geschoben.</li></ul><h3>Geändert</h3><ul><li><b>Sprachnotiz: Das Fenster bleibt offen.</b> Nach dem zweiten ⌃⌥⌘N schließt es sich nicht mehr. Der Text erscheint gleich unten in „Eingang“, du kannst weiterschreiben, Esc schließt das Fenster. Gespeichert wird wie beim Tippen.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.2/Tippi-2.39.2.dmg" length="25549272" type="application/octet-stream" sparkle:edSignature="PYgtorb+S062mMzpsLLOcA+5EL5g+garocVJ9JKsrvvOVwK16Yf7mW3OVZBAyXjRLD4GUmv1LNLvDpPRzsotAw=="/>
+        </item>
+        <item>
             <title>2.39.1</title>
             <pubDate>Sat, 14 Nov 2026 15:40:07 +0100</pubDate>
             <sparkle:version>653</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Sprachnotiz per Kürzel.</b> ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allen Fenstern, auch über einem Video im Vollbild, und startet sofort das Diktat. Nochmal ⌃⌥⌘N beendet die Aufnahme, der Text steht dann mit Datum und Uhrzeit unten in der Notiz „Eingang“. Tippi legt sie beim ersten Mal an; sie belegt keinen der drei Schnellnotiz-Plätze. Das Kürzel änderst du unter Einstellungen → Hotkeys.</li><li><b>Transparenz-Regler fürs Schnellnotiz-Fenster.</b> Unten im Fenster stellst du ein, wie durchsichtig es ist.</li></ul><h3>Behoben</h3><ul><li><b>Zwischenablage-Verläufe nehmen Tippis Rückgabe nicht mehr als neue Kopie auf.</b> Nach dem Einfügen, Diktieren oder Lesen der Markierung legt Tippi deinen vorherigen Inhalt zurück in die Zwischenablage. Zwischenablage-Verläufe wie Gnotchi oder Maccy hielten das für eine neue Kopie: Gelöschte Einträge kamen zurück, und was du in einer ausgeschlossenen App oder während einer Pause kopiert hattest, landete doch im Verlauf. Tippi markiert den zurückgelegten Inhalt jetzt als „vorübergehend“, der Inhalt selbst bleibt gleich. Einzige Ausnahme: Kopierst du etwas und löst Tippi in derselben halben Sekunde aus, sieht der Verlauf diese Kopie nicht.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.0/Tippi-2.39.0.dmg" length="25542850" type="application/octet-stream" sparkle:edSignature="ZIlg1XUu9MF/v6J2Rjf405d1rx4maNLhO4l5aKwNnKKxlIj5oZVO0q4ix67AEbuxy+UENH1nVa3zVB4DaoMpBw=="/>
-        </item>
-        <item>
-            <title>2.38.0</title>
-            <pubDate>Fri, 13 Nov 2026 17:01:24 +0100</pubDate>
-            <sparkle:version>642</sparkle:version>
-            <sparkle:shortVersionString>2.38.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Datei-Aufgaben aus Porter.</b> Nutzt du Porter, zeigt das Notizfenster unten in der Liste den Abschnitt „Datei-Aufgaben“: die offenen Aufgaben, die du in Porter an Dateien und Ordner gehängt hast, die neueste zuerst. Ein Klick öffnet die Datei in Porter, ohne Porter zeigt Tippi sie im Finder. Tippi liest Porters Liste in iCloud Drive nur und ändert sie nie; abhaken und bearbeiten geht in Porter. Wer Porter nicht nutzt, sieht den Abschnitt nicht.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.38.0/Tippi-2.38.0.dmg" length="25029531" type="application/octet-stream" sparkle:edSignature="1iOYF94O0lYlBvopTDrNDuQ1Rvk2NaIHKxTgyDoa38e4qy34VRbOc9KlElUMrxABv69l0rnLtME0X6tUMyjsDQ=="/>
         </item>
     </channel>
 </rss>
