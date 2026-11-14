@@ -2,10 +2,6 @@
 
 ## [2.39.2] — 2026-11-14
 
-- _Add release notes here._
-
-## [Unveröffentlicht]
-
 ### Behoben
 - **Das Schnellnotiz-Fenster landet nicht mehr unter dem Bildschirmrand.** Auf einem MacBook mit Notch öffnete es sich bei der Sprachnotiz außerhalb des Bildschirms: offen, aber unsichtbar. Gemessen lag es mit dem oberen Rand bei 973 Punkten auf einem 956 Punkte hohen Bildschirm. Liegt das Menüleisten-Symbol auf keinem Bildschirm, öffnet es jetzt oben in der Mitte, und es wird immer ganz in den sichtbaren Bereich geschoben.
 
