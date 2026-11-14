@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.39.0</title>
+            <pubDate>Sat, 14 Nov 2026 15:18:31 +0100</pubDate>
+            <sparkle:version>648</sparkle:version>
+            <sparkle:shortVersionString>2.39.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Sprachnotiz per Kürzel.</b> ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allen Fenstern, auch über einem Video im Vollbild, und startet sofort das Diktat. Nochmal ⌃⌥⌘N beendet die Aufnahme, der Text steht dann mit Datum und Uhrzeit unten in der Notiz „Eingang“. Tippi legt sie beim ersten Mal an; sie belegt keinen der drei Schnellnotiz-Plätze. Das Kürzel änderst du unter Einstellungen → Hotkeys.</li><li><b>Transparenz-Regler fürs Schnellnotiz-Fenster.</b> Unten im Fenster stellst du ein, wie durchsichtig es ist.</li></ul><h3>Behoben</h3><ul><li><b>Zwischenablage-Verläufe nehmen Tippis Rückgabe nicht mehr als neue Kopie auf.</b> Nach dem Einfügen, Diktieren oder Lesen der Markierung legt Tippi deinen vorherigen Inhalt zurück in die Zwischenablage. Zwischenablage-Verläufe wie Gnotchi oder Maccy hielten das für eine neue Kopie: Gelöschte Einträge kamen zurück, und was du in einer ausgeschlossenen App oder während einer Pause kopiert hattest, landete doch im Verlauf. Tippi markiert den zurückgelegten Inhalt jetzt als „vorübergehend“, der Inhalt selbst bleibt gleich. Einzige Ausnahme: Kopierst du etwas und löst Tippi in derselben halben Sekunde aus, sieht der Verlauf diese Kopie nicht.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.0/Tippi-2.39.0.dmg" length="25542850" type="application/octet-stream" sparkle:edSignature="ZIlg1XUu9MF/v6J2Rjf405d1rx4maNLhO4l5aKwNnKKxlIj5oZVO0q4ix67AEbuxy+UENH1nVa3zVB4DaoMpBw=="/>
+        </item>
+        <item>
             <title>2.38.0</title>
             <pubDate>Fri, 13 Nov 2026 17:01:24 +0100</pubDate>
             <sparkle:version>642</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Ruhigere, lebendigere Bedienelemente.</b> Die Leiste beim Markieren von Text zeigt unter dem Zeiger einen weichen Schatten, der von Symbol zu Symbol gleitet, und ein gedrücktes Symbol federt kurz nach. Die Reiter der Schnellnotizen sind jetzt eine Pille, die beim Wechsel zum neuen Reiter gleitet und sich dabei leicht dehnt. Dieselbe Optik bekommen Porter, TippAI, Gnotchi und Kalli.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.37.0/Tippi-2.37.0.dmg" length="25466716" type="application/octet-stream" sparkle:edSignature="7DMut43mYqSa8KHUGhTCTp2gYapssmSmxlotF2ULhUMAicxA9wy01vDhbfCTF1p6nr7YrFM9NK4nmnIo3S+kAQ=="/>
-        </item>
-        <item>
-            <title>2.36.0</title>
-            <pubDate>Thu, 12 Nov 2026 16:32:42 +0100</pubDate>
-            <sparkle:version>631</sparkle:version>
-            <sparkle:shortVersionString>2.36.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Schnellnotizen von anderen Apps aus öffnen.</b> Die Adresse <code>tippi://schnellnotiz</code> öffnet das Schnellnotiz-Fenster unter dem Tippi-Symbol, genau wie ein Klick darauf. Ist keine Schnellnotiz markiert, öffnet sich das Notizfenster. Porter nutzt das für seinen Notizen-Knopf. Die Adresse kann nichts anderes und nimmt keinen Text an.</li></ul><h3>Behoben</h3><ul><li>Diktatkorrekturen setzen ein sicher erkanntes und bestätigtes Textfeld voraus. „Korrektur merken“ zeigt die Wortgruppe vor Anwendung bereits gemerkter Regeln. Satzzeichen und gleich geschriebene Unicode-Varianten werden berücksichtigt. Ein abgelaufener Timer kann kein neueres Diktat löschen.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.36.0/Tippi-2.36.0.dmg" length="25005040" type="application/octet-stream" sparkle:edSignature="teq8l4W63EemxBQ9RmTk4064e6ROzUWOHpykbVpDhLqmHwNROJeKcwS38P7HdArtnTe7rttuxxs4rQ1dfLZkBg=="/>
         </item>
     </channel>
 </rss>
