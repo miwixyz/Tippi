@@ -188,7 +188,10 @@ in the docs with the code. Since 2.20.1 it checks the website too: the provider
 and built-in prompt tiles in `docs/index.html` against `LLMRouter.allProviders`
 and the built-in prompts, every visible version number against
 `MARKETING_VERSION`, EN/DE `data-lang` parity, and that no page in `docs/` loads
-external scripts or fonts (the privacy policy promises that). The website once
+external scripts or fonts (the privacy policy promises that). Every global hotkey
+must have a row in the comparison tables of `README.md` and `docs/ONE-PAGER.md`; a new
+`HotkeyManager` needs its table word mapped in the script (2.39 added `voiceNote` →
+"Voice note"). The website once
 showed 10 of 11 providers and 22 of 24 prompts while this script reported no
 drift, because it only read prose. `TIPPI_INDEX_HTML=<file>` checks a copy, for
 negative tests. Every `HotkeyManager` in `AppDelegate` must map to a word in the

@@ -142,6 +142,7 @@ Tippi/
 │       ├── NotesLiveSync.swift             # v2.11.6 — NSMetadataQuery auf den Notes-Ordner.
 │       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
+│       ├── InboxNote.swift                 # 2.39 — Sprachnotiz ⌃⌥⌘N: hängt Diktate an „Eingang“ an
 │       ├── PorterFileTasks.swift           # 2.38 — Datei-Aufgaben: liest Porters iCloud-Liste
 │       │                                   #   `Porter/Notizen.json` NUR (nie schreiben), Klick → Porter/Finder.
 │       │                                   #   Design: docs/SECURE-DESIGN-datei-aufgaben.md
