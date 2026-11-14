@@ -89,6 +89,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let screenOCRHotkeyManager = HotkeyManager(id: 6)
     /// ⌃⌥⌘P: Pause an/aus (TippiPause, Michael 2026-10-19). Fest, nicht einstellbar.
     let pauseHotkeyManager = HotkeyManager(id: 8)
+    /// Sprachnotiz ⌃⌥⌘N (2026-11-14): Panel schwebend + Diktat an „Eingang“.
+    let voiceNoteHotkeyManager = HotkeyManager(id: 9)
     private var pauseMenuItem: NSMenuItem?
     private var resumeMenuItem: NSMenuItem?
     private var pauseEndTimer: Timer?
@@ -1535,9 +1537,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// (Re)registers the dictation hot key. Call after the setting or model
     /// state changes. No-op (and stops any prior registration) when dictation
     /// is disabled or the selected speech engine isn't ready.
+    /// Sprachnotiz: dieselben Voraussetzungen wie das Diktat (eingeschaltet, Modell bereit) – wird deshalb
+    /// aus `restartDictationHotkey` mit neu gestartet.
+    func restartVoiceNoteHotkey() {
+        voiceNoteHotkeyManager.stop()
+        guard NotesSettings.isVoiceEnabled, DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady else {
+            NSLog("Tippi: voice note hot key inactive")
+            return
+        }
+        let combo = NotesSettings.voiceCombo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
+        voiceNoteHotkeyManager.update(trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags))
+        voiceNoteHotkeyManager.start { [weak self] in
+            Task { @MainActor in await self?.handleVoiceNoteHotkey() }
+        }
+        NSLog("Tippi: voice note hot key registered (\(combo.displayString))")
+    }
+
+    /// Erster Druck: Panel schwebend mit „Eingang“ zeigen, Aufnahme starten. Zweiter Druck: Panel zu – vor der
+    /// Transkription, damit der Editor seinen Stand speichert, bevor angehängt wird –, dann transkribieren.
+    /// Während der Transkription und bei einem laufenden normalen Diktat: nichts (ein dritter Druck soll nicht
+    /// abbrechen, ein Fremd-Diktat nicht umleiten).
+    func handleVoiceNoteHotkey() async {
+        switch dictationController.state {
+        case .idle:
+            let target = resolvedSourceAppForCapture()
+            let inbox = InboxNote.find(in: NotesStore.shared.notes, title: InboxNote.title)
+            quickNotesPopover.openFloating(relativeTo: statusItem?.button, focus: inbox?.id)
+            await dictationController.toggle(targetApp: target, source: .inbox)
+        case .recording:
+            guard dictationController.source == .inbox else { return }
+            quickNotesPopover.close()
+            await dictationController.toggle(targetApp: nil, source: .inbox)
+        case .transcribing:
+            return
+        }
+    }
+
     func restartDictationHotkey() {
         // Same preconditions as the mail hot key — every path that changes them lands here.
-        defer { restartMailDictationHotkey() }
+        defer {
+            restartMailDictationHotkey()
+            restartVoiceNoteHotkey()
+        }
         dictationHotkeyManager.stop()
         guard DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady else {
             NSLog("Tippi: dictation hot key inactive (enabled=\(DictationSettings.isEnabled), engineReady=\(SpeechEngine.isCurrentEngineReady))")

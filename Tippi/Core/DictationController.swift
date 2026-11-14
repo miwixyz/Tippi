@@ -462,13 +462,19 @@ final class DictationController: ObservableObject {
     /// (audit 2026-09-27; trigger and translate already handled Notes).
     private func transcribeAndInsert(wavURL: URL, targetApp: NSRunningApplication?, notesTextView: NSTextView? = nil,
                                      targetField: FocusedFieldReader.FocusSpot? = nil) async {
+        defer {
+            state = .idle
+            transcriptionTask = nil
+        }
         do {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
             let (polished, cleanupNotice) = await processTranscript(raw, appName: targetApp?.localizedName ?? "")
             let targetID = notesTextView == nil ? targetApp?.bundleIdentifier : nil
-            let (final, correction) = prepareInsertion(polished, targetID: targetID, isNotes: notesTextView != nil)
+            let (final, correction) = prepareInsertion(polished, targetID: targetID,
+                                                       isNotes: notesTextView != nil || source == .inbox)
             try Task.checkCancellation()
+            if source == .inbox { return await deliverToInbox(correction?.text ?? final, rawCount: raw.count) }
             // Decided BEFORE insertion: the clipboard fallback activates the target
             // app itself, so "frontmost" afterwards is true by construction.
             // Mail dictation never presses Return — it writes a mail, it sends nothing.
@@ -546,9 +552,6 @@ final class DictationController: ObservableObject {
                 NSLog("Tippi: dictation transcription failed — \(error.localizedDescription)")
             }
         }
-
-        state = .idle
-        transcriptionTask = nil
     }
 
     /// Fire-and-forget: if dictation post-process is enabled and resolves to

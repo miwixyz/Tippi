@@ -36,6 +36,9 @@ final class NotesStore: ObservableObject {
 
     @Published private(set) var notes: [Note] = []
     @Published private(set) var isUsingiCloud: Bool = false
+    /// Erster `refresh()` ist durch. Vorher ist `notes` leer – wer per Titel sucht (Sprachnotiz „Eingang“),
+    /// würde sonst eine zweite Notiz anlegen.
+    @Published private(set) var hasLoaded = false
 
     /// The note currently open in the editor, or `nil`. Set by `NotesEditorView`.
     ///
@@ -77,7 +80,8 @@ final class NotesStore: ObservableObject {
 
     init(directory: URL? = nil, refreshOnInit: Bool = true) {
         if let directory { currentDirectory = directory }
-        if refreshOnInit { refresh() }
+        // Ohne Laden beim Start (Tests, eigener Ordner) gilt der Speicher als bereit.
+        if refreshOnInit { refresh() } else { hasLoaded = true }
     }
 
     // MARK: - Public API
@@ -120,6 +124,7 @@ final class NotesStore: ObservableObject {
                 )
                     .sorted { $0.modifiedAt > $1.modifiedAt }
                 self.heldBackExternalEdit = false
+                self.hasLoaded = true
                 self.startLiveSync(in: directory, enabled: usingiCloud)
             }
         }

@@ -2,12 +2,17 @@
 
 ## [Unveröffentlicht]
 
+### Neu
+- **Sprachnotiz per Kürzel.** ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allen Fenstern, auch über einem Video im Vollbild, und startet sofort das Diktat. Nochmal ⌃⌥⌘N beendet die Aufnahme, der Text steht dann mit Datum und Uhrzeit unten in der Notiz „Eingang“. Tippi legt sie beim ersten Mal an; sie belegt keinen der drei Schnellnotiz-Plätze. Das Kürzel änderst du unter Einstellungen → Hotkeys.
+- **Transparenz-Regler fürs Schnellnotiz-Fenster.** Unten im Fenster stellst du ein, wie durchsichtig es ist.
+
 ### Behoben
 - **Zwischenablage-Verläufe nehmen Tippis Rückgabe nicht mehr als neue Kopie auf.** Nach dem Einfügen, Diktieren oder Lesen der Markierung legt Tippi deinen vorherigen Inhalt zurück in die Zwischenablage. Zwischenablage-Verläufe wie Gnotchi oder Maccy hielten das für eine neue Kopie: Gelöschte Einträge kamen zurück, und was du in einer ausgeschlossenen App oder während einer Pause kopiert hattest, landete doch im Verlauf. Tippi markiert den zurückgelegten Inhalt jetzt als „vorübergehend“, der Inhalt selbst bleibt gleich. Einzige Ausnahme: Kopierst du etwas und löst Tippi in derselben halben Sekunde aus, sieht der Verlauf diese Kopie nicht.
 
 ### Intern
 - `PasteboardSnapshot.restore` setzt an jedem Element `org.nspasteboard.TransientType`. Design: `docs/SECURE-DESIGN-clipboard-restore.md`. Gemessen gegen Gnotchi 0.26.1 (echter `ClipboardLink.tick()`, benannte Zwischenablage, Tippis Ablauf nachgebaut): vorher alle drei Fälle im Verlauf, mit Markierung keiner. Maccy lässt `.transient` laut Quellcode aus (`Maccy/Clipboard.swift:27–30`), nicht am Gerät gemessen.
-- 872 Tests (2 neue).
+- Sprachnotiz: `DictationSource.inbox`, `InboxNote` (Suche per Titel, Rückfall in die Zwischenablage statt Überschreiben), `NotesStore.hasLoaded`, Schwebe-Modus im Schnellnotiz-Panel, Kürzel-ID 9. Design: `docs/SECURE-DESIGN-sprachnotiz.md`.
+- 881 Tests (11 neue).
 
 ## [2.38.0] — 2026-11-13
 

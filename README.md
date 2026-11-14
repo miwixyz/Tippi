@@ -36,6 +36,7 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Dictation that runs on-device | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode**, Whisper/Parakeet **on your Mac** — no account, no subscription, audio never leaves the machine (v1.7); a second hot key lays out emails (v2.21) |
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
+| Voice note into one inbox | Apple Notes + system dictation | **Voice note** (⌃⌥⌘N): quick notes float above everything, dictation starts at once, the text lands with a timestamp in the note “Inbox”; adjustable transparency |
 | Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
 | AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 8 providers — in place, no app switch, your own keys |
 | Silence the helpers for a while (no popup, no autocomplete, no snippets) | quitting each helper app, or toggling settings one by one | **Pause** (⌃⌥⌘P or menu bar), timed or until you resume — hotkeys keep working (v2.29) |
@@ -287,6 +288,7 @@ This route always works because macOS does the binding, not Tippi.
 | ⌥⌘L | Translate Quick Panel | yes |
 | ⌥⌘E | Emoji picker | yes |
 | ⌥⌘N | Notes window | yes |
+| ⌃⌥⌘N | Voice note: quick notes + dictation into “Inbox” | yes |
 | ⌃⌘S | Show/hide the note list (only while Notes is open, View menu) | yes, fixed |
 | ⌥⌘2 | Text from a screen selection | no |
 | ⌃⌥⌘P | Pause / resume what Tippi does on its own (popup, autocomplete, snippets) — v2.29 | yes, fixed |

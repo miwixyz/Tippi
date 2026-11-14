@@ -19,13 +19,16 @@ enum DictationSource: Equatable {
     case mail
     /// Diktat-Taste plus Zusatztaste (`DictationModes`): Prompt des Modus statt Glättung.
     case mode(DictationMode)
+    /// Sprachnotiz-Kürzel (⌃⌥⌘N): Text geht an die Notiz „Eingang“, nie an den Cursor (`InboxNote`).
+    case inbox
 }
 
 enum DictationLayout {
     /// Layout or not. Never in terminals and apps on the „Enter nach dem Diktat" list
     /// (`targetIsTerminal`): a line break there can send a command or a message.
     static func layoutWanted(source: DictationSource, toggle: Bool, targetIsTerminal: Bool) -> Bool {
-        guard !targetIsTerminal else { return false }
+        // Sprachnotiz: kein Brief-Layout – eine Notiz ist keine Mail (Michael hat das Layout an).
+        guard !targetIsTerminal, source != .inbox else { return false }
         return source == .mail || toggle
     }
 

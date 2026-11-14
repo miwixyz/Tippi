@@ -10,6 +10,9 @@ struct QuickNotesView: View {
     let noteIDs: [UUID]
     var onOpenInNotes: (UUID) -> Void
     var onShowMenu: () -> Void
+    /// Deckkraft-Regler (Sprachnotiz, Michael 2026-11-14): der Controller setzt `alphaValue` des Panels.
+    var onOpacityChange: (Double) -> Void = { _ in }
+    @State private var opacity = NotesSettings.quickNotesOpacity
     @State private var selectedID: UUID?
     @State private var size: CGSize = NotesPreferences.quickNotesSize
     @State private var dragStartSize: CGSize?
@@ -59,6 +62,19 @@ struct QuickNotesView: View {
                 }
                 .buttonStyle(.link)
                 Spacer()
+                Image(systemName: "circle.lefthalf.filled")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                Slider(value: $opacity, in: NotesSettings.opacityRange)
+                    .controlSize(.mini)
+                    .frame(width: 70)
+                    .help(String(localized: "quicknotes.opacity"))
+                    .accessibilityLabel(Text(String(localized: "quicknotes.opacity")))
+                    .onChange(of: opacity) { _, value in
+                        NotesSettings.quickNotesOpacity = value
+                        onOpacityChange(NotesSettings.quickNotesOpacity)
+                    }
                 Button(action: onShowMenu) {
                     Label(String(localized: "quicknotes.showMenu"), systemImage: "ellipsis.circle")
                         .labelStyle(.iconOnly)
@@ -156,6 +172,10 @@ final class QuickNotesPopoverController {
     /// Closing on resign-key can race the status icon's own click — without
     /// this the icon would reopen the panel right after closing it.
     private var lastClose = Date.distantPast
+    /// Schwebe-Modus (Sprachnotiz): bleibt bei Klicks daneben offen und lässt sich verschieben.
+    private(set) var isFloating = false
+    /// Einmal verschoben → nicht mehr unter das Symbol zurückrücken.
+    private var userMoved = false
 
     var isShown: Bool { panel != nil }
 
@@ -175,10 +195,37 @@ final class QuickNotesPopoverController {
     /// note is marked, like `toggle`.
     func open(relativeTo button: NSStatusBarButton) -> Bool {
         if panel != nil { return true }
+        guard let buttonWindow = button.window else { return false }
+        let iconFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
+        return present(ids: NotesPreferences.quickNoteIDs, anchor: NSPoint(x: iconFrame.midX, y: iconFrame.minY - 6),
+                       floating: false)
+    }
+
+    /// Sprachnotiz (⌃⌥⌘N): Panel schwebend zeigen, mit `focus` („Eingang“) als Reiter – auch wenn die Notiz
+    /// keine der drei Schnellnotizen ist. Ohne Menüleisten-Symbol oben mittig auf dem Bildschirm mit der Maus.
+    @discardableResult
+    func openFloating(relativeTo button: NSStatusBarButton?, focus noteID: UUID?) -> Bool {
+        if panel != nil { return true }
+        var ids = NotesPreferences.quickNoteIDs
+        if let noteID {
+            if !ids.contains(noteID) { ids.append(noteID) }
+            Self.lastSelectedID = noteID
+        }
+        let anchor: NSPoint
+        if let button, let window = button.window {
+            let iconFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
+            anchor = NSPoint(x: iconFrame.midX, y: iconFrame.minY - 6)
+        } else {
+            let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) } ?? NSScreen.main
+            let visible = screen?.visibleFrame ?? .zero
+            anchor = NSPoint(x: visible.midX, y: visible.maxY - 8)
+        }
+        return present(ids: ids, anchor: anchor, floating: true)
+    }
+
+    private func present(ids: [UUID], anchor: NSPoint, floating: Bool) -> Bool {
         let store = NotesStore.shared
-        let ids = NotesPreferences.quickNoteIDs
-        guard !NotesPreferences.quickNotes(ids: ids, in: store.notes).isEmpty,
-              let buttonWindow = button.window else { return false }
+        guard !NotesPreferences.quickNotes(ids: ids, in: store.notes).isEmpty else { return false }
 
         let view = QuickNotesView(
             store: store,
@@ -190,7 +237,8 @@ final class QuickNotesPopoverController {
             onShowMenu: { [weak self] in
                 self?.close()
                 DispatchQueue.main.async { self?.onShowMenu() }
-            }
+            },
+            onOpacityChange: { [weak self] value in self?.panel?.alphaValue = value }
         )
         let hosting = NSHostingController(rootView: view)
         hosting.sizingOptions = [.intrinsicContentSize]
@@ -217,9 +265,12 @@ final class QuickNotesPopoverController {
         panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         panel.appearance = AppearanceSettings.panelAppearance()
         panel.onCancel = { [weak self] in self?.close() }
+        panel.alphaValue = NotesSettings.quickNotesOpacity
+        panel.isMovableByWindowBackground = floating
 
-        let iconFrame = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
-        anchor = NSPoint(x: iconFrame.midX, y: iconFrame.minY - 6)
+        self.anchor = anchor
+        isFloating = floating
+        userMoved = false
         self.panel = panel
         place(panel)
 
@@ -231,30 +282,49 @@ final class QuickNotesPopoverController {
                 self.place(panel)
             }
         })
-        observers.append(NotificationCenter.default.addObserver(
-            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in self?.close() }
-        })
-        // Clicks into other apps — same mechanism as TranslateQuickPanel.
-        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            Task { @MainActor in self?.close() }
+        if floating {
+            // Schwebend: Klicks daneben (Video, andere App) schließen nicht – nur Esc oder das Kürzel.
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.didMoveNotification, object: panel, queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in self?.noteMove() }
+            })
+        } else {
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor in self?.close() }
+            })
+            // Clicks into other apps — same mechanism as TranslateQuickPanel.
+            globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+                Task { @MainActor in self?.close() }
+            }
         }
 
         panel.makeKeyAndOrderFront(nil)
         return true
     }
 
-    /// Centred under the icon, top edge fixed, kept on the icon's screen.
-    private func place(_ panel: NSPanel) {
-        guard let anchor else { return }
-        let size = panel.frame.size
+    /// Ein vom Nutzer verschobenes schwebendes Panel bleibt, wo es ist (auch beim Vergrößern).
+    private func noteMove() {
+        guard let panel, let anchor else { return }
+        let expected = Self.placedOrigin(size: panel.frame.size, anchor: anchor, screens: NSScreen.screens)
+        if panel.frame.origin != expected { userMoved = true }
+    }
+
+    static func placedOrigin(size: CGSize, anchor: NSPoint, screens: [NSScreen]) -> NSPoint {
         var x = anchor.x - size.width / 2
-        if let screen = NSScreen.screens.first(where: { $0.frame.contains(anchor) }) ?? NSScreen.main {
+        if let screen = screens.first(where: { $0.frame.contains(anchor) }) ?? NSScreen.main {
             let visible = screen.visibleFrame
             x = min(max(x, visible.minX + 8), visible.maxX - size.width - 8)
         }
-        let origin = NSPoint(x: x.rounded(), y: (anchor.y - size.height).rounded())
+        return NSPoint(x: x.rounded(), y: (anchor.y - size.height).rounded())
+    }
+
+    /// Centred under the icon, top edge fixed, kept on the icon's screen.
+    private func place(_ panel: NSPanel) {
+        guard let anchor, !userMoved else { return }
+        let origin = Self.placedOrigin(size: panel.frame.size, anchor: anchor, screens: NSScreen.screens)
         if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
     }
 
@@ -269,6 +339,8 @@ final class QuickNotesPopoverController {
         }
         self.panel = nil
         anchor = nil
+        isFloating = false
+        userMoved = false
         panel.orderOut(nil)
         // Tears the SwiftUI tree down so the editor's onDisappear saves the last
         // keystrokes now.

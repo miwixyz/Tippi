@@ -34,6 +34,46 @@ enum NotesSettings {
         }
     }
 
+    // MARK: Sprachnotiz (Michael 2026-11-14, docs/SECURE-DESIGN-sprachnotiz.md)
+
+    private static let voiceEnabledKey = "notes.voiceHotkey.enabled"
+    private static let voiceComboKey = "notes.voiceHotkeyCombo.v1"
+    private static let opacityKey = "notes.quickNotes.opacity.v1"
+
+    /// Kürzel: Schnellnotiz-Panel zeigen und sofort diktieren, Text geht an „Eingang“. Ab Werk an.
+    static var isVoiceEnabled: Bool {
+        get { store.object(forKey: voiceEnabledKey) as? Bool ?? true }
+        set { store.set(newValue, forKey: voiceEnabledKey) }
+    }
+
+    static var voiceCombo: KeyCombo {
+        get {
+            guard let data = store.data(forKey: voiceComboKey),
+                  let combo = try? JSONDecoder().decode(KeyCombo.self, from: data) else {
+                return .voiceNoteDefault
+            }
+            return combo
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                store.set(data, forKey: voiceComboKey)
+            }
+        }
+    }
+
+    /// Deckkraft des Schnellnotiz-Panels. Begrenzt: bei 0 wäre es unsichtbar und nicht mehr bedienbar.
+    static let opacityRange: ClosedRange<Double> = 0.35...1.0
+    static var quickNotesOpacity: Double {
+        get { clampedOpacity(store.object(forKey: opacityKey)) }
+        set { store.set(clampedOpacity(newValue), forKey: opacityKey) }
+    }
+
+    /// Gespeicherte Werte können per `defaults write` Unsinn sein – nur endliche Zahlen im Bereich.
+    nonisolated static func clampedOpacity(_ raw: Any?) -> Double {
+        guard let value = (raw as? NSNumber)?.doubleValue, value.isFinite else { return 1.0 }
+        return min(max(value, 0.35), 1.0)
+    }
+
     /// Note list shown next to the editor (⌃⌘S, like Apple Notes). Shown by
     /// default. Local to this Mac on purpose — screen sizes differ between Macs,
     /// so it does not go through `NotesPreferences` (iCloud).

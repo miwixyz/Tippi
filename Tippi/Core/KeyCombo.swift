@@ -42,6 +42,10 @@ struct KeyCombo: Codable, Equatable {
     /// emoji (⌥⌘E) and the hardcoded safety hotkey (⌃⌥⌘T).
     static let notesDefault = KeyCombo(keyCode: 45, modifiers: [.option, .command])
 
+    /// Sprachnotiz default: ⌃⌥⌘N (N für Notiz). Frei gegenüber ⌥⌘N (Notizfenster), ⌃⌥⌘M (Diktat),
+    /// ⌃⌥⌘T (Sicherheit) und ⌃⌥⌘P (Pause); in Michaels anderen Apps nicht belegt (geprüft 2026-11-14).
+    static let voiceNoteDefault = KeyCombo(keyCode: 45, modifiers: [.control, .option, .command])
+
     var displayString: String {
         var parts: [String] = []
         let m = modifiers

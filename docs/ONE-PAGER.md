@@ -43,6 +43,7 @@ covers that whole row:
 | On-device dictation | Superwhisper · Wispr Flow (cloud, subscription) | **Dictation mode** (Whisper / Parakeet) — on your Mac, no account, audio stays local; a second hot key lays out emails |
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
+| Voice note into one inbox | Apple Notes + system dictation | **Voice note** (⌃⌥⌘N): floating quick notes, dictation straight into “Inbox” |
 | Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |
 | AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 8 providers — in place, no app switch |
 | Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |

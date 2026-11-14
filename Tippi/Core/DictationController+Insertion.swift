@@ -22,13 +22,35 @@ extension DictationController {
 
     /// Corrections follow cleanup so stored phrases never feed a provider.
     /// Both they and layout skip targets where Return can execute or send text.
+    /// Sprachnotiz (`DictationSource.inbox`): an „Eingang“ anhängen. Klappt das nicht (Notizen nicht geladen,
+    /// „Eingang“ gerade im Editor offen), liegt der Text in der Zwischenablage – nie still verloren.
+    func deliverToInbox(_ text: String, rawCount: Int) async {
+        let outcome = await InboxNote.append(text, store: .shared)
+        RecordingIndicatorWindowController.shared.hide()
+        let message: String
+        switch outcome {
+        case .appended:
+            message = String(localized: "inbox.toast.appended")
+        case .nothingToAdd:
+            message = String(localized: "inbox.toast.empty")
+        case .notLoaded, .openInEditor:
+            let board = NSPasteboard.general
+            board.clearContents()
+            board.setString(text, forType: .string)
+            message = String(localized: outcome == .notLoaded ? "inbox.toast.notLoaded" : "inbox.toast.openInEditor")
+        }
+        ToastWindowController.shared.show(message: message)
+        // Nur Längen und Ausgang, nie Text.
+        NSLog("Tippi: dictation to inbox \(text.count) chars (raw=\(rawCount)) — \(String(describing: outcome))")
+    }
+
     func prepareInsertion(_ polished: String, targetID: String?, isNotes: Bool) -> (String, CorrectionDraft?) {
         let targetExcluded = targetID.map(Self.excludesCorrections) ?? false
         let layout = DictationLayout.layoutWanted(source: source, toggle: DictationSettings.layoutEnabled,
                                                    targetIsTerminal: targetExcluded)
         let original = layout ? DictationLayout.format(polished) : polished
         let corrections = DictationCorrections.shared
-        guard corrections.enabled, source == .standard, !targetExcluded, isNotes || targetID != nil else {
+        guard corrections.enabled, source == .standard || source == .inbox, !targetExcluded, isNotes || targetID != nil else {
             return (original, nil)
         }
         let corrected = corrections.apply(to: polished)

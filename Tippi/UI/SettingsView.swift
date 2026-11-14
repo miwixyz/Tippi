@@ -251,6 +251,7 @@ private struct HotkeysTab: View {
     @ObservedObject private var translateHotkey: HotkeyManager
     @ObservedObject private var emojiHotkey: HotkeyManager
     @ObservedObject private var notesHotkey: HotkeyManager
+    @ObservedObject private var voiceNoteHotkey: HotkeyManager
     @ObservedObject private var screenOCRHotkey: HotkeyManager
 
     init() {
@@ -265,6 +266,8 @@ private struct HotkeysTab: View {
             wrappedValue: delegate?.screenOCRHotkeyManager ?? HotkeyManager(id: 906))
         _notesHotkey = ObservedObject(
             wrappedValue: delegate?.notesHotkeyManager ?? HotkeyManager(id: 905))
+        _voiceNoteHotkey = ObservedObject(
+            wrappedValue: delegate?.voiceNoteHotkeyManager ?? HotkeyManager(id: 909))
     }
 
     @State private var combo: KeyCombo = KeyComboStore.load()
@@ -282,6 +285,8 @@ private struct HotkeysTab: View {
     @State private var screenOCRConceal = ScreenOCRSettings.concealFromClipboardHistory
     @State private var screenOCRJoin = ScreenOCRSettings.joinLines
     @State private var notesCombo: KeyCombo = NotesSettings.combo
+    @State private var voiceNoteEnabled: Bool = NotesSettings.isVoiceEnabled
+    @State private var voiceNoteCombo: KeyCombo = NotesSettings.voiceCombo
 
     var body: some View {
         ScrollView {
@@ -447,6 +452,40 @@ private struct HotkeysTab: View {
                                 combo: notesCombo,
                                 reset: { notesCombo = .notesDefault },
                                 test: { AppDelegate.shared?.showNotesWindow() }
+                            )
+                        }
+                    }
+                    .padding(6)
+                }
+
+                // Sprachnotiz (2026-11-14): Panel + Diktat, Text an „Eingang“.
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(isOn: $voiceNoteEnabled) {
+                            Text(String(localized: "settings.hotkeys.voiceNote.header"))
+                                .font(FamilyTheme.font(.headline))
+                        }
+                        .onChange(of: voiceNoteEnabled) { _, new in
+                            NotesSettings.isVoiceEnabled = new
+                            AppDelegate.shared?.restartVoiceNoteHotkey()
+                        }
+
+                        Text(String(localized: "settings.hotkeys.voiceNote.intro"))
+                            .font(FamilyTheme.font(.caption))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if voiceNoteEnabled {
+                            HotkeyRecorderField(combo: $voiceNoteCombo)
+                                .onChange(of: voiceNoteCombo) { _, new in
+                                    NotesSettings.voiceCombo = new
+                                    AppDelegate.shared?.restartVoiceNoteHotkey()
+                                }
+                            hotkeyControls(
+                                manager: voiceNoteHotkey,
+                                combo: voiceNoteCombo,
+                                reset: { voiceNoteCombo = .voiceNoteDefault },
+                                test: { Task { @MainActor in await AppDelegate.shared?.handleVoiceNoteHotkey() } }
                             )
                         }
                     }
