@@ -513,6 +513,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.32.0 | ✅ Done | **Dictation modes** — extra key with the dictation trigger picks Improve, Defuse, Add emojis or your own prompt; local MLX warmed while you speak (20 s → <1 s), dictation fits the text at the cursor, Apple Intelligence as provider, Parakeet Ultra selectable. |
 | v2.32.1 | ✅ Done | **Haiku 5.5 as the Anthropic default** — cleanup prompt names German filler "also"/"genau"; new `scripts/diktat-pruefstand.py` checks dictation cleanup (Haiku 5.5 18/18, Haiku 4.5 17/18) |
 | v2.34.0 | ✅ Done | **Quick notes in the menu bar** — up to three notes as tabs behind the Tippi icon; permission hints use the macOS 27 name |
+| v2.39.1 | ✅ Done | **Voice note window** — the quick-notes window now also appears on the first ⌃⌥⌘N after launch (notes load at startup) |
 | v2.39.0 | ✅ Done | **Voice note** — ⌃⌥⌘N: floating quick notes + dictation into the note “Inbox”, transparency slider; clipboard restore marked as transient |
 | v2.38.0 | ✅ Done | **File tasks from Porter** — open tasks attached to files in Porter, listed in the Notes window; a click opens the file in Porter |
 | v2.37.0 | ✅ Done | **Calmer, livelier controls** — gliding hover shadow and press spring in the selection bar; quick notes tabs as a gliding pill (same look as Porter, TippAI, Gnotchi, Kalli) |
