@@ -264,6 +264,14 @@ is not the pinned, clean version and fails on non-system dylibs;
 `prune-releases.sh` and `docs-drift-check.sh` fail instead of reporting success
 when `gh` or a doc file is missing.
 
+Since v2.39.2: every build (`make test`, `make build`, `make release`,
+`scripts/devid-testbuild.sh`) registers its copy with LaunchServices as an owner
+of `tippi:` and `com.tippi.app`, so `tippi://schnellnotiz` could open a build
+copy instead of the installed app. `scripts/unregister-build-copies.sh` removes
+every copy outside `/Applications`, then checks that only the installed app is
+left (exit 1 otherwise). `release.sh` runs it at the end; after test builds run
+`make unregister-builds`.
+
 Since v2.23.0: the emoji-database check (`generate-emoji-data.py --check`) only
 downloads the pinned Unicode sources from `raw.githubusercontent.com` when
 `Tippi/Resources/emoji-data.json` or the generator changed since the last release

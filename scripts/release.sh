@@ -656,6 +656,11 @@ if [ "${PRUNE:-1}" -eq 1 ] && [ -x scripts/prune-releases.sh ]; then
     ./scripts/prune-releases.sh || echo "  ⚠ prune failed — releases left as they are, fix by hand"
 fi
 
+# Build-Kopien (build/, DerivedData, Testbuilds) beanspruchen `tippi:` – nur die installierte App soll es
+# (2026-11-14, dreimal von Hand). Nach dem Release, weil Archiv und Export selbst neue Kopien anmelden.
+echo ""
+./scripts/unregister-build-copies.sh || echo "  ⚠ LaunchServices: Build-Kopie bleibt angemeldet – siehe ZU TUN oben"
+
 echo "✓ Release complete"
 echo "  DMG:  ${DMG_PATH}"
 echo "  Size: $(du -h "${DMG_PATH}" | cut -f1)"

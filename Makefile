@@ -2,7 +2,7 @@
 # `make -n` wirklich aus — `make -n test` startete sonst den echten Testlauf.
 SUBMAKE := $(MAKE)
 
-.PHONY: help generate open build clean lint icons prepare-binary release release-dry-run bump
+.PHONY: help generate open build clean lint icons prepare-binary release release-dry-run bump unregister-builds
 
 TEAM_ID          := LTKJ6Z2VYB
 # Local builds only. scripts/release.sh signs with the Developer ID identity
@@ -124,6 +124,11 @@ test: generate
 	$(SUBMAKE) --no-print-directory purge-test-defaults || rc=1; \
 	bash scripts/real-defaults-guard.sh compare || rc=1; \
 	exit $$rc
+
+
+# Build-Kopien bei LaunchServices abmelden – nach Testbuilds, damit `tippi:` nur die installierte App öffnet.
+unregister-builds:
+	@./scripts/unregister-build-copies.sh
 
 purge-test-defaults:
 # Wiederholt, nicht einmalig (korrigiert 2026-09-20, nachdem der erste Entwurf
