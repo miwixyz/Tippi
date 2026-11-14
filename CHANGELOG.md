@@ -2,10 +2,6 @@
 
 ## [2.39.0] — 2026-11-14
 
-- _Add release notes here._
-
-## [Unveröffentlicht]
-
 ### Neu
 - **Sprachnotiz per Kürzel.** ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allen Fenstern, auch über einem Video im Vollbild, und startet sofort das Diktat. Nochmal ⌃⌥⌘N beendet die Aufnahme, der Text steht dann mit Datum und Uhrzeit unten in der Notiz „Eingang“. Tippi legt sie beim ersten Mal an; sie belegt keinen der drei Schnellnotiz-Plätze. Das Kürzel änderst du unter Einstellungen → Hotkeys.
 - **Transparenz-Regler fürs Schnellnotiz-Fenster.** Unten im Fenster stellst du ein, wie durchsichtig es ist.
