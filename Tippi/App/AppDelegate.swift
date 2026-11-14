@@ -1556,6 +1556,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceNoteHotkeyManager.start { [weak self] in
             Task { @MainActor in await self?.handleVoiceNoteHotkey() }
         }
+        _ = NotesStore.shared   // Notizen schon jetzt laden, damit das Panel beim ersten Druck bereit ist
         NSLog("Tippi: voice note hot key registered (\(combo.displayString))")
     }
 
@@ -1567,9 +1568,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         switch dictationController.state {
         case .idle:
             let target = resolvedSourceAppForCapture()
-            let inbox = InboxNote.find(in: NotesStore.shared.notes, title: InboxNote.title)
-            quickNotesPopover.openFloating(relativeTo: statusItem?.button, focus: inbox?.id)
             await dictationController.toggle(targetApp: target, source: .inbox)
+            await showInboxPanel()
         case .recording:
             guard dictationController.source == .inbox else { return }
             quickNotesPopover.close()
@@ -1577,6 +1577,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .transcribing:
             return
         }
+    }
+
+    /// Panel mit „Eingang“ zeigen, sobald die Notizen geladen sind (Michael 14.11.: kein Fenster beim ersten
+    /// Druck – `NotesStore.shared` lädt erst beim ersten Zugriff, das Panel fand eine leere Liste). Höchstens 3 s;
+    /// nur solange die Sprachnotiz-Aufnahme noch läuft.
+    private func showInboxPanel() async {
+        let store = NotesStore.shared
+        for _ in 0..<30 where !store.hasLoaded { try? await Task.sleep(for: .milliseconds(100)) }
+        guard store.hasLoaded, dictationController.source == .inbox,
+              case .recording = dictationController.state else { return }
+        let inbox = InboxNote.ensure(in: store)
+        quickNotesPopover.openFloating(relativeTo: statusItem?.button, focus: inbox.id)
     }
 
     func restartDictationHotkey() {

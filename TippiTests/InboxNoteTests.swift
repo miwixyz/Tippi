@@ -47,6 +47,20 @@ final class InboxNoteTests: XCTestCase {
         await store.waitForPendingOperations()
     }
 
+    /// Fix 14.11. (kein Fenster beim ersten Druck): Panel braucht „Eingang“ schon beim Diktatbeginn.
+    func testEnsureCreatesOnceAndAppendKeepsTitle() async throws {
+        let (store, dir) = try makeStore()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let first = InboxNote.ensure(in: store)
+        XCTAssertEqual(InboxNote.ensure(in: store).id, first.id, "kein zweites Anlegen")
+        _ = await InboxNote.append("hallo", store: store)
+        let notes = store.notes.filter { $0.title == InboxNote.title }
+        XCTAssertEqual(notes.count, 1)
+        XCTAssertTrue(notes[0].content.hasPrefix(InboxNote.title + "\n\n"))
+        XCTAssertTrue(notes[0].content.hasSuffix(" – hallo\n"))
+        await store.waitForPendingOperations()
+    }
+
     /// Code-Audit 14.11.: Stille über Whisper ergibt Leerraum – kein leerer Eintrag, keine neue Notiz.
     func testBlankTextAddsNothing() async throws {
         let (store, dir) = try makeStore()

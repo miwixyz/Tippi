@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Behoben
+- **Sprachnotiz zeigt jetzt ihr Fenster.** Beim ersten ⌃⌥⌘N nach dem Start lief nur die Aufnahme, das Schnellnotiz-Fenster blieb weg, weil Tippi die Notizen erst beim ersten Zugriff lädt. Jetzt lädt Tippi sie schon beim Start, wartet beim Kürzel kurz darauf und legt „Eingang“ gleich zu Beginn an, damit das Fenster einen Reiter hat. Der Text kam auch vorher an.
+
+### Intern
+- `AppDelegate.showInboxPanel` (wartet bis 3 s auf `NotesStore.hasLoaded`, nur solange die Sprachnotiz-Aufnahme läuft), `InboxNote.ensure`. 882 Tests (1 neuer).
+
 ## [2.39.0] — 2026-11-14
 
 ### Neu

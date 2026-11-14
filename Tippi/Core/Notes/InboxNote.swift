@@ -39,6 +39,16 @@ enum InboxNote {
         date.formatted(.dateTime.locale(locale).day().month(.twoDigits).hour().minute())
     }
 
+    /// „Eingang“ finden oder (nur mit Titelzeile) anlegen – fürs Panel beim Diktatbeginn. Nur nach `hasLoaded`
+    /// aufrufen, sonst entstünde eine zweite.
+    static func ensure(in store: NotesStore) -> Note {
+        if let note = find(in: store.notes, title: title) { return note }
+        var note = store.create()
+        note.content = title + "\n"
+        store.save(note)
+        return note
+    }
+
     /// Hängt `text` an „Eingang“ an (legt sie bei Bedarf an). Liest den Inhalt erst jetzt frisch aus dem
     /// Speicher – nie einen Stand vom Aufnahmebeginn.
     static func append(_ text: String, store: NotesStore, now: Date = Date(),
