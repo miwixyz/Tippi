@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.39.1</title>
+            <pubDate>Sat, 14 Nov 2026 15:40:07 +0100</pubDate>
+            <sparkle:version>653</sparkle:version>
+            <sparkle:shortVersionString>2.39.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Sprachnotiz zeigt jetzt ihr Fenster.</b> Beim ersten ⌃⌥⌘N nach dem Start lief nur die Aufnahme, das Schnellnotiz-Fenster blieb weg, weil Tippi die Notizen erst beim ersten Zugriff lädt. Jetzt lädt Tippi sie schon beim Start, wartet beim Kürzel kurz darauf und legt „Eingang“ gleich zu Beginn an, damit das Fenster einen Reiter hat. Der Text kam auch vorher an.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.1/Tippi-2.39.1.dmg" length="25548028" type="application/octet-stream" sparkle:edSignature="a2KiS61J79SggrROFfLOC4tAQTOpSpiLuhVlfLRsZ/Uv58AjCNnCAulSidSJ8T1F0TGGkNva6X3HVnIvnj0DDA=="/>
+        </item>
+        <item>
             <title>2.39.0</title>
             <pubDate>Sat, 14 Nov 2026 15:18:31 +0100</pubDate>
             <sparkle:version>648</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Datei-Aufgaben aus Porter.</b> Nutzt du Porter, zeigt das Notizfenster unten in der Liste den Abschnitt „Datei-Aufgaben“: die offenen Aufgaben, die du in Porter an Dateien und Ordner gehängt hast, die neueste zuerst. Ein Klick öffnet die Datei in Porter, ohne Porter zeigt Tippi sie im Finder. Tippi liest Porters Liste in iCloud Drive nur und ändert sie nie; abhaken und bearbeiten geht in Porter. Wer Porter nicht nutzt, sieht den Abschnitt nicht.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.38.0/Tippi-2.38.0.dmg" length="25029531" type="application/octet-stream" sparkle:edSignature="1iOYF94O0lYlBvopTDrNDuQ1Rvk2NaIHKxTgyDoa38e4qy34VRbOc9KlElUMrxABv69l0rnLtME0X6tUMyjsDQ=="/>
-        </item>
-        <item>
-            <title>2.37.0</title>
-            <pubDate>Fri, 13 Nov 2026 14:29:30 +0100</pubDate>
-            <sparkle:version>636</sparkle:version>
-            <sparkle:shortVersionString>2.37.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Ruhigere, lebendigere Bedienelemente.</b> Die Leiste beim Markieren von Text zeigt unter dem Zeiger einen weichen Schatten, der von Symbol zu Symbol gleitet, und ein gedrücktes Symbol federt kurz nach. Die Reiter der Schnellnotizen sind jetzt eine Pille, die beim Wechsel zum neuen Reiter gleitet und sich dabei leicht dehnt. Dieselbe Optik bekommen Porter, TippAI, Gnotchi und Kalli.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.37.0/Tippi-2.37.0.dmg" length="25466716" type="application/octet-stream" sparkle:edSignature="7DMut43mYqSa8KHUGhTCTp2gYapssmSmxlotF2ULhUMAicxA9wy01vDhbfCTF1p6nr7YrFM9NK4nmnIo3S+kAQ=="/>
         </item>
     </channel>
 </rss>
