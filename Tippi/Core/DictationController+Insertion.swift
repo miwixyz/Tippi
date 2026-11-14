@@ -25,7 +25,14 @@ extension DictationController {
     /// Sprachnotiz (`DictationSource.inbox`): an „Eingang“ anhängen. Klappt das nicht (Notizen nicht geladen,
     /// „Eingang“ gerade im Editor offen), liegt der Text in der Zwischenablage – nie still verloren.
     func deliverToInbox(_ text: String, rawCount: Int) async {
-        let outcome = await InboxNote.append(text, store: .shared)
+        let store = NotesStore.shared
+        let outcome: InboxNote.Outcome
+        if store.hasLoaded, let note = InboxNote.find(in: store.notes, title: InboxNote.title),
+           let editor = inboxEditor?(note.id), InboxNote.appendLive(text, to: editor) {
+            outcome = .appended(created: false)   // in den offenen Editor im Panel
+        } else {
+            outcome = await InboxNote.append(text, store: store)
+        }
         RecordingIndicatorWindowController.shared.hide()
         let message: String
         switch outcome {

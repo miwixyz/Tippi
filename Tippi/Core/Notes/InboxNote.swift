@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// Sprachnotiz (Michael 2026-11-14): Diktate über ⌃⌥⌘N landen mit Zeitstempel unten in einer festen Notiz
 /// „Eingang“ statt am Cursor. Design: `docs/SECURE-DESIGN-sprachnotiz.md`.
@@ -37,6 +37,27 @@ enum InboxNote {
 
     nonisolated static func stamp(_ date: Date, locale: Locale = .current) -> String {
         date.formatted(.dateTime.locale(locale).day().month(.twoDigits).hour().minute())
+    }
+
+    /// Wo und was im offenen Editor eingefügt wird: Leerraum am Ende ersetzt durch `\n\nStempel – Text\n` –
+    /// dasselbe Ergebnis wie `appending`, aber als Einfügung, damit Undo und der Cursor des Nutzers erhalten bleiben.
+    nonisolated static func liveInsertion(current: String, text: String, stamp: String) -> (range: NSRange, insert: String) {
+        let full = current as NSString
+        let body = current.replacingOccurrences(of: "\\s+$", with: "", options: .regularExpression) as NSString
+        let insert = "\n\n" + stamp + " – " + text.trimmingCharacters(in: .whitespacesAndNewlines) + "\n"
+        return (NSRange(location: body.length, length: full.length - body.length), insert)
+    }
+
+    /// Diktat direkt in den offenen Editor von „Eingang“ (Panel bleibt offen). Gespeichert wird über das normale
+    /// Autosave des Editors – kein zweiter Schreiber, nichts wird überschrieben. `false` = nicht eingefügt.
+    static func appendLive(_ text: String, to textView: NSTextView, now: Date = Date()) -> Bool {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        let (range, insert) = liveInsertion(current: textView.string, text: text, stamp: stamp(now))
+        guard textView.shouldChangeText(in: range, replacementString: insert) else { return false }
+        textView.textStorage?.replaceCharacters(in: range, with: insert)
+        textView.didChangeText()
+        textView.scrollRangeToVisible(NSRange(location: range.location + (insert as NSString).length, length: 0))
+        return true
     }
 
     /// „Eingang“ finden oder (nur mit Titelzeile) anlegen – fürs Panel beim Diktatbeginn. Nur nach `hasLoaded`

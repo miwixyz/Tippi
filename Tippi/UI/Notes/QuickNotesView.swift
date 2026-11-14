@@ -1,5 +1,9 @@
 import AppKit
 import SwiftUI
+import os
+
+/// Messpunkt Sprachnotiz (Michael 14.11.: „Fenster geht sofort wieder zu“) – nur Zustände, nie Text.
+let quickNotesLog = Logger(subsystem: "com.tippi.app", category: "quick-notes")
 
 /// Up to three notes as tabs, shown in a popover under the menu bar icon
 /// (Michael, 2026-11-09: „in der Menüleiste immer drei feste Notizen“).
@@ -212,10 +216,12 @@ final class QuickNotesPopoverController {
             Self.lastSelectedID = noteID
         }
         let anchor: NSPoint
-        if let button, let window = button.window {
-            let iconFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
+        if let button, let window = button.window,
+           case let iconFrame = window.convertToScreen(button.convert(button.bounds, to: nil)),
+           NSScreen.screens.contains(where: { $0.frame.contains(NSPoint(x: iconFrame.midX, y: iconFrame.midY)) }) {
             anchor = NSPoint(x: iconFrame.midX, y: iconFrame.minY - 6)
         } else {
+            // Kein Symbol oder Symbol hinter der Notch/außerhalb jedes Bildschirms (gemessen 14.11.).
             let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) } ?? NSScreen.main
             let visible = screen?.visibleFrame ?? .zero
             anchor = NSPoint(x: visible.midX, y: visible.maxY - 8)
@@ -289,6 +295,16 @@ final class QuickNotesPopoverController {
             ) { [weak self] _ in
                 Task { @MainActor in self?.noteMove() }
             })
+            // Messpunkt: verschwindet das Fenster ohne `close()`?
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+            ) { _ in quickNotesLog.notice("floating panel resigned key") })
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.didChangeOcclusionStateNotification, object: panel, queue: .main
+            ) { note in
+                let visible = (note.object as? NSWindow)?.occlusionState.contains(.visible) ?? false
+                quickNotesLog.notice("floating panel occlusion: visible=\(visible, privacy: .public)")
+            })
         } else {
             observers.append(NotificationCenter.default.addObserver(
                 forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
@@ -302,7 +318,23 @@ final class QuickNotesPopoverController {
         }
 
         panel.makeKeyAndOrderFront(nil)
+        quickNotesLog.notice("present: floating=\(floating, privacy: .public) tabs=\(ids.count, privacy: .public) visible=\(panel.isVisible, privacy: .public)")
         return true
+    }
+
+    /// Editor der Notiz `noteID`, wenn das Panel sie gerade als Reiter zeigt (Sprachnotiz, Michael 14.11.:
+    /// „Fenster soll offen bleiben, bis ich Esc drücke“) – dann geht das Diktat direkt in diesen Editor.
+    func liveTextView(for noteID: UUID) -> NSTextView? {
+        guard let panel, panel.isVisible, Self.lastSelectedID == noteID, let root = panel.contentView else { return nil }
+        return Self.firstTextView(in: root)
+    }
+
+    private static func firstTextView(in view: NSView) -> NSTextView? {
+        if let textView = view as? PlainTextEditor.PasteAwareTextView { return textView }
+        for sub in view.subviews {
+            if let found = firstTextView(in: sub) { return found }
+        }
+        return nil
     }
 
     /// Ein vom Nutzer verschobenes schwebendes Panel bleibt, wo es ist (auch beim Vergrößern).
@@ -312,13 +344,23 @@ final class QuickNotesPopoverController {
         if panel.frame.origin != expected { userMoved = true }
     }
 
+    /// Oben mittig unter dem Anker, waagrecht **und senkrecht** ganz im sichtbaren Bereich. Gemessen 14.11.
+    /// (MacBook, Symbol hinter der Notch): Anker außerhalb jedes Bildschirms → Panel lag mit y = 973 unter der
+    /// Unterkante eines 956 px hohen Bildschirms, offen, aber unsichtbar.
     static func placedOrigin(size: CGSize, anchor: NSPoint, screens: [NSScreen]) -> NSPoint {
+        let screen = screens.first(where: { $0.frame.contains(anchor) }) ?? NSScreen.main ?? screens.first
+        return clampedOrigin(size: size, anchor: anchor, visible: screen?.visibleFrame)
+    }
+
+    /// Reine Rechnung (getestet): Mitte unter `anchor`, 8 pt Abstand zu den Kanten des sichtbaren Bereichs.
+    nonisolated static func clampedOrigin(size: CGSize, anchor: NSPoint, visible: CGRect?) -> NSPoint {
         var x = anchor.x - size.width / 2
-        if let screen = screens.first(where: { $0.frame.contains(anchor) }) ?? NSScreen.main {
-            let visible = screen.visibleFrame
+        var y = anchor.y - size.height
+        if let visible {
             x = min(max(x, visible.minX + 8), visible.maxX - size.width - 8)
+            y = min(max(y, visible.minY + 8), visible.maxY - size.height - 8)
         }
-        return NSPoint(x: x.rounded(), y: (anchor.y - size.height).rounded())
+        return NSPoint(x: x.rounded(), y: y.rounded())
     }
 
     /// Centred under the icon, top edge fixed, kept on the icon's screen.
@@ -328,8 +370,9 @@ final class QuickNotesPopoverController {
         if panel.frame.origin != origin { panel.setFrameOrigin(origin) }
     }
 
-    func close() {
+    func close(_ reason: String = #function, caller: String = #fileID, line: Int = #line) {
         guard let panel else { return }
+        quickNotesLog.notice("close: reason=\(reason, privacy: .public) from \(caller, privacy: .public):\(line, privacy: .public) floating=\(self.isFloating, privacy: .public)")
         lastClose = Date()
         observers.forEach { NotificationCenter.default.removeObserver($0) }
         observers.removeAll()

@@ -326,6 +326,8 @@ final class DictationController: ObservableObject {
     /// Which hot key started the running recording — the mail hot key always lays
     /// the text out (`DictationLayout.layoutWanted`). Set at start, not at stop.
     var source: DictationSource = .standard
+    /// Sprachnotiz: Editor von „Eingang“, wenn das Panel ihn gerade zeigt (gesetzt von `AppDelegate`).
+    var inboxEditor: (@MainActor (UUID) -> NSTextView?)?
 
     /// Toggles dictation. `targetApp` is the app that was frontmost when the
     /// hot key fired — used as the AX target for insertion. A press while

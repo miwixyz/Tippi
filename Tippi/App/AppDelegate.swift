@@ -1560,19 +1560,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSLog("Tippi: voice note hot key registered (\(combo.displayString))")
     }
 
-    /// Erster Druck: Panel schwebend mit „Eingang“ zeigen, Aufnahme starten. Zweiter Druck: Panel zu – vor der
-    /// Transkription, damit der Editor seinen Stand speichert, bevor angehängt wird –, dann transkribieren.
+    /// Erster Druck: Panel schwebend mit „Eingang“ zeigen, Aufnahme starten. Zweiter Druck: Aufnahme beenden,
+    /// das Panel bleibt offen (Esc schließt); der Text geht in seinen Editor, sonst über `InboxNote.append`.
     /// Während der Transkription und bei einem laufenden normalen Diktat: nichts (ein dritter Druck soll nicht
     /// abbrechen, ein Fremd-Diktat nicht umleiten).
     func handleVoiceNoteHotkey() async {
+        quickNotesLog.notice("voice hot key: state=\(String(describing: self.dictationController.state).prefix(12), privacy: .public) source=\(String(describing: self.dictationController.source), privacy: .public)")
         switch dictationController.state {
         case .idle:
             let target = resolvedSourceAppForCapture()
+            dictationController.inboxEditor = { [weak self] id in self?.quickNotesPopover.liveTextView(for: id) }
             await dictationController.toggle(targetApp: target, source: .inbox)
             await showInboxPanel()
         case .recording:
             guard dictationController.source == .inbox else { return }
-            quickNotesPopover.close()
+            // Fenster bleibt offen (Michael 14.11.): Esc schließt. Der Text geht in den offenen Editor.
             await dictationController.toggle(targetApp: nil, source: .inbox)
         case .transcribing:
             return
@@ -1586,7 +1588,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let store = NotesStore.shared
         for _ in 0..<30 where !store.hasLoaded { try? await Task.sleep(for: .milliseconds(100)) }
         guard store.hasLoaded, dictationController.source == .inbox,
-              case .recording = dictationController.state else { return }
+              case .recording = dictationController.state else {
+            quickNotesLog.notice("inbox panel skipped: loaded=\(store.hasLoaded, privacy: .public)")
+            return
+        }
         let inbox = InboxNote.ensure(in: store)
         quickNotesPopover.openFloating(relativeTo: statusItem?.button, focus: inbox.id)
     }

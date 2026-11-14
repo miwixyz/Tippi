@@ -61,6 +61,38 @@ final class InboxNoteTests: XCTestCase {
         await store.waitForPendingOperations()
     }
 
+    /// Michael 14.11.: Fenster bleibt offen – Diktat geht in den offenen Editor, gleiches Format wie `appending`.
+    func testLiveInsertionMatchesAppendingAndKeepsUndo() {
+        let current = "Eingang\n\n14.11., 14:52 – eins\n  \n"
+        let (range, insert) = InboxNote.liveInsertion(current: current, text: " zwei ", stamp: "14.11., 15:00")
+        let result = (current as NSString).replacingCharacters(in: range, with: insert)
+        XCTAssertEqual(result, InboxNote.appending("zwei", to: current, title: "Eingang", stamp: "14.11., 15:00"))
+
+        let textView = NSTextView()
+        textView.string = "Eingang\n"
+        textView.allowsUndo = true
+        XCTAssertTrue(InboxNote.appendLive("hallo", to: textView))
+        XCTAssertTrue(textView.string.hasPrefix("Eingang\n\n"))
+        XCTAssertTrue(textView.string.hasSuffix(" – hallo\n"))
+        XCTAssertFalse(InboxNote.appendLive("  ", to: textView), "Leerraum fügt nichts ein")
+        textView.isEditable = false
+        XCTAssertFalse(InboxNote.appendLive("gesperrt", to: textView), "nicht editierbar → nicht eingefügt, Rückfall greift")
+    }
+
+    /// Gemessen 14.11. (MacBook 1470×956): Panel 900×761 lag mit dem Anker außerhalb unter der Unterkante.
+    func testPanelOriginStaysOnScreen() {
+        let visible = CGRect(x: 0, y: 0, width: 1470, height: 924)   // ohne Menüleiste
+        let size = CGSize(width: 900, height: 761)
+        for anchor in [NSPoint(x: 1300, y: -200), NSPoint(x: 735, y: 2000), NSPoint(x: -500, y: 400), NSPoint(x: 735, y: 918)] {
+            let origin = QuickNotesPopoverController.clampedOrigin(size: size, anchor: anchor, visible: visible)
+            let frame = CGRect(origin: origin, size: size)
+            XCTAssertTrue(visible.insetBy(dx: 7.5, dy: 7.5).contains(frame), "\(anchor) → \(frame)")
+        }
+        let normal = QuickNotesPopoverController.clampedOrigin(size: CGSize(width: 400, height: 300),
+                                                               anchor: NSPoint(x: 735, y: 900), visible: visible)
+        XCTAssertEqual(normal, NSPoint(x: 535, y: 600), "unter dem Symbol, mittig")
+    }
+
     /// Code-Audit 14.11.: Stille über Whisper ergibt Leerraum – kein leerer Eintrag, keine neue Notiz.
     func testBlankTextAddsNothing() async throws {
         let (store, dir) = try makeStore()

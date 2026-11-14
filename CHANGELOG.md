@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Behoben
+- **Das Schnellnotiz-Fenster landet nicht mehr unter dem Bildschirmrand.** Auf einem MacBook mit Notch öffnete es sich bei der Sprachnotiz außerhalb des Bildschirms: offen, aber unsichtbar. Gemessen lag es mit dem oberen Rand bei 973 Punkten auf einem 956 Punkte hohen Bildschirm. Liegt das Menüleisten-Symbol auf keinem Bildschirm, öffnet es jetzt oben in der Mitte, und es wird immer ganz in den sichtbaren Bereich geschoben.
+
+### Geändert
+- **Sprachnotiz: Das Fenster bleibt offen.** Nach dem zweiten ⌃⌥⌘N schließt es sich nicht mehr. Der Text erscheint gleich unten in „Eingang“, du kannst weiterschreiben, Esc schließt das Fenster. Gespeichert wird wie beim Tippen.
+
+### Intern
+- Messpunkt `Logger` Kategorie `quick-notes` (nur Zustände): zeigte, dass das Fenster offen stand und vom eigenen zweiten Druck geschlossen wurde. Diktat geht bei offenem „Eingang“ direkt in dessen Editor (`InboxNote.appendLive`, Einfügung mit Undo, Autosave des Editors), sonst wie bisher über den Speicher. 884 Tests (2 neue).
+
 ## [2.39.1] — 2026-11-14
 
 ### Behoben
