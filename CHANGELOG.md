@@ -2,10 +2,6 @@
 
 ## [2.39.1] — 2026-11-14
 
-- _Add release notes here._
-
-## [Unveröffentlicht]
-
 ### Behoben
 - **Sprachnotiz zeigt jetzt ihr Fenster.** Beim ersten ⌃⌥⌘N nach dem Start lief nur die Aufnahme, das Schnellnotiz-Fenster blieb weg, weil Tippi die Notizen erst beim ersten Zugriff lädt. Jetzt lädt Tippi sie schon beim Start, wartet beim Kürzel kurz darauf und legt „Eingang“ gleich zu Beginn an, damit das Fenster einen Reiter hat. Der Text kam auch vorher an.
 
