@@ -3,6 +3,9 @@ import AppKit
 /// Captures the current state of `NSPasteboard.general` and can restore it later.
 /// Used to make `⌘C` / `⌘V` round-trips invisible to the user.
 struct PasteboardSnapshot {
+    /// nspasteboard.org marker: clipboard managers skip entries carrying it.
+    static let transientType = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
+
     private let items: [[NSPasteboard.PasteboardType: Data]]
     /// `changeCount` at capture. Unchanged at restore = nobody wrote → leave
     /// the clipboard alone. `restore()` is also called on paths where Tippi's
@@ -39,6 +42,12 @@ struct PasteboardSnapshot {
             for (type, data) in entries {
                 item.setData(data, forType: type)
             }
+            // The restored content is never a new copy. Without this marker,
+            // clipboard histories (Gnotchi, Maccy) record it again:
+            // deleted entries come back, copies from excluded apps or made
+            // while paused land in the history (measured 2026-11-14 against
+            // Gnotchi 0.26.1, docs/SECURE-DESIGN-clipboard-restore.md).
+            item.setData(Data(), forType: Self.transientType)
             return item
         }
         // The clipboard WAS changed (by Tippi), so the original state is what

@@ -70,6 +70,49 @@ final class AuditFollowupTests: XCTestCase {
         XCTAssertEqual(pasteboard.string(forType: .string), "before")
     }
 
+    /// 2026-11-14: Zwischenablage-Verläufe (Gnotchi, Maccy, Paste) nahmen den
+    /// zurückgeschriebenen Inhalt als neue Kopie auf. Jedes Element muss die
+    /// TransientType-Markierung tragen, der Inhalt bleibt gleich.
+    func testClipboardRestoreMarksEveryItemAsTransient() throws {
+        let pasteboard = NSPasteboard.withUniqueName()
+        defer { pasteboard.releaseGlobally() }
+        pasteboard.clearContents()
+        let first = NSPasteboardItem()
+        first.setString("eins", forType: .string)
+        let second = NSPasteboardItem()
+        second.setString("zwei", forType: .string)
+        second.setData(Data([1, 2, 3]), forType: .init("org.nspasteboard.ConcealedType"))
+        pasteboard.writeObjects([first, second])
+        var snapshot = PasteboardSnapshot.capture(from: pasteboard)
+
+        pasteboard.clearContents()
+        pasteboard.setString("Tippi result", forType: .string)
+        snapshot.markOwnedChange(on: pasteboard)
+        snapshot.restore(to: pasteboard)
+
+        let items = try XCTUnwrap(pasteboard.pasteboardItems)
+        XCTAssertEqual(items.count, 2)
+        XCTAssertEqual(items.map { $0.string(forType: .string) }, ["eins", "zwei"])
+        for item in items {
+            XCTAssertTrue(item.types.contains(PasteboardSnapshot.transientType))
+        }
+        XCTAssertEqual(items[1].data(forType: .init("org.nspasteboard.ConcealedType")), Data([1, 2, 3]))
+        XCTAssertTrue((pasteboard.types ?? []).contains(PasteboardSnapshot.transientType))
+    }
+
+    func testClipboardRestoreOfEmptyClipboardWritesNoMarkerItem() {
+        let pasteboard = NSPasteboard.withUniqueName()
+        defer { pasteboard.releaseGlobally() }
+        pasteboard.clearContents()
+        var snapshot = PasteboardSnapshot.capture(from: pasteboard)
+
+        pasteboard.clearContents()
+        pasteboard.setString("Tippi result", forType: .string)
+        snapshot.markOwnedChange(on: pasteboard)
+        snapshot.restore(to: pasteboard)
+        XCTAssertEqual(pasteboard.pasteboardItems?.count ?? 0, 0)
+    }
+
     func testCorruptHistoryDatabaseDoesNotCrashStoreInitialization() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
