@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.39.2] — 2026-11-14
+
+- _Add release notes here._
+
 ## [Unveröffentlicht]
 
 ### Behoben
