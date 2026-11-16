@@ -95,6 +95,8 @@ Schlüsselbund), Snippets, Verlauf, Diktat (Modellordner), Autovervollständigun
   - `ueber` → Reiter **Über**: Name, Version, Links.
   - `dateiaufgaben` (2026-11-13) → Abschnitt „Datei-Aufgaben“ mit drei festen Demo-Zeilen aus dem Code, dazu
     Leer- und Nicht-lesbar-Zustand. Liest nie Porters Liste (`docs/SECURE-DESIGN-datei-aufgaben.md`).
+  - `popup` (2026-11-16) → das Prompt-Popup (⌥⌘T), gleiche View wie im Betrieb, aber nur mit `DemoPrompt.builtIn`
+    (nie `DemoPrompt.all` = eigene Prompts des Nutzers), ohne Aktionen, ohne Schnellaktionen-Block (Einstellung aus), feste Zeichenzahl. Zeigt keinen Nutzerinhalt.
 - **Gesperrt**, mit Grund: Anbieter (API-Schlüssel-Felder), Prompts (eigene Prompts = Nutzerinhalt), Wörterbuch &
   Snippets (Snippets, Espanso-Import), Verlauf (diktierte/umgeschriebene Texte), Diktat (Modelle, Wörterbuch,
   Mikrofonliste), Autovervollständigung (MLX-Status, Modellordner), Kurzbefehle und Berechtigungen (keine Inhalte,

@@ -25,9 +25,12 @@ struct DebugCommand: Equatable, Sendable {
     static let quickNotesWindow = "schnellnotizen"
     /// Abschnitt „Datei-Aufgaben“ (2026-11-13) — nur mit festen Demo-Zeilen im Code, nie aus Porters Liste (B5).
     static let fileTasksWindow = "dateiaufgaben"
+    /// Prompt-Popup (⌥⌘T) (2026-11-16) — nur mit den eingebauten Prompts (`DemoPrompt.builtIn`), nie `DemoPrompt.all`,
+    /// das auch eigene Prompts des Nutzers enthält (B5). Für Bilder auf der Website.
+    static let popupWindow = "popup"
     /// Fenster, von denen ein Bild erlaubt ist (B5). Anbieter, Prompts, Snippets, Verlauf, Diktat,
     /// Autovervollständigung, Notizen zeigen im echten Tippi echte Inhalte und fehlen bewusst.
-    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow, quickNotesWindow, fileTasksWindow]
+    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow, quickNotesWindow, fileTasksWindow, popupWindow]
     static let appearances: Set<String> = ["light", "dark", "system"]
 
     /// Größte Nachricht (4 Byte Länge + JSON). Größer → Verbindung zu.

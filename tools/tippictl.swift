@@ -3,7 +3,7 @@
 // `scripts/bild-test.sh` baut und signiert es nach build-dev/tippictl.
 //
 //   tippictl status
-//   tippictl snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben
+//   tippictl snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben|popup
 //   tippictl appearance light|dark|system
 //   tippictl selftest          → PASS/FAIL je Schritt, Exit 0 = alles bestanden, 1 = Fehlschlag
 //
@@ -12,7 +12,7 @@ import Darwin
 import Foundation
 import Security
 
-let usage = "Nutzung: tippictl status | snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben | appearance light|dark|system | selftest"
+let usage = "Nutzung: tippictl status | snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben|popup | appearance light|dark|system | selftest"
 let args = Array(CommandLine.arguments.dropFirst())
 guard let cmd = args.first else { print(usage); exit(64) }
 var message: [String: Any] = ["v": 1, "cmd": cmd]

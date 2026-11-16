@@ -161,6 +161,46 @@ final class DebugBridge {
         return win
     }
 
+    /// Das Prompt-Popup wie im echten Betrieb (gleiche View, randlos, durchsichtig, Schatten), aber nur mit den eingebauten
+    /// Prompts – nie `DemoPrompt.all` (enthält eigene Prompts des Nutzers, B5) – und ohne jede Aktion. Feste Zeichenzahl.
+    private func popupWindow() -> NSWindow {
+        let id = DebugCommand.popupWindow
+        if let win = windows[id] { return win }
+        let view = PromptPopupView(
+            prompts: DemoPrompt.builtIn,
+            // Ohne den Schnellaktionen-Block (Einstellung „Lokale Schnellaktionen“ aus): so steht die Prompt-Liste im Bild
+            // oben statt unter dem Raster der Textwerkzeuge.
+            localActions: [],
+            localActionsReady: true,
+            selectedCharacterCount: 104,
+            onSelect: { _ in },
+            onDismiss: {}
+        )
+        // Größe wie im echten Betrieb messen, dann doppelt so groß zeichnen: Die Kopie läuft auf 1×-Bildschirmen, das Bild
+        // soll auf Retina-Seiten scharf sein. SwiftUI skaliert Schrift und Formen vektoriell, nicht als Pixelbild.
+        let measure = NSHostingController(rootView: view)
+        measure.sizingOptions = [.intrinsicContentSize]
+        measure.view.layoutSubtreeIfNeeded()
+        let fitting = measure.view.fittingSize
+        let size = NSSize(width: max(fitting.width, 290), height: max(fitting.height, 100))
+        let scale: CGFloat = 2
+        let big = NSHostingController(rootView: view
+            .frame(width: size.width, height: size.height)
+            .scaleEffect(scale, anchor: .topLeading)
+            .frame(width: size.width * scale, height: size.height * scale, alignment: .topLeading))
+        let win = NSWindow(contentViewController: big)
+        win.styleMask = [.borderless]
+        win.backgroundColor = .clear
+        win.isOpaque = false
+        win.hasShadow = true
+        win.identifier = NSUserInterfaceItemIdentifier(id)
+        win.isReleasedWhenClosed = false
+        win.setContentSize(NSSize(width: size.width * scale, height: size.height * scale))
+        win.center()
+        windows[id] = win
+        return win
+    }
+
     /// Abschnitt „Datei-Aufgaben“ mit festen Demo-Zeilen (links) und dem Leer-Zustand (rechts). Liest nie Porters
     /// Liste — das Bild kann keinen echten Pfad und keinen echten Notiztext zeigen (B5).
     private func fileTasksWindow() -> NSWindow {
@@ -201,6 +241,8 @@ final class DebugBridge {
             win = quickNotesWindow()
         } else if id == DebugCommand.fileTasksWindow {
             win = fileTasksWindow()
+        } else if id == DebugCommand.popupWindow {
+            win = popupWindow()
         } else if let tab = Self.tab(for: id) {
             win = window(id, tab: tab)
         } else {

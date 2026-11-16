@@ -3,6 +3,7 @@
 ## [Unveröffentlicht]
 
 ### Intern
+- Bild-Testkopie: `tippictl snapshot popup` zeigt das Prompt-Popup (⌥⌘T) mit den eingebauten Prompts, nie mit eigenen Prompts (für Website-Bilder).
 - `scripts/unregister-build-copies.sh` + `make unregister-builds`: meldet Build- und Testkopien bei LaunchServices ab, damit `tippi://` nur die installierte App öffnet; läuft am Ende von `release.sh`. Am 14.11. dreimal von Hand nötig. Gemessen: Kopie angemeldet (2 Besitzer von `tippi:`) → Skript → 1.
 
 ## [2.39.2] — 2026-11-14
