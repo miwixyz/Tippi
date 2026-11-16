@@ -26,7 +26,7 @@ final class DictationCorrectionWindow: NSWindowController, NSWindowDelegate {
 }
 
 @MainActor
-private struct DictationCorrectionEditor: View {
+struct DictationCorrectionEditor: View {
     @ObservedObject private var corrections = DictationCorrections.shared
     let original: DictationCorrections.Rule?
     let dismiss: () -> Void
@@ -44,7 +44,7 @@ private struct DictationCorrectionEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if original == nil, let recent = corrections.recent {
-                Text("dictation.corrections.last").font(.headline)
+                Text("dictation.corrections.last").font(FamilyTheme.font(.headline))
                 ScrollView {
                     Text(verbatim: recent)
                         .textSelection(.enabled)
@@ -56,13 +56,13 @@ private struct DictationCorrectionEditor: View {
                 .focused($focusHeard)
             TextField("dictation.corrections.replacement", text: $replacement)
             Text("dictation.corrections.editorHint")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(FamilyTheme.font(.caption))
+                .foregroundStyle(FamilyTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             if let validationMessage {
                 Text(verbatim: validationMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(FamilyTheme.font(.caption))
+                    .foregroundStyle(FamilyTheme.textSecondary)
             }
             HStack {
                 Spacer()
@@ -75,6 +75,8 @@ private struct DictationCorrectionEditor: View {
                 .disabled(rule == nil || validationMessage != nil)
             }
         }
+        .font(FamilyTheme.font(13))
+        .tint(FamilyTheme.accentFill)
         .padding(20)
         .frame(width: 470)
         .onAppear { focusHeard = true }

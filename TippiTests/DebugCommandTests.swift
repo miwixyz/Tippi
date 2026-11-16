@@ -16,6 +16,15 @@ final class DebugCommandTests: XCTestCase {
         XCTAssertEqual(parse(#"{"v":1,"id":"a","cmd":"selftest"}"#)?.kind, .selftest)
     }
 
+    func testAcceptsDemoSurfaceWindows() {
+        // Schwebende Oberflächen mit festen Demo-Inhalten im Code (B5), nie mit echten Daten.
+        for window in ["popup", "popupvoll", "emojivorschlag", "emojipicker", "auswahlleiste", "uebersetzenbild",
+                       "toast", "aufnahme", "korrektur", "popupsprache", "vorschlag"] {
+            XCTAssertEqual(parse(#"{"v":1,"id":"a","cmd":"snapshot","window":"\#(window)"}"#)?.kind,
+                           .snapshot(window: window), window)
+        }
+    }
+
     func testRejectsWindowsWithRealContent() {
         // Reiter und Fenster, die im echten Tippi echte Inhalte zeigen (B5).
         for window in ["anbieter", "prompts", "snippets", "verlauf", "diktat", "autovervollstaendigung",

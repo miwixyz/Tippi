@@ -131,7 +131,7 @@ final class EmojiSuggestionModel: ObservableObject {
     @Published var suggestions: [InlineSuggestion] = []
 }
 
-private struct EmojiSuggestionView: View {
+struct EmojiSuggestionView: View {
     @ObservedObject var model: EmojiSuggestionModel
     let onPick: (InlineSuggestion) -> Void
 
@@ -143,11 +143,7 @@ private struct EmojiSuggestionView: View {
         }
         .padding(4)
         .frame(width: 300, alignment: .leading)
-        .tippiGlass(in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-        )
+        .floatingPanel(radius: FamilyTheme.Radius.field)
     }
 
     private func row(for suggestion: InlineSuggestion, isTop: Bool) -> some View {
@@ -157,24 +153,24 @@ private struct EmojiSuggestionView: View {
                 Text(emoji.character)
                     .font(.system(size: 17))
                 Text(emoji.nameDE.replacingOccurrences(of: "_", with: " "))
-                    .font(.system(size: 12))
-                    .foregroundStyle(isTop ? .primary : .secondary)
+                    .font(FamilyTheme.font(12, weight: .medium, relativeTo: .caption))
+                    .foregroundStyle(isTop ? FamilyTheme.accent : FamilyTheme.textSecondary)
                     .lineLimit(1)
             case .snippet(let trigger, let preview):
                 // Eigenes Snippet: Kürzel + Vorschau des Texts, damit man sieht,
                 // was eingefügt wird, bevor man die Leertaste drückt.
                 Image(systemName: "text.badge.checkmark")
                     .font(.system(size: 13))
-                    .foregroundStyle(.tint)
+                    .foregroundStyle(FamilyTheme.accent)
                     .frame(width: 20)
                 Text(trigger)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(isTop ? .primary : .secondary)
+                    .foregroundStyle(isTop ? FamilyTheme.accent : FamilyTheme.textPrimary)
                     .lineLimit(1)
                     .layoutPriority(1)
                 Text(preview)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .font(FamilyTheme.font(11, relativeTo: .caption2))
+                    .foregroundStyle(FamilyTheme.textSecondary)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
@@ -183,18 +179,15 @@ private struct EmojiSuggestionView: View {
                 // Names the key that inserts it — Space accepts the top entry
                 // (Tab resets the buffer and closes the list, so "⇥" was wrong).
                 Text("␣")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1)
-                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 3))
+                    .font(FamilyTheme.font(10, weight: .medium, relativeTo: .caption2))
+                    .foregroundStyle(FamilyTheme.accent.opacity(0.85))
             }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
         .background(
-            RoundedRectangle(cornerRadius: 5)
-                .fill(isTop ? Color.accentColor.opacity(0.22) : Color.clear)
+            RoundedRectangle(cornerRadius: FamilyTheme.Radius.field - 6, style: .continuous)
+                .fill(isTop ? FamilyTheme.accent.opacity(0.14) : Color.clear)
         )
         .contentShape(Rectangle())
         .onTapGesture { onPick(suggestion) }

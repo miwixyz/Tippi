@@ -126,11 +126,7 @@ struct SelectionActionBarView: View {
         .padding(.horizontal, Self.horizontalPadding)
         .padding(.vertical, Self.verticalPadding)
         .frame(width: Self.width, height: Self.height, alignment: .leading)
-        .tippiGlass(in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-        )
+        .floatingBar()
     }
 
     private var currencyRow: some View {
@@ -155,7 +151,7 @@ struct SelectionActionBarView: View {
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .frame(height: Self.iconSide)
                         .padding(.horizontal, 6)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.12)))
+                        .background(RoundedRectangle(cornerRadius: 6).fill(FamilyTheme.accent.opacity(0.12)))
                 }
                 .buttonStyle(.glassPress)
                 .glassGhostItem()
@@ -170,12 +166,12 @@ struct SelectionActionBarView: View {
         } label: {
             VStack(spacing: 0) {
                 Text(count.formatted())
-                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+                    .font(FamilyTheme.font(12, weight: .semibold, relativeTo: .caption).monospacedDigit())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text(action.title)
                     .font(FamilyTheme.font(8))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FamilyTheme.textSecondary)
                     .lineLimit(1)
             }
             .frame(width: Self.countWidth, height: Self.iconSide)

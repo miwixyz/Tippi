@@ -29,22 +29,17 @@ struct EmojiPickerView: View {
             footer
         }
         .frame(width: 380)
-        .tippiGlass()
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-        )
+        .floatingPanel()
         .onAppear { isSearchFocused = true }
     }
 
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FamilyTheme.textSecondary)
             TextField(String(localized: "emoji.search.placeholder"), text: $model.query)
                 .textFieldStyle(.plain)
-                .font(.system(size: 15))
+                .font(FamilyTheme.font(15, weight: .medium))
                 .focused($isSearchFocused)
                 // Return is handled by the panel's key monitor so it works
                 // regardless of focus; this keeps the field from beeping.
@@ -93,7 +88,7 @@ struct EmojiPickerView: View {
             .frame(width: cellSize, height: cellSize)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(isSelected ? Color.accentColor.opacity(0.28) : Color.clear)
+                    .fill(isSelected ? FamilyTheme.accent.opacity(0.14) : Color.clear)
             )
             .contentShape(Rectangle())
             .onTapGesture { onPick(emoji) }
@@ -110,8 +105,8 @@ struct EmojiPickerView: View {
                 .font(.system(size: 22))
                 .foregroundStyle(.tertiary)
             Text(String(localized: "emoji.empty.title"))
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .font(FamilyTheme.font(13, relativeTo: .footnote))
+                .foregroundStyle(FamilyTheme.textSecondary)
         }
         .frame(height: 220)
         .frame(maxWidth: .infinity)
@@ -123,18 +118,18 @@ struct EmojiPickerView: View {
                 Text(selected.character)
                     .font(.system(size: 15))
                 Text(selected.nameDE.replacingOccurrences(of: "_", with: " "))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .font(FamilyTheme.font(11, weight: .medium, relativeTo: .caption2))
+                    .foregroundStyle(FamilyTheme.textSecondary)
                     .lineLimit(1)
             } else if model.isShowingRecents {
                 Text(String(localized: "emoji.footer.recents"))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .font(FamilyTheme.font(11, weight: .medium, relativeTo: .caption2))
+                    .foregroundStyle(FamilyTheme.textSecondary)
             }
             Spacer(minLength: 8)
             Text(String(localized: "emoji.footer.hint"))
-                .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
+                .font(FamilyTheme.font(10, relativeTo: .caption2))
+                .foregroundStyle(FamilyTheme.textSecondary)
                 .lineLimit(1)
         }
         .padding(.horizontal, 12)

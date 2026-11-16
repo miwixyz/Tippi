@@ -107,6 +107,8 @@ Schlüsselbund), Snippets, Verlauf, Diktat (Modellordner), Autovervollständigun
   Fensternummer). Das Fenster öffnet die Kopie auch ohne Freigabe, damit `status` zeigt, dass es sich ohne Absturz
   aufbaut; ohne Freigabe kommt eine Fehlerantwort, kein Bild.
 
+**Demo-Oberflächen (2026-11-16):** `popup`, `popupvoll`, `emojivorschlag`, `emojipicker`, `auswahlleiste`, `uebersetzenbild`, `toast`, `aufnahme`, `korrektur`, `popupsprache`, `vorschlag` zeigen schwebende Oberflächen mit **festen Demo-Inhalten im Code** (`DebugSurfaces`, eingebaute Prompts, Beispieltexte), nie `DemoPrompt.all`, Snippets, Notizen, Verlauf oder eine echte Auswahl. Der Name `uebersetzen` bleibt gesperrt (echtes Fenster, echter Text); `DebugCommandTests` prüft beides.
+
 ## B6 – Ingestion: feste Befehle
 
 - **Vertrauensgrenze:** `debug.sock` – Bytes von einem anderen Prozess desselben Nutzers.

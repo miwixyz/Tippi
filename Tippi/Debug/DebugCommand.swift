@@ -32,7 +32,8 @@ struct DebugCommand: Equatable, Sendable {
     /// Autovervollständigung, Notizen zeigen im echten Tippi echte Inhalte und fehlen bewusst.
     /// Wie `popupWindow`, aber mit dem Block der Schnellaktionen (Prüfung der Optik des ganzen Popups).
     static let popupFullWindow = "popupvoll"
-    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow, quickNotesWindow, fileTasksWindow, popupWindow, popupFullWindow]
+    static let snapshotWindows: Set<String> = Set([settingsWindow, helpWindow, aboutWindow, quickNotesWindow, fileTasksWindow, popupWindow, popupFullWindow])
+        .union(DebugSurfaces.ids)
     static let appearances: Set<String> = ["light", "dark", "system"]
 
     /// Größte Nachricht (4 Byte Länge + JSON). Größer → Verbindung zu.

@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - Toast view
 
-private struct ToastView: View {
+struct ToastView: View {
     let message: String
     /// Einmal hüpfen beim Erscheinen. `.symbolEffect(.bounce)` ohne `value:` hüpft
     /// endlos — auch im ausgeblendeten Fenster: nach jedem Diktat blieb Tippi bei
@@ -13,20 +13,18 @@ private struct ToastView: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.tint)
+                .foregroundStyle(FamilyTheme.accent)
                 .font(.system(size: 13, weight: .medium))
                 .symbolEffect(.bounce, value: appeared)
                 .onAppear { appeared = true }
             Text(message)
                 .font(FamilyTheme.font(.subheadline, weight: .medium))
-                .foregroundStyle(.primary)
+                .foregroundStyle(FamilyTheme.textPrimary)
                 .lineLimit(1)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .tippiGlass(in: Capsule())
-        .overlay(Capsule().stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
-        .shadow(color: .black.opacity(0.14), radius: 10, y: 4)
+        .floatingPill()
         // Room for the shadow inside the window; without it the window edge cut
         // the shadow into a hard rectangle (same fix as the recording pill, 2026-10-02).
         .padding(Self.shadowRoom)

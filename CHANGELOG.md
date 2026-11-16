@@ -4,9 +4,10 @@
 
 ### Geändert
 - **Das Prompt-Popup (⌥⌘T) hat das Design der App-Familie.** Feste Karte statt Glas, Hinweiszeile „Prompt wählen oder tippen“ statt Titel und Schließen-Knopf, Prompt-Zeilen in Plus Jakarta Sans ohne Symbole, die gewählte Zeile mit Akzent-Tönung statt voller Blau-Fläche. Die Schnellaktionen nutzen nur noch die Akzentfarbe statt sechs Kategoriefarben. Tastatur unverändert (1–9, Pfeile, Return, Esc, Tippen zum Filtern).
+- **Emoji-Vorschlag und -Auswahl, Auswahl-Leiste, Toast, Aufnahme-Anzeige, Übersetzen-Fenster und die Sprachsteuerung im Popup folgen demselben Design.** Listen und Fenster sind feste Karten, Pille und Leiste getöntes Glas mit Rand und Schatten. Schrift Plus Jakarta Sans, Auswahl mit Akzent-Tönung, Aufnahme und Fehler in den Statusfarben der Familie statt Systemrot und -orange. Der graue Vorschlag beim Autovervollständigen bleibt bewusst unverändert.
 
 ### Intern
-- Bild-Testkopie: `tippictl snapshot popupvoll` zeigt das Popup samt Schnellaktionen.
+- Bild-Testkopie: `tippictl snapshot popupvoll` zeigt das Popup samt Schnellaktionen, dazu `emojivorschlag`, `emojipicker`, `auswahlleiste`, `uebersetzenbild`, `toast`, `aufnahme`, `korrektur`, `popupsprache` und `vorschlag` (feste Demo-Inhalte).
 - Bild-Testkopie: `tippictl snapshot popup` zeigt das Prompt-Popup (⌥⌘T) mit den eingebauten Prompts, nie mit eigenen Prompts (für Website-Bilder).
 - `scripts/unregister-build-copies.sh` + `make unregister-builds`: meldet Build- und Testkopien bei LaunchServices ab, damit `tippi://` nur die installierte App öffnet; läuft am Ende von `release.sh`. Am 14.11. dreimal von Hand nötig. Gemessen: Kopie angemeldet (2 Besitzer von `tippi:`) → Skript → 1.
 

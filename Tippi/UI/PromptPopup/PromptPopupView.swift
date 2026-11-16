@@ -25,6 +25,8 @@ struct PromptPopupView: View {
     var audioRecorder: AudioRecorder? = nil
     var onVoiceTranscribed: ((String) -> Void)? = nil
     var voiceMode: VoiceMode = .dictate
+    /// Nur für Bilder der Bild-Testkopie: zeigt die Sprachsteuerung auch ohne bereites Diktatmodell.
+    var showsVoiceControlsAlways = false
 
     // -1 means the "Direkt einfügen" row is highlighted (only when onDirectInsert != nil)
     @State private var selectedIndex: Int
@@ -51,8 +53,10 @@ struct PromptPopupView: View {
         onDirectInsert: (() -> Void)? = nil,
         audioRecorder: AudioRecorder? = nil,
         onVoiceTranscribed: ((String) -> Void)? = nil,
-        voiceMode: VoiceMode = .dictate
+        voiceMode: VoiceMode = .dictate,
+        showsVoiceControlsAlways: Bool = false
     ) {
+        self.showsVoiceControlsAlways = showsVoiceControlsAlways
         self.prompts = prompts
         self.localActions = localActions
         self.localActionsReady = localActionsReady
@@ -107,6 +111,7 @@ struct PromptPopupView: View {
                 VoiceSection(
                     audioRecorder: audioRecorder,
                     mode: voiceMode,
+                    forceControls: showsVoiceControlsAlways,
                     onTranscribed: onVoiceTranscribed ?? { _ in },
                     onFieldFocusChange: { instructionFieldActive = $0 },
                     onInstructionChange: { newText in
@@ -381,6 +386,7 @@ private struct DirectInsertRow: View {
 private struct VoiceSection: View {
     var audioRecorder: AudioRecorder?
     let mode: VoiceMode
+    var forceControls = false
     let onTranscribed: (String) -> Void
     var onFieldFocusChange: (Bool) -> Void = { _ in }
     /// Called on every keystroke in the instruction field. Parent uses this to
@@ -397,12 +403,14 @@ private struct VoiceSection: View {
     init(
         audioRecorder: AudioRecorder?,
         mode: VoiceMode,
+        forceControls: Bool = false,
         onTranscribed: @escaping (String) -> Void,
         onFieldFocusChange: @escaping (Bool) -> Void = { _ in },
         onInstructionChange: @escaping (String) -> Void = { _ in }
     ) {
         self.audioRecorder = audioRecorder
         self.mode          = mode
+        self.forceControls = forceControls
         self.onTranscribed = onTranscribed
         self.onFieldFocusChange = onFieldFocusChange
         self.onInstructionChange = onInstructionChange
@@ -411,7 +419,7 @@ private struct VoiceSection: View {
 
     var body: some View {
         Group {
-            if !SpeechEngine.isCurrentEngineReady {  // Parakeet (default) needs no Whisper model — audit 2026-09-27
+            if !SpeechEngine.isCurrentEngineReady && !forceControls {  // Parakeet (default) needs no Whisper model — audit 2026-09-27
                 setupBanner
             } else {
                 voiceControls
@@ -432,23 +440,23 @@ private struct VoiceSection: View {
     private var setupBanner: some View {
         HStack(spacing: 8) {
             Image(systemName: "mic.slash")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FamilyTheme.textSecondary)
                 .font(.system(size: 14))
             VStack(alignment: .leading, spacing: 2) {
                 Text(String(localized: "voice.setup.banner.title"))
                     .font(FamilyTheme.font(.caption, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(FamilyTheme.textPrimary)
                 Text(String(localized: "voice.setup.banner.body"))
                     .font(FamilyTheme.font(.caption2))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FamilyTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 7)
-                .fill(Color.secondary.opacity(0.08))
+            RoundedRectangle(cornerRadius: FamilyTheme.Radius.field - 4, style: .continuous)
+                .fill(FamilyTheme.accent.opacity(0.08))
         )
     }
 
@@ -517,7 +525,7 @@ private struct VoiceSection: View {
             if !typedInstruction.trimmingCharacters(in: .whitespaces).isEmpty {
                 Button(action: submitTyped) {
                     Image(systemName: "arrow.up.circle.fill")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(FamilyTheme.accent)
                         .font(.system(size: 18))
                 }
                 .buttonStyle(.plain)
@@ -539,7 +547,7 @@ private struct VoiceSection: View {
                     .fill(micButtonBackground)
                     .frame(width: 32, height: 32)
                 Image(systemName: micButtonSymbol)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(FamilyTheme.onAccent)
                     .font(.system(size: 14, weight: .medium))
             }
         }
@@ -555,9 +563,9 @@ private struct VoiceSection: View {
 
     private var micButtonBackground: Color {
         switch voiceState {
-        case .recording:     return .red
-        case .transcribing:  return .orange
-        default:             return .accentColor
+        case .recording:     return FamilyTheme.danger
+        case .transcribing:  return FamilyTheme.warning
+        default:             return FamilyTheme.accent
         }
     }
 
@@ -577,22 +585,22 @@ private struct VoiceSection: View {
                         ? "voice.mic.speakInstruction"
                         : "voice.mic.tapToDictate"))
                 .font(FamilyTheme.font(.caption))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FamilyTheme.textSecondary)
         case .recording:
             Text(String(localized: "voice.mic.recording"))
                 .font(FamilyTheme.font(.caption))
-                .foregroundStyle(.red)
+                .foregroundStyle(FamilyTheme.danger)
         case .transcribing:
             HStack(spacing: 4) {
                 ProgressView().scaleEffect(0.6)
                 Text(String(localized: "voice.mic.transcribing"))
                     .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FamilyTheme.textSecondary)
             }
         case .failed(let msg):
             Text(msg)
                 .font(FamilyTheme.font(.caption2))
-                .foregroundStyle(.orange)
+                .foregroundStyle(FamilyTheme.warning)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -603,7 +611,7 @@ private struct VoiceSection: View {
         HStack(spacing: 2) {
             ForEach(0..<4, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.red.opacity(0.7))
+                    .fill(FamilyTheme.danger.opacity(0.7))
                     .frame(width: 3, height: CGFloat(4 + Int(recorder.level * 12)) + CGFloat(i % 2 == 0 ? 2 : 0))
                     .animation(.easeInOut(duration: 0.1), value: recorder.level)
             }

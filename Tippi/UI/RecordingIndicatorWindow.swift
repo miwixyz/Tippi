@@ -11,7 +11,7 @@ private struct WaveformBars: View {
         HStack(spacing: 2.5) {
             ForEach(0..<barCount, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Color.accentColor)
+                    .fill(FamilyTheme.accent)
                     .frame(width: 3, height: barHeight(for: i))
                     .animation(.easeInOut(duration: 0.12), value: level)
             }
@@ -53,7 +53,7 @@ enum RecordingDuration {
 
 // MARK: - Indicator view
 
-private struct RecordingIndicatorView: View {
+struct RecordingIndicatorView: View {
     let mode: RecordingIndicatorWindowController.Mode
     @ObservedObject var recorder: AudioRecorder
     let aiEnabled: Bool
@@ -70,12 +70,12 @@ private struct RecordingIndicatorView: View {
             case .recording:
                 Image(systemName: source.dictationMode?.symbol ?? (isMail ? "envelope.fill" : "mic.fill"))
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(FamilyTheme.accent)
                 WaveformBars(level: recorder.level)
                 Text(RecordingDuration.formatted(recorder.elapsed))
                     // Monospaced digits: without them the pill twitches on every
                     // tick as glyph widths change, and the window is sized once.
-                    .font(.subheadline.weight(.medium).monospacedDigit())
+                    .font(FamilyTheme.font(.subheadline, weight: .medium).monospacedDigit())
                 Text(source.dictationMode?.title
                      ?? String(localized: isMail ? "dictation.indicator.recordingMail" : "dictation.indicator.recording"))
                     .font(FamilyTheme.font(.subheadline, weight: .medium))
@@ -91,12 +91,10 @@ private struct RecordingIndicatorView: View {
                 aiBadge
             }
         }
-        .foregroundStyle(.primary)
+        .foregroundStyle(FamilyTheme.textPrimary)
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .tippiGlass(in: Capsule())
-        .overlay(Capsule().stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
-        .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+        .floatingPill()
     }
 
     /// Status hint (not a button) — the whole window ignores mouse events.
@@ -112,7 +110,7 @@ private struct RecordingIndicatorView: View {
             Text(providerName ?? String(localized: "dictation.indicator.aiSuffix"))
                 .font(FamilyTheme.font(.subheadline, weight: .regular))
         }
-        .foregroundStyle(.secondary)
+        .foregroundStyle(FamilyTheme.textSecondary)
     }
 }
 
@@ -160,7 +158,7 @@ private struct LiveTextBox: View {
         if !preview.text.isEmpty {
             Text(LiveTranscriptionPreview.tail(preview.text, maxCharacters: size.tailCharacters))
                 .font(FamilyTheme.font(size.pointSize))
-                .foregroundStyle(.primary)
+                .foregroundStyle(FamilyTheme.textPrimary)
                 .multilineTextAlignment(.leading)
                 .lineLimit(3)
                 // If the text ever needs a fourth line, drop the oldest words,
@@ -169,9 +167,7 @@ private struct LiveTextBox: View {
                 .frame(maxWidth: size.windowSize.width - 40, alignment: .leading)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .tippiGlass(in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
-                .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
+                .floatingBar()
                 .transition(.opacity)
                 // VoiceOver reads the whole text, without the leading "…".
                 .accessibilityElement(children: .ignore)

@@ -175,13 +175,23 @@ final class DebugBridge {
             onSelect: { _ in },
             onDismiss: {}
         )
+        return surfaceWindow(id, AnyView(view), minSize: NSSize(width: 290, height: 100))
+    }
+
+    /// Fenster einer schwebenden Oberfläche mit festen Demo-Inhalten (`DebugSurfaces`).
+    private func surfaceWindow(_ id: String, _ view: AnyView) -> NSWindow {
+        if let win = windows[id] { return win }
+        return surfaceWindow(id, view, minSize: NSSize(width: 20, height: 20))
+    }
+
+    private func surfaceWindow(_ id: String, _ view: AnyView, minSize: NSSize) -> NSWindow {
         // Größe wie im echten Betrieb messen, dann doppelt so groß zeichnen: Die Kopie läuft auf 1×-Bildschirmen, das Bild
         // soll auf Retina-Seiten scharf sein. SwiftUI skaliert Schrift und Formen vektoriell, nicht als Pixelbild.
         let measure = NSHostingController(rootView: view)
         measure.sizingOptions = [.intrinsicContentSize]
         measure.view.layoutSubtreeIfNeeded()
         let fitting = measure.view.fittingSize
-        let size = NSSize(width: max(fitting.width, 290), height: max(fitting.height, 100))
+        let size = NSSize(width: max(fitting.width, minSize.width), height: max(fitting.height, minSize.height))
         let scale: CGFloat = 2
         let big = NSHostingController(rootView: view
             .frame(width: size.width, height: size.height)
@@ -242,6 +252,8 @@ final class DebugBridge {
             win = fileTasksWindow()
         } else if id == DebugCommand.popupWindow || id == DebugCommand.popupFullWindow {
             win = popupWindow(id)
+        } else if let surface = DebugSurfaces.view(for: id) {
+            win = surfaceWindow(id, surface)
         } else if let tab = Self.tab(for: id) {
             win = window(id, tab: tab)
         } else {

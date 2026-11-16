@@ -29,14 +29,16 @@ struct TranslateQuickView: View {
         onClose: @escaping () -> Void,
         audioRecorder: AudioRecorder?,
         initialText: String = "",
-        onReplace: ((String) -> Void)? = nil
+        onReplace: ((String) -> Void)? = nil,
+        previewState: ViewState = .idle
     ) {
+        self._state = State(initialValue: previewState)
         self.onClose = onClose
         self.audioRecorder = audioRecorder
         self.onReplace = onReplace
         self._input = State(initialValue: initialText)
     }
-    @State private var state: ViewState = .idle
+    @State private var state: ViewState
     @State private var voice: VoiceState = .idle
     @State private var task: Task<Void, Never>?
     @State private var transcriptionTask: Task<Void, Never>?
@@ -77,11 +79,7 @@ struct TranslateQuickView: View {
         // panel side makes the window follow this.
         .frame(width: 560)
         .fixedSize(horizontal: false, vertical: true)
-        .tippiGlass(in: RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-        )
+        .floatingPanel()
         .padding(1) // keeps the stroke from clipping against the panel edge
         .onAppear {
             // Focus the field once the panel has actually become key window.
@@ -121,7 +119,7 @@ struct TranslateQuickView: View {
                     .font(.system(size: 13))
             }
             .buttonStyle(.plain)
-            .foregroundStyle(sourceLanguage == .auto ? Color.secondary.opacity(0.35) : Color.secondary)
+            .foregroundStyle(sourceLanguage == .auto ? FamilyTheme.textSecondary.opacity(0.35) : FamilyTheme.textSecondary)
             .disabled(sourceLanguage == .auto)
             .help(String(localized: "translate.panel.swap"))
 
@@ -135,7 +133,7 @@ struct TranslateQuickView: View {
 
             Spacer()
         }
-        .font(.system(size: 12))
+        .font(FamilyTheme.font(12, weight: .medium, relativeTo: .caption))
         .padding(.horizontal, 16)
         .padding(.top, 10)
     }
@@ -156,7 +154,7 @@ struct TranslateQuickView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "character.bubble")
                 .font(.system(size: 18))
-                .foregroundStyle(.tint)
+                .foregroundStyle(FamilyTheme.accent)
                 .padding(.top, 2)
             // `axis: .vertical` + a line range: a single-line TextField holding
             // multi-paragraph text rendered its overflow outside the field's
@@ -164,7 +162,7 @@ struct TranslateQuickView: View {
             // lines, scrolls internally beyond that.
             TextField(String(localized: "translate.panel.placeholder"), text: $input, axis: .vertical)
                 .textFieldStyle(.plain)
-                .font(.system(size: 18))
+                .font(FamilyTheme.font(18, relativeTo: .title3))
                 .lineLimit(1...6)
                 .focused($inputFocused)
                 // Return translates; ⌥Return inserts a newline, so long input
@@ -190,7 +188,7 @@ struct TranslateQuickView: View {
             Button(action: toggleRecording) {
                 Image(systemName: voice == .recording ? "mic.fill" : "mic")
                     .font(.system(size: 16))
-                    .foregroundStyle(voice == .recording ? Color.red : Color.secondary)
+                    .foregroundStyle(voice == .recording ? FamilyTheme.danger : FamilyTheme.textSecondary)
             }
             .buttonStyle(.plain)
             .disabled(voice == .transcribing)
@@ -202,7 +200,7 @@ struct TranslateQuickView: View {
         Button(action: onClose) {
             Image(systemName: "xmark.circle.fill")
                 .font(.system(size: 16))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FamilyTheme.textSecondary)
         }
         .buttonStyle(.plain)
         .help(String(localized: "translate.panel.close"))
@@ -287,7 +285,7 @@ struct TranslateQuickView: View {
         case .failed(let message):
             HStack {
                 Image(systemName: "exclamationmark.triangle")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(FamilyTheme.warning)
                 Text(message)
                     .font(FamilyTheme.font(.callout))
                     .foregroundStyle(.secondary)
