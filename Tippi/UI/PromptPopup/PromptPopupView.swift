@@ -117,12 +117,9 @@ struct PromptPopupView: View {
             }
         }
         .frame(width: 290)
-        .tippiGlass()
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.secondary.opacity(0.25), lineWidth: 0.5)
-        )
+        .background(popupShape.fill(FamilyTheme.card))
+        .clipShape(popupShape)
+        .overlay(popupShape.strokeBorder(FamilyTheme.cardStroke, lineWidth: 0.8))
         .focusable()
         .focused($focused)
         .focusEffectDisabled()
@@ -199,43 +196,36 @@ struct PromptPopupView: View {
         }
     }
 
+    /// Feste Karte der App-Familie (nie transparent), Radius 20.
+    private var popupShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: FamilyTheme.Radius.tile, style: .continuous)
+    }
+
+    /// Hinweiszeile statt Titel: zeigt, was getippt wird, sonst den Hinweis. Kein Schließen-Knopf
+    /// (Esc und Klick daneben schließen).
     private var header: some View {
         HStack(spacing: 6) {
-            // Show the search glass only when the query originates from the
-            // container (direct type-to-search, dictate mode). When the
-            // instruction field is active the query is visible in the text
-            // field below, so keep the header neutral to avoid duplication.
-            Image(systemName: (!searchQuery.isEmpty && !instructionFieldActive)
-                  ? "magnifyingglass" : "pencil.and.outline")
-                .foregroundStyle(.tint)
-            if !searchQuery.isEmpty && !instructionFieldActive {
+            if searchQuery.isEmpty || instructionFieldActive {
+                Text(String(localized: "popup.hint"))
+                    .foregroundStyle(FamilyTheme.textSecondary)
+            } else {
                 Text(searchQuery)
-                    .font(FamilyTheme.font(.subheadline, weight: .semibold))
+                    .foregroundStyle(FamilyTheme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.head)
-            } else {
-                Text("Tippi")
-                    .font(FamilyTheme.font(.subheadline, weight: .semibold))
             }
             Spacer()
-            // Match-count is always shown when a filter is active, regardless
-            // of source — visual confirmation that filtering is running.
-            if !searchQuery.isEmpty {
+            if !searchQuery.isEmpty && !instructionFieldActive {
                 Text("\(filteredPrompts.count)")
-                    .font(FamilyTheme.font(.caption))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FamilyTheme.textSecondary)
                     .monospacedDigit()
             }
-            Button(action: onDismiss) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
-                    .font(.system(size: 15))
-            }
-            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 10)
-        .padding(.bottom, 6)
+        .font(FamilyTheme.font(12, weight: .medium, relativeTo: .caption))
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+        .accessibilityElement(children: .combine)
     }
 
     private var list: some View {
@@ -261,6 +251,7 @@ struct PromptPopupView: View {
             }
         }
         .padding(.vertical, 6)
+        .padding(.horizontal, 4)
     }
 
     private func runLocalAction(_ action: LocalTextAction) {
@@ -359,30 +350,25 @@ private struct DirectInsertRow: View {
             HStack(spacing: 10) {
                 Image(systemName: "arrow.down.doc.fill")
                     .frame(width: 18)
-                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .accentColor)
+                    .foregroundStyle(FamilyTheme.accent)
                 Text(String(localized: "voice.directInsert"))
-                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .primary)
+                    .font(FamilyTheme.font(13, weight: .medium))
+                    .foregroundStyle(isSelected ? FamilyTheme.accent : FamilyTheme.textPrimary)
                 Spacer()
                 Text("↩")
-                    .font(.caption2.monospaced())
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 1)
-                    .background(
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(isSelected ? Color(nsColor: .selectedMenuItemTextColor).opacity(0.25) : Color.secondary.opacity(0.15))
-                    )
-                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
+                    .font(FamilyTheme.font(11, weight: .medium, relativeTo: .caption2))
+                    .foregroundStyle(isSelected ? FamilyTheme.accent.opacity(0.85) : FamilyTheme.textSecondary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? FamilyTheme.accentFill : Color.clear)   // weiße Schrift: Füllung ≥ 4,6 : 1 (2.20.0)
-                .padding(.horizontal, 6)
+            RoundedRectangle(cornerRadius: FamilyTheme.Radius.field - 4, style: .continuous)
+                .fill(isSelected ? FamilyTheme.accent.opacity(0.14) : Color.clear)
+                .padding(.horizontal, 4)
         )
         .onHover { hovering in
             if hovering { onHover() }
@@ -689,34 +675,27 @@ private struct PromptRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 10) {
-                Image(systemName: prompt.symbol)
-                    .frame(width: 18)
-                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
                 Text(prompt.title)
-                    .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .primary)
+                    .font(FamilyTheme.font(13, weight: .medium))
+                    .foregroundStyle(isSelected ? FamilyTheme.accent : FamilyTheme.textPrimary)
                 Spacer()
                 if !shortcut.isEmpty {
                     Text(shortcut)
-                        .font(.caption2.monospaced())
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(isSelected ? Color(nsColor: .selectedMenuItemTextColor).opacity(0.25) : Color.secondary.opacity(0.15))
-                        )
-                        .foregroundStyle(isSelected ? Color(nsColor: .selectedMenuItemTextColor) : .secondary)
+                        .font(FamilyTheme.font(11, weight: .medium, relativeTo: .caption2))
+                        .monospacedDigit()
+                        .foregroundStyle(isSelected ? FamilyTheme.accent.opacity(0.85) : FamilyTheme.textSecondary)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? FamilyTheme.accentFill : Color.clear)   // weiße Schrift: Füllung ≥ 4,6 : 1 (2.20.0)
-                .padding(.horizontal, 6)
+            RoundedRectangle(cornerRadius: FamilyTheme.Radius.field - 4, style: .continuous)
+                .fill(isSelected ? FamilyTheme.accent.opacity(0.14) : Color.clear)
+                .padding(.horizontal, 4)
         )
         .onHover { hovering in
             if hovering { onHover() }

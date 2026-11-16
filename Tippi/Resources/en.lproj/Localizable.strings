@@ -902,3 +902,5 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.corrections.validation.noMatch" = "This phrase would not make a new correction here. Check the spelling and your existing rules.";
 "dictation.corrections.validation.deleted" = "This rule has been deleted.";
 "dictation.toast.correctionWriteUnverified" = "Insertion could not be confirmed. Check the text field.";
+
+"popup.hint" = "Pick a prompt or type";

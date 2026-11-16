@@ -30,7 +30,9 @@ struct DebugCommand: Equatable, Sendable {
     static let popupWindow = "popup"
     /// Fenster, von denen ein Bild erlaubt ist (B5). Anbieter, Prompts, Snippets, Verlauf, Diktat,
     /// Autovervollständigung, Notizen zeigen im echten Tippi echte Inhalte und fehlen bewusst.
-    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow, quickNotesWindow, fileTasksWindow, popupWindow]
+    /// Wie `popupWindow`, aber mit dem Block der Schnellaktionen (Prüfung der Optik des ganzen Popups).
+    static let popupFullWindow = "popupvoll"
+    static let snapshotWindows: Set<String> = [settingsWindow, helpWindow, aboutWindow, quickNotesWindow, fileTasksWindow, popupWindow, popupFullWindow]
     static let appearances: Set<String> = ["light", "dark", "system"]
 
     /// Größte Nachricht (4 Byte Länge + JSON). Größer → Verbindung zu.
