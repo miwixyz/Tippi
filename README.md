@@ -53,6 +53,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **One look (v2.40)** — the popup, emoji suggestions and picker, selection bar, toast, recording indicator and translate window share one design: solid cards, glass only for the small pill and bar, Plus Jakarta Sans, the chosen row tinted in the accent colour. Keys and behaviour are unchanged.
 - **Voice note (v2.39)** — ⌃⌥⌘N shows your quick notes floating above everything, even over a full-screen video, and starts dictation at once; press again and the text lands with a timestamp at the bottom of the note “Inbox”. The quick-notes window has a transparency slider.
 - **File tasks from Porter (v2.38)** — if you use Porter, the Notes window lists the open tasks you attached to files and folders there, newest first. A click opens the file in Porter (without Porter, in Finder). Tippi only reads Porter's list in iCloud Drive and never changes it.
 - **Calmer, livelier controls (v2.37)** — in the selection bar a soft hover shadow glides from icon to icon and pressed icons spring back; the quick notes tabs are a pill that glides to the tab you pick.
@@ -513,6 +514,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.32.0 | ✅ Done | **Dictation modes** — extra key with the dictation trigger picks Improve, Defuse, Add emojis or your own prompt; local MLX warmed while you speak (20 s → <1 s), dictation fits the text at the cursor, Apple Intelligence as provider, Parakeet Ultra selectable. |
 | v2.32.1 | ✅ Done | **Haiku 5.5 as the Anthropic default** — cleanup prompt names German filler "also"/"genau"; new `scripts/diktat-pruefstand.py` checks dictation cleanup (Haiku 5.5 18/18, Haiku 4.5 17/18) |
 | v2.34.0 | ✅ Done | **Quick notes in the menu bar** — up to three notes as tabs behind the Tippi icon; permission hints use the macOS 27 name |
+| v2.40.0 | ✅ Done | **One look** — the popup and six floating surfaces use the app family design; keys unchanged |
 | v2.39.2 | ✅ Done | **Voice note window on screen** — the quick-notes window is always kept on the visible screen (it opened below the edge on a notched MacBook) and stays open until Esc; dictation goes straight into the open “Inbox” |
 | v2.39.1 | ✅ Done | **Voice note window** — the quick-notes window now also appears on the first ⌃⌥⌘N after launch (notes load at startup) |
 | v2.39.0 | ✅ Done | **Voice note** — ⌃⌥⌘N: floating quick notes + dictation into the note “Inbox”, transparency slider; clipboard restore marked as transient |

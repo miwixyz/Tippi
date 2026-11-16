@@ -2,10 +2,6 @@
 
 ## [2.40.0] — 2026-11-16
 
-- _Add release notes here._
-
-## [Unveröffentlicht]
-
 ### Geändert
 - **Das Prompt-Popup (⌥⌘T) hat das Design der App-Familie.** Feste Karte statt Glas, Hinweiszeile „Prompt wählen oder tippen“ statt Titel und Schließen-Knopf, Prompt-Zeilen in Plus Jakarta Sans ohne Symbole, die gewählte Zeile mit Akzent-Tönung statt voller Blau-Fläche. Die Schnellaktionen nutzen nur noch die Akzentfarbe statt sechs Kategoriefarben. Tastatur unverändert (1–9, Pfeile, Return, Esc, Tippen zum Filtern).
 - **Emoji-Vorschlag und -Auswahl, Auswahl-Leiste, Toast, Aufnahme-Anzeige, Übersetzen-Fenster und die Sprachsteuerung im Popup folgen demselben Design.** Listen und Fenster sind feste Karten, Pille und Leiste getöntes Glas mit Rand und Schatten. Schrift Plus Jakarta Sans, Auswahl mit Akzent-Tönung, Aufnahme und Fehler in den Statusfarben der Familie statt Systemrot und -orange. Der graue Vorschlag beim Autovervollständigen bleibt bewusst unverändert.
