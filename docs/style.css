@@ -197,6 +197,7 @@ html[lang="de"] .hero h1 { font-size: clamp(34px, 3.6vw, 52px); }
 .hero .btn.ghost { background: none; border-color: transparent; color: var(--accent); padding: 12px 10px; text-decoration: underline; text-decoration-color: rgba(var(--accent-rgb), .35); text-underline-offset: 3px; }
 .hero .btn.ghost:hover { border-color: transparent; text-decoration-color: currentColor; }
 .hero small { display: block; margin-top: 16px; color: var(--text-2); font-size: 14px; }
+.hero small.price { font-size: 15px; color: var(--text); max-width: 46ch; line-height: 1.5; }
 .hero .contrast { margin-top: 4px; font-size: 13px; }
 
 /* Hero: a neutral sample text as backdrop, the real Tippi popup (screenshot of the app) in front */
