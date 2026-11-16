@@ -61,17 +61,15 @@
 <main id="content" tabindex="-1">
 <header class="hero">
   <div class="wrap">
-    <img src="mascot-224.png" class="mascot" alt="Tippi mascot" width="112" height="112">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1 data-lang="en">Mark text.<br><span class="accent nw">Hit ⌥⌘T.</span><br>AI fixes it.</h1>
+        <h1 data-lang="de">Text markieren.<br><span class="accent nw">⌥⌘T drücken.</span><br>KI macht den Rest.</h1>
 
-    <div><p class="news"><span data-lang="en">New in 2.39: voice note. ⌃⌥⌘N shows your quick notes floating above everything, even over a full-screen video, and starts dictation. Press again and the text lands with the time in the note “Inbox”.</span><span data-lang="de">Neu in 2.39: Sprachnotiz. ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allem, auch über einem Video im Vollbild, und startet das Diktat. Nochmal drücken, und der Text steht mit Uhrzeit in der Notiz „Eingang“.</span></p></div>
+        <p class="sub" data-lang="en">Rewrite, translate and reply at your cursor, in any Mac app. One menu bar app instead of eight, open source, with your own key or fully local.</p>
+        <p class="sub" data-lang="de">Schreibe um, übersetze und antworte direkt am Cursor, in jeder Mac-App. Eine Menüleisten-App statt acht, Open Source, mit eigenem Key oder komplett lokal.</p>
 
-    <h1 data-lang="en">Mark text.<br><span class="accent">Hit ⌥⌘T.</span> AI fixes it.</h1>
-    <h1 data-lang="de">Text markieren.<br><span class="accent">⌥⌘T drücken.</span> KI macht den Rest.</h1>
-
-    <p class="sub" data-lang="en">One menu bar app instead of eight: AI writing right at your cursor in any app, plus dictation, translation, snippets, emoji, notes and text from the screen. Open source, bring your own key, fully local if you want.</p>
-    <p class="sub" data-lang="de">Eine Menüleisten-App statt acht: KI-Schreiben direkt am Cursor in jeder App, dazu Diktat, Übersetzung, Kürzel, Emojis, Notizen und Text vom Bildschirm. Open Source, mit eigenem API-Key, auf Wunsch komplett lokal.</p>
-
-    <div class="cta-group">
+        <div class="cta-group">
       <a class="btn" href="https://github.com/miwixyz/Tippi/releases/latest" target="_blank" rel="noopener">
         <svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span data-lang="en">Download for macOS</span>
@@ -83,10 +81,17 @@
       </a>
     </div>
 
-    <small data-lang="en">Free · MIT licensed · Apple Silicon · macOS 15+</small>
-    <small data-lang="de">Kostenlos · MIT-Lizenz · Apple Silicon · macOS 15+</small>
-    <small class="contrast" data-lang="en">No subscription. Your API keys, your costs.</small>
-    <small class="contrast" data-lang="de">Kein Abo. Deine API-Keys, deine Kosten.</small>
+        <small data-lang="en">Free · MIT licensed · Apple Silicon · macOS 15+</small>
+        <small data-lang="de">Kostenlos · MIT-Lizenz · Apple Silicon · macOS 15+</small>
+        <small class="contrast" data-lang="en">No subscription. Your API keys, your costs.</small>
+        <small class="contrast" data-lang="de">Kein Abo. Deine API-Keys, deine Kosten.</small>
+
+      </div>
+      <div class="hero-stage demo" id="demo">
+        <video data-lang="en" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in action: the AI prompt popup, emoji shortcodes, currency converter, local dictation, translation and AI note titles"></video>
+        <video data-lang="de" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in Aktion: KI-Pop-up, Emoji-Kürzel, Währungsrechner, lokales Diktat, Übersetzen und KI-Notiztitel"></video>
+      </div>
+    </div>
 
     <div class="app-strip" aria-label="Apps in which Tippi works">
       <span class="label" data-lang="en">Works right inside</span>
@@ -100,102 +105,243 @@
       <span class="app-chip">Messages</span>
       <span class="app-chip"><span data-lang="en">and any other text field</span><span data-lang="de">und jedem anderen Textfeld</span></span>
     </div>
+
+    <p class="news"><span data-lang="en">New in 2.39: voice note. ⌃⌥⌘N floats your quick notes over everything and starts dictation.</span><span data-lang="de">Neu in 2.39: Sprachnotiz. ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allem und startet das Diktat.</span></p>
   </div>
 </header>
 
-<!-- ── Demo video (self-hosted, no third party) ──────────────────────────── -->
-<section id="demo" class="demo">
-  <div class="wrap">
-    <video data-lang="en" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in action: the AI prompt popup, emoji shortcodes, currency converter, local dictation, translation and AI note titles"></video>
-    <video data-lang="de" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in Aktion: KI-Pop-up, Emoji-Kürzel, Währungsrechner, lokales Diktat, Übersetzen und KI-Notiztitel"></video>
-  </div>
-</section>
-
-<!-- ── One app instead of eight ──────────────────────────────────────────── -->
-<section id="one-app">
+<!-- ── One app instead of eight: all features in four groups ───────────────── -->
+<section id="features">
   <div class="wrap">
     <h2 data-lang="en">One app instead of eight</h2>
     <h2 data-lang="de">Eine App statt acht</h2>
     <p class="lead" data-lang="en">At its core, Tippi is AI writing right where you type. Around it sit the small helpers most people install one by one.</p>
     <p class="lead" data-lang="de">Im Kern ist Tippi KI-Schreiben genau da, wo du tippst. Dazu kommen die kleinen Helfer, die man sonst einzeln installiert.</p>
 
-    <div class="card core">
-      <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
-      <h3 data-lang="en">AI writing, grammar and tone, in every app</h3>
-      <h3 data-lang="de">KI-Schreiben, Rechtschreibung und Ton, in jeder App</h3>
-      <p data-lang="en">Instead of Grammarly or copying text into a chat app and back: 24 built-in prompts plus your own, 8 providers, applied in place with your own keys.</p>
-      <p data-lang="de">Statt Grammarly oder Text in eine Chat-App kopieren und wieder zurück: 24 eingebaute Prompts plus deine eigenen, 8 Anbieter, direkt an Ort und Stelle, mit deinen eigenen Keys.</p>
+    <div class="fgroups">
+      <div class="fgroup">
+        <div class="fg-head"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <h3 data-lang="en">Write</h3><h3 data-lang="de">Schreiben</h3></div>
+        <p class="fg-lead" data-lang="en">AI writing right where your cursor is.</p>
+        <p class="fg-lead" data-lang="de">KI-Schreiben direkt am Cursor.</p>
+        <ul>
+          <li>
+            <h4 data-lang="en">24 curated built-in prompts</h4>
+            <h4 data-lang="de">24 kuratierte Built-in-Prompts</h4>
+            <p class="instead"><span data-lang="en">Instead of Grammarly or copying text into a chat app and back</span><span data-lang="de">Statt Grammarly oder Text in eine Chat-App kopieren und wieder zurück</span></p>
+            <p data-lang="en">Improve, Fix grammar, Translate, TL;DR, Email reply and more. Edit each one or add your own.</p>
+            <p data-lang="de">Verbessern, Rechtschreibung, Übersetzen, TL;DR, E-Mail-Antwort und mehr. Jeden kannst du anpassen oder eigene dazulegen.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Type or speak an instruction</h4>
+            <h4 data-lang="de">Anweisung tippen oder sprechen</h4>
+            <p data-lang="en">Select text, then type or say what you want, such as "reply to this email". Tippi applies it with AI.</p>
+            <p data-lang="de">Markiere Text und tippe oder sprich, was du willst, etwa „antworte auf diese Mail“. Tippi setzt es per KI um.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Streaming preview &amp; refine</h4>
+            <h4 data-lang="de">Live-Vorschau &amp; Verfeinern</h4>
+            <p data-lang="en">With most cloud providers the result streams in live. Refine it in place as often as you like, for example "shorter" or "more formal", before you replace your text.</p>
+            <p data-lang="de">Bei den meisten Cloud-Anbietern erscheint das Ergebnis live. Du verfeinerst es direkt, etwa mit „kürzer“ oder „förmlicher“, so oft du willst, bevor du deinen Text ersetzt.</p>
+          </li>
+        </ul>
+        <details class="more">
+          <summary><span data-lang="en">Show 6 more</span><span data-lang="de">6 weitere anzeigen</span></summary>
+          <ul>
+          <li>
+            <h4 data-lang="en">Prompt chains</h4>
+            <h4 data-lang="de">Prompt-Ketten</h4>
+            <p data-lang="en">Link several prompts behind one hotkey, and each step's output feeds the next. You see live progress, and a failed step keeps the last good result. One chain is built in.</p>
+            <p data-lang="de">Verkette mehrere Prompts hinter einem Hotkey, die Ausgabe jedes Schritts wird zur nächsten Eingabe. Du siehst den Fortschritt live, und bei einem Fehler bleibt das letzte gute Ergebnis.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Smart variables</h4>
+            <h4 data-lang="de">Smarte Variablen</h4>
+            <p data-lang="en">Put <code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code> or <code>{selected_text}</code> into a prompt, and Tippi fills them in when you run it. One prompt then fits the app and text at hand.</p>
+            <p data-lang="de">Setz <code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code> oder <code>{selected_text}</code> in einen Prompt, und Tippi füllt sie beim Start aus. So passt sich ein Prompt der App und deinem Text an.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Ambient prompt filtering</h4>
+            <h4 data-lang="de">Ambient-Prompt-Filter</h4>
+            <p data-lang="en">The prompt list narrows as you type, in the popup or the instruction field. Number keys 1 to 9 still pick a prompt, and ⎋ clears the search before closing the popup.</p>
+            <p data-lang="de">Die Prompt-Liste filtert beim Tippen, im Popup oder im Anweisungsfeld. Die Zifferntasten 1 bis 9 wählen weiter einen Prompt, und ⎋ löscht erst die Suche, dann schließt es das Popup.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Apple Intelligence on board</h4>
+            <h4 data-lang="de">Apple Intelligence an Bord</h4>
+            <p data-lang="en">On macOS 26 and later, Apple's on-device model works as a provider. You need no key and no download, and your text stays on the Mac. It does well at cleanup and emojis.</p>
+            <p data-lang="de">Ab macOS 26 kann Apples Modell auf dem Mac als Anbieter arbeiten. Du brauchst keinen Schlüssel und keinen Download, dein Text bleibt auf dem Mac. Stark bei Bereinigen und Emojis.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">One-click local AI</h4>
+            <h4 data-lang="de">Lokale KI in einem Klick</h4>
+            <p data-lang="en">Run AI fully on your Mac with Apple Silicon. Tippi installs the MLX toolchain from Settings in one click, no Terminal needed. Your text then stays on your Mac.</p>
+            <p data-lang="de">KI komplett lokal auf deinem Mac mit Apple Silicon. Tippi installiert die MLX-Toolchain mit einem Klick aus den Einstellungen, ganz ohne Terminal. Dein Text bleibt dann auf dem Mac.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Autocomplete as you type <span class="labs">(Labs)</span></h4>
+            <h4 data-lang="de">Autovervollständigung <span class="labs">(Labs)</span></h4>
+            <p data-lang="en">Pause for a moment and your local model suggests the rest of the sentence in grey. ⇥ takes one word, ⇧⇥ all of it. Runs only on your Mac, off until you turn it on.</p>
+            <p data-lang="de">Halte kurz inne, und dein lokales Modell schlägt den Rest des Satzes grau vor. ⇥ übernimmt ein Wort, ⇧⇥ alles. Läuft nur auf deinem Mac und ist aus, bis du es einschaltest.</p>
+          </li>
+          </ul>
+        </details>
+      </div>
+      <div class="fgroup">
+        <div class="fg-head"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <h3 data-lang="en">Speak</h3><h3 data-lang="de">Sprechen</h3></div>
+        <p class="fg-lead" data-lang="en">Dictation that stays on your Mac.</p>
+        <p class="fg-lead" data-lang="de">Diktat, das auf deinem Mac bleibt.</p>
+        <ul>
+          <li>
+            <h4 data-lang="en">Dictation modes</h4>
+            <h4 data-lang="de">Diktat-Modi</h4>
+            <p data-lang="en">Hold one extra key with your dictation key: ⇧ improves the text, control calms an angry message, ⌘ adds emojis, the other ⌥ runs a prompt you pick.</p>
+            <p data-lang="de">Halte zur Diktat-Taste eine Zusatztaste: ⇧ verbessert, control macht aus Ärger eine sachliche Nachricht, ⌘ setzt Emojis, die andere ⌥ startet deinen Prompt.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Dictation that fits the sentence</h4>
+            <h4 data-lang="de">Diktat, das in den Satz passt</h4>
+            <p data-lang="en">Dictate into the middle of a sentence and Tippi fixes the edges (spacing, lowercase, no stray period) with fixed rules, not AI.</p>
+            <p data-lang="de">Diktierst du mitten in einen Satz, passt Tippi die Ränder an (Leerzeichen, Kleinschreibung, kein überflüssiger Punkt), mit festen Regeln statt KI.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Voice input</h4>
+            <h4 data-lang="de">Spracheingabe</h4>
+            <p class="instead"><span data-lang="en">Instead of Superwhisper or Wispr Flow</span><span data-lang="de">Statt Superwhisper oder Wispr Flow</span></p>
+            <p data-lang="en">Dictate on a single key: double-tap to start and stop, or hold it while you speak. ⌃⌥⌘B writes emails with line breaks. Whisper or Parakeet run on your Mac, no audio leaves it.</p>
+            <p data-lang="de">Diktiere auf einer Taste: zweimal antippen startet und stoppt, halten nimmt auf, solange du sprichst. ⌃⌥⌘B setzt Mails mit Absätzen. Whisper oder Parakeet laufen auf deinem Mac.</p>
+          </li>
+        </ul>
+        <details class="more">
+          <summary><span data-lang="en">Show 3 more</span><span data-lang="de">3 weitere anzeigen</span></summary>
+          <ul>
+          <li>
+            <h4 data-lang="en">Return after dictation, per app</h4>
+            <h4 data-lang="de">Enter nach dem Diktat, pro App</h4>
+            <p data-lang="en">For apps you pick, like a chat, Tippi presses Return once the dictated text is in. In terminals only text the AI left unchanged is sent. Off until you add an app.</p>
+            <p data-lang="de">In Apps, die du auswählst, etwa einem Chat, drückt Tippi nach dem Diktat Enter. In Terminals geht nur Text raus, den die KI nicht verändert hat. Aus, bis du eine App einträgst.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Remember dictation corrections</h4>
+            <h4 data-lang="de">Diktatkorrekturen merken</h4>
+            <p data-lang="en">Does “Google Fonts” keep coming out as “Google Fonds”? After dictating, confirm the correct phrase in the Tippi menu. The optional rule stays on this Mac.</p>
+            <p data-lang="de">Schreibt Tippi immer wieder „Google Fonds“ statt „Google Fonts“? Bestätige nach dem Diktat die richtige Wortgruppe im Tippi-Menü. Die Regel bleibt auf diesem Mac.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Live text while you dictate</h4>
+            <h4 data-lang="de">Text live beim Diktieren</h4>
+            <p data-lang="en">The recording window shows your words as you speak, in three text sizes and six positions. The same local model writes the final text, so nothing changes when you stop.</p>
+            <p data-lang="de">Das Aufnahmefenster zeigt deine Worte schon beim Sprechen, in drei Schriftgrößen und an sechs Stellen. Derselbe lokale Erkenner schreibt den Text, nichts springt um.</p>
+          </li>
+          </ul>
+        </details>
+      </div>
+      <div class="fgroup">
+        <div class="fg-head"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <h3 data-lang="en">Everyday</h3><h3 data-lang="de">Alltag</h3></div>
+        <p class="fg-lead" data-lang="en">The small helpers you would otherwise install one by one.</p>
+        <p class="fg-lead" data-lang="de">Die kleinen Helfer, die man sonst einzeln installiert.</p>
+        <ul>
+          <li>
+            <h4 data-lang="en">Text Snippets</h4>
+            <h4 data-lang="de">Text-Snippets</h4>
+            <p class="instead"><span data-lang="en">Instead of Espanso or TextExpander</span><span data-lang="de">Statt Espanso oder TextExpander</span></p>
+            <p data-lang="en">Type a trigger anywhere and it expands at once, no hotkey needed. Espanso files import, and shell commands only run once you approve them.</p>
+            <p data-lang="de">Tippe ein Kürzel, und es wird sofort ersetzt, ohne Hotkey. Espanso-Dateien lassen sich importieren, Shell-Befehle laufen erst nach Freigabe.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Emoji picker &amp; shortcodes</h4>
+            <h4 data-lang="de">Emoji-Auswahl &amp; Kürzel</h4>
+            <p class="instead"><span data-lang="en">Instead of the Rocket app</span><span data-lang="de">Statt der Rocket-App</span></p>
+            <p data-lang="en">Press ⌥⌘E for a picker with recents first, or type <code>:rocket:</code> for 🚀, anywhere. German and English names work, and suggestions appear as you type.</p>
+            <p data-lang="de">⌥⌘E öffnet eine Auswahl mit den zuletzt genutzten oben, oder du tippst <code>:rakete:</code> für 🚀, überall. Deutsche und englische Namen gehen, Vorschläge erscheinen beim Tippen.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Translate Quick Panel</h4>
+            <h4 data-lang="de">Übersetzungs-Fenster</h4>
+            <p class="instead"><span data-lang="en">Instead of the DeepL app</span><span data-lang="de">Statt der DeepL-App</span></p>
+            <p data-lang="en">Press ⌥⌘L for a small window that takes your selection, or type or speak. Five languages, read-aloud, and Replace (⌘⏎) writes the translation back over your text.</p>
+            <p data-lang="de">⌥⌘L öffnet ein kleines Fenster, das deine Markierung übernimmt, oder du tippst oder sprichst. Fünf Sprachen, Vorlesen, und Ersetzen (⌘⏎) schreibt die Übersetzung über deinen Text.</p>
+          </li>
+        </ul>
+        <details class="more">
+          <summary><span data-lang="en">Show 6 more</span><span data-lang="de">6 weitere anzeigen</span></summary>
+          <ul>
+          <li>
+            <h4 data-lang="en">Auto-popup on selection</h4>
+            <h4 data-lang="de">Auto-Popup bei Auswahl</h4>
+            <p class="instead"><span data-lang="en">Instead of the PopClip app</span><span data-lang="de">Statt der PopClip-App</span></p>
+            <p data-lang="en">Select text anywhere and the quick-actions bar appears right next to it, like PopClip. You choose the position, and it moves aside for other apps' popups. Off by default.</p>
+            <p data-lang="de">Markiere irgendwo Text, und die Aktionsleiste erscheint direkt daneben, wie bei PopClip. Die Position wählst du selbst, und sie weicht Popups anderer Apps aus. Ab Werk ist sie aus.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Local quick actions</h4>
+            <h4 data-lang="de">Lokale Schnellaktionen</h4>
+            <p class="instead"><span data-lang="en">Instead of TextSoap or a word counter</span><span data-lang="de">Statt TextSoap oder einem Wortzähler</span></p>
+            <p data-lang="en">Bold, bullets, quotes, UPPER and lower case, url-style-slugs, umlauts to ae, word count and more. They run instantly on your Mac, without AI, from the ⌥⌘T popup and the selection bar.</p>
+            <p data-lang="de">Fett, Aufzählung, Anführungszeichen, GROSS und klein, adress-taugliche-schreibweise, Umlaute zu ae, Wörter zählen und mehr. Das läuft sofort auf deinem Mac, ohne KI, im ⌥⌘T-Popup und in der Auswahlleiste.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Notes window</h4>
+            <h4 data-lang="de">Notizen-Fenster</h4>
+            <p class="instead"><span data-lang="en">Instead of Apple Notes or a notes app</span><span data-lang="de">Statt Apple Notizen oder einer Notiz-App</span></p>
+            <p data-lang="en">Press ⌥⌘N for plain .txt notes in iCloud Drive on all your Macs. ⌃⌥⌘N floats your quick notes over everything and dictates straight into the note “Inbox”.</p>
+            <p data-lang="de">⌥⌘N öffnet Notizen als reine .txt-Dateien in iCloud Drive, auf allen Macs. ⌃⌥⌘N lässt die Schnellnotizen über allem schweben und diktiert direkt in „Eingang“.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Text from a screen selection</h4>
+            <h4 data-lang="de">Text vom Bildschirm</h4>
+            <p class="instead"><span data-lang="en">Instead of TextSniper or CleanShot X</span><span data-lang="de">Statt TextSniper oder CleanShot X</span></p>
+            <p data-lang="en">Press ⌥⌘2 and drag over anything you can't copy, like a screenshot or an image PDF. The text lands in your clipboard, recognized on your Mac. Off until you turn it on.</p>
+            <p data-lang="de">Drück ⌥⌘2 und zieh ein Rechteck über alles, was sich nicht kopieren lässt, etwa einen Screenshot. Der Text landet in der Zwischenablage, erkannt auf deinem Mac. Ab Werk ist das aus.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Currency converter</h4>
+            <h4 data-lang="de">Währungsrechner</h4>
+            <p data-lang="en">Select an amount like 23 € or USD 1,100, click €→$ and pick a favorite currency. Tippi shows the result and copies it, or adds it right after. 28 currencies, rates updated daily.</p>
+            <p data-lang="de">Markiere einen Betrag wie 23 € oder USD 1,100, klick auf €→$, wähle eine Lieblingswährung. Tippi zeigt und kopiert das Ergebnis, auf Wunsch auch dahinter. 28 Währungen, Kurse täglich.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Generate a password</h4>
+            <h4 data-lang="de">Passwort erzeugen</h4>
+            <p data-lang="en">From the menu bar or popup: 12 characters with upper and lower case, a digit and a symbol, no look-alikes. Tippi inserts it and keeps it on the clipboard for 60 seconds.</p>
+            <p data-lang="de">Aus Menüleiste oder Popup: 12 Zeichen mit Groß- und Kleinbuchstaben, Ziffer und Sonderzeichen, ohne Verwechsler. Tippi setzt es am Cursor ein und hält es 60 Sekunden bereit.</p>
+          </li>
+          </ul>
+        </details>
+      </div>
+      <div class="fgroup">
+        <div class="fg-head"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          <h3 data-lang="en">Trust</h3><h3 data-lang="de">Vertrauen</h3></div>
+        <p class="fg-lead" data-lang="en">You see what it does and what it needs.</p>
+        <p class="fg-lead" data-lang="de">Du siehst, was es tut und was es braucht.</p>
+        <ul>
+          <li>
+            <h4 data-lang="en">System-wide hotkey</h4>
+            <h4 data-lang="de">Systemweiter Hotkey</h4>
+            <p data-lang="en">Works in any app, with no switch to a chat window or another tab. Each hotkey shows whether it is really registered and tells you when another app already uses it.</p>
+            <p data-lang="de">Funktioniert in jeder App, ohne Wechsel in ein Chat-Fenster oder anderen Tab. Jeder Hotkey zeigt, ob er wirklich registriert ist, und sagt es, wenn eine andere App ihn belegt.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Permissions at a glance</h4>
+            <h4 data-lang="de">Berechtigungen auf einen Blick</h4>
+            <p data-lang="en">One settings page lists every permission Tippi may ask for, shows whether it is granted and why it is needed, and opens the right spot in System Settings with one click.</p>
+            <p data-lang="de">Eine Einstellungsseite zeigt jede Berechtigung, die Tippi anfragen kann, ob sie erteilt ist und wofür Tippi sie braucht. Ein Klick öffnet die richtige Stelle in den Systemeinstellungen.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Says what broke, and what to do</h4>
+            <h4 data-lang="de">Sagt, was klemmt und was hilft</h4>
+            <p data-lang="en">When something fails, the menu bar names the cause and shows the next step. Tippi also sends one silent notice per issue.</p>
+            <p data-lang="de">Fällt etwas aus, nennt die Menüleiste die Ursache und den nächsten Schritt. Tippi meldet sich einmal, ohne Ton.</p>
+          </li>
+        </ul>
+      </div>
     </div>
-
-    <ul class="replaces">
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/></svg></span>
-        <span class="task" data-lang="en">Pick emoji without the system palette</span>
-        <span class="task" data-lang="de">Emoji wählen ohne die Systempalette</span>
-        <span class="instead"><span data-lang="en">Instead of the Rocket app</span><span data-lang="de">Statt der Rocket-App</span></span>
-        <span class="inTippi" data-lang="en">The ⌥⌘E picker and <code>:name:</code> shortcodes</span>
-        <span class="inTippi" data-lang="de">⌥⌘E-Auswahl und <code>:name:</code>-Kürzel überall</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><polyline points="7 9 10 12 7 15"/><line x1="12" y1="15" x2="16" y2="15"/></svg></span>
-        <span class="task" data-lang="en">Text shortcuts that expand as you type</span>
-        <span class="task" data-lang="de">Kürzel, die sich beim Tippen erweitern</span>
-        <span class="instead"><span data-lang="en">Instead of Espanso or TextExpander</span><span data-lang="de">Statt Espanso oder TextExpander</span></span>
-        <span class="inTippi" data-lang="en">Text snippets, with Espanso file import</span>
-        <span class="inTippi" data-lang="de">Text-Snippets, Espanso-Dateien importierbar</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M4 4v4M4 4h4M20 4v4M20 4h-4M4 20v-4M4 20h4M20 20v-4M20 20h-4"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></span>
-        <span class="task" data-lang="en">An action bar next to any selection</span>
-        <span class="task" data-lang="de">Aktionsleiste neben jeder Markierung</span>
-        <span class="instead"><span data-lang="en">Instead of the PopClip app</span><span data-lang="de">Statt der PopClip-App</span></span>
-        <span class="inTippi" data-lang="en">Selection bar, placed where you want it</span>
-        <span class="inTippi" data-lang="de">Auswahlleiste, Position frei wählbar</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-        <span class="task" data-lang="en">Dictation that stays on your Mac</span>
-        <span class="task" data-lang="de">Diktat, das auf deinem Mac bleibt</span>
-        <span class="instead"><span data-lang="en">Instead of Superwhisper or Wispr Flow</span><span data-lang="de">Statt Superwhisper oder Wispr Flow</span></span>
-        <span class="inTippi" data-lang="en">Whisper or Parakeet, no subscription</span>
-        <span class="inTippi" data-lang="de">Whisper oder Parakeet, ohne Konto und Abo</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"/><path d="M4 21l3-7 3 7"/><path d="M4.5 19h5"/></svg></span>
-        <span class="task" data-lang="en">A quick window for translations</span>
-        <span class="task" data-lang="de">Ein schnelles Übersetzungsfenster</span>
-        <span class="instead"><span data-lang="en">Instead of the DeepL app</span><span data-lang="de">Statt der DeepL-App</span></span>
-        <span class="inTippi" data-lang="en">Translate panel (⌥⌘L), five languages</span>
-        <span class="inTippi" data-lang="de">Übersetzungs-Fenster (⌥⌘L), fünf Sprachen</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></span>
-        <span class="task" data-lang="en">Quick notes, synced across your Macs</span>
-        <span class="task" data-lang="de">Schnelle Notizen, auf allen deinen Macs</span>
-        <span class="instead"><span data-lang="en">Instead of Apple Notes or a notes app</span><span data-lang="de">Statt Apple Notizen oder einer Notiz-App</span></span>
-        <span class="inTippi" data-lang="en">Notes (⌥⌘N) as plain .txt files in iCloud</span>
-        <span class="inTippi" data-lang="de">Notizen (⌥⌘N) als .txt-Dateien in iCloud</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="10" x2="17" y2="10"/><line x1="7" y1="14" x2="13" y2="14"/></svg></span>
-        <span class="task" data-lang="en">Grab text from images and the screen</span>
-        <span class="task" data-lang="de">Text von Bild und Bildschirm holen</span>
-        <span class="instead"><span data-lang="en">Instead of TextSniper or CleanShot X</span><span data-lang="de">Statt TextSniper oder CleanShot X</span></span>
-        <span class="inTippi" data-lang="en">Screen text (⌥⌘2), recognized on your Mac</span>
-        <span class="inTippi" data-lang="de">Bildschirmtext (⌥⌘2), erkannt auf deinem Mac</span>
-      </li>
-      <li>
-        <span class="tile-icon"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></span>
-        <span class="task" data-lang="en">Formatting, case changes, word count</span>
-        <span class="task" data-lang="de">Formatieren, Groß/klein, Wörter zählen</span>
-        <span class="instead"><span data-lang="en">Instead of TextSoap or a word counter</span><span data-lang="de">Statt TextSoap oder einem Wortzähler</span></span>
-        <span class="inTippi" data-lang="en">Local quick actions, no AI, works offline</span>
-        <span class="inTippi" data-lang="de">Lokale Schnellaktionen, ohne KI, offline</span>
-      </li>
-    </ul>
 
     <p class="why-one" data-lang="en">It is not about the price. Eight helper apps mean eight sets of permissions to grant again after macOS updates, eight things to keep current and eight places where hotkeys collide. Tippi is one app, with one set of permissions and one update path.</p>
     <p class="why-one" data-lang="de">Es geht nicht ums Geld. Acht Helfer-Apps heißen: acht Mal Berechtigungen erteilen, nach macOS-Updates oft wieder, acht Programme aktuell halten und acht Stellen, an denen sich Tastenkürzel in die Quere kommen. Tippi ist eine App, mit einem Satz Berechtigungen und einem Update-Weg.</p>
+    <p class="more-link"><a href="https://github.com/miwixyz/Tippi#features" target="_blank" rel="noopener"><span data-lang="en">All details in the README →</span><span data-lang="de">Alle Details in der README →</span></a></p>
   </div>
 </section>
 
@@ -277,211 +423,6 @@
     </table>
   </div>
 </section>
-
-<!-- ── Features (ordered by everyday use) ────────────────────────────────── -->
-<section id="features">
-  <div class="wrap">
-    <h2 data-lang="en">What's in the box</h2>
-    <h2 data-lang="de">Was drinsteckt</h2>
-    <p class="lead" data-lang="en">Built to fit into your existing workflow, not replace it.</p>
-    <p class="lead" data-lang="de">Gebaut um sich in deinen Workflow einzufügen, nicht ihn zu ersetzen.</p>
-
-    <div class="features">
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><line x1="12" y1="17" x2="12" y2="22"></line><path d="M17 3l2 2-2 2"></path></svg></div>
-        <h3 data-lang="en">Dictation modes</h3>
-        <h3 data-lang="de">Diktat-Modi</h3>
-        <p data-lang="en">Hold one extra key with your dictation key: ⇧ improves the text, control calms an angry message, ⌘ adds emojis, the other ⌥ runs a prompt you pick.</p>
-        <p data-lang="de">Halte zur Diktat-Taste eine Zusatztaste: ⇧ verbessert, control macht aus Ärger eine sachliche Nachricht, ⌘ setzt Emojis, die andere ⌥ startet deinen Prompt.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="9" y2="12"></line><line x1="15" y1="12" x2="20" y2="12"></line><line x1="12" y1="9" x2="12" y2="15"></line><line x1="4" y1="17" x2="16" y2="17"></line></svg></div>
-        <h3 data-lang="en">Dictation that fits the sentence</h3>
-        <h3 data-lang="de">Diktat, das in den Satz passt</h3>
-        <p data-lang="en">Dictate into the middle of a sentence and Tippi fixes the edges: a space where words would stick, lowercase mid-sentence, no stray period. It uses fixed rules, not AI.</p>
-        <p data-lang="de">Diktierst du mitten in einen Satz, passt Tippi die Ränder an: Leerzeichen, wo Wörter kleben, Kleinschreibung im Satz, kein überflüssiger Punkt. Das machen feste Regeln, keine KI.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"></rect><rect x="9" y="9" width="6" height="6" rx="1"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line></svg></div>
-        <h3 data-lang="en">Apple Intelligence on board</h3>
-        <h3 data-lang="de">Apple Intelligence an Bord</h3>
-        <p data-lang="en">On macOS 26 and later, Apple's on-device model works as a provider. You need no key and no download, and your text stays on the Mac. It does well at cleanup and emojis.</p>
-        <p data-lang="de">Ab macOS 26 kann Apples Modell auf dem Mac als Anbieter arbeiten. Du brauchst keinen Schlüssel und keinen Download, dein Text bleibt auf dem Mac. Stark bei Bereinigen und Emojis.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
-        <h3 data-lang="en">System-wide hotkey</h3>
-        <h3 data-lang="de">Systemweiter Hotkey</h3>
-        <p data-lang="en">Works in any app, with no switch to a chat window or another tab. Each hotkey shows whether it is really registered and tells you when another app already uses it.</p>
-        <p data-lang="de">Funktioniert in jeder App, ohne Wechsel in ein Chat-Fenster oder anderen Tab. Jeder Hotkey zeigt, ob er wirklich registriert ist, und sagt es, wenn eine andere App ihn belegt.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="0.5" fill="currentColor"></circle></svg></div>
-        <h3 data-lang="en">24 curated built-in prompts</h3>
-        <h3 data-lang="de">24 kuratierte Built-in-Prompts</h3>
-        <p data-lang="en">Improve, Fix grammar, Translate, Summarize, TL;DR, LinkedIn post, Email reply, Humanize and more. You can edit each one and add your own prompts next to them.</p>
-        <p data-lang="de">Verbessern, Rechtschreibung, Übersetzen, TL;DR, LinkedIn-Post, E-Mail-Antwort, Menschlicher und mehr. Jeden kannst du anpassen und eigene Prompts dazulegen.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
-        <h3 data-lang="en">Type or speak an instruction</h3>
-        <h3 data-lang="de">Anweisung tippen oder sprechen</h3>
-        <p data-lang="en">Select text, then type a free instruction such as "reply to this email" or "translate to Spanish", or just say it. Tippi applies it to your text with AI.</p>
-        <p data-lang="de">Markiere Text und tippe eine freie Anweisung, etwa „antworte auf diese Mail“ oder „übersetze ins Spanische“, oder sprich sie einfach. Tippi wendet sie per KI auf deinen Text an.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M3 5h4M6 17v4M4 19h4"></path><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z"></path></svg></div>
-        <h3 data-lang="en">Streaming preview &amp; refine</h3>
-        <h3 data-lang="de">Live-Vorschau &amp; Verfeinern</h3>
-        <p data-lang="en">With most cloud providers the result streams in live. Refine it in place as often as you like, for example "shorter" or "more formal", before you replace your text.</p>
-        <p data-lang="de">Bei den meisten Cloud-Anbietern erscheint das Ergebnis live. Du verfeinerst es direkt, etwa mit „kürzer“ oder „förmlicher“, so oft du willst, bevor du deinen Text ersetzt.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg></div>
-        <h3 data-lang="en">Local quick actions</h3>
-        <h3 data-lang="de">Lokale Schnellaktionen</h3>
-        <p data-lang="en">Bold, bullets, quotes, UPPER and lower case, url-style-slugs, umlauts to ae, word count and more. They run instantly on your Mac, without AI, from the ⌥⌘T popup and the selection bar.</p>
-        <p data-lang="de">Fett, Aufzählung, Anführungszeichen, GROSS und klein, adress-taugliche-schreibweise, Umlaute zu ae, Wörter zählen und mehr. Das läuft sofort auf deinem Mac, ohne KI, im ⌥⌘T-Popup und in der Auswahlleiste.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v4M4 4h4M20 4v4M20 4h-4M4 20v-4M4 20h4M20 20v-4M20 20h-4"></path><rect x="9" y="9" width="6" height="6" rx="1"></rect></svg></div>
-        <h3 data-lang="en">Auto-popup on selection</h3>
-        <h3 data-lang="de">Auto-Popup bei Auswahl</h3>
-        <p data-lang="en">Select text anywhere and the quick-actions bar appears right next to it, like PopClip. You choose the position, and it moves aside for other apps' popups. Off by default.</p>
-        <p data-lang="de">Markiere irgendwo Text, und die Aktionsleiste erscheint direkt daneben, wie bei PopClip. Die Position wählst du selbst, und sie weicht Popups anderer Apps aus. Ab Werk ist sie aus.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>
-        <h3 data-lang="en">Voice input</h3>
-        <h3 data-lang="de">Spracheingabe</h3>
-        <p data-lang="en">Dictate on a single key: double-tap to start and stop, or hold it while you speak. ⌃⌥⌘B writes emails with line breaks. Whisper or Parakeet run on your Mac, no audio leaves it.</p>
-        <p data-lang="de">Diktiere auf einer Taste: zweimal antippen startet und stoppt, halten nimmt auf, solange du sprichst. ⌃⌥⌘B setzt Mails mit Absätzen. Whisper oder Parakeet laufen auf deinem Mac.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><polyline points="21 16 21 19 14 19"/><polyline points="16 17 14 19 16 21"/></svg></div>
-        <h3 data-lang="en">Return after dictation, per app</h3>
-        <h3 data-lang="de">Enter nach dem Diktat, pro App</h3>
-        <p data-lang="en">For apps you pick, like a chat, Tippi presses Return once the dictated text is in. In terminals only text the AI left unchanged is sent. Off until you add an app.</p>
-        <p data-lang="de">In Apps, die du auswählst, etwa einem Chat, drückt Tippi nach dem Diktat Enter. In Terminals geht nur Text raus, den die KI nicht verändert hat. Aus, bis du eine App einträgst.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="7" x2="16" y2="7"></line><line x1="9" y1="11" x2="14" y2="11"></line></svg></div>
-        <h3 data-lang="en">Remember dictation corrections</h3>
-        <h3 data-lang="de">Diktatkorrekturen merken</h3>
-        <p data-lang="en">Does “Google Fonts” keep coming out as “Google Fonds”? After dictating, confirm the correct phrase in the Tippi menu. The optional rule stays on this Mac.</p>
-        <p data-lang="de">Schreibt Tippi immer wieder „Google Fonds“ statt „Google Fonts“? Bestätige nach dem Diktat die richtige Wortgruppe im Tippi-Menü. Die Regel bleibt auf diesem Mac.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2M12 8v8m-3 0h6"></path><path d="M4 21l3-7 3 7"></path><path d="M4.5 19h5"></path></svg></div>
-        <h3 data-lang="en">Translate Quick Panel</h3>
-        <h3 data-lang="de">Übersetzungs-Fenster</h3>
-        <p data-lang="en">Press ⌥⌘L for a small window that takes your selection, or type or speak. Five languages, read-aloud, and Replace (⌘⏎) writes the translation back over your text.</p>
-        <p data-lang="de">⌥⌘L öffnet ein kleines Fenster, das deine Markierung übernimmt, oder du tippst oder sprichst. Fünf Sprachen, Vorlesen, und Ersetzen (⌘⏎) schreibt die Übersetzung über deinen Text.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><polyline points="7 9 10 12 7 15"></polyline><line x1="12" y1="15" x2="16" y2="15"></line></svg></div>
-        <h3 data-lang="en">Text Snippets</h3>
-        <h3 data-lang="de">Text-Snippets</h3>
-        <p data-lang="en">Type a trigger anywhere and it expands at once, no hotkey needed. Pick dates from a list and import your Espanso files. Shell commands only run once you approve them.</p>
-        <p data-lang="de">Tippe ein Kürzel, und es wird sofort ersetzt, ohne Hotkey. Datum und Wochentag wählst du aus einer Liste, Espanso-Dateien importierst du. Shell-Befehle laufen erst nach Freigabe.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"></path><line x1="9" y1="9.5" x2="9.01" y2="9.5"></line><line x1="15" y1="9.5" x2="15.01" y2="9.5"></line></svg></div>
-        <h3 data-lang="en">Emoji picker &amp; shortcodes</h3>
-        <h3 data-lang="de">Emoji-Auswahl &amp; Kürzel</h3>
-        <p data-lang="en">Press ⌥⌘E for a picker with recents first, or type <code>:rocket:</code> for 🚀, anywhere. German and English names work, and suggestions appear as you type.</p>
-        <p data-lang="de">⌥⌘E öffnet eine Auswahl mit den zuletzt genutzten oben, oder du tippst <code>:rakete:</code> für 🚀, überall. Deutsche und englische Namen gehen, Vorschläge erscheinen beim Tippen.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg></div>
-        <h3 data-lang="en">Notes window</h3>
-        <h3 data-lang="de">Notizen-Fenster</h3>
-        <p data-lang="en">Press ⌥⌘N for plain .txt notes in iCloud Drive on all your Macs. ⌃⌥⌘N floats your quick notes over everything and dictates straight into the note “Inbox”.</p>
-        <p data-lang="de">⌥⌘N öffnet Notizen als reine .txt-Dateien in iCloud Drive, auf allen Macs. ⌃⌥⌘N lässt die Schnellnotizen über allem schweben und diktiert direkt in „Eingang“.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><line x1="7" y1="10" x2="17" y2="10"></line><line x1="7" y1="14" x2="13" y2="14"></line></svg></div>
-        <h3 data-lang="en">Text from a screen selection</h3>
-        <h3 data-lang="de">Text vom Bildschirm</h3>
-        <p data-lang="en">Press ⌥⌘2 and drag over anything you can't copy, like a screenshot or an image PDF. The text lands in your clipboard, recognized on your Mac. Off until you turn it on.</p>
-        <p data-lang="de">Drück ⌥⌘2 und zieh ein Rechteck über alles, was sich nicht kopieren lässt, etwa einen Screenshot. Der Text landet in der Zwischenablage, erkannt auf deinem Mac. Ab Werk ist das aus.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"/><path d="M18.1 10.4a5 5 0 1 1-6.7 6.7"/><path d="M7 6h1.5v4"/><path d="M16 13h.5v3.5"/></svg></div>
-        <h3 data-lang="en">Currency converter</h3>
-        <h3 data-lang="de">Währungsrechner</h3>
-        <p data-lang="en">Select an amount like 23 € or USD 1,100, click €→$ and pick a favorite currency. Tippi shows the result and copies it, or adds it right after. 28 currencies, rates updated daily.</p>
-        <p data-lang="de">Markiere einen Betrag wie 23 € oder USD 1,100, klick auf €→$, wähle eine Lieblingswährung. Tippi zeigt und kopiert das Ergebnis, auf Wunsch auch dahinter. 28 Währungen, Kurse täglich.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div>
-        <h3 data-lang="en">Generate a password</h3>
-        <h3 data-lang="de">Passwort erzeugen</h3>
-        <p data-lang="en">From the menu bar or popup: 12 characters with upper and lower case, a digit and a symbol, no look-alikes. Tippi inserts it and keeps it on the clipboard for 60 seconds.</p>
-        <p data-lang="de">Aus Menüleiste oder Popup: 12 Zeichen mit Groß- und Kleinbuchstaben, Ziffer und Sonderzeichen, ohne Verwechsler. Tippi setzt es am Cursor ein und hält es 60 Sekunden bereit.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 22h-1a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4h1"/><path d="M7 22h1a4 4 0 0 0 4-4v-1"/><path d="M7 2h1a4 4 0 0 1 4 4v1"/></svg></div>
-        <h3 data-lang="en">Autocomplete as you type <span class="labs">(Labs)</span></h3>
-        <h3 data-lang="de">Autovervollständigung <span class="labs">(Labs)</span></h3>
-        <p data-lang="en">Pause for a moment and your local model suggests the rest of the sentence in grey. ⇥ takes one word, ⇧⇥ all of it. Runs only on your Mac, off until you turn it on.</p>
-        <p data-lang="de">Halte kurz inne, und dein lokales Modell schlägt den Rest des Satzes grau vor. ⇥ übernimmt ein Wort, ⇧⇥ alles. Läuft nur auf deinem Mac und ist aus, bis du es einschaltest.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div>
-        <h3 data-lang="en">Prompt chains</h3>
-        <h3 data-lang="de">Prompt-Ketten</h3>
-        <p data-lang="en">Link several prompts behind one hotkey, and each step's output feeds the next. You see live progress, and a failed step keeps the last good result. One chain is built in.</p>
-        <p data-lang="de">Verkette mehrere Prompts hinter einem Hotkey, die Ausgabe jedes Schritts wird zur nächsten Eingabe. Du siehst den Fortschritt live, und bei einem Fehler bleibt das letzte gute Ergebnis.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></div>
-        <h3 data-lang="en">Ambient prompt filtering</h3>
-        <h3 data-lang="de">Ambient-Prompt-Filter</h3>
-        <p data-lang="en">The prompt list narrows as you type, in the popup or the instruction field. Number keys 1 to 9 still pick a prompt, and ⎋ clears the search before closing the popup.</p>
-        <p data-lang="de">Die Prompt-Liste filtert beim Tippen, im Popup oder im Anweisungsfeld. Die Zifferntasten 1 bis 9 wählen weiter einen Prompt, und ⎋ löscht erst die Suche, dann schließt es das Popup.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H6a2 2 0 0 0-2 2v2"></path><path d="M16 3h2a2 2 0 0 1 2 2v2"></path><path d="M8 21H6a2 2 0 0 1-2-2v-2"></path><path d="M16 21h2a2 2 0 0 0 2-2v-2"></path><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg></div>
-        <h3 data-lang="en">Smart variables</h3>
-        <h3 data-lang="de">Smarte Variablen</h3>
-        <p data-lang="en">Put <code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code> or <code>{selected_text}</code> into a prompt, and Tippi fills them in when you run it. One prompt then fits the app and text at hand.</p>
-        <p data-lang="de">Setz <code>{clipboard}</code>, <code>{app_name}</code>, <code>{language}</code> oder <code>{selected_text}</code> in einen Prompt, und Tippi füllt sie beim Start aus. So passt sich ein Prompt der App und deinem Text an.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg></div>
-        <h3 data-lang="en">One-click local AI</h3>
-        <h3 data-lang="de">Lokale KI in einem Klick</h3>
-        <p data-lang="en">Run AI fully on your Mac with Apple Silicon. Tippi installs the MLX toolchain from Settings in one click, no Terminal needed. Your text then stays on your Mac.</p>
-        <p data-lang="de">KI komplett lokal auf deinem Mac mit Apple Silicon. Tippi installiert die MLX-Toolchain mit einem Klick aus den Einstellungen, ganz ohne Terminal. Dein Text bleibt dann auf dem Mac.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg></div>
-        <h3 data-lang="en">Permissions at a glance</h3>
-        <h3 data-lang="de">Berechtigungen auf einen Blick</h3>
-        <p data-lang="en">One settings page lists every permission Tippi may ask for, shows whether it is granted and why it is needed, and opens the right spot in System Settings with one click.</p>
-        <p data-lang="de">Eine Einstellungsseite zeigt jede Berechtigung, die Tippi anfragen kann, ob sie erteilt ist und wofür Tippi sie braucht. Ein Klick öffnet die richtige Stelle in den Systemeinstellungen.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
-        <h3 data-lang="en">Says what broke, and what to do</h3>
-        <h3 data-lang="de">Sagt, was klemmt und was hilft</h3>
-        <p data-lang="en">When something fails, the menu bar names the cause and shows the next step as a row that opens the right place in Settings. Tippi also sends one silent notice per issue.</p>
-        <p data-lang="de">Fällt etwas aus, nennt die Menüleiste die Ursache und zeigt den nächsten Schritt als Zeile, die die passende Stelle in den Einstellungen öffnet. Tippi meldet sich einmal, ohne Ton.</p>
-      </div>
-      <div class="card feature">
-        <div class="icon"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="7" y1="8" x2="17" y2="8"></line><line x1="7" y1="12" x2="13" y2="12"></line></svg></div>
-        <h3 data-lang="en">Live text while you dictate</h3>
-        <h3 data-lang="de">Text live beim Diktieren</h3>
-        <p data-lang="en">The recording window shows your words as you speak, in three text sizes and six positions. The same local model writes the final text, so nothing changes when you stop.</p>
-        <p data-lang="de">Das Aufnahmefenster zeigt deine Worte schon beim Sprechen, in drei Schriftgrößen und an sechs Stellen. Derselbe lokale Erkenner schreibt den Text, nichts springt um.</p>
-      </div>
-    </div>
-
-    <p class="more-link"><a href="https://github.com/miwixyz/Tippi#features" target="_blank" rel="noopener"><span data-lang="en">All details in the README →</span><span data-lang="de">Alle Details in der README →</span></a></p>
-  </div>
-</section>
-
 <!-- ── Providers ─────────────────────────────────────────────────────────── -->
 <section>
   <div class="wrap">
