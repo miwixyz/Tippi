@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.40.0] — 2026-11-16
+
+- _Add release notes here._
+
 ## [Unveröffentlicht]
 
 ### Geändert
