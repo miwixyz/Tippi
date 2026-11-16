@@ -13,6 +13,7 @@ final class DebugCommandTests: XCTestCase {
         XCTAssertEqual(parse(#"{"v":1,"id":"a","cmd":"appearance","mode":"dark"}"#)?.kind, .appearance("dark"))
         XCTAssertEqual(parse(#"{"v":1,"id":"a","cmd":"appearance","mode":"light"}"#)?.kind, .appearance("light"))
         XCTAssertEqual(parse(#"{"v":1,"id":"a","cmd":"appearance","mode":"system"}"#)?.kind, .appearance("system"))
+        XCTAssertEqual(parse(#"{"v":1,"id":"a","cmd":"selftest"}"#)?.kind, .selftest)
     }
 
     func testRejectsWindowsWithRealContent() {

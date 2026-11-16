@@ -108,7 +108,7 @@ Schlüsselbund), Snippets, Verlauf, Diktat (Modellordner), Autovervollständigun
 ## B6 – Ingestion: feste Befehle
 
 - **Vertrauensgrenze:** `debug.sock` – Bytes von einem anderen Prozess desselben Nutzers.
-- **Schema:** `{"v":1,"id":"…","cmd":"status"|"snapshot"|"appearance", "window"|"mode": …}`. `v` Zahl 1 (kein
+- **Schema:** `{"v":1,"id":"…","cmd":"status"|"snapshot"|"appearance"|"selftest", "window"|"mode": …}`. `v` Zahl 1 (kein
   Wahrheitswert). `id` 1–32 Zeichen A–Z/a–z/0–9 – wird Dateiname, kein Pfad-Ausbruch. `window` nur aus der festen
   Liste (B5), `mode` nur light/dark/system. Alles andere: verworfen, **keine Antwort**, Verbindung zu.
 - **Parser:** `JSONSerialization` (Daten, kein Code-Pfad), kein `Codable` mit Typ-Auswahl, kein Shell-Aufruf.

@@ -82,6 +82,9 @@ final class DebugBridge {
             answer["ok"] = true
         case .snapshot(let window):
             answer.merge(await snapshot(window: window, id: command.id)) { $1 }
+        case .selftest:
+            let steps = await SelfTest.run(windowFor: { [self] id in Self.tab(for: id).map { window(id, tab: $0) } })
+            answer.merge(SelfTest.answer(steps)) { $1 }
         }
         write(answer, id: command.id)
     }

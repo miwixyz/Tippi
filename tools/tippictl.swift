@@ -5,18 +5,19 @@
 //   tippictl status
 //   tippictl snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben
 //   tippictl appearance light|dark|system
+//   tippictl selftest          → PASS/FAIL je Schritt, Exit 0 = alles bestanden, 1 = Fehlschlag
 //
 // Prüft vor dem Senden, dass am Socket wirklich die signierte Bild-Testkopie lauscht.
 import Darwin
 import Foundation
 import Security
 
-let usage = "Nutzung: tippictl status | snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben | appearance light|dark|system"
+let usage = "Nutzung: tippictl status | snapshot einstellungen|hilfe|ueber|schnellnotizen|dateiaufgaben | appearance light|dark|system | selftest"
 let args = Array(CommandLine.arguments.dropFirst())
 guard let cmd = args.first else { print(usage); exit(64) }
 var message: [String: Any] = ["v": 1, "cmd": cmd]
 switch (cmd, args.count) {
-case ("status", 1): break
+case ("status", 1), ("selftest", 1): break
 case ("snapshot", 2): message["window"] = args[1]
 case ("appearance", 2): message["mode"] = args[1]
 default: print(usage); exit(64)
@@ -83,13 +84,30 @@ close(sock)
 
 // Antwort abwarten
 let answer = dir.appendingPathComponent("Antworten/\(id).json")
-let deadline = Date().addingTimeInterval(15)
+let wait: TimeInterval = cmd == "selftest" ? 45 : 15   // Selbsttest: Notizen-Rauchtest, Emoji, Fenster
+let deadline = Date().addingTimeInterval(wait)
 while Date() < deadline {
     if let data = try? Data(contentsOf: answer) {
-        print(String(decoding: data, as: UTF8.self))
         try? FileManager.default.removeItem(at: answer)
+        if cmd == "selftest" {
+            // Zeilenweise PASS/FAIL; Exit 1, wenn irgendein Schritt scheitert.
+            guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let steps = obj["schritte"] as? [[String: Any]] else {
+                fail("Selbsttest-Antwort unlesbar: \(String(decoding: data, as: UTF8.self))")
+            }
+            for s in steps {
+                let ok = s["ok"] as? Bool == true
+                print("\(ok ? "PASS" : "FAIL") \(s["name"] as? String ?? "?") — \(s["detail"] as? String ?? "")")
+            }
+            let passed = obj["bestanden"] as? Bool == true
+            print(passed ? "Selbsttest bestanden (\(steps.count) Schritte)" : "Selbsttest GESCHEITERT")
+            fflush(stdout)
+            exit(passed ? 0 : 1)
+        }
+        print(String(decoding: data, as: UTF8.self))
         exit(0)
     }
     usleep(100_000)
 }
-fail("Keine Antwort nach 15 s", 5)
+fail("Keine Antwort nach \(Int(wait)) s"
+     + (cmd == "selftest" ? " – Kopie vermutlich im Selbsttest abgestürzt (Crash-Bericht: ~/Library/Logs/DiagnosticReports)" : ""), 5)
