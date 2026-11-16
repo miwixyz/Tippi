@@ -199,9 +199,16 @@ html[lang="de"] .hero h1 { font-size: clamp(34px, 3.6vw, 52px); }
 .hero small { display: block; margin-top: 16px; color: var(--text-2); font-size: 14px; }
 .hero .contrast { margin-top: 4px; font-size: 13px; }
 
-/* Hero: the real demo video (self-hosted) on the right, text on the left */
+/* Hero: a neutral sample text as backdrop, the real Tippi popup (screenshot of the app) in front */
 .hero-stage { width: 100%; margin-top: 52px; }
-.hero-stage video { max-width: none; }
+.sample-mail {
+  background: var(--card); border: 1px solid var(--card-stroke); border-radius: var(--radius-card);
+  box-shadow: var(--shadow); padding: 24px 26px; font-size: 16px; line-height: 1.65; text-align: left;
+}
+.sample-mail .bar { font-size: 13px; color: var(--text-2); margin-bottom: 12px; }
+.sample-mail mark { background: rgba(var(--accent-rgb), .18); color: inherit; border-radius: 4px; padding: 0 2px; }
+.scene picture { display: block; width: 260px; max-width: 70%; margin: -16px 14px 0 auto; position: relative; }
+.scene img { display: block; width: 100%; height: auto; filter: drop-shadow(0 14px 26px rgba(30, 40, 70, .22)); }
 
 .app-strip { margin: 44px 0 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; max-width: none; }
 .app-strip .label { width: 100%; color: var(--text-2); font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }

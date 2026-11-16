@@ -87,9 +87,13 @@
         <small class="contrast" data-lang="de">Kein Abo. Deine API-Keys, deine Kosten.</small>
 
       </div>
-      <div class="hero-stage demo" id="demo">
-        <video data-lang="en" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in action: the AI prompt popup, emoji shortcodes, currency converter, local dictation, translation and AI note titles"></video>
-        <video data-lang="de" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in Aktion: KI-Pop-up, Emoji-Kürzel, Währungsrechner, lokales Diktat, Übersetzen und KI-Notiztitel"></video>
+      <div class="hero-stage scene" data-lang="en">
+        <div class="sample-mail" aria-hidden="true"><div class="bar">Mail · New message</div>Hi Anna, thanks for the update. <mark>I wanted to maybe ask if you could possibly send me the figures whenever you get a chance, no rush at all</mark> before Friday. Best, Sam</div>
+        <picture><source media="(prefers-color-scheme: dark)" srcset="popup-en-dark.png"><img src="popup-en-light.png" width="580" height="908" alt="The Tippi popup next to your cursor: a list of prompts such as Translate, Improve, Fix Grammar and Shorten, each with a number key"></picture>
+      </div>
+      <div class="hero-stage scene" data-lang="de">
+        <div class="sample-mail" aria-hidden="true"><div class="bar">Mail · Neue Nachricht</div>Hallo Anna, danke für das Update. <mark>Ich wollte vielleicht fragen, ob du mir die Zahlen eventuell irgendwann schicken könntest, ganz ohne Eile</mark> vor Freitag. Viele Grüße, Sam</div>
+        <picture><source media="(prefers-color-scheme: dark)" srcset="popup-de-dark.png"><img src="popup-de-light.png" width="580" height="908" alt="Das Tippi-Popup am Cursor: eine Liste von Prompts wie Übersetzen, Verbessern, Rechtschreibung und Kürzen, jeweils mit Zifferntaste"></picture>
       </div>
     </div>
 
@@ -109,6 +113,14 @@
     <p class="news"><span data-lang="en">New in 2.39: voice note. ⌃⌥⌘N floats your quick notes over everything and starts dictation.</span><span data-lang="de">Neu in 2.39: Sprachnotiz. ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allem und startet das Diktat.</span></p>
   </div>
 </header>
+
+<!-- ── Demo video (self-hosted, no third party) ──────────────────────────── -->
+<section id="demo" class="demo">
+  <div class="wrap">
+    <video data-lang="en" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in action: the AI prompt popup, emoji shortcodes, currency converter, local dictation, translation and AI note titles"></video>
+    <video data-lang="de" data-src="tippi-demo.mp4" poster="tippi-demo-poster.png" muted loop playsinline controls preload="none" width="1920" height="1080" aria-label="Tippi in Aktion: KI-Pop-up, Emoji-Kürzel, Währungsrechner, lokales Diktat, Übersetzen und KI-Notiztitel"></video>
+  </div>
+</section>
 
 <!-- ── One app instead of eight: all features in four groups ───────────────── -->
 <section id="features">
