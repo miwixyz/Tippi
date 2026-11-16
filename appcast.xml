@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.40.0</title>
+            <pubDate>Mon, 16 Nov 2026 18:23:38 +0100</pubDate>
+            <sparkle:version>672</sparkle:version>
+            <sparkle:shortVersionString>2.40.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Geändert</h3><ul><li><b>Das Prompt-Popup (⌥⌘T) hat das Design der App-Familie.</b> Feste Karte statt Glas, Hinweiszeile „Prompt wählen oder tippen“ statt Titel und Schließen-Knopf, Prompt-Zeilen in Plus Jakarta Sans ohne Symbole, die gewählte Zeile mit Akzent-Tönung statt voller Blau-Fläche. Die Schnellaktionen nutzen nur noch die Akzentfarbe statt sechs Kategoriefarben. Tastatur unverändert (1–9, Pfeile, Return, Esc, Tippen zum Filtern).</li><li><b>Emoji-Vorschlag und -Auswahl, Auswahl-Leiste, Toast, Aufnahme-Anzeige, Übersetzen-Fenster und die Sprachsteuerung im Popup folgen demselben Design.</b> Listen und Fenster sind feste Karten, Pille und Leiste getöntes Glas mit Rand und Schatten. Schrift Plus Jakarta Sans, Auswahl mit Akzent-Tönung, Aufnahme und Fehler in den Statusfarben der Familie statt Systemrot und -orange. Der graue Vorschlag beim Autovervollständigen bleibt bewusst unverändert.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.0/Tippi-2.40.0.dmg" length="25007198" type="application/octet-stream" sparkle:edSignature="jqLjjxaraVxGtl5eSWAv4iuPCBRodEZhxCf3QvBxY2oSc7x1eMtcjaphPQKHWXMzY7MxikSuF8y7ksC5ZDvOBA=="/>
+        </item>
+        <item>
             <title>2.39.2</title>
             <pubDate>Sat, 14 Nov 2026 17:00:26 +0100</pubDate>
             <sparkle:version>658</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Sprachnotiz zeigt jetzt ihr Fenster.</b> Beim ersten ⌃⌥⌘N nach dem Start lief nur die Aufnahme, das Schnellnotiz-Fenster blieb weg, weil Tippi die Notizen erst beim ersten Zugriff lädt. Jetzt lädt Tippi sie schon beim Start, wartet beim Kürzel kurz darauf und legt „Eingang“ gleich zu Beginn an, damit das Fenster einen Reiter hat. Der Text kam auch vorher an.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.1/Tippi-2.39.1.dmg" length="25548028" type="application/octet-stream" sparkle:edSignature="a2KiS61J79SggrROFfLOC4tAQTOpSpiLuhVlfLRsZ/Uv58AjCNnCAulSidSJ8T1F0TGGkNva6X3HVnIvnj0DDA=="/>
-        </item>
-        <item>
-            <title>2.39.0</title>
-            <pubDate>Sat, 14 Nov 2026 15:18:31 +0100</pubDate>
-            <sparkle:version>648</sparkle:version>
-            <sparkle:shortVersionString>2.39.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Sprachnotiz per Kürzel.</b> ⌃⌥⌘N zeigt deine Schnellnotizen schwebend über allen Fenstern, auch über einem Video im Vollbild, und startet sofort das Diktat. Nochmal ⌃⌥⌘N beendet die Aufnahme, der Text steht dann mit Datum und Uhrzeit unten in der Notiz „Eingang“. Tippi legt sie beim ersten Mal an; sie belegt keinen der drei Schnellnotiz-Plätze. Das Kürzel änderst du unter Einstellungen → Hotkeys.</li><li><b>Transparenz-Regler fürs Schnellnotiz-Fenster.</b> Unten im Fenster stellst du ein, wie durchsichtig es ist.</li></ul><h3>Behoben</h3><ul><li><b>Zwischenablage-Verläufe nehmen Tippis Rückgabe nicht mehr als neue Kopie auf.</b> Nach dem Einfügen, Diktieren oder Lesen der Markierung legt Tippi deinen vorherigen Inhalt zurück in die Zwischenablage. Zwischenablage-Verläufe wie Gnotchi oder Maccy hielten das für eine neue Kopie: Gelöschte Einträge kamen zurück, und was du in einer ausgeschlossenen App oder während einer Pause kopiert hattest, landete doch im Verlauf. Tippi markiert den zurückgelegten Inhalt jetzt als „vorübergehend“, der Inhalt selbst bleibt gleich. Einzige Ausnahme: Kopierst du etwas und löst Tippi in derselben halben Sekunde aus, sieht der Verlauf diese Kopie nicht.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.0/Tippi-2.39.0.dmg" length="25542850" type="application/octet-stream" sparkle:edSignature="ZIlg1XUu9MF/v6J2Rjf405d1rx4maNLhO4l5aKwNnKKxlIj5oZVO0q4ix67AEbuxy+UENH1nVa3zVB4DaoMpBw=="/>
         </item>
     </channel>
 </rss>
