@@ -163,14 +163,13 @@ final class DebugBridge {
 
     /// Das Prompt-Popup wie im echten Betrieb (gleiche View, randlos, durchsichtig, Schatten), aber nur mit den eingebauten
     /// Prompts – nie `DemoPrompt.all` (enthält eigene Prompts des Nutzers, B5) – und ohne jede Aktion. Feste Zeichenzahl.
-    private func popupWindow() -> NSWindow {
-        let id = DebugCommand.popupWindow
+    private func popupWindow(_ id: String = DebugCommand.popupWindow) -> NSWindow {
         if let win = windows[id] { return win }
         let view = PromptPopupView(
             prompts: DemoPrompt.builtIn,
             // Ohne den Schnellaktionen-Block (Einstellung „Lokale Schnellaktionen“ aus): so steht die Prompt-Liste im Bild
             // oben statt unter dem Raster der Textwerkzeuge.
-            localActions: [],
+            localActions: id == DebugCommand.popupFullWindow ? LocalTextAction.all : [],
             localActionsReady: true,
             selectedCharacterCount: 104,
             onSelect: { _ in },
@@ -241,8 +240,8 @@ final class DebugBridge {
             win = quickNotesWindow()
         } else if id == DebugCommand.fileTasksWindow {
             win = fileTasksWindow()
-        } else if id == DebugCommand.popupWindow {
-            win = popupWindow()
+        } else if id == DebugCommand.popupWindow || id == DebugCommand.popupFullWindow {
+            win = popupWindow(id)
         } else if let tab = Self.tab(for: id) {
             win = window(id, tab: tab)
         } else {

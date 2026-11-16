@@ -3,21 +3,6 @@ import SwiftUI
 // Quick-action buttons of the prompt popup, split out of PromptPopupView.swift
 // (file_length) when highlight, list, quotes and bracket pairs were added.
 
-/// Category → accent color for the small icon badge, same idea as macOS
-/// System Settings' own colored row icons — a native reference, not a
-/// borrowed brand color. Kept local to the UI layer so `LocalTextAction`
-/// itself (Core) never needs to import SwiftUI.
-extension LocalTextActionCategory {
-    var tint: Color {
-        switch self {
-        case .formatting: return .blue
-        case .enclose: return .orange
-        case .transform: return .purple
-        case .info: return .teal
-        }
-    }
-}
-
 extension LocalTextAction {
     var isIconOnly: Bool { category == .formatting || category == .enclose }
 }
@@ -50,7 +35,7 @@ struct LocalActionIconButton: View {
     var body: some View {
         Button(action: onTap) {
             LocalActionGlyph(action: action, size: 13)
-                .foregroundStyle(action.category.tint)
+                .foregroundStyle(FamilyTheme.accent)
                 .frame(maxWidth: .infinity, minHeight: 28)
                 .contentShape(Rectangle())
         }
@@ -76,10 +61,10 @@ struct LocalActionButton: View {
             HStack(spacing: 7) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(action.category.tint.opacity(0.16))
+                        .fill(FamilyTheme.accent.opacity(0.16))
                         .frame(width: 20, height: 20)
                     LocalActionGlyph(action: action, size: 10)
-                        .foregroundStyle(action.category.tint)
+                        .foregroundStyle(FamilyTheme.accent)
                         .frame(width: 18)
                 }
                 Text(action.title)

@@ -904,3 +904,5 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "dictation.corrections.validation.noMatch" = "Die Wortgruppe ergibt an dieser Stelle keine neue Korrektur. Prüfe die Schreibweise und bestehende Regeln.";
 "dictation.corrections.validation.deleted" = "Diese Regel wurde inzwischen gelöscht.";
 "dictation.toast.correctionWriteUnverified" = "Einfügen konnte nicht bestätigt werden — prüfe das Textfeld.";
+
+"popup.hint" = "Prompt wählen oder tippen";
