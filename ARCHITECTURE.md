@@ -151,6 +151,8 @@ Tippi/
 ├── Debug/                          # 2.33 — nur Debug-Build (`#if DEBUG`), Befehlskanal der Bild-Testkopie, docs/SECURE-DESIGN-befehlskanal.md
 │   ├── DebugSocketServer.swift     # Unix-Socket debug.sock, nur für das Developer-ID-signierte tippictl
 │   ├── DebugCommand.swift          # Befehle status · snapshot <reiter> · appearance
+│   ├── SelfTest.swift              # v2.39 — Selbsttest der Bild-Testkopie (`tippictl selftest`)
+│   ├── DebugSurfaces.swift         # v2.40 — Demo-Fenster schwebender Oberflächen mit festen Inhalten (Bilder, B5)
 │   └── DebugBridge.swift           # führt die Befehle in der App aus (je ein Einstellungs-Reiter)
 ├── LLM/                            # 8 Provider + Router
 │   ├── LLMProvider.swift           # Protocol + OpenAICompatibleProvider-Extension
@@ -166,6 +168,8 @@ Tippi/
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):
 │   │                               #   Akzent, accentFill, glassTint, Plus Jakarta Sans, Schrift-Registrierung
+│   ├── FloatingSurface.swift       # v2.40 — gemeinsame Oberfläche schwebender Elemente: feste Karte (Popup, Emoji, Übersetzen),
+│   │                               #   getöntes Glas für Pille und Leiste (Toast, Aufnahme-Anzeige, Auswahl-Leiste)
 │   ├── GlassEffects.swift          # v2.37 — Bewegung der App-Familie (wie Porter, TippAI, Gnotchi):
 │   │                               #   SlidingPicker (gleitende Pille), gleitender Hover-Schatten, GlassPressStyle
 │   ├── NonKeyPanelChrome.swift     # NonKeyPanel + ClickableHostingView, geteilt von
