@@ -226,7 +226,8 @@ Tippi/
 │   ├── PromptsSettingsTab.swift    # Prompts-Tab: eine Liste, Ziehen zum Sortieren, Editor für alle
 │   ├── SnippetsSettingsTab.swift   # Snippets- + Emoji-Inline-Einstellungen
 │   ├── DictationCorrectionWindow.swift # Editor für bestätigte Wortgruppen und Verwaltung in Eigene Wörter
-│   └── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
+│   ├── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
+│   └── StreamDeckSection.swift     # 2.41 — Einstellung „Stream Deck“ + „Plugin installieren“ (Allgemein)
 ├── Voice/
 │   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate), AVAudioEngine seit 2.22
 │   ├── AudioCapture.swift          # 16-kHz-Umrechnung, Sample-Speicher, WAV, Formatprüfung (2.22)
