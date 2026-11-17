@@ -70,4 +70,92 @@ final class MLXPortOccupancyTests: XCTestCase {
         XCTAssertEqual(MLXServerManager.occupantVerdict(listenerPID: 42, listenerCommand: nil), .free)
         XCTAssertEqual(MLXServerManager.occupantVerdict(listenerPID: nil, listenerCommand: "mlx_lm.server"), .free)
     }
+
+    // MARK: - Nur eigene Server (Audit-Fund 7, 2026-11-17)
+
+    private let binary = "/Users/x/.local/bin/mlx_lm.server"
+    /// Die Kommandozeile, wie `ps` sie für Tippis Start zeigt (gemessen 17.11.).
+    private var ownCommand: String {
+        "/Users/x/.local/share/uv/tools/mlx-lm/bin/python \(binary) "
+            + "--model mlx-community/gemma-4-e4b-it-4bit --port 8080 --host 127.0.0.1"
+    }
+
+    func testASilentMLXServerOfAnotherLiveProgramIsNeverKilled() {
+        // Elternprozess lebt (z. B. die installierte Tippi neben einem Testbuild).
+        let verdict = MLXServerManager.occupantVerdict(listenerPID: 87957, listenerCommand: ownCommand,
+                                                       listenerParentPID: 87915, ownPID: 500)
+        XCTAssertEqual(verdict, .foreignProcess(pid: 87957, command: ownCommand))
+    }
+
+    func testASilentOrphanedMLXServerIsStillStale() {
+        XCTAssertEqual(MLXServerManager.occupantVerdict(listenerPID: 4992, listenerCommand: ownCommand,
+                                                        listenerParentPID: 1, ownPID: 500),
+                       .staleMLXServer(pid: 4992))
+    }
+
+    func testAnOrphanWithOurCommandLineIsTippisLeftover() {
+        // Tippi abgestürzt oder schneller beendet als sein Server: Elternprozess launchd.
+        let listener = MLXServerManager.PortListener(pid: 4992, parentPID: 1, command: ownCommand)
+        XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: listener, ownPID: 500,
+                                                               binaryPath: binary, port: 8080),
+                       .leftoverOfTippi(pid: 4992))
+    }
+
+    func testOurOwnDyingChildIsALeftoverToo() {
+        let listener = MLXServerManager.PortListener(pid: 4992, parentPID: 500, command: ownCommand)
+        XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: listener, ownPID: 500,
+                                                               binaryPath: binary, port: 8080),
+                       .leftoverOfTippi(pid: 4992))
+    }
+
+    func testTheSameServerOfAnotherRunningTippiIsForeign() {
+        // Genau der Fall vom 17.11.: gleicher Befehl, aber Kind einer anderen, lebenden Tippi.
+        let listener = MLXServerManager.PortListener(pid: 87957, parentPID: 87915, command: ownCommand)
+        XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: listener, ownPID: 500,
+                                                               binaryPath: binary, port: 8080),
+                       .foreign(pid: 87957, command: ownCommand))
+    }
+
+    func testAnOrphanWithOtherOptionsIsForeign() {
+        // Von Hand gestartet, z. B. ohne --host oder auf anderem Port: nicht unser Befehl.
+        let byHand = "/Users/x/python \(binary) --model mlx-community/gemma-4-e4b-it-4bit --port 8080"
+        let otherBinary = ownCommand.replacingOccurrences(of: binary, with: "/opt/homebrew/bin/mlx_lm.server")
+        for command in [byHand, otherBinary] {
+            let listener = MLXServerManager.PortListener(pid: 7, parentPID: 1, command: command)
+            XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: listener, ownPID: 500,
+                                                                   binaryPath: binary, port: 8080),
+                           .foreign(pid: 7, command: command), command)
+        }
+    }
+
+    func testAnOrphanForAnotherModelIsStillOurs() {
+        // Nach einem Absturz kann das Modell gewechselt worden sein — der alte Server bleibt unserer.
+        let other = ownCommand.replacingOccurrences(of: "gemma-4-e4b", with: "gemma-4-e2b")
+        let listener = MLXServerManager.PortListener(pid: 9, parentPID: 1, command: other)
+        XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: listener, ownPID: 500,
+                                                               binaryPath: binary, port: 8080),
+                       .leftoverOfTippi(pid: 9))
+    }
+
+    func testAnUnidentifiedAnsweringServerIsForeign() {
+        XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: nil, ownPID: 500,
+                                                               binaryPath: binary, port: 8080),
+                       .foreign(pid: nil, command: ""))
+        let noParent = MLXServerManager.PortListener(pid: 3, parentPID: nil, command: ownCommand)
+        XCTAssertEqual(MLXServerManager.answeringServerVerdict(listener: noParent, ownPID: 500,
+                                                               binaryPath: binary, port: 8080),
+                       .foreign(pid: 3, command: ownCommand))
+    }
+
+    func testPSLineIsSplitIntoParentAndCommand() {
+        let parsed = MLXServerManager.parsePSLine("  87915 /Users/x/python /Users/x/mlx_lm.server --port 8080\n")
+        XCTAssertEqual(parsed.parentPID, 87915)
+        XCTAssertEqual(parsed.command, "/Users/x/python /Users/x/mlx_lm.server --port 8080")
+        XCTAssertNil(MLXServerManager.parsePSLine("").parentPID)
+    }
+
+    func testDisplayNamePrefersTheServerOverPython() {
+        XCTAssertEqual(MLXServerManager.displayName(ofCommand: ownCommand), "mlx_lm.server")
+        XCTAssertEqual(MLXServerManager.displayName(ofCommand: "/usr/bin/llama-server -p 8080"), "llama-server")
+    }
 }

@@ -302,6 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showWelcomeWindow()
         }
         startHotkey()
+        wireIdleUnload()
 
         // Pre-warm the MLX server if it's the user's preferred provider.
         // This avoids a 30–60s wait on first transformation after launch.
@@ -321,6 +322,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
     #endif
+
+    /// Lokale Modelle nach 15 Min ohne Nutzung entladen (`LocalModelIdleUnloader`).
+    /// Ein laufendes Diktat zählt als Nutzung — Aufnahme und Nachbearbeitung
+    /// dürfen nie ein Modell verlieren, das sie gleich brauchen.
+    private func wireIdleUnload() {
+        let unloader = LocalModelIdleUnloader.shared
+        unloader.isBusy = { [weak self] in
+            guard let self else { return false }
+            return self.dictationController.state != .idle || MLXServerManager.shared.state == .starting
+        }
+        unloader.unload = { [weak self] in
+            self?.autocomplete.engines.unload()
+            MLXServerManager.shared.stopIfOwned()
+        }
+    }
 
     func applicationWillTerminate(_ notification: Notification) {
         // Bild-Testkopie: nichts aufräumen — MLX-Server und temporäre Aufnahmen gehören dem echten Tippi.

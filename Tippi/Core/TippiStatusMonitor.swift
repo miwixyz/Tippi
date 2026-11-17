@@ -119,6 +119,8 @@ final class TippiStatusMonitor: ObservableObject {
                         headline: String(localized: "status.error.mlxFailed"),
                         action: message
                     ))
+                case .stopped where MLXServerManager.shared.unloadedForIdle:
+                    new = .ready   // nach Leerlauf entladen — der nächste Gebrauch startet ihn wieder
                 case .stopped:
                     new = .error(Problem(
                         headline: String(localized: "status.error.mlxStopped"),
