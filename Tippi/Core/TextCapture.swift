@@ -28,6 +28,17 @@ enum TextCapture {
         let app = resolvedSourceApp(sourceApp)
         captureLog.notice("capture start app=\(app?.localizedName ?? "nil", privacy: .public) trusted=\(AXIsProcessTrusted())")
 
+        // Never read a password field — the text would go to the AI provider.
+        // Native and browser password fields refuse ⌘C anyway; this covers apps
+        // with home-made ones (audit 2026-11-17, finding 13). The field, not
+        // the system-wide secure-input flag: Terminal's "Secure Keyboard
+        // Entry" keeps that on for every app.
+        if let app, let focused = FocusedFieldReader.focusedElement(pid: app.processIdentifier),
+           FocusedFieldReader.isSecure(focused) {
+            captureLog.notice("capture skipped: password field")
+            return nil
+        }
+
         // Phase 1: do not activate — front app still owns the selection (right after hotkey).
         if let text = await readViaPasteboard(), !text.isEmpty {
             captureLog.notice("pasteboard (no activate) ok \(text.count) chars")

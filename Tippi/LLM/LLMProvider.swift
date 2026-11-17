@@ -265,7 +265,7 @@ extension OpenAICompatibleProvider {
         var request = URLRequest(url: modelsURL)
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ProviderSession.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw LLMError.invalidResponse
         }
@@ -376,7 +376,7 @@ func openAIChatComplete(
     )
     request.httpBody = try JSONEncoder().encode(body)
 
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await ProviderSession.data(for: request)
     guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse }
     guard (200..<300).contains(http.statusCode) else {
         let text = String(data: data, encoding: .utf8) ?? ""
@@ -496,11 +496,10 @@ func openAIChatStream(
                 )
                 request.httpBody = try JSONEncoder().encode(body)
 
-                let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                let (bytes, response) = try await ProviderSession.shared.bytes(for: request)
                 guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse }
                 guard (200..<300).contains(http.statusCode) else {
-                    var errBody = ""
-                    for try await line in bytes.lines { errBody += line }
+                    let errBody = try await ProviderSession.errorBody(bytes)
                     throw LLMError.httpError(status: http.statusCode, body: errBody)
                 }
 

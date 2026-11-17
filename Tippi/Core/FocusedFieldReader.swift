@@ -11,8 +11,8 @@ import ApplicationServices
 enum FocusedFieldReader {
     /// Characters kept on each side of the cursor — the fitter looks at the
     /// last two characters before and the first word after.
-    static let beforeLimit = 200
-    static let afterLimit = 100
+    nonisolated static let beforeLimit = 200
+    nonisolated static let afterLimit = 100
     private static let timeout: Float = 0.25
 
     /// Text before and after the cursor (selection left out) in the focused

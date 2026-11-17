@@ -60,13 +60,13 @@ final class PermissionsManager: ObservableObject {
         microphoneGranted = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
         // Preflight fragt nicht nach, es liest nur den Stand.
         screenRecordingGranted = CGPreflightScreenCaptureAccess()
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
             let allowed: Bool? = switch settings.authorizationStatus {
             case .notDetermined: nil
             case .denied: false
             default: true   // authorized, provisional, ephemeral
             }
-            Task { @MainActor [weak self] in self?.notificationsAllowed = allowed }
+            Task { @MainActor in self?.notificationsAllowed = allowed }
         }
     }
 
@@ -84,8 +84,8 @@ final class PermissionsManager: ObservableObject {
 
     func requestNotifications() {
         if notificationsAllowed == nil {
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in
-                Task { @MainActor [weak self] in self?.refresh() }
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] _, _ in
+                Task { @MainActor in self?.refresh() }
             }
         } else {
             openNotificationSettings()

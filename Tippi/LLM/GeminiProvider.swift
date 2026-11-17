@@ -61,7 +61,7 @@ struct GeminiProvider: LLMProvider {
         )
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ProviderSession.data(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw LLMError.invalidResponse
         }
@@ -113,7 +113,7 @@ struct GeminiProvider: LLMProvider {
         var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000")!)
         request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.timeoutInterval = 15
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ProviderSession.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw LLMError.invalidResponse
         }

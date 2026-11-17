@@ -67,7 +67,7 @@ struct AnthropicProvider: LLMProvider {
         )
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ProviderSession.data(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw LLMError.invalidResponse
         }
@@ -115,7 +115,7 @@ struct AnthropicProvider: LLMProvider {
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.timeoutInterval = 15
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await ProviderSession.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw LLMError.invalidResponse
         }

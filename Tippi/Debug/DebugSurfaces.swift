@@ -5,18 +5,19 @@ import SwiftUI
 /// nie echte Daten (B5 in docs/SECURE-DESIGN-befehlskanal.md): keine eigenen Prompts, Snippets, Notizen, Verlauf.
 @MainActor
 enum DebugSurfaces {
-    static let emojiSuggestion = "emojivorschlag"
-    static let emojiPicker = "emojipicker"
-    static let selectionBar = "auswahlleiste"
+    // `nonisolated`: reine Konstanten, `DebugCommand.snapshotWindows` liest sie außerhalb des Hauptthreads.
+    nonisolated static let emojiSuggestion = "emojivorschlag"
+    nonisolated static let emojiPicker = "emojipicker"
+    nonisolated static let selectionBar = "auswahlleiste"
     /// Nicht „uebersetzen“: dieser Name bleibt gesperrt (B5, `DebugCommandTests`), denn das echte Fenster zeigt echten Text.
-    static let translate = "uebersetzenbild"
-    static let toast = "toast"
-    static let recording = "aufnahme"
-    static let correction = "korrektur"
-    static let popupVoice = "popupsprache"
-    static let autocomplete = "vorschlag"
+    nonisolated static let translate = "uebersetzenbild"
+    nonisolated static let toast = "toast"
+    nonisolated static let recording = "aufnahme"
+    nonisolated static let correction = "korrektur"
+    nonisolated static let popupVoice = "popupsprache"
+    nonisolated static let autocomplete = "vorschlag"
 
-    static let ids: Set<String> = [emojiSuggestion, emojiPicker, selectionBar, translate, toast, recording, correction,
+    nonisolated static let ids: Set<String> = [emojiSuggestion, emojiPicker, selectionBar, translate, toast, recording, correction,
                                    popupVoice, autocomplete]
 
     /// Raum rundherum, damit Schatten im Bild nicht an der Fensterkante abgeschnitten werden.

@@ -187,7 +187,9 @@ final class AutocompleteController: ObservableObject {
         pauseTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: pause)
             guard !Task.isCancelled else { return }
-            autocompleteLog.notice("pause elapsed")
+            // .debug, nicht .notice: einmal pro Tipp-Pause, `.notice` wird
+            // dauerhaft gespeichert (Audit 2026-11-17, Fund 14; 608 Zeilen in 2 Tagen).
+            autocompleteLog.debug("pause elapsed")
             self?.requestSuggestion()
         }
     }
@@ -214,7 +216,7 @@ final class AutocompleteController: ObservableObject {
         let pid = shown.pid
         cancelPending()
         dismiss()
-        autocompleteLog.notice("accepted bundle=\(front?.bundleIdentifier ?? "?", privacy: .public) len=\(split.take.count, privacy: .public) rest=\(split.rest?.count ?? 0, privacy: .public)")
+        autocompleteLog.notice("accepted bundle=\(front?.bundleIdentifier ?? "?", privacy: .private) len=\(split.take.count, privacy: .public) rest=\(split.rest?.count ?? 0, privacy: .public)")
         let gen = generation
         Task {
             await TextInsertion.replace(with: split.take, in: front)
@@ -328,7 +330,7 @@ final class AutocompleteController: ObservableObject {
                                                                continuesStartedWord: healing != nil),
                   NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier,
                   !self.isOtherTypingUIActive() else {
-                autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : (engine == nil ? "heal" : "engine"), privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
+                autocompleteLog.notice("no suggestion bundle=\(bundleID, privacy: .private) path=\(healing == nil ? "chat" : (engine == nil ? "heal" : "engine"), privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) ms=\(ms, privacy: .public)")
                 return
             }
             self.showPanel(suggestion, field: field, animated: true)
@@ -336,7 +338,7 @@ final class AutocompleteController: ObservableObject {
             self.alternativesSeed = seed.map { ($0, app.processIdentifier, field) }
             self.bridge.setAlternatives(seedAvailable: seed != nil, listCount: 0)
             self.bridge.setVisible(true)
-            autocompleteLog.notice("shown bundle=\(bundleID, privacy: .public) path=\(healing == nil ? "chat" : (engine == nil ? "heal" : "engine"), privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
+            autocompleteLog.notice("shown bundle=\(bundleID, privacy: .private) path=\(healing == nil ? "chat" : (engine == nil ? "heal" : "engine"), privacy: .public) ctx=\(field.context.utf16.count, privacy: .public) len=\(suggestion.count, privacy: .public) ms=\(ms, privacy: .public)")
         }
     }
 
@@ -348,7 +350,10 @@ final class AutocompleteController: ObservableObject {
     }
 
     private func skip(_ why: String) {
-        autocompleteLog.notice("skip: \(why, privacy: .public)")
+        // .debug: die Gründe nennen App-Kennungen (`bundle=…`). Als `.notice`
+        // entstand ein dauerhaftes Protokoll, wann in welcher App getippt wurde
+        // — dasselbe Muster, das am 19.09. bei den Mausklicks behoben wurde.
+        autocompleteLog.debug("skip: \(why, privacy: .public)")
     }
 
     private func fetch(_ request: URLRequest) async -> String? {

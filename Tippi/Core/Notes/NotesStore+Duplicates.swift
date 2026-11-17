@@ -20,20 +20,35 @@ extension NotesStore {
     /// within one sync window gives each its own filename. Until 2026-11-17
     /// the older one was removed for good; now it stays as a conflict copy.
     nonisolated static func loadAllNotes(from directory: URL) -> [Note] {
+        loadAllNotesAndPending(from: directory).notes
+    }
+
+    /// `pending`: notes whose file exists but is still downloading (an older
+    /// local copy, a dataless file or a `.icloud` placeholder). They are not
+    /// deleted, only not readable yet, so `refresh` keeps the in-memory
+    /// version instead of dropping the note — the open note used to vanish
+    /// from the editor for seconds (audit 2026-11-17, finding 6).
+    nonisolated static func loadAllNotesAndPending(from directory: URL) -> (notes: [Note], pending: Set<UUID>) {
         guard let entries = try? FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: [.ubiquitousItemDownloadingStatusKey]
         ) else {
-            return []
+            return ([], [])
         }
 
         var bestByID: [UUID: (note: Note, url: URL)] = [:]
         var older: [(note: Note, url: URL)] = []
+        var pending: Set<UUID> = []
 
-        for url in entries where url.pathExtension == fileExtension {
+        for url in entries {
+            guard url.pathExtension == fileExtension else {
+                if url.pathExtension == "icloud", let id = cloudNoteID(in: url) { pending.insert(id) }
+                continue
+            }
             if let status = try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]).ubiquitousItemDownloadingStatus,
                status != .current {
                 try? FileManager.default.startDownloadingUbiquitousItem(at: url)
+                if let id = cloudNoteID(in: url) { pending.insert(id) }
                 continue
             }
             guard let note = readNoteFile(at: url) else { continue }
@@ -59,7 +74,7 @@ extension NotesStore {
             }
         }
 
-        return bestByID.values.map(\.note) + copies
+        return (bestByID.values.map(\.note) + copies, pending)
     }
 
     /// Moves a diverging version of a note to its own note instead of deleting

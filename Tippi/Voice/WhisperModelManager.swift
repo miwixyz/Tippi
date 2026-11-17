@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 // MARK: - Model catalog
@@ -8,9 +9,29 @@ struct WhisperModel: Identifiable, Hashable {
     let filename: String    // e.g. "ggml-base.en.bin"
     let sizeMB: Int
     let languages: String   // "English only" / "Multilingual"
+    /// SHA-256 of the file at `revision` (Hugging Face LFS metadata, fetched
+    /// 2026-11-17; `ggml-small.bin` cross-checked against an installed copy).
+    let sha256: String
+
+    /// Pinned commit instead of `main`: a moving branch could serve a
+    /// different file than the one the checksum describes. The model is parsed
+    /// by whisper.cpp's C++ loader, so an unverified file is untrusted input
+    /// (audit 2026-11-17, finding 10).
+    static let revision = "5359861c739e955e79d9a303bcbc70fb988958b1"
 
     var downloadURL: URL {
-        URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/\(filename)")!
+        URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/\(Self.revision)/\(filename)")!
+    }
+
+    /// Streams the file in 4 MB pieces — the models are up to ~490 MB.
+    static func sha256Hex(of url: URL) -> String? {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while let chunk = try? handle.read(upToCount: 4 * 1024 * 1024), !chunk.isEmpty {
+            hasher.update(data: chunk)
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     var localURL: URL {
@@ -24,11 +45,16 @@ struct WhisperModel: Identifiable, Hashable {
     // Spaltenausrichtung ist hier Absicht (Modelle zeilenweise vergleichbar).
     // swiftlint:disable comma colon
     static let catalog: [WhisperModel] = [
-        WhisperModel(id: "tiny.en", displayName: "Tiny (English)",        filename: "ggml-tiny.en.bin",  sizeMB:  77,  languages: "English only"),
-        WhisperModel(id: "base.en",  displayName: "Base (English)",        filename: "ggml-base.en.bin",  sizeMB: 148,  languages: "English only"),
-        WhisperModel(id: "base",     displayName: "Base (Multilingual)",   filename: "ggml-base.bin",     sizeMB: 148,  languages: "Multilingual"),
-        WhisperModel(id: "small.en", displayName: "Small (English)",       filename: "ggml-small.en.bin", sizeMB: 488,  languages: "English only"),
-        WhisperModel(id: "small",    displayName: "Small (Multilingual)",  filename: "ggml-small.bin",    sizeMB: 488,  languages: "Multilingual"),
+        WhisperModel(id: "tiny.en", displayName: "Tiny (English)",        filename: "ggml-tiny.en.bin",  sizeMB:  77,  languages: "English only",
+                     sha256: "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f"),
+        WhisperModel(id: "base.en",  displayName: "Base (English)",        filename: "ggml-base.en.bin",  sizeMB: 148,  languages: "English only",
+                     sha256: "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002"),
+        WhisperModel(id: "base",     displayName: "Base (Multilingual)",   filename: "ggml-base.bin",     sizeMB: 148,  languages: "Multilingual",
+                     sha256: "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe"),
+        WhisperModel(id: "small.en", displayName: "Small (English)",       filename: "ggml-small.en.bin", sizeMB: 488,  languages: "English only",
+                     sha256: "c6138d6d58ecc8322097e0f987c32f1be8bb0a18532a3f88f734d1bbf9c41e5d"),
+        WhisperModel(id: "small",    displayName: "Small (Multilingual)",  filename: "ggml-small.bin",    sizeMB: 488,  languages: "Multilingual",
+                     sha256: "1be3a9b2063867b937e64e2ec7483364a79917e157fa98c5d94b5c1fffea987b"),
     ]
     // swiftlint:enable comma colon
 }
@@ -75,6 +101,13 @@ final class WhisperModelManager: NSObject, ObservableObject {
                 }
             }
             let staged = stagedURL
+            // Hashed here, off the main thread (several seconds for ~490 MB).
+            // Only for a 200 answer — an error page keeps its HTTP message below.
+            let isOK = (response as? HTTPURLResponse)?.statusCode == 200
+            let checksumError: Error? = staged.flatMap { file in
+                isOK && WhisperModel.sha256Hex(of: file) != model.sha256 ? ChecksumMismatch() : nil
+            }
+            let failure = error ?? checksumError
 
             Task { @MainActor [weak self] in
                 guard let self else {
@@ -91,7 +124,7 @@ final class WhisperModelManager: NSObject, ObservableObject {
                 self.downloadingModel = nil
                 self.downloadProgress = 0
 
-                if let error {
+                if let error = failure {
                     if let staged { try? FileManager.default.removeItem(at: staged) }
                     // A user-initiated cancel is not an error worth surfacing.
                     if (error as NSError).code != NSURLErrorCancelled {
@@ -177,5 +210,12 @@ final class WhisperModelManager: NSObject, ObservableObject {
         }
         // Last model gone → the hotkey must unregister (audit 2026-09-27).
         AppDelegate.shared?.restartDictationHotkey()
+    }
+}
+
+/// The download is not the file the catalog describes (audit 2026-11-17, finding 10).
+struct ChecksumMismatch: LocalizedError {
+    var errorDescription: String? {
+        "Download failed: the file does not match the expected checksum. Try again later."
     }
 }

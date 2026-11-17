@@ -123,14 +123,28 @@ enum TextInsertion {
         let snapshot = await paste(text: text, expectedPID: app?.processIdentifier,
                                    currentHostOnly: true, restoreClipboard: false)
         insertLog.notice("secret pasted (\(text.count, privacy: .public) chars), clipboard cleared in \(Int(secretClipboardLifetime), privacy: .public) s")
+        pendingSecretRestore = snapshot
         Task {
             try? await Task.sleep(nanoseconds: UInt64(secretClipboardLifetime * 1_000_000_000))
-            snapshot.restore()
+            restoreSecretClipboardNow()
             insertLog.notice("secret clipboard lifetime over — previous clipboard restored if untouched")
         }
     }
 
     static let secretClipboardLifetime: TimeInterval = 60
+
+    /// The clipboard the secret replaced. Kept here so quitting (⌘Q, a Sparkle
+    /// update) restores it too — the 60 s timer dies with the process and the
+    /// password stayed on the clipboard (audit 2026-11-17, finding 18).
+    private static var pendingSecretRestore: PasteboardSnapshot?
+
+    /// Puts the pre-secret clipboard back now. `restore` itself leaves the
+    /// clipboard alone if something else was copied in the meantime.
+    static func restoreSecretClipboardNow() {
+        guard let snapshot = pendingSecretRestore else { return }
+        pendingSecretRestore = nil
+        snapshot.restore()
+    }
 
     /// Bypasses AX entirely and inserts `text` via clipboard + synthetic ⌘V.
     /// Use when AX has already been attempted and confirmed to be a no-op
@@ -153,9 +167,13 @@ enum TextInsertion {
         await insertViaClipboard(text, into: app)
     }
 
+    /// Fallback "copied to clipboard" for results that could not be inserted.
+    /// This Mac only — no Universal Clipboard to iPhone/iPad, the text is a
+    /// transcript or an AI rewrite of the user's own text (audit 2026-11-17,
+    /// finding 12). Deliberately not concealed: the user is meant to paste it.
     static func copy(_ text: String) {
         let pb = NSPasteboard.general
-        pb.clearContents()
+        pb.prepareForNewContents(with: .currentHostOnly)
         pb.setString(text, forType: .string)
     }
 
@@ -192,6 +210,9 @@ enum TextInsertion {
             // Do not post ⌘V into a different app. The result stays on the
             // clipboard for manual recovery instead of replacing unrelated text.
             insertLog.error("paste withheld: target app is no longer frontmost")
+            // Say so: nothing visible happened, and the clipboard now holds the
+            // result instead of what was copied before (audit 2026-11-17, finding 11).
+            reportPasteNotLanded()
             return snapshot
         }
         logPasteState("before ⌘V", target)
@@ -236,6 +257,7 @@ enum TextInsertion {
         guard isExpectedFrontmost(targetPID: expectedPID,
                                   frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier) else {
             insertLog.error("rich paste withheld: target app is no longer frontmost")
+            reportPasteNotLanded()
             return
         }
         simulatePaste()

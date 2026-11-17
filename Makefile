@@ -139,14 +139,20 @@ purge-test-defaults:
 #
 # Zuerst auf das Ende des Testhosts warten, dann bis zu 5 Runden aus
 # Loeschen + Daemon-Neustart, bis zwei Messungen hintereinander null ergeben.
+#
+# Drei Namensmuster (Audit 2026-11-17, Fund 19): `ThrowawayDefaults` legt
+# `TippiTests.*` an, einzelne Tests eigene Suiten `tippi-test-<UUID>` bzw.
+# `tippi.tests.*`. Nur das erste wurde geloescht – bis zum 17.11. lagen
+# 241 Reste in ~/Library/Preferences. Die echte Domain `com.tippi.app`
+# passt auf keines der Muster.
 	@for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -qf 'TippiTests.xctest' || break; sleep 0.5; done; \
-	before=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+	before=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -cE '^(TippiTests\.|tippi-test-|tippi\.tests\.)' || true); \
 	after=$$before; \
 	for attempt in 1 2 3 4 5; do \
-	  find ~/Library/Preferences -maxdepth 1 -name 'TippiTests.*.plist' -delete 2>/dev/null || true; \
+	  find ~/Library/Preferences -maxdepth 1 \( -name 'TippiTests.*.plist' -o -name 'tippi-test-*.plist' -o -name 'tippi.tests.*.plist' \) -delete 2>/dev/null || true; \
 	  killall cfprefsd 2>/dev/null || true; \
 	  sleep 1; \
-	  after=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -c '^TippiTests' || true); \
+	  after=$$(ls ~/Library/Preferences/ 2>/dev/null | grep -cE '^(TippiTests\.|tippi-test-|tippi\.tests\.)' || true); \
 	  [ "$$after" -eq 0 ] && break; \
 	done; \
 	echo "✓ Test-Preference-Domains: $$before → $$after"; \

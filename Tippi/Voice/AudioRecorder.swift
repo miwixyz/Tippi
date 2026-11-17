@@ -318,10 +318,16 @@ final class AudioRecorder: NSObject, ObservableObject {
         guard let files = try? FileManager.default.contentsOfDirectory(
             at: tmp, includingPropertiesForKeys: nil
         ) else { return }
-        for f in files where f.lastPathComponent.hasPrefix("tippi-voice-")
-            && f.pathExtension == "wav" {
+        for f in files where isOrphanedRecording(f.lastPathComponent) {
             try? FileManager.default.removeItem(at: f)
         }
+    }
+
+    /// The recording itself and whisper-cli's transcript sidecar
+    /// `<name>.wav.txt` — the latter holds the spoken text in clear and was
+    /// left behind after a crash mid-transcription (audit 2026-11-17, finding 17).
+    nonisolated static func isOrphanedRecording(_ name: String) -> Bool {
+        name.hasPrefix("tippi-voice-") && (name.hasSuffix(".wav") || name.hasSuffix(".wav.txt"))
     }
 
     // MARK: - System audio muting

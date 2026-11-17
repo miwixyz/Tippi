@@ -7,7 +7,7 @@ import Carbon
 import Combine
 import QuartzCore
 import Sparkle
-import UserNotifications
+@preconcurrency import UserNotifications
 import SwiftUI
 import os
 
@@ -333,6 +333,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if notesWindowController.wasOpened {
             NotesStore.shared.flushUnsavedEditSynchronously()
         }
+        // A generated password must not outlive its 60 s on the clipboard
+        // just because the app quit before the timer fired.
+        TextInsertion.restoreSecretClipboardNow()
         // Restore system audio if the user quits Tippi mid-recording with
         // "mute system audio" on — a clean quit should never leave the
         // Mac muted. (Crash/force-quit is covered separately at next
@@ -1363,8 +1366,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             defer { ScreenTextCapture.logReady(since: pressedAt) }
-            self.screenSelectionOverlay.begin(frozen: frozen) { [weak self] rect in
-            guard let self else { return }
+            // The enclosing task already holds `self` strongly (AppDelegate
+            // lives as long as the app); a weak capture here only drew a
+            // compiler warning.
+            self.screenSelectionOverlay.begin(frozen: frozen) { rect in
             guard let rect else {
                 // Abbruch ist ein normaler Ausgang, keine Fehlermeldung wert.
                 self.screenOCRInProgress = false
@@ -2373,7 +2378,7 @@ private func safetyHotKeyCallback(
 // reminder — a notification plus the menu row — and a click on either opens
 // the window as a user action, i.e. in front.
 extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
-    static let updateReminderID = "tippi.update"
+    nonisolated static let updateReminderID = "tippi.update"
 
     var supportsGentleScheduledUpdateReminders: Bool { true }
 

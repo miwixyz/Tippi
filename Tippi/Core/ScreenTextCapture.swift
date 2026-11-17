@@ -1,6 +1,6 @@
 import AppKit
 import ScreenCaptureKit
-import Vision
+@preconcurrency import Vision
 import os
 
 private let ocrLog = Logger(subsystem: "com.tippi.app", category: "screen-ocr")

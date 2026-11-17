@@ -111,7 +111,10 @@ final class NotesStore: ObservableObject {
                 Self.migrateLocalNotesIfNeeded(into: directory)
             }
             // Erstellungsdatum aus dem mit TippAI geteilten Index (NoteCreationIndex).
-            let loaded = NoteCreationIndex.applyingIndex(to: Self.loadAllNotes(from: directory), in: directory)
+            let disk = Self.loadAllNotesAndPending(from: directory)
+            let loaded = NoteCreationIndex.applyingIndex(to: disk.notes, in: directory)
+            // Still downloading ≠ deleted: keep what is in memory (audit 2026-11-17, finding 6).
+            let stillDownloading = disk.pending.subtracting(loaded.map(\.id))
             await MainActor.run {
                 guard self.refreshRevision == request else { return }
                 let changed = Set(self.noteMutationRevisions.compactMap { id, revision in
@@ -125,7 +128,7 @@ final class NotesStore: ObservableObject {
                 self.isUsingiCloud = usingiCloud
                 self.notes = Self.preferNewer(
                     loaded: loaded, current: mergeCurrent,
-                    preservingIDs: changed.intersection(currentIDs),
+                    preservingIDs: changed.union(stillDownloading).intersection(currentIDs),
                     deletedIDs: changed.subtracting(currentIDs)
                 )
                     .sorted { $0.modifiedAt > $1.modifiedAt }
@@ -354,9 +357,10 @@ final class NotesStore: ObservableObject {
                 failure = error.localizedDescription
             }
             guard let self else { return }
+            let message = failure
             await MainActor.run {
                 self.writesInFlight -= 1
-                self.loadError = failure
+                self.loadError = message
             }
         }
     }

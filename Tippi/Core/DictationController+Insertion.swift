@@ -41,9 +41,7 @@ extension DictationController {
         case .nothingToAdd:
             message = String(localized: "inbox.toast.empty")
         case .notLoaded, .openInEditor:
-            let board = NSPasteboard.general
-            board.clearContents()
-            board.setString(text, forType: .string)
+            TextInsertion.copy(text)   // this Mac only (audit 2026-11-17, finding 12)
             message = String(localized: outcome == .notLoaded ? "inbox.toast.notLoaded" : "inbox.toast.openInEditor")
         }
         ToastWindowController.shared.show(message: message)
