@@ -72,6 +72,10 @@ actor AutocompleteEngine {
     /// freie Fortsetzung, in einem Durchgang. `nil`, wenn kein passendes Stück kommt.
     func run(prompt: String, open: String, vocabulary: AutocompleteVocabulary,
              maxSteps: Int, maxTokens: Int, candidates: Int) throws -> Result? {
+        // Vor dem Prompt-Durchlauf, dem teuersten Schritt: Anfragen warten am Actor
+        // hintereinander. Eine beim Weitertippen überholte rechnete sonst den ganzen
+        // Prompt noch durch — gemessen 17.11.: sechs gestaute Anfragen, bis 14,8 s.
+        try Task.checkCancellation()
         let cache = try context.model.newCache(parameters: nil)
         var logits = forward(context.tokenizer.encode(text: prompt, addSpecialTokens: true), cache: cache)
         var rest = open
@@ -102,6 +106,7 @@ actor AutocompleteEngine {
 
     /// Freie Fortsetzung eines Prompts (Alternativen zu ganzen Wörtern ergänzen).
     func complete(prompt: String, maxTokens: Int) throws -> (text: String, cutAtLength: Bool) {
+        try Task.checkCancellation()   // wie in `run`: vor dem Prompt-Durchlauf
         let cache = try context.model.newCache(parameters: nil)
         let logits = forward(context.tokenizer.encode(text: prompt, addSpecialTokens: true), cache: cache)
         return try freeRun(logits: logits, cache: cache, maxTokens: maxTokens)

@@ -62,7 +62,10 @@ final class NotesStore: ObservableObject {
     /// The editor's latest text that the 600 ms debounce has not saved yet.
     /// Written synchronously on quit — ⌘Q within the debounce window lost
     /// the last keystrokes (audit 2026-09-27).
-    private var unsavedEdit: (id: UUID, content: String)?
+    private var unsavedEdit: (id: UUID, content: String, base: String?)?
+    /// Saves queued but not yet finished. The quit-time write may only tidy up
+    /// its own predecessor file when nothing else is still writing.
+    private var writesInFlight = 0
 
     /// Resolved during `refresh()` and reused by `save`/`delete` for the rest
     /// of the session, so every mutation doesn't re-resolve the ubiquity
@@ -76,7 +79,7 @@ final class NotesStore: ObservableObject {
     private var noteMutationRevisions: [UUID: Int] = [:]
     private var refreshRevision = 0
 
-    private nonisolated static let fileExtension = "txt"
+    nonisolated static let fileExtension = "txt"
 
     init(directory: URL? = nil, refreshOnInit: Bool = true) {
         if let directory { currentDirectory = directory }
@@ -98,7 +101,10 @@ final class NotesStore: ObservableObject {
             guard let self else { return }
             // Queued writes first: reading the disk while the editor's last
             // save is still in flight would hand back the older version, which
-            // the editor now adopts (review 2026-09-27).
+            // the editor now adopts (review 2026-09-27). Not *in* the queue:
+            // saves must never wait for a slow iCloud read, ⌘Q would drop them.
+            // A rename of this Mac caught halfway can then surface as a
+            // conflict copy — an extra note, never a lost one.
             await pending?.value
             let (directory, usingiCloud) = Self.resolveStorageDirectory()
             if usingiCloud {
@@ -148,15 +154,20 @@ final class NotesStore: ObservableObject {
     /// after a reload is the file's own modification date (see
     /// `loadAllNotes`), which a coordinated write updates to the same
     /// moment anyway.
-    func save(_ note: Note) {
+    ///
+    /// `basedOn` is the version the new text was written on top of — the only
+    /// version a rename may remove from disk (see `writeNoteFile`). The editor
+    /// passes its own; other callers edit the list's current text.
+    func save(_ note: Note, basedOn base: String? = nil) {
         guard let index = notes.firstIndex(where: { $0.id == note.id }) else { return }
         if unsavedEdit?.id == note.id { unsavedEdit = nil }
+        let previousContent = base ?? notes[index].content
         var updated = note
         updated.modifiedAt = Date()
         notes[index] = updated
         notes.sort { $0.modifiedAt > $1.modifiedAt }
         markMutation(updated.id)
-        persist(updated)
+        persist(updated, previousContent: previousContent)
     }
 
     /// Deletes permanently — no trash/undo in v1. Callers (see
@@ -303,8 +314,8 @@ final class NotesStore: ObservableObject {
     private var pendingWrite: Task<Void, Never>?
 
     /// Called by the editor on every change until the debounce saves it.
-    func noteUnsavedEdit(id: UUID, content: String) {
-        unsavedEdit = (id, content)
+    func noteUnsavedEdit(id: UUID, content: String, basedOn base: String? = nil) {
+        unsavedEdit = (id, content, base)
     }
 
     /// Synchronous last write for `applicationWillTerminate` — an async write
@@ -316,32 +327,36 @@ final class NotesStore: ObservableObject {
         note.content = edit.content
         note.modifiedAt = Date()
         do {
-            // No pruning of other files with this UUID: a queued async write may
-            // still be running, and two interleaved writes with different
-            // titles could each delete the other's file — the note gone
-            // (review 2026-09-27). A duplicate is resolved by `loadAllNotes`.
-            try Self.writeNoteFile(note, to: currentDirectory, pruneStale: false)
+            // Pruning only when no queued async write is still running: two
+            // interleaved writes with different titles could each act on the
+            // other's file (review 2026-09-27). Without pruning, a title changed
+            // just before ⌘Q leaves the old file behind, which the next load
+            // keeps as a conflict copy — an extra note, not a lost one.
+            try Self.writeNoteFile(note, to: currentDirectory, pruneStale: writesInFlight == 0,
+                                   previousContent: edit.base)
             unsavedEdit = nil
         } catch {
             notesLog.error("final save on quit failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    private func persist(_ note: Note) {
+    private func persist(_ note: Note, previousContent: String? = nil) {
         let directory = currentDirectory
         let previous = pendingWrite
+        writesInFlight += 1
         pendingWrite = Task.detached(priority: .userInitiated) { [weak self] in
             await previous?.value
+            var failure: String?
             do {
-                try Self.writeNoteFile(note, to: directory)
-                guard let self else { return }
-                await MainActor.run { self.loadError = nil }
+                try Self.writeNoteFile(note, to: directory, previousContent: previousContent)
             } catch {
                 notesLog.error("save failed for \(note.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
-                guard let self else { return }
-                await MainActor.run {
-                    self.loadError = error.localizedDescription
-                }
+                failure = error.localizedDescription
+            }
+            guard let self else { return }
+            await MainActor.run {
+                self.writesInFlight -= 1
+                self.loadError = failure
             }
         }
     }
@@ -453,7 +468,7 @@ final class NotesStore: ObservableObject {
     /// placeholders without reading or downloading the latter. A placeholder
     /// with the same UUID forces a separate conflict copy so the local text is
     /// visible immediately without overwriting an unseen cloud version.
-    private nonisolated static func cloudNoteID(in url: URL) -> UUID? {
+    nonisolated static func cloudNoteID(in url: URL) -> UUID? {
         var name = url.lastPathComponent
         if name.hasPrefix("."), name.hasSuffix(".icloud") {
             name.removeFirst()
@@ -463,57 +478,7 @@ final class NotesStore: ObservableObject {
         return uuidSuffix(of: String(name.dropLast(".txt".count)))
     }
 
-    /// Lists every note file in `directory`. Any ubiquitous item not yet
-    /// downloaded locally is skipped this pass (download is kicked off, it
-    /// will appear on the next `refresh()`) rather than blocking here.
-    ///
-    /// Also self-heals duplicate-UUID files — a real bug (fixed 2026-09-13
-    /// in `writeNoteFile`) could leave a note's previous filename behind
-    /// after a title-triggered rename, so an install that hit it once has a
-    /// stray file sitting in this folder forever, resolving to the same
-    /// note ID and rendering as a ghost duplicate everywhere the list is
-    /// used (e.g. showing twice in Favorites). Keeps whichever copy was
-    /// modified most recently and quietly deletes the rest, rather than
-    /// requiring every already-affected install to be manually cleaned up.
-    private nonisolated static func loadAllNotes(from directory: URL) -> [Note] {
-        guard let entries = try? FileManager.default.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: [.ubiquitousItemDownloadingStatusKey]
-        ) else {
-            return []
-        }
-
-        var bestByID: [UUID: (note: Note, url: URL)] = [:]
-        var staleURLs: [URL] = []
-
-        for url in entries where url.pathExtension == fileExtension {
-            if let status = try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]).ubiquitousItemDownloadingStatus,
-               status != .current {
-                try? FileManager.default.startDownloadingUbiquitousItem(at: url)
-                continue
-            }
-            guard let note = readNoteFile(at: url) else { continue }
-            if let existing = bestByID[note.id] {
-                if note.modifiedAt > existing.note.modifiedAt {
-                    staleURLs.append(existing.url)
-                    bestByID[note.id] = (note, url)
-                } else {
-                    staleURLs.append(url)
-                }
-            } else {
-                bestByID[note.id] = (note, url)
-            }
-        }
-
-        if !staleURLs.isEmpty {
-            notesLog.notice("cleaning up \(staleURLs.count, privacy: .public) stale duplicate note file(s) left behind by a fixed rename bug")
-            for url in staleURLs {
-                try? deleteFile(at: url)
-            }
-        }
-
-        return bestByID.values.map(\.note)
-    }
+    // `loadAllNotes` and the conflict copies: NotesStore+Duplicates.swift
 
     // MARK: - File Coordinator wrapped I/O
     //
@@ -528,7 +493,7 @@ final class NotesStore: ObservableObject {
     /// dropped into the folder by hand (no parseable trailing UUID) is
     /// skipped, not adopted. (Arbitrary external file adoption is a real
     /// possible follow-up, not part of this scope.)
-    private nonisolated static func readNoteFile(at url: URL) -> Note? {
+    nonisolated static func readNoteFile(at url: URL) -> Note? {
         guard let id = uuidSuffix(of: url.deletingPathExtension().lastPathComponent) else {
             notesLog.notice("skipped non-note file \(url.lastPathComponent, privacy: .public)")
             return nil
@@ -558,7 +523,15 @@ final class NotesStore: ObservableObject {
     /// actually renames on disk when it changed since the last save — which
     /// only happens when the first line itself changed, not on every
     /// keystroke elsewhere in the note.
-    private nonisolated static func writeNoteFile(_ note: Note, to directory: URL, pruneStale: Bool = true) throws {
+    ///
+    /// `previousContent` is what this Mac last had for the note. Only a file
+    /// holding exactly that (or the new text) is this Mac's own predecessor and
+    /// may go. Any other file with the same UUID came from another Mac — e.g.
+    /// its own rename, held back while the note was open here — and is kept as
+    /// a conflict copy instead of being deleted unseen (audit 2026-11-17).
+    nonisolated static func writeNoteFile(
+        _ note: Note, to directory: URL, pruneStale: Bool = true, previousContent: String? = nil
+    ) throws {
         let newURL = directory.appendingPathComponent(filename(for: note))
         var coordinatorError: NSError?
         var writeError: Error?
@@ -587,7 +560,14 @@ final class NotesStore: ObservableObject {
         // forever, later re-appearing as a ghost duplicate of the same note
         // (self-healed for already-affected installs in `loadAllNotes`).
         for staleURL in pruneStale ? staleFileURLs(forID: note.id, in: directory, excluding: newURL.lastPathComponent) : [] {
-            try? deleteFile(at: staleURL)
+            // Unreadable (still downloading, coordination failed): not known
+            // to be ours — leave it for the next load instead of guessing.
+            guard let stale = readNoteFile(at: staleURL) else { continue }
+            if stale.content == note.content || stale.content == previousContent {
+                try? deleteFile(at: staleURL)
+            } else {
+                _ = keepAsConflictCopy(stale, at: staleURL, in: directory)
+            }
         }
     }
 
@@ -610,7 +590,7 @@ final class NotesStore: ObservableObject {
         if let lastError { throw lastError }
     }
 
-    private nonisolated static func deleteFile(at url: URL) throws {
+    nonisolated static func deleteFile(at url: URL) throws {
         var coordinatorError: NSError?
         var deleteError: Error?
         let coordinator = NSFileCoordinator()

@@ -229,7 +229,7 @@ struct NotesEditorView: View {
     /// `NotesStore.save` would otherwise happily re-append a note whose id
     /// it no longer recognizes as removed.
     private func scheduleSave(_ newValue: String) {
-        if newValue != lastSavedText { store.noteUnsavedEdit(id: note.id, content: newValue) }
+        if newValue != lastSavedText { store.noteUnsavedEdit(id: note.id, content: newValue, basedOn: lastSavedText) }
         saveTask?.cancel()
         saveTask = Task {
             try? await Task.sleep(nanoseconds: 600_000_000)
@@ -249,7 +249,10 @@ struct NotesEditorView: View {
         guard store.notes.contains(where: { $0.id == note.id }) else { return }
         var updated = note
         updated.content = content
-        store.save(updated)
+        // The version this text was typed on top of — not whatever the store
+        // list holds now, which a refresh may already have replaced with the
+        // other Mac's version (review of audit fix 2026-11-17).
+        store.save(updated, basedOn: lastSavedText)
         lastSavedText = content
     }
 
