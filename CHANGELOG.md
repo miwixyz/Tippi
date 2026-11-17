@@ -2,7 +2,11 @@
 
 ## [2.41.1] — 2026-11-17
 
-- _Add release notes here._
+### Neu
+- **Neue Symbole für das Stream-Deck-Plugin.** Alle Tasten und Drehregler haben ein einheitliches Aussehen bekommen: dunkle Glasfläche, klare weiße Linien, ein ruhiges Leuchten von oben. Der Diktat-Zustand bleibt auf einen Blick erkennbar: roter Punkt beim Aufnehmen, drei Punkte beim Schreiben, abgeblendet, wenn Diktat nicht bereit ist. Der Tastentitel steht oben und überdeckt das Zeichen nicht. Nach dem Update meldet Tippi unter Einstellungen → Allgemein → Stream Deck, dass das Plugin älter ist – dort „Plugin installieren“ wählen. Tasten, denen du selbst ein Bild zugewiesen hast, behalten es.
+
+### Intern
+- Symbole kommen aus dem Glas-Generator des Maintainers, `tools/deck-icons.swift` entfernt. `StreamDeckTests` (16) grün.
 
 ## [2.41.0] — 2026-11-17
 
