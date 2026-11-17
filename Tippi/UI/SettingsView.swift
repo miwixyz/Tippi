@@ -796,6 +796,7 @@ private struct ProviderRow: View {
     @State private var mlxIsInstalled: Bool = MLXServerManager.isInstalled
     /// Port and custom repo ID are jargon most people never need — tucked away.
     @State private var mlxAdvancedExpanded = false
+    @State private var mlxUnloadWhenIdle = LocalModelIdleUnloader.isEnabled
 
     private var isMLX: Bool { provider.id == "mlx" }
     /// No model to pick and nothing to save — the system owns the model.
@@ -961,6 +962,14 @@ private struct ProviderRow: View {
                     .background(.tint.opacity(0.06))
                     .cornerRadius(6)
                 }
+                // Gilt für den MLX-Server und das Rechenwerk der Autovervollständigung.
+                Toggle(String(localized: "settings.providers.mlx.unloadWhenIdle"), isOn: $mlxUnloadWhenIdle)
+                    .font(FamilyTheme.font(.caption))
+                    .help(String(localized: "settings.providers.mlx.unloadWhenIdle.help"))
+                    .onChange(of: mlxUnloadWhenIdle) { _, on in
+                        LocalModelIdleUnloader.isEnabled = on
+                        LocalModelIdleUnloader.shared.settingChanged()
+                    }
                 if mlxIsInstalled || mlxPreset == "custom" {
                     MLXAdvancedSettings(isExpanded: $mlxAdvancedExpanded, modelName: $modelName, port: $mlxPort,
                                         showsCustomModel: mlxPreset == "custom", showsPort: mlxIsInstalled)

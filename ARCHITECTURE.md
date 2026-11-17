@@ -90,6 +90,9 @@ Tippi/
 │   ├── PermissionsManager.swift    # Accessibility, Input Monitoring, Mikrofon, Bildschirmaufnahme, Mitteilungen
 │   ├── AccessibilityListName.swift # v2.34 — Name der Freigabe-Liste je macOS-Version (ab 27 „Gerätesteuerung und Datenzugriff“), Platzhalter in allen Texten
 │   ├── LocalTextAction.swift       # Lokale Aktionen ohne KI (Case, Umlaute, …)
+│   ├── LocalModelIdleUnloader.swift # 2026-11-17 — lokale Modelle nach 15 Min ohne Nutzung entladen
+│   │                               #   (Rechenwerk + eigener MLX-Server), ein schlafender Task, kein Takt;
+│   │                               #   Einstellung `mlx.unloadWhenIdle.v1`, ab Werk an; Entscheidung rein + getestet
 │   ├── TippiPause.swift            # Pause (v2.29): Endzeitpunkt; Popup, Autocomplete, Snippets fragen ihn ab
 │   ├── GnotchiBridge.swift         # 2.30 — Aufnahmezustand an Gnotchi (distnoted, nie Text), Signaturprüfung über PID
 │   ├── GnotchiLiveText.swift       # 2.30 — Live-Text an Gnotchi über Unix-Socket, Audit-Token-Prüfung vor dem ersten Byte
@@ -168,6 +171,9 @@ Tippi/
 │   │                               #   = wie ein nicht laufender lokaler Server
 │   ├── MLXChildEnvironment.swift   # Audit 2026-11-17 — feste Umgebung für mlx_lm.server/uvx/brew/uv
 │   │                               #   (kein PYTHON*/DYLD_*: Kindprozesse erben Tippis Rechte)
+│   ├── MLXServerOwnership.swift    # Audit 2026-11-17 — nur eigene MLX-Server: fremder Server auf dem Port
+│   │                               #   wird abgelehnt, Rest eines früheren Tippi-Laufs (Eltern 1/eigene PID +
+│   │                               #   unser Befehl) ersetzt; reine Entscheidungen, getestet
 │   └── {OpenAI,Anthropic,Gemini,Mistral,OpenRouter,Ollama,MLX,AppleIntelligence}Provider.swift
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):

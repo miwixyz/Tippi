@@ -26,6 +26,9 @@ struct MLXProvider: LLMProvider {
 
     func complete(systemPrompt: String, userText: String, model: String,
                   temperature hint: Double?) async throws -> String {
+        // Counts as use, and blocks the idle unload while in flight.
+        await MainActor.run { LocalModelIdleUnloader.shared.beginRequest() }
+        defer { Task { @MainActor in LocalModelIdleUnloader.shared.endRequest() } }
         // Ensure server is running (starts it if needed)
         let port = try await MLXServerManager.shared.start()
         let url  = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions")!
@@ -134,6 +137,8 @@ struct MLXProvider: LLMProvider {
     /// `MLXServerManager.start()` returns immediately for a running server, so
     /// it never covered that case. Best-effort: all errors are ignored.
     static func prime(systemPrompt: String) async {
+        await MainActor.run { LocalModelIdleUnloader.shared.beginRequest() }
+        defer { Task { @MainActor in LocalModelIdleUnloader.shared.endRequest() } }
         guard let port = try? await MLXServerManager.shared.start(),
               let url = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions") else { return }
         var request = URLRequest(url: url)

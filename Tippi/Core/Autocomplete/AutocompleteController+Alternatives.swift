@@ -18,6 +18,7 @@ extension AutocompleteController {
     /// ↓ wurde geschluckt. Die weiteren Kandidaten werden erst jetzt zu ganzen
     /// Wörtern ergänzt (wenige kurze Anfragen an den eigenen Server).
     func showAlternatives() {
+        LocalModelIdleUnloader.shared.noteUse()
         let engine = activeEngine()
         let server = MLXServerManager.shared.ownedServerURL
         guard let entry = alternativesSeed,

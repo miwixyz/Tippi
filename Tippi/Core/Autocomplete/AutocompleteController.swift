@@ -129,9 +129,7 @@ final class AutocompleteController: ObservableObject {
         // Nutzt nur den selbst gestarteten Server. Wer die Funktion einschaltet,
         // will Vorschläge — ohne diesen Start gäbe es nach jedem Neustart von
         // Tippi keine, solange MLX nicht der Standard-Anbieter ist.
-        if MLXServerManager.isInstalled, MLXServerManager.shared.state == .stopped {
-            Task { try? await MLXServerManager.shared.start() }
-        }
+        startOwnServerIfStopped()
         _ = vocabularies.vocabulary(for: MLXServerManager.activeModel)   // vorladen
         if let engine = AutocompleteEngineHost.availableModel(), AutocompleteSettings.inProcess {
             _ = vocabularies.vocabulary(for: engine)
@@ -281,6 +279,11 @@ final class AutocompleteController: ObservableObject {
         // seinen Grund — nur Gründe und Zahlen, nie getippten Text.
         guard bridge.tap != nil else { return skip("no tap") }
         guard !isOtherTypingUIActive() else { return skip("other typing UI active") }
+        // Nutzung fürs Entladen nach Leerlauf. Wurde entladen, kommt beides hier
+        // zurück: der Server über start(), das Rechenwerk über activeEngine() —
+        // bis dahin gibt es eben keinen Vorschlag bzw. den Server-Weg.
+        LocalModelIdleUnloader.shared.noteUse()
+        startOwnServerIfStopped()
         let engine = activeEngine()
         let server = MLXServerManager.shared.ownedServerURL
         guard engine != nil || server != nil else {
@@ -345,6 +348,15 @@ final class AutocompleteController: ObservableObject {
     func activeEngine() -> AutocompleteEngine? {
         guard AutocompleteSettings.inProcess, let model = AutocompleteEngineHost.availableModel() else { return nil }
         return engines.engine(for: model)
+    }
+
+    /// Startet den eigenen MLX-Server, wenn er aus ist (nach dem Einschalten,
+    /// nach einem App-Neustart oder nach dem Entladen bei Leerlauf). Nur aus
+    /// `.stopped` — ein `.failed` (z. B. fremder Server) wird nicht bei jeder
+    /// Tipp-Pause erneut versucht.
+    private func startOwnServerIfStopped() {
+        guard MLXServerManager.shared.state == .stopped, MLXServerManager.isInstalled else { return }
+        Task { try? await MLXServerManager.shared.start() }
     }
 
     private func skip(_ why: String) {

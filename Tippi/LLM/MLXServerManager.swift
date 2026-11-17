@@ -3,7 +3,8 @@ import Foundation
 // MARK: - MLXServerManager
 
 /// Manages the lifecycle of a local `mlx_lm.server` process.
-/// Tippi starts the server on first MLX request and keeps it running until the app quits.
+/// Started on first MLX request; runs until quit or 15 min idle (`LocalModelIdleUnloader`).
+/// Only a server this Tippi started is used — see `MLXServerOwnership.swift`.
 @MainActor
 final class MLXServerManager: ObservableObject {
     static let shared = MLXServerManager()
@@ -97,6 +98,7 @@ final class MLXServerManager: ObservableObject {
         let model = Self.model
         let port  = Self.port
         state = .starting
+        unloadedForIdle = false
         isWarm = false
         // A stderr chunk from the *previous* attempt can still be sitting in the
         // MainActor queue when this one flips to `.starting`. Landing then, it
@@ -116,24 +118,29 @@ final class MLXServerManager: ObservableObject {
             throw MLXError.serverNotFound
         }
 
-        // If a server is already listening on the configured port, reuse it
-        // instead of killing user-owned MLX processes — but ONLY if it actually
-        // serves the model we want. Otherwise the process on this port is a
-        // foreign server (LM Studio, LocalAI, llama.cpp, …); silently sending the
-        // user's selected text to it would leak that text to an unintended local
-        // process and run against the wrong model. Refuse in that case.
-        if let existingModelID = await fetchActiveModelID(port: port) {
-            guard existingModelID == model else {
-                let msg = "Port \(port) is already used by a server serving '\(existingModelID)', not '\(model)'. Change Tippi's MLX port in Settings or stop that server."
-                NSLog("Tippi MLX: \(msg)")
+        // Something already answers. It used to be adopted when it reported the
+        // right model ID — but any program can report any ID, and this server
+        // receives the user's text. Only a server Tippi started is used now
+        // (audit finding 7, 2026-11-17); a leftover of an earlier Tippi run is
+        // replaced, anything else refused. See `answeringServerVerdict`.
+        if await fetchModels(port: port) != nil {
+            let binaryPath = binary.path
+            let found = await Task.detached(operation: { Self.listener(on: port) }).value
+            switch Self.answeringServerVerdict(listener: found, ownPID: getpid(), binaryPath: binaryPath, port: port) {
+            case .leftoverOfTippi(let pid):
+                NSLog("Tippi MLX: replacing leftover server pid \(pid) of an earlier Tippi run on port \(port)")
+                guard await Task.detached(operation: { Self.clearStaleServer(on: port) }).value else {
+                    let msg = String(format: String(localized: "mlx.error.stuckPort"), port)
+                    state = .failed(msg)
+                    throw MLXError.launchFailed(msg)
+                }
+            case .foreign(let pid, let command):
+                let who = pid.map { "\(Self.displayName(ofCommand: command)), PID \($0)" } ?? "?"
+                let msg = String(format: String(localized: "mlx.error.foreignServer"), port, who)
+                NSLog("Tippi MLX: refusing server on port \(port) not started by Tippi (\(who))")
                 state = .failed(msg)
                 throw MLXError.launchFailed(msg)
             }
-            activeModelID = existingModelID
-            state = .running(port: port)
-            // A pre-existing server serving our model is assumed already warm.
-            isWarm = true
-            return port
         }
 
         // Nothing answered. Before spawning, find out whether the port is even
@@ -142,7 +149,8 @@ final class MLXServerManager: ObservableObject {
         // lsof/ps block (and clearing a stale server can wait seconds) — off
         // the main actor, which also hosts the autocomplete tap (audit 2026-09-27).
         if let found = await Task.detached(operation: { Self.listener(on: port) }).value {
-            switch Self.occupantVerdict(listenerPID: found.pid, listenerCommand: found.command) {
+            switch Self.occupantVerdict(listenerPID: found.pid, listenerCommand: found.command,
+                                        listenerParentPID: found.parentPID, ownPID: getpid()) {
             case .staleMLXServer:
                 guard await Task.detached(operation: { Self.clearStaleServer(on: port) }).value else {
                     let msg = String(format: String(localized: "mlx.error.stuckPort"), port)
@@ -208,9 +216,13 @@ final class MLXServerManager: ObservableObject {
                 MLXServerManager.shared.lastProgressAt = Date()
             }
         }
-        proc.terminationHandler = { [weak self] _ in
+        proc.terminationHandler = { [weak self] ended in
             stderrPipe.fileHandleForReading.readabilityHandler = nil
+            let endedID = ObjectIdentifier(ended)
             Task { @MainActor [weak self] in
+                // Only the current process: a server stopped for idling may exit
+                // after its successor is up and must not mark that one crashed.
+                guard let current = self?.process, ObjectIdentifier(current) == endedID else { return }
                 // Exit while we still believed the server was running = an
                 // unexpected crash/kill (an explicit stop() sets .stopped BEFORE
                 // terminate(), so this branch never fires for that path). Surface
@@ -243,6 +255,7 @@ final class MLXServerManager: ObservableObject {
             lastProgressAt = nil
             activeModelID = await fetchActiveModelID(port: p)
             state = .running(port: p)
+            LocalModelIdleUnloader.shared.noteUse()   // idle clock starts with the start
             // /v1/models answers before the model is actually loaded — the first
             // completion pays the weight-load + Metal-kernel-compile cost. Force
             // that now in the background so the user's first real polish is warm.
@@ -277,10 +290,26 @@ final class MLXServerManager: ObservableObject {
         process?.terminate()
         process = nil
         state = .stopped
+        unloadedForIdle = false
         activeModelID = nil
         isWarm = false
         downloadStatus = nil
         lastProgressAt = nil
+    }
+
+    /// `.stopped` by the idle unload, not by the user: the next use starts it
+    /// again, so the menu bar must not turn red (`TippiStatusMonitor`).
+    private(set) var unloadedForIdle = false
+
+    /// Idle unload: only a server this Tippi started, only once fully up (a
+    /// start in flight is "in use"). Next `start()` launches it again.
+    @discardableResult
+    func stopIfOwned() -> Bool {
+        guard state.isRunning, process?.isRunning == true else { return false }
+        NSLog("Tippi MLX: stopping own server after idle period")
+        stop()
+        unloadedForIdle = true
+        return true
     }
 
     // MARK: - Warm-up
@@ -351,8 +380,8 @@ final class MLXServerManager: ObservableObject {
     // MARK: - Own server only (autocomplete)
 
     /// Base URL of the server **this Tippi process started itself** — `nil` in
-    /// every other case, including a server `start()` merely adopted because it
-    /// already answered on the port.
+    /// every other case. Since 2026-11-17 `start()` no longer adopts a server
+    /// that already answered on the port; this check stays as the second lock.
     ///
     /// The autocomplete sends everything the user types. An adopted listener
     /// could be any program that got to the port first, so it must never receive
@@ -448,10 +477,20 @@ final class MLXServerManager: ObservableObject {
     /// which surfaced as a startup timeout blaming the download. Every attempt
     /// failed the same way regardless of model — reported as "Fehler kommt bei
     /// allen MLX Modellen", and the port was the reason.
-    nonisolated static func occupantVerdict(listenerPID: Int32?, listenerCommand: String?) -> PortOccupant {
+    ///
+    /// `listenerParentPID` (2026-11-17): a silent `mlx_lm.server` is only
+    /// "stale" — and killed — when nobody else owns it: orphaned (parent 1) or
+    /// our own child. One whose parent is another live program (a second Tippi,
+    /// a terminal) belongs to that program and is never killed. `nil` = parent
+    /// unknown, keeps the earlier behaviour.
+    nonisolated static func occupantVerdict(listenerPID: Int32?, listenerCommand: String?,
+                                            listenerParentPID: Int32? = nil,
+                                            ownPID: Int32 = getpid()) -> PortOccupant {
         guard let pid = listenerPID, let command = listenerCommand else { return .free }
         // Match the server itself and the uv/uvx wrapper Tippi launches it through.
-        if command.contains("mlx_lm.server") || command.contains("mlx-lm") {
+        let isMLX = command.contains("mlx_lm.server") || command.contains("mlx-lm")
+        let nobodyElseOwnsIt = listenerParentPID.map { isLeftoverParent($0, ownPID: ownPID) } ?? true
+        if isMLX, nobodyElseOwnsIt {
             return .staleMLXServer(pid: pid)
         }
         return .foreignProcess(pid: pid, command: command)
@@ -459,7 +498,7 @@ final class MLXServerManager: ObservableObject {
 
     /// Who is listening on `port`, via `lsof`. `nil` when the port is free or
     /// `lsof` is unavailable — the caller then behaves as before.
-    nonisolated static func listener(on port: Int) -> (pid: Int32, command: String)? {
+    nonisolated static func listener(on port: Int) -> PortListener? {
         let lsof = Process()
         lsof.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
         lsof.arguments = ["-nP", "-iTCP:\(port)", "-sTCP:LISTEN", "-t"]
@@ -479,16 +518,16 @@ final class MLXServerManager: ObservableObject {
 
         let ps = Process()
         ps.executableURL = URL(fileURLWithPath: "/bin/ps")
-        ps.arguments = ["-o", "command=", "-p", "\(pid)"]
+        ps.arguments = ["-o", "ppid=,command=", "-p", "\(pid)"]
         let psPipe = Pipe()
         ps.standardOutput = psPipe
         ps.standardError = FileHandle.nullDevice
-        do { try ps.run() } catch { return (pid, "") }
+        do { try ps.run() } catch { return PortListener(pid: pid, parentPID: nil, command: "") }
         let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
         ps.waitUntilExit()
         // swiftlint:disable:next optional_data_string_conversion - wie oben: ersetzen statt verwerfen
-        let command = String(decoding: psData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        return (pid, command)
+        let parsed = parsePSLine(String(decoding: psData, as: UTF8.self))
+        return PortListener(pid: pid, parentPID: parsed.parentPID, command: parsed.command)
     }
 
     /// Clears a stale MLX server off `port`. Returns `true` when the port is
@@ -497,7 +536,9 @@ final class MLXServerManager: ObservableObject {
     nonisolated static func clearStaleServer(on port: Int) -> Bool {
         guard let found = listener(on: port) else { return true }
         guard case .staleMLXServer(let pid) = occupantVerdict(listenerPID: found.pid,
-                                                              listenerCommand: found.command) else {
+                                                              listenerCommand: found.command,
+                                                              listenerParentPID: found.parentPID,
+                                                              ownPID: getpid()) else {
             return false
         }
         NSLog("Tippi MLX: terminating stale server pid \(pid) holding port \(port)")
