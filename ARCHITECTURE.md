@@ -166,6 +166,8 @@ Tippi/
 │   │                               #   damit scripts/apple-intelligence-messung/ genau diese Datei misst
 │   ├── AppleIntelligenceProvider.swift # 2.32 — Anbieter `apple` (ein Preset „System“), nicht verfügbar
 │   │                               #   = wie ein nicht laufender lokaler Server
+│   ├── MLXChildEnvironment.swift   # Audit 2026-11-17 — feste Umgebung für mlx_lm.server/uvx/brew/uv
+│   │                               #   (kein PYTHON*/DYLD_*: Kindprozesse erben Tippis Rechte)
 │   └── {OpenAI,Anthropic,Gemini,Mistral,OpenRouter,Ollama,MLX,AppleIntelligence}Provider.swift
 ├── UI/
 │   ├── FamilyTheme.swift           # v2.20 — Design der App-Familie (Kopie der Vault-Vorlage):

@@ -244,13 +244,17 @@ final class SelectionPopupMonitor: ObservableObject {
             onNoSelection()
             return
         }
-        guard let text = TextCapture.selectedText(from: element),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        // Same short limit as the range read (audit 2026-11-17, finding 5);
+        // 0 restores the global timeout for the later replacement.
+        AXUIElementSetMessagingTimeout(element, 0.25)
+        let text = TextCapture.selectedText(from: element)
+        let bounds = text == nil ? nil : TextCapture.boundsForSelection(element: element, range: range)
+        AXUIElementSetMessagingTimeout(element, 0)
+        guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             selectionPopupLog.debug("checkSelection: range found but no text readable, app=\(app.localizedName ?? "?", privacy: .public)")
             onNoSelection()
             return
         }
-        let bounds = TextCapture.boundsForSelection(element: element, range: range)
         selectionPopupLog.debug("checkSelection: match, \(text.count, privacy: .public) chars, bounds=\(bounds.map { "\($0)" } ?? "nil", privacy: .public), app=\(app.localizedName ?? "?", privacy: .public)")
         onSelection(SelectionSnapshot(
             text: text, element: element, range: range, bounds: bounds, sourceApp: app,

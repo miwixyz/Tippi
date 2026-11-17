@@ -7,8 +7,8 @@ import Foundation
 /// provider without touching a Terminal.
 ///
 /// Two-phase flow:
-///   1. Install `uv` (Astral's Python tool installer) via the official installer
-///      script. Skipped if `uv` is already on disk.
+///   1. Install `uv` (Astral's Python tool installer) via Homebrew
+///      (`brew install uv`). Skipped if `uv` is already on disk.
 ///   2. Run `uv tool install mlx-lm`, which downloads and registers
 ///      `~/.local/bin/mlx_lm.server` — exactly the path `MLXServerManager`
 ///      already looks for.
@@ -65,8 +65,8 @@ final class MLXInstaller {
 
                     continuation.yield(.log("Installing uv via Homebrew…"))
                     do {
-                        try await runShell(
-                            "\"\(brewPath)\" install uv",
+                        try await run(
+                            brewPath, ["install", "uv"],
                             onLine: { continuation.yield(.log($0)) }
                         )
                         continuation.yield(.log("✓ uv installed"))
@@ -86,8 +86,8 @@ final class MLXInstaller {
                 continuation.yield(.log("Installing mlx-lm via uv (this downloads PyTorch and MLX — may take a couple of minutes)…"))
                 let uvPath = await MainActor.run { Self.resolvedUVPath() ?? "uv" }
                 do {
-                    try await runShell(
-                        "\"\(uvPath)\" tool install mlx-lm",
+                    try await run(
+                        uvPath, ["tool", "install", "mlx-lm"],
                         onLine: { continuation.yield(.log($0)) }
                     )
                     continuation.yield(.log("✓ mlx-lm installed"))
@@ -148,10 +148,19 @@ final class MLXInstaller {
 
     // MARK: - Shell runner
 
-    /// Run a shell command and stream stdout/stderr line by line.
+    /// `executable` + `arguments` as a launch list — no `/bin/sh -c`, so no
+    /// string is ever parsed by a shell. A bare name (`uv` when no install
+    /// path was found) is looked up via `/usr/bin/env` in the fixed PATH.
+    nonisolated static func launch(_ executable: String, _ arguments: [String]) -> (url: URL, arguments: [String]) {
+        executable.contains("/")
+            ? (URL(fileURLWithPath: executable), arguments)
+            : (URL(fileURLWithPath: "/usr/bin/env"), [executable] + arguments)
+    }
+
+    /// Run a program and stream stdout/stderr line by line.
     /// Throws if the process exits non-zero or fails to launch.
-    private static func runShell(
-        _ command: String,
+    private static func run(
+        _ executable: String, _ arguments: [String],
         onLine: @escaping @Sendable (String) -> Void
     ) async throws {
         let runner = ShellProcessRunner()
@@ -159,19 +168,16 @@ final class MLXInstaller {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
                 let proc = Process()
-                proc.executableURL = URL(fileURLWithPath: "/bin/sh")
-                proc.arguments = ["-c", command]
+                let target = launch(executable, arguments)
+                proc.executableURL = target.url
+                proc.arguments = target.arguments
                 let pipe = Pipe()
                 proc.standardOutput = pipe
                 proc.standardError = pipe
 
-                // Ensure user's HOME and a sensible PATH are present so tools
-                // installed in ~/.local/bin are reachable.
-                var env = ProcessInfo.processInfo.environment
-                let extraPath = "\(NSHomeDirectory())/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-                env["PATH"] = (env["PATH"].map { "\(extraPath):\($0)" }) ?? extraPath
-                env["HOME"] = NSHomeDirectory()
-                proc.environment = env
+                // Fixed environment with ~/.local/bin and Homebrew on the PATH
+                // so freshly installed tools are found — see `MLXChildEnvironment`.
+                proc.environment = MLXChildEnvironment.make()
 
                 let buffer = LineBuffer()
                 pipe.fileHandleForReading.readabilityHandler = { handle in

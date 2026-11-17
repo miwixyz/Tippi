@@ -77,14 +77,20 @@ enum TextCapture {
         guard AXIsProcessTrusted() else { return nil }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         ChromiumAccessibility.wake(appElement, pid: app.processIdentifier)
+        // Runs on the main thread, for the selection bar on every mouse-up.
+        // Without a limit a hung app cost Tippi's 2 s global timeout per call
+        // and froze the keyboard tap with it (audit 2026-11-17, finding 5).
+        AXUIElementSetMessagingTimeout(appElement, 0.25)
         guard let focused = focusedElement(in: appElement) else { return nil }
 
         var rangeRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(
-            focused,
-            kAXSelectedTextRangeAttribute as CFString,
-            &rangeRef
-        ) == .success, let rangeValue = rangeRef else {
+        AXUIElementSetMessagingTimeout(focused, 0.25)
+        let rangeResult = AXUIElementCopyAttributeValue(focused, kAXSelectedTextRangeAttribute as CFString, &rangeRef)
+        // `focused` is stored and reused later (bounds, replacement); those
+        // callers set their own limit or rely on the global one — 0 resets
+        // this element to the global value instead of leaking 0.25 s.
+        AXUIElementSetMessagingTimeout(focused, 0)
+        guard rangeResult == .success, let rangeValue = rangeRef else {
             return nil
         }
 

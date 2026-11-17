@@ -174,6 +174,8 @@ final class MLXServerManager: ObservableObject {
             // without anyone noticing. Hardening, added 2026-09-19.
             "--host", "127.0.0.1"
         ]
+        // Fixed environment, never Tippi's own — see `MLXChildEnvironment`.
+        proc.environment = MLXChildEnvironment.make()
         // stdout stays discarded (request logging, not interesting). stderr is
         // read: that is where huggingface_hub reports the first-run model
         // download, the single slowest thing that can happen here.
