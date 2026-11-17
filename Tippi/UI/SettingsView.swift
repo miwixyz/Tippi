@@ -180,6 +180,10 @@ private struct GeneralSettingsTab: View {
 
             CurrencyFavoritesSection()
 
+            if let link = AppDelegate.shared?.streamDeck {
+                StreamDeckSection(link: link)
+            }
+
             Section {
                 Toggle(String(localized: "settings.general.selectionPopup"), isOn: $selectionPopupEnabled)
                     .onChange(of: selectionPopupEnabled) { _, _ in
@@ -1409,6 +1413,8 @@ private struct HelpTab: View {
         HelpEntry(id: "translate", icon: "character.bubble", category: .voice,
                   title: String(localized: "settings.help.translateTitle"), body: String(localized: "settings.help.translateBody")),
 
+        HelpEntry(id: "streamDeck", icon: "square.grid.3x2", category: .misc,
+                  title: String(localized: "settings.help.streamDeckTitle"), body: String(localized: "settings.help.streamDeckBody")),
         HelpEntry(id: "appearance", icon: "circle.lefthalf.filled", category: .misc,
                   title: String(localized: "settings.help.appearanceTitle"), body: String(localized: "settings.help.appearanceBody")),
         HelpEntry(id: "notes", icon: "note.text", category: .misc,

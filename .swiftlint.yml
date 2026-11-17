@@ -6,6 +6,7 @@
 included:
   - Tippi
   - TippiTests
+  - TippiDeck
 
 excluded:
   # whisper.cpp ist ein gitignorierter Upstream-Checkout von `make prepare-binary`

@@ -73,6 +73,11 @@ echo "  build: ${CUR_BUILD} → ${NEW_BUILD}"
 # Patch project.yml (BSD sed-safe in-place edit).
 sed -i '' -E "s/(MARKETING_VERSION: )\"[^\"]+\"/\1\"${NEW_VERSION}\"/" "${PROJECT_FILE}"
 sed -i '' -E "s/(CURRENT_PROJECT_VERSION: )\"[^\"]+\"/\1\"${NEW_BUILD}\"/" "${PROJECT_FILE}"
+# Stream-Deck-Plugin: Manifest-Version folgt der App (vier Stellen, Elgato-Format). release.sh prüft das.
+DECK_MANIFEST="TippiDeck/dev.mwlr.tippi.deck.sdPlugin/manifest.json"
+if [ -f "${DECK_MANIFEST}" ]; then
+    sed -i '' -E "s/(\"Version\": )\"[^\"]+\"/\1\"${NEW_VERSION}.0\"/" "${DECK_MANIFEST}"
+fi
 
 # Stamp CHANGELOG.md header if missing.
 if [ -f "${CHANGELOG_FILE}" ]; then

@@ -430,6 +430,19 @@ SPARKLE_FW="${APP_PATH}/Contents/Frameworks/Sparkle.framework/Versions/B"
 codesign --force --options runtime --timestamp --sign "${DEVELOPER_ID}" \
     "${APP_PATH}/Contents/MacOS/whisper-cli"
 
+# Stream-Deck-Plugin (docs/SECURE-DESIGN-stream-deck.md): own identifier, no entitlements, Developer ID – Tippi checks the
+# socket peer against exactly this, and "Install Plugin" only hands over a binary that passes the same requirement.
+DECK_DIR="${APP_PATH}/Contents/Resources/dev.mwlr.tippi.deck.sdPlugin"
+DECK_BIN="${DECK_DIR}/tippideck"
+[ -x "${DECK_BIN}" ] || { echo "✗ Stream Deck plugin missing in the bundle or not executable"; exit 1; }
+[ -f "${DECK_DIR}/manifest.json" ] || { echo "✗ Stream Deck plugin manifest missing"; exit 1; }
+grep -q "\"Version\": \"${VERSION}.0\"" "${DECK_DIR}/manifest.json" \
+    || { echo "✗ Stream Deck manifest version is not ${VERSION}.0 (scripts/bump-version.sh patches it)"; exit 1; }
+codesign --force --options runtime --timestamp -i dev.mwlr.tippi.deck --sign "${DEVELOPER_ID}" "${DECK_BIN}"
+codesign --verify --strict \
+    -R='anchor apple generic and certificate leaf[subject.OU] = "LTKJ6Z2VYB" and identifier "dev.mwlr.tippi.deck"' "${DECK_BIN}" \
+    || { echo "✗ Stream Deck plugin not validly signed with Developer ID"; exit 1; }
+
 # Sign Sparkle executables
 for bin in \
     "${SPARKLE_FW}/XPCServices/Installer.xpc/Contents/MacOS/Installer" \

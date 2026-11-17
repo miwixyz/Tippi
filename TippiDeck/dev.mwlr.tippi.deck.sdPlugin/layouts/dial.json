@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/layout.json",
+  "id": "tippi-dial",
+  "items": [
+    { "key": "name", "type": "text", "rect": [12, 4, 76, 26], "font": { "size": 17, "weight": 600 }, "alignment": "left", "text-overflow": "ellipsis" },
+    { "key": "value", "type": "text", "rect": [92, 4, 96, 26], "font": { "size": 15, "weight": 600 }, "alignment": "right", "color": "#98A9E1" },
+    { "key": "track", "type": "pixmap", "rect": [12, 36, 176, 30] },
+    { "key": "bar", "type": "bar", "rect": [12, 76, 176, 10], "value": 0, "subtype": 4, "border_w": 0, "bar_fill_c": "#98A9E1" }
+  ]
+}

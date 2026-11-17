@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Tippi",
+  "Version": "2.40.2.0",
+  "Author": "MWLR",
+  "Description": "Diktat, Prompts und Werkzeuge von Tippi auf Tasten und Drehreglern.",
+  "URL": "https://tippi.mwlr.dev",
+  "UUID": "dev.mwlr.tippi.deck",
+  "Icon": "imgs/plugin",
+  "CodePath": "tippideck",
+  "SDKVersion": 2,
+  "Software": { "MinimumVersion": "6.5" },
+  "OS": [{ "Platform": "mac", "MinimumVersion": "15" }],
+  "Category": "Tippi",
+  "CategoryIcon": "imgs/category",
+  "PropertyInspectorPath": "pi/index.html",
+  "Profiles": [
+    { "Name": "profiles/tippi-plus", "DeviceType": 7, "Readonly": false, "DontAutoSwitchWhenInstalled": true, "AutoInstall": true },
+    { "Name": "profiles/tippi-neo", "DeviceType": 9, "Readonly": false, "DontAutoSwitchWhenInstalled": true, "AutoInstall": true }
+  ],
+  "Actions": [
+    {
+      "Name": "Diktat",
+      "UUID": "dev.mwlr.tippi.deck.dictation",
+      "Icon": "imgs/dictation",
+      "Tooltip": "Diktat starten/stoppen oder halten zum Sprechen; auch Diktat für Mails und Sprachnotiz",
+      "Controllers": ["Encoder", "Keypad"],
+      "Encoder": {
+        "Icon": "imgs/dictation-dial",
+        "layout": "layouts/dial.json",
+        "TriggerDescription": { "Rotate": "Modus wählen", "Push": "Start/Stopp", "Touch": "Start/Stopp" }
+      },
+      "States": [{ "Image": "imgs/key-mic", "TitleAlignment": "top", "FontSize": 10 }]
+    },
+    {
+      "Name": "Prompt",
+      "UUID": "dev.mwlr.tippi.deck.prompt",
+      "Icon": "imgs/prompt",
+      "Tooltip": "Einen Prompt auf die Auswahl anwenden (Vorschau zum Bestätigen) oder Tippi öffnen",
+      "Controllers": ["Encoder", "Keypad"],
+      "Encoder": {
+        "Icon": "imgs/prompt-dial",
+        "layout": "layouts/dial.json",
+        "TriggerDescription": { "Rotate": "Prompt wählen", "Push": "Anwenden", "Touch": "Tippi öffnen" }
+      },
+      "States": [{ "Image": "imgs/key-prompt", "TitleAlignment": "top", "FontSize": 10 }]
+    },
+    {
+      "Name": "Werkzeug",
+      "UUID": "dev.mwlr.tippi.deck.tool",
+      "Icon": "imgs/tool",
+      "Tooltip": "Übersetzen, Emoji, Notizen, Schnellnotiz, Text vom Bildschirm, Passwort oder Tippi-Fenster",
+      "Controllers": ["Keypad"],
+      "States": [{ "Image": "imgs/key-popup", "TitleAlignment": "top", "FontSize": 10 }]
+    },
+    {
+      "Name": "Schalter",
+      "UUID": "dev.mwlr.tippi.deck.toggle",
+      "Icon": "imgs/toggle",
+      "Tooltip": "Tippi pausieren, Autovervollständigung an/aus oder Diktatsprache wechseln",
+      "Controllers": ["Keypad"],
+      "States": [{ "Image": "imgs/key-pause", "TitleAlignment": "top", "FontSize": 10 }]
+    }
+  ]
+}

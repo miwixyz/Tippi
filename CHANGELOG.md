@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Neu
+- **Tippi auf dem Stream Deck.** Ein eigenes Plugin für Elgatos Stream Deck (Stream Deck +, Neo und alle anderen Modelle): Diktat starten und stoppen oder halten zum Sprechen, Diktat für Mails, Sprachnotiz, einen Prompt direkt auf die Auswahl anwenden (auch deine eigenen), Tippi öffnen, Übersetzen, Emoji, Notizen, Schnellnotiz, Text vom Bildschirm, Passwort, Pause, Autovervollständigung und Diktatsprache. Am Stream Deck + wählt ein Drehregler den Diktat-Modus und zeigt den Mikrofonpegel, ein zweiter blättert durch die Prompts. Jede Taste zeigt ihren Zustand (bereit, nimmt auf, schreibt). Fertige Profile für Stream Deck + und Neo mit zwei Seiten werden mitinstalliert. Einschalten unter Einstellungen → Allgemein → Stream Deck, dort auch „Plugin installieren“.
+
+### Sicherheit
+- **Stream Deck nur über ein geprüftes Plugin.** Ab Werk aus; aus heißt, Tippi öffnet gar keinen Zugang. Eingeschaltet nimmt Tippi Befehle nur von seinem eigenen, mit Developer ID signierten Plugin an, und nur, wenn Elgatos Stream-Deck-App es gestartet hat. Ein selbst gestartetes Plugin wird abgelehnt. Es gibt nur eine feste Liste von Befehlen, die auch per Kürzel oder Menü gehen; nichts davon fügt fremden Text ein. Ans Stream Deck gehen nur Zustand, Pegel und Prompt-Namen, nie markierter Text, Diktat oder Ergebnis. Entwurf: `docs/SECURE-DESIGN-stream-deck.md`.
+
 ## [2.40.2] — 2026-11-17
 
 ### Behoben

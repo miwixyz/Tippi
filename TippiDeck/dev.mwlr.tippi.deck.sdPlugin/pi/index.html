@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<!-- Settings of a Tippi action inside Stream Deck (docs/SECURE-DESIGN-stream-deck.md). Local only: no network beyond Stream
+     Deck's own WebSocket, no foreign scripts. Stores only the choice (kind, press, mode, prompt, tool, switch) via setSettings.
+     Prompt and mode names come from the plugin and are inserted with textContent only – never as HTML. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src ws://127.0.0.1:*">
+<style>
+  body { margin: 0; padding: 8px 12px; background: #2d2d2d; color: #d8d8d8; font: 12px -apple-system, sans-serif; }
+  .row { display: flex; align-items: center; margin: 6px 0; }
+  label { width: 90px; flex: none; color: #9a9a9a; }
+  select { flex: 1; min-width: 0; background: #3d3d3d; color: #e6e6e6; border: 1px solid #555; border-radius: 4px; padding: 3px 4px; font: inherit; }
+  p { color: #8c8c8c; margin: 10px 0 0; line-height: 1.4; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+  <div class="row hidden" id="kindRow"><label for="kind" data-de="Art" data-en="Kind">Art</label>
+    <select id="kind">
+      <option value="dictation" data-de="Diktat" data-en="Dictation">Diktat</option>
+      <option value="mail" data-de="Diktat für Mails" data-en="Mail dictation">Diktat für Mails</option>
+      <option value="voiceNote" data-de="Sprachnotiz" data-en="Voice note">Sprachnotiz</option>
+    </select>
+  </div>
+  <div class="row hidden" id="pressRow"><label for="press" data-de="Taste" data-en="Key">Taste</label>
+    <select id="press">
+      <option value="toggle" data-de="Drücken = Start/Stopp" data-en="Press = start/stop">Drücken = Start/Stopp</option>
+      <option value="hold" data-de="Halten zum Sprechen" data-en="Hold to talk">Halten zum Sprechen</option>
+    </select>
+  </div>
+  <div class="row hidden" id="modeRow"><label for="mode" data-de="Modus" data-en="Mode">Modus</label>
+    <select id="mode"></select>
+  </div>
+  <div class="row hidden" id="promptRow"><label for="prompt">Prompt</label>
+    <select id="prompt"></select>
+  </div>
+  <div class="row hidden" id="toolRow"><label for="tool" data-de="Werkzeug" data-en="Tool">Werkzeug</label>
+    <select id="tool">
+      <option value="popup" data-de="Tippi öffnen (⌥⌘T)" data-en="Open Tippi (⌥⌘T)">Tippi öffnen (⌥⌘T)</option>
+      <option value="translate" data-de="Übersetzen" data-en="Translate">Übersetzen</option>
+      <option value="emoji" data-de="Emoji-Auswahl" data-en="Emoji picker">Emoji-Auswahl</option>
+      <option value="notes" data-de="Notizen" data-en="Notes">Notizen</option>
+      <option value="quickNotes" data-de="Schnellnotiz" data-en="Quick note">Schnellnotiz</option>
+      <option value="screenText" data-de="Text vom Bildschirm lesen" data-en="Read text from screen">Text vom Bildschirm lesen</option>
+      <option value="password" data-de="Passwort erzeugen" data-en="Generate password">Passwort erzeugen</option>
+    </select>
+  </div>
+  <div class="row hidden" id="toggleRow"><label for="toggle" data-de="Schalter" data-en="Switch">Schalter</label>
+    <select id="toggle">
+      <option value="pause" data-de="Tippi pausieren/fortsetzen" data-en="Pause/resume Tippi">Tippi pausieren/fortsetzen</option>
+      <option value="autocomplete" data-de="Autovervollständigung an/aus" data-en="Autocomplete on/off">Autovervollständigung an/aus</option>
+      <option value="language" data-de="Diktatsprache wechseln" data-en="Next dictation language">Diktatsprache wechseln</option>
+    </select>
+  </div>
+  <p id="hint"></p>
+<script>
+  const PREFIX = 'dev.mwlr.tippi.deck.';
+  const fixed = {
+    kind: ['dictation', 'mail', 'voiceNote'], press: ['toggle', 'hold'],
+    mode: ['standard', 'shift', 'control', 'command', 'option'],
+    tool: ['popup', 'translate', 'emoji', 'notes', 'quickNotes', 'screenText', 'password'],
+    toggle: ['pause', 'autocomplete', 'language']
+  };
+  const idPattern = /^[A-Za-z0-9._-]{1,64}$/;
+  let socket = null, uuid = null, actionUUID = '', settings = {}, german = true, onDial = false;
+
+  const $ = id => document.getElementById(id);
+  const t = (de, en) => german ? de : en;
+
+  function option(select, value, text) {
+    const o = document.createElement('option');
+    o.value = value;
+    o.textContent = text;   // never innerHTML: names come from the user's own prompts
+    select.appendChild(o);
+  }
+
+  function fillModes(modes) {
+    const sel = $('mode');
+    sel.textContent = '';
+    option(sel, 'standard', t('Normal', 'Normal'));
+    const names = { shift: '⇧', control: '⌃', command: '⌘', option: '⌥' };
+    (modes || []).forEach(m => {
+      if (fixed.mode.includes(m.id)) option(sel, m.id, names[m.id] + ' ' + String(m.title).slice(0, 40));
+    });
+    sel.value = fixed.mode.includes(settings.mode) && Array.from(sel.options).some(o => o.value === settings.mode) ? settings.mode : 'standard';
+  }
+
+  function fillPrompts(prompts) {
+    const sel = $('prompt');
+    sel.textContent = '';
+    option(sel, '', t('— Tippi-Fenster öffnen —', '— Open Tippi window —'));
+    (prompts || []).forEach(p => { if (idPattern.test(p.id)) option(sel, p.id, String(p.title).slice(0, 40)); });
+    const want = typeof settings.prompt === 'string' ? settings.prompt : '';
+    if (want && !Array.from(sel.options).some(o => o.value === want)) option(sel, want, t('(gelöscht)', '(deleted)'));
+    sel.value = want;
+  }
+
+  function save() {
+    settings = { kind: $('kind').value, press: $('press').value, mode: $('mode').value,
+                 prompt: $('prompt').value, tool: $('tool').value, toggle: $('toggle').value };
+    if (socket && socket.readyState === 1) {
+      socket.send(JSON.stringify({ event: 'setSettings', context: uuid, payload: settings }));
+    }
+  }
+
+  function updateRows() {
+    const kind = $('kind').value;
+    const a = actionUUID.slice(PREFIX.length);
+    $('kindRow').classList.toggle('hidden', a !== 'dictation' || onDial);
+    $('pressRow').classList.toggle('hidden', a !== 'dictation' || kind !== 'dictation');
+    $('modeRow').classList.toggle('hidden', a !== 'dictation' || kind !== 'dictation');
+    $('promptRow').classList.toggle('hidden', a !== 'prompt');
+    $('toolRow').classList.toggle('hidden', a !== 'tool');
+    $('toggleRow').classList.toggle('hidden', a !== 'toggle');
+    const hints = {
+      dictation: onDial ? t('Drehen wählt den Modus, Drücken startet und stoppt. Modi legst du in Tippi unter Sprache → Diktat-Modi fest.',
+                            'Turn to pick the mode, press to start and stop. Modes are set in Tippi under Voice → Dictation modes.')
+                        : t('Modi legst du in Tippi unter Sprache → Diktat-Modi fest.', 'Modes are set in Tippi under Voice → Dictation modes.'),
+      prompt: onDial ? t('Drehen blättert durch deine Prompts, Drücken wendet ihn auf die Auswahl an, Tippen öffnet Tippi.',
+                         'Turn to browse your prompts, press to apply to the selection, tap to open Tippi.')
+                     : t('Wirkt auf den markierten Text. Das Ergebnis erscheint zuerst in Tippis Vorschau.',
+                         'Works on the selected text. The result first appears in Tippi’s preview.'),
+      tool: '', toggle: ''
+    };
+    $('hint').textContent = hints[a] || '';
+  }
+
+  window.connectElgatoStreamDeckSocket = function (port, inUUID, registerEvent, info, actionInfo) {
+    uuid = inUUID;
+    let action = {}, inf = {};
+    try { action = JSON.parse(actionInfo); } catch (e) { action = {}; }
+    try { inf = JSON.parse(info); } catch (e) { inf = {}; }
+    german = !(inf.application && typeof inf.application.language === 'string') || inf.application.language.startsWith('de');
+    document.querySelectorAll('[data-de]').forEach(el => { el.textContent = german ? el.dataset.de : el.dataset.en; });
+    actionUUID = typeof action.action === 'string' ? action.action : '';
+    onDial = action.payload && action.payload.controller === 'Encoder';
+    const s = (action.payload && action.payload.settings) || {};
+    settings = s;
+    for (const key of ['kind', 'press', 'tool', 'toggle']) {
+      $(key).value = fixed[key].includes(s[key]) ? s[key] : fixed[key][0];
+    }
+    fillModes([]);
+    fillPrompts([]);
+    updateRows();
+    socket = new WebSocket('ws://127.0.0.1:' + Number(port));
+    socket.onopen = function () {
+      socket.send(JSON.stringify({ event: registerEvent, uuid: uuid }));
+      // Ask the plugin for the prompt and mode names (from Tippi).
+      socket.send(JSON.stringify({ event: 'sendToPlugin', action: actionUUID, context: uuid, payload: { get: 'lists' } }));
+    };
+    socket.onmessage = function (msg) {
+      let m = {};
+      try { m = JSON.parse(msg.data); } catch (e) { return; }
+      if (m.event !== 'sendToPropertyInspector' || !m.payload) return;
+      fillModes(Array.isArray(m.payload.modes) ? m.payload.modes : []);
+      fillPrompts(Array.isArray(m.payload.prompts) ? m.payload.prompts : []);
+      if (!m.payload.connected) $('hint').textContent = t('Tippi ist nicht verbunden – in Tippi unter Allgemein „Stream Deck“ einschalten.',
+                                                         'Tippi is not connected – turn on “Stream Deck” in Tippi under General.');
+    };
+  };
+
+  for (const id of ['kind', 'press', 'mode', 'prompt', 'tool', 'toggle']) {
+    $(id).addEventListener('change', () => { save(); updateRows(); });
+  }
+</script>
+</body>
+</html>

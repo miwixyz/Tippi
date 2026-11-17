@@ -34,6 +34,9 @@ echo "▶ whisper-cli + Re-Sign (innen → außen)"
 cp Tippi/Helpers/whisper-cli "$APP_PATH/Contents/MacOS/whisper-cli"
 chmod +x "$APP_PATH/Contents/MacOS/whisper-cli"
 SPARKLE_FW="$APP_PATH/Contents/Frameworks/Sparkle.framework/Versions/B"
+# Stream-Deck-Plugin: eigene Kennung, ohne Berechtigungen (docs/SECURE-DESIGN-stream-deck.md).
+DECK_BIN="$APP_PATH/Contents/Resources/dev.mwlr.tippi.deck.sdPlugin/tippideck"
+[ -f "$DECK_BIN" ] && codesign --force --options runtime --timestamp -i dev.mwlr.tippi.deck --sign "$DEVELOPER_ID" "$DECK_BIN"
 codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID" "$APP_PATH/Contents/MacOS/whisper-cli"
 for bin in "$SPARKLE_FW/XPCServices/Installer.xpc/Contents/MacOS/Installer" \
            "$SPARKLE_FW/XPCServices/Downloader.xpc/Contents/MacOS/Downloader" \

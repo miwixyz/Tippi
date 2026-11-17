@@ -61,6 +61,14 @@ targets:
         product: MLXLMCommon
       - package: SwiftTransformers
         product: Tokenizers
+      # Stream-Deck-Plugin: eigenes Programm mit eigener Kennung, damit Tippi den Absender am Socket prüfen kann.
+      - target: TippiDeck
+        embed: true
+        link: false
+        codeSign: true
+        copy:
+          destination: resources
+          subpath: dev.mwlr.tippi.deck.sdPlugin
     sources:
       - path: Tippi
         excludes:
@@ -68,6 +76,11 @@ targets:
           - "Resources/Tippi.entitlements"
           - "Resources/Tippi.debug.entitlements"
           - "Helpers/**"
+      # Stream-Deck-Plugin (docs/SECURE-DESIGN-stream-deck.md): Manifest, Layout, Einstellungsseite, Symbole, Profile als
+      # Ordner nach Contents/Resources. Das Programm `tippideck` kommt über die Abhängigkeit unten in denselben Ordner.
+      - path: TippiDeck/dev.mwlr.tippi.deck.sdPlugin
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tippi.app
@@ -111,12 +124,42 @@ targets:
         - TippiTests
       shared: true
 
+  # Stream-Deck-Plugin „TippiDeck“ (docs/SECURE-DESIGN-stream-deck.md): von Elgatos Stream Deck gestartet, spricht dessen
+  # WebSocket und Tippis geprüften Socket `deck.sock`. Keine Berechtigungen. Nachrichtenformat = dieselbe Datei wie in Tippi
+  # (DeckWire). Kennung im Programm (eingebettete Info.plist), weil Tippi den Peer an `dev.mwlr.tippi.deck` erkennt.
+  # Vorbild: GnotchiDeck (Gnotchi G59).
+  TippiDeck:
+    type: tool
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: TippiDeck
+        excludes:
+          - dev.mwlr.tippi.deck.sdPlugin/**
+      - path: Tippi/Deck/DeckWire.swift
+    settings:
+      base:
+        PRODUCT_NAME: tippideck
+        PRODUCT_BUNDLE_IDENTIFIER: dev.mwlr.tippi.deck
+        MARKETING_VERSION: "2.40.2"
+        GENERATE_INFOPLIST_FILE: YES
+        CREATE_INFOPLIST_SECTION_IN_BINARY: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: LTKJ6Z2VYB
+        SWIFT_VERSION: "5.10"
+        ARCHS: arm64
+        SKIP_INSTALL: YES
+
   TippiTests:
     type: bundle.unit-test
     platform: macOS
     deploymentTarget: "15.0"
     sources:
       - path: TippiTests
+      # Stream Deck: pure parts of the plugin (marquee, logic) are tested here too.
+      - path: TippiDeck/Marquee.swift
+      - path: TippiDeck/DeckLogic.swift
     dependencies:
       - target: Tippi
     settings:
@@ -124,6 +167,8 @@ targets:
         SWIFT_VERSION: "5.10"
         ARCHS: arm64
         GENERATE_INFOPLIST_FILE: YES
+        # TippiDeck/DeckLogic.swift imports the app module only here (DeckWire lives there); in the plugin it is compiled in.
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) DECK_IN_TESTS"
         # Must match the host app's team. Without these the bundle is signed
         # "Sign to Run Locally" (ad-hoc, no Team ID) while Tippi.app carries
         # LTKJ6Z2VYB, and macOS then refuses to dlopen the tests into the host:

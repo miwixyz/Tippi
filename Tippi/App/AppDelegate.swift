@@ -77,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Fourth Carbon hot key (id 4) for the emoji picker. Like translate: no
     /// AX capture, no selection needed — it only ever inserts.
     let emojiHotkeyManager = HotkeyManager(id: 4)
-    private let emojiPickerPanel = EmojiPickerPanel()
+    let emojiPickerPanel = EmojiPickerPanel()
     /// Fifth Carbon hot key (id 5) for the Notes window. Remappable + toggle
     /// in Settings → Hotkeys, same shape as translate/emoji (see
     /// `NotesSettings`, `restartNotesHotkey`).
@@ -154,8 +154,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// direct AppKit access to our own text view, no Accessibility needed.
     private var lastNativeTextView: NSTextView?
     private var lastNativeRange: NSRange?
-    private let popupController = PromptPopupController()
-    private let previewWindowController = PreviewWindowController()
+    let popupController = PromptPopupController()
+    let previewWindowController = PreviewWindowController()
     private let notesWindowController = NotesWindowController()
     private var cancellables = Set<AnyCancellable>()
     private var updaterController: SPUStandardUpdaterController?
@@ -174,7 +174,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// guard before any of them actually opened the popup, then race on the
     /// AX-selection capture and popup-open. User-visible symptom was a 2–5 s
     /// freeze on every hotkey press. Mutated on `@MainActor` only.
-    private var isHandlingTrigger = false
+    var isHandlingTrigger = false
+    /// Stream Deck plugin link (docs/SECURE-DESIGN-stream-deck.md). Socket only while the setting is on.
+    let streamDeck = StreamDeckLink()
+    /// A Stream Deck key is holding a dictation (ends when the key is released or the plugin goes away).
+    var deckHoldActive = false
+    /// Last AI command from the Stream Deck (cost guard, D5).
+    var deckLastAI = Date.distantPast
     /// In-flight guard for the translate panel. Needed for the same reason as
     /// `isHandlingTrigger`: the capture before the panel appears suspends long
     /// enough for a second hotkey press to arrive and close what the first one
@@ -303,6 +309,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         startHotkey()
         wireIdleUnload()
+        startStreamDeck()
 
         // Pre-warm the MLX server if it's the user's preferred provider.
         // This avoids a 30–60s wait on first transformation after launch.
@@ -344,6 +351,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The mlx_lm.server child process would otherwise outlive the app,
         // holding the model in RAM and blocking the port.
         MLXServerManager.shared.stop()
+        streamDeck.stop()
         // Notes typed in the last 600 ms (debounce) — only if Notes was used
         // this session, so quitting never instantiates the store.
         if notesWindowController.wasOpened {
@@ -551,7 +559,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         restartAutocomplete()
     }
 
-    @objc private func toggleAutocomplete() {
+    @objc func toggleAutocomplete() {
         setAutocompleteEnabled(!AutocompleteSettings.isEnabled)
     }
 
@@ -617,7 +625,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The status menu does not activate Tippi, so the frontmost app is still
     /// the one the user was typing in.
-    @objc private func generatePasswordFromMenu() {
+    @objc func generatePasswordFromMenu() {
         let app = NSWorkspace.shared.frontmostApplication
         guard app?.bundleIdentifier != Bundle.main.bundleIdentifier else {
             ToastWindowController.shared.show(message: String(localized: "password.noTarget"))
@@ -978,7 +986,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// it before deciding nothing is marked. With nothing marked the Notes
     /// window opens. Never the status menu: opened from code during launch it
     /// sat off-screen and blocked the main thread (measured 2026-11-12).
-    private func openQuickNotesFromURL() {
+    func openQuickNotesFromURL() {
         guard !quickNotesURLWaiting, let button = statusItem?.button else { return }
         if quickNotesPopover.open(relativeTo: button) {
             appDelegateLog.notice("URL quick notes: panel shown \(self.quickNotesPopover.isShown, privacy: .public)")
@@ -1168,7 +1176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Languages exposed in the menubar submenu. Single source of truth for
     /// the (code, native label) pairs — kept in sync with `languageSection`
     /// in `SettingsView.swift`. Add a new entry in both places.
-    private static let dictationLanguages: [(code: String, label: String)] = [
+    static let dictationLanguages: [(code: String, label: String)] = [
         ("auto", String(localized: "settings.voice.language.auto")),
         ("de", "Deutsch"),
         ("en", "English"),
@@ -1787,7 +1795,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// your selection" feel as the main hotkey — before the panel steals key
     /// focus. Empty/failed capture just leaves the field empty, exactly like
     /// before this existed: nothing selected is not an error state here.
-    private func toggleTranslatePanel() async {
+    func toggleTranslatePanel() async {
         guard !translateQuickPanel.isOpen else {
             translateQuickPanel.close()
             return
@@ -1919,7 +1927,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func resolvedSourceAppForCapture() -> NSRunningApplication? {
+    func resolvedSourceAppForCapture() -> NSRunningApplication? {
         if let app = lastNonTippiApp,
            app.bundleIdentifier != Bundle.main.bundleIdentifier {
             return app
@@ -2027,7 +2035,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.keyWindow?.firstResponder as? PlainTextEditor.PasteAwareTextView
     }
 
-    private enum TriggerSource { case hotkey, manual }
+    enum TriggerSource { case hotkey, manual }
 
     /// Resolves what to capture for a trigger — either Tippi's own focused
     /// Notes editor (native, no Accessibility involved) or some other app's
@@ -2036,7 +2044,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// (`lastNativeTextView`/`lastNativeRange` vs. `lastSelectionElement`/
     /// `lastSelectionRange`) and clears the other, so later replace/append
     /// calls can tell which one applies.
-    private func captureForTrigger() async -> (sourceApp: NSRunningApplication?, captured: CapturedText?) {
+    func captureForTrigger() async -> (sourceApp: NSRunningApplication?, captured: CapturedText?) {
         if let textView = Self.focusedNotesTextView() {
             let range = textView.selectedRange()
             lastSelectionElement = nil
@@ -2098,7 +2106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return anchor
     }
 
-    private func handleTriggered(from source: TriggerSource) async {
+    func handleTriggered(from source: TriggerSource) async {
         NSLog("Tippi: handleTriggered from=\(source)")
         guard !isHandlingTrigger,
               !popupController.isOpen,
@@ -2294,7 +2302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
     }
 
-    private func showPreview(prompt: DemoPrompt, captured: CapturedText) {
+    func showPreview(prompt: DemoPrompt, captured: CapturedText) {
         previewWindowController.show(
             prompt: prompt,
             originalText: captured.text,
