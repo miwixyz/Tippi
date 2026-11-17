@@ -138,6 +138,8 @@ Tippi/
 │       ├── Note.swift                      # Model, nicht Codable (1 .txt-Datei/Notiz)
 │       ├── NotesStore.swift                # iCloud-Container + lokaler Fallback, NSFileCoordinator
 │       │                                   #   `merge` ist rein + getestet: aktualisiert, loescht NIE
+│       ├── NotesStore+Duplicates.swift     # v2.40.1 — loadAllNotes + Konfliktkopien: gleiche UUID, anderer Text
+│       │                                   #   wird eigene Notiz (Kennung aus UUID+Text), nie geloescht
 │       ├── NoteCreationIndex.swift         # v2.31 — Erstellungsdatum je Notiz (.notes-created.json, mit TippAI geteilt) + NoteSortOrder
 │       ├── NotesLiveSync.swift             # v2.11.6 — NSMetadataQuery auf den Notes-Ordner.
 │       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
