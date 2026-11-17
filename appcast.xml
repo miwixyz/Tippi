@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.40.1</title>
+            <pubDate>Tue, 17 Nov 2026 11:03:29 +0100</pubDate>
+            <sparkle:version>677</sparkle:version>
+            <sparkle:shortVersionString>2.40.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Notizen gehen bei zwei Macs nicht mehr verloren.</b> Wurde die erste Zeile derselben Notiz auf zwei Macs kurz nacheinander geändert (oder auf einem davon offline), entstanden zwei Dateien derselben Notiz, und Tippi löschte eine davon endgültig. Jetzt bleibt jede abweichende Fassung als eigene Notiz erhalten (Konfliktkopie). Beide Macs legen dieselbe Kopie an, keine doppelte. Gelöscht wird nur noch eine exakt gleiche Datei oder die eigene Vorgängerfassung beim Umbenennen.</li><li><b>Autovervollständigung: Vorschläge stauen sich nicht mehr.</b> Eine beim Weitertippen überholte Anfrage rechnete den ganzen Text noch durch, bevor die nächste drankam. Gemessen kamen so sechs Anfragen auf einmal zurück, die längste nach 14,8 Sekunden. Überholte Anfragen brechen jetzt sofort ab.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.1/Tippi-2.40.1.dmg" length="25008058" type="application/octet-stream" sparkle:edSignature="Is9VOImMa/rtYSOHIejeowEUlI0MVxrIhl5e0X8qiy2Ou/l+r/z5wsCOGLCfER1+57iZJHEcVqdgmexje3fYCg=="/>
+        </item>
+        <item>
             <title>2.40.0</title>
             <pubDate>Mon, 16 Nov 2026 18:23:38 +0100</pubDate>
             <sparkle:version>672</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Das Schnellnotiz-Fenster landet nicht mehr unter dem Bildschirmrand.</b> Auf einem MacBook mit Notch öffnete es sich bei der Sprachnotiz außerhalb des Bildschirms: offen, aber unsichtbar. Gemessen lag es mit dem oberen Rand bei 973 Punkten auf einem 956 Punkte hohen Bildschirm. Liegt das Menüleisten-Symbol auf keinem Bildschirm, öffnet es jetzt oben in der Mitte, und es wird immer ganz in den sichtbaren Bereich geschoben.</li></ul><h3>Geändert</h3><ul><li><b>Sprachnotiz: Das Fenster bleibt offen.</b> Nach dem zweiten ⌃⌥⌘N schließt es sich nicht mehr. Der Text erscheint gleich unten in „Eingang“, du kannst weiterschreiben, Esc schließt das Fenster. Gespeichert wird wie beim Tippen.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.2/Tippi-2.39.2.dmg" length="25549272" type="application/octet-stream" sparkle:edSignature="PYgtorb+S062mMzpsLLOcA+5EL5g+garocVJ9JKsrvvOVwK16Yf7mW3OVZBAyXjRLD4GUmv1LNLvDpPRzsotAw=="/>
-        </item>
-        <item>
-            <title>2.39.1</title>
-            <pubDate>Sat, 14 Nov 2026 15:40:07 +0100</pubDate>
-            <sparkle:version>653</sparkle:version>
-            <sparkle:shortVersionString>2.39.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Sprachnotiz zeigt jetzt ihr Fenster.</b> Beim ersten ⌃⌥⌘N nach dem Start lief nur die Aufnahme, das Schnellnotiz-Fenster blieb weg, weil Tippi die Notizen erst beim ersten Zugriff lädt. Jetzt lädt Tippi sie schon beim Start, wartet beim Kürzel kurz darauf und legt „Eingang“ gleich zu Beginn an, damit das Fenster einen Reiter hat. Der Text kam auch vorher an.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.1/Tippi-2.39.1.dmg" length="25548028" type="application/octet-stream" sparkle:edSignature="a2KiS61J79SggrROFfLOC4tAQTOpSpiLuhVlfLRsZ/Uv58AjCNnCAulSidSJ8T1F0TGGkNva6X3HVnIvnj0DDA=="/>
         </item>
     </channel>
 </rss>
