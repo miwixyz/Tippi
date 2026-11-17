@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.41.1] — 2026-11-17
+
+- _Add release notes here._
+
 ## [2.41.0] — 2026-11-17
 
 ### Neu
