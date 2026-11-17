@@ -171,6 +171,8 @@ Tippi/
 │   │                               #   = wie ein nicht laufender lokaler Server
 │   ├── MLXChildEnvironment.swift   # Audit 2026-11-17 — feste Umgebung für mlx_lm.server/uvx/brew/uv
 │   │                               #   (kein PYTHON*/DYLD_*: Kindprozesse erben Tippis Rechte)
+│   ├── ProviderSession.swift       # Audit 2026-11-17 — Session der Cloud-Anbieter: keine Redirects,
+│   │                               #   ephemer, Antwort ≤ 8 MB
 │   ├── MLXServerOwnership.swift    # Audit 2026-11-17 — nur eigene MLX-Server: fremder Server auf dem Port
 │   │                               #   wird abgelehnt, Rest eines früheren Tippi-Laufs (Eltern 1/eigene PID +
 │   │                               #   unser Befehl) ersetzt; reine Entscheidungen, getestet

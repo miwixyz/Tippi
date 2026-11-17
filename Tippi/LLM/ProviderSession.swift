@@ -11,8 +11,10 @@ import Foundation
 ///   non-2xx status and surfaces as a normal HTTP error.
 /// - **Ephemeral.** No cookies, no response cache on disk — the answers are
 ///   the user's rewritten text.
-/// - **Size limit.** An answer above `maxResponseBytes` is rejected; a
-///   streamed error body is cut at `maxErrorBodyBytes`.
+/// - **Size limit.** An answer above `maxResponseBytes` is rejected — after
+///   it was received, so this guards what Tippi parses and shows, not the
+///   memory of one download. A streamed error body is cut at
+///   `maxErrorBodyBytes` while reading, byte by byte.
 enum ProviderSession {
     /// Far above any real completion (output is capped by max tokens).
     static let maxResponseBytes = 8 * 1024 * 1024
@@ -25,9 +27,17 @@ enum ProviderSession {
         return URLSession(configuration: config, delegate: RefuseProviderRedirects(), delegateQueue: nil)
     }()
 
+    /// Tests only: a session with their own `URLProtocol` — a globally
+    /// registered protocol class reaches `URLSession.shared` alone, not a
+    /// session built from its own configuration like `shared` here.
+    nonisolated(unsafe) static var testingSession: URLSession?
+
+    /// The session requests go through: `shared`, or the test's.
+    static var session: URLSession { testingSession ?? shared }
+
     /// `data(for:)` with the size limit.
     static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        let (data, response) = try await shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         try checkSize(data.count)
         return (data, response)
     }
@@ -38,12 +48,18 @@ enum ProviderSession {
 
     /// Error body of a failed stream, at most `maxErrorBodyBytes`.
     static func errorBody(_ bytes: URLSession.AsyncBytes) async throws -> String {
-        var body = ""
-        for try await line in bytes.lines {
-            body += line
-            if body.utf8.count >= maxErrorBodyBytes { break }
+        // Bytes, not lines: one huge line without a newline would otherwise
+        // be buffered whole before the limit is checked.
+        var body = Data()
+        for try await byte in bytes {
+            body.append(byte)
+            if body.count >= maxErrorBodyBytes { break }
         }
-        return body
+        // Cut mid-character → retry without the last up to 3 bytes.
+        for drop in 0...3 where body.count >= drop {
+            if let text = String(bytes: body.dropLast(drop), encoding: .utf8) { return text }
+        }
+        return ""
     }
 }
 

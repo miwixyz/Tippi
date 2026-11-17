@@ -41,6 +41,12 @@ extension MLXServerManager {
     /// user runs by hand with other options out of reach. A server that is the
     /// child of another *running* program — e.g. the installed Tippi next to a
     /// test build — is foreign: same command, different owner.
+    ///
+    /// Known limits (review 2026-11-17): a server started by hand (`nohup`,
+    /// LaunchAgent) with exactly Tippi's arguments and parent 1 counts as a
+    /// leftover and is replaced. With the `uvx` install the Python listener's
+    /// command line and parent (`uvx`) never match, so after a crash that
+    /// leftover is reported as foreign until it is ended by hand.
     nonisolated static func answeringServerVerdict(listener: PortListener?, ownPID: Int32,
                                                    binaryPath: String, port: Int) -> AnsweringServer {
         guard let listener else { return .foreign(pid: nil, command: "") }

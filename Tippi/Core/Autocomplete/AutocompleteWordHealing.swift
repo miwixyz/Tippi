@@ -338,14 +338,17 @@ final class AutocompleteVocabularyCache {
             let started = Date()
             let vocabulary = AutocompleteVocabulary.load(model: model)
             let ms = Int(Date().timeIntervalSince(started) * 1000)
-            await MainActor.run {
-                guard let self else { return }
-                self.loading = nil
-                self.loaded = (model, vocabulary)
-                healingLog.notice("vocabulary \(vocabulary == nil ? "unavailable" : "loaded", privacy: .public) pieces=\(vocabulary?.pieces.count ?? 0, privacy: .public) ms=\(ms, privacy: .public)")
-            }
+            // Über eine Methode statt `MainActor.run { self … }`: das schwach
+            // gefangene `self` in einer nebenläufigen Closure ist ab Swift 6 ein Fehler.
+            await self?.didLoad(model: model, vocabulary: vocabulary, ms: ms)
         }
         return nil
+    }
+
+    private func didLoad(model: String, vocabulary: AutocompleteVocabulary?, ms: Int) {
+        loading = nil
+        loaded = (model, vocabulary)
+        healingLog.notice("vocabulary \(vocabulary == nil ? "unavailable" : "loaded", privacy: .public) pieces=\(vocabulary?.pieces.count ?? 0, privacy: .public) ms=\(ms, privacy: .public)")
     }
 }
 

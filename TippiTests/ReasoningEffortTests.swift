@@ -46,12 +46,17 @@ final class ReasoningEffortTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        URLProtocol.registerClass(BodyCapture.self)
+        // Anbieter-Anfragen laufen seit dem Audit 2026-11-17 über `ProviderSession`
+        // (keine Redirects), nicht über `URLSession.shared` — `URLProtocol.registerClass`
+        // erreicht sie nicht. Daher eine eigene Sitzung mit dem Abfang-Protokoll.
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [BodyCapture.self]
+        ProviderSession.testingSession = URLSession(configuration: config)
         BodyCapture.lastBody = nil
     }
 
     override func tearDown() {
-        URLProtocol.unregisterClass(BodyCapture.self)
+        ProviderSession.testingSession = nil
         super.tearDown()
     }
 

@@ -123,13 +123,27 @@ enum TextInsertion {
         let snapshot = await paste(text: text, expectedPID: app?.processIdentifier,
                                    currentHostOnly: true, restoreClipboard: false)
         insertLog.notice("secret pasted (\(text.count, privacy: .public) chars), clipboard cleared in \(Int(secretClipboardLifetime), privacy: .public) s")
-        pendingSecretRestore = snapshot
+        // A second password within the lifetime: its snapshot holds the first
+        // password. Keep the earliest snapshot (the real clipboard), let it own
+        // the newest write, and let only the newest timer restore — otherwise
+        // the first password came back for good (review 2026-11-17).
+        if var earlier = pendingSecretRestore {
+            earlier.markOwnedChange()
+            pendingSecretRestore = earlier
+        } else {
+            pendingSecretRestore = snapshot
+        }
+        secretGeneration &+= 1
+        let generation = secretGeneration
         Task {
             try? await Task.sleep(nanoseconds: UInt64(secretClipboardLifetime * 1_000_000_000))
+            guard generation == secretGeneration else { return }
             restoreSecretClipboardNow()
             insertLog.notice("secret clipboard lifetime over — previous clipboard restored if untouched")
         }
     }
+
+    private static var secretGeneration = 0
 
     static let secretClipboardLifetime: TimeInterval = 60
 

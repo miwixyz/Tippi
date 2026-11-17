@@ -357,7 +357,9 @@ final class AutocompleteController: ObservableObject {
     /// `.stopped` — ein `.failed` (z. B. fremder Server) wird nicht bei jeder
     /// Tipp-Pause erneut versucht.
     private func startOwnServerIfStopped() {
-        guard MLXServerManager.shared.state == .stopped, MLXServerManager.isInstalled else { return }
+        // Only after an idle unload: a server the user stopped by hand stays stopped.
+        guard MLXServerManager.shared.state == .stopped, MLXServerManager.shared.unloadedForIdle,
+              MLXServerManager.isInstalled else { return }
         Task { try? await MLXServerManager.shared.start() }
     }
 

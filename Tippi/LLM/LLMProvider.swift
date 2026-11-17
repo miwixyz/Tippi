@@ -496,7 +496,7 @@ func openAIChatStream(
                 )
                 request.httpBody = try JSONEncoder().encode(body)
 
-                let (bytes, response) = try await ProviderSession.shared.bytes(for: request)
+                let (bytes, response) = try await ProviderSession.session.bytes(for: request)
                 guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse }
                 guard (200..<300).contains(http.statusCode) else {
                     let errBody = try await ProviderSession.errorBody(bytes)

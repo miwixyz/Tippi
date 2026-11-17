@@ -123,9 +123,9 @@ final class MLXServerManager: ObservableObject {
         // receives the user's text. Only a server Tippi started is used now
         // (audit finding 7, 2026-11-17); a leftover of an earlier Tippi run is
         // replaced, anything else refused. See `answeringServerVerdict`.
-        if await fetchModels(port: port) != nil {
+        if await fetchModels(port: port) != nil, // gone before lsof (just stopped) → free, below
+           let found = await Task.detached(operation: { Self.listener(on: port) }).value {
             let binaryPath = binary.path
-            let found = await Task.detached(operation: { Self.listener(on: port) }).value
             switch Self.answeringServerVerdict(listener: found, ownPID: getpid(), binaryPath: binaryPath, port: port) {
             case .leftoverOfTippi(let pid):
                 NSLog("Tippi MLX: replacing leftover server pid \(pid) of an earlier Tippi run on port \(port)")
