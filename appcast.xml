@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.40.2</title>
+            <pubDate>Tue, 17 Nov 2026 11:57:57 +0100</pubDate>
+            <sparkle:version>682</sparkle:version>
+            <sparkle:shortVersionString>2.40.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Klick in eine hängende App friert Tippi nicht mehr sekundenlang ein.</b> Mit eingeschalteter Auswahlleiste fragte Tippi nach jedem Mausklick die angeklickte App ab und wartete bis zu 2 Sekunden je Abfrage. Bei aktiver Autovervollständigung stockte in der Zeit auch das Tippen in allen Apps. Jetzt höchstens rund eine Sekunde, und eine nicht antwortende App wird nur alle 5 Sekunden erneut gefragt.</li></ul><h3>Sicherheit</h3><ul><li><b>Lokales MLX läuft mit fester Umgebung.</b> Der MLX-Server und die MLX-Installation laufen als Unterprogramme mit Tippis Rechten (Bedienungshilfen, Mikrofon). Sie übernahmen bisher alle Umgebungsvariablen. So hätte ein Programm, das schon auf dem Mac läuft, ohne Rückfrage eigenen Code einschleusen können. Jetzt bekommen sie nur Suchpfad, Benutzerordner, Sprache, Proxy und die Hugging-Face-Einstellungen. Die Installation startet <code>brew</code> und <code>uv</code> direkt, ohne Shell.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.2/Tippi-2.40.2.dmg" length="25009762" type="application/octet-stream" sparkle:edSignature="6wqspHqu6laE1cggtL/iH6+vkCgci7NftiMer4tLWe1MhbJNdQ4VlbN6dCLxak8aeps42PvLwNrHZiKvnKwdAw=="/>
+        </item>
+        <item>
             <title>2.40.1</title>
             <pubDate>Tue, 17 Nov 2026 11:03:29 +0100</pubDate>
             <sparkle:version>677</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Geändert</h3><ul><li><b>Das Prompt-Popup (⌥⌘T) hat das Design der App-Familie.</b> Feste Karte statt Glas, Hinweiszeile „Prompt wählen oder tippen“ statt Titel und Schließen-Knopf, Prompt-Zeilen in Plus Jakarta Sans ohne Symbole, die gewählte Zeile mit Akzent-Tönung statt voller Blau-Fläche. Die Schnellaktionen nutzen nur noch die Akzentfarbe statt sechs Kategoriefarben. Tastatur unverändert (1–9, Pfeile, Return, Esc, Tippen zum Filtern).</li><li><b>Emoji-Vorschlag und -Auswahl, Auswahl-Leiste, Toast, Aufnahme-Anzeige, Übersetzen-Fenster und die Sprachsteuerung im Popup folgen demselben Design.</b> Listen und Fenster sind feste Karten, Pille und Leiste getöntes Glas mit Rand und Schatten. Schrift Plus Jakarta Sans, Auswahl mit Akzent-Tönung, Aufnahme und Fehler in den Statusfarben der Familie statt Systemrot und -orange. Der graue Vorschlag beim Autovervollständigen bleibt bewusst unverändert.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.0/Tippi-2.40.0.dmg" length="25007198" type="application/octet-stream" sparkle:edSignature="jqLjjxaraVxGtl5eSWAv4iuPCBRodEZhxCf3QvBxY2oSc7x1eMtcjaphPQKHWXMzY7MxikSuF8y7ksC5ZDvOBA=="/>
-        </item>
-        <item>
-            <title>2.39.2</title>
-            <pubDate>Sat, 14 Nov 2026 17:00:26 +0100</pubDate>
-            <sparkle:version>658</sparkle:version>
-            <sparkle:shortVersionString>2.39.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Das Schnellnotiz-Fenster landet nicht mehr unter dem Bildschirmrand.</b> Auf einem MacBook mit Notch öffnete es sich bei der Sprachnotiz außerhalb des Bildschirms: offen, aber unsichtbar. Gemessen lag es mit dem oberen Rand bei 973 Punkten auf einem 956 Punkte hohen Bildschirm. Liegt das Menüleisten-Symbol auf keinem Bildschirm, öffnet es jetzt oben in der Mitte, und es wird immer ganz in den sichtbaren Bereich geschoben.</li></ul><h3>Geändert</h3><ul><li><b>Sprachnotiz: Das Fenster bleibt offen.</b> Nach dem zweiten ⌃⌥⌘N schließt es sich nicht mehr. Der Text erscheint gleich unten in „Eingang“, du kannst weiterschreiben, Esc schließt das Fenster. Gespeichert wird wie beim Tippen.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.39.2/Tippi-2.39.2.dmg" length="25549272" type="application/octet-stream" sparkle:edSignature="PYgtorb+S062mMzpsLLOcA+5EL5g+garocVJ9JKsrvvOVwK16Yf7mW3OVZBAyXjRLD4GUmv1LNLvDpPRzsotAw=="/>
         </item>
     </channel>
 </rss>
