@@ -2,7 +2,12 @@
 
 ## [2.40.1] — 2026-11-17
 
-- _Add release notes here._
+### Behoben
+- **Notizen gehen bei zwei Macs nicht mehr verloren.** Wurde die erste Zeile derselben Notiz auf zwei Macs kurz nacheinander geändert (oder auf einem davon offline), entstanden zwei Dateien derselben Notiz, und Tippi löschte eine davon endgültig. Jetzt bleibt jede abweichende Fassung als eigene Notiz erhalten (Konfliktkopie). Beide Macs legen dieselbe Kopie an, keine doppelte. Gelöscht wird nur noch eine exakt gleiche Datei oder die eigene Vorgängerfassung beim Umbenennen.
+- **Autovervollständigung: Vorschläge stauen sich nicht mehr.** Eine beim Weitertippen überholte Anfrage rechnete den ganzen Text noch durch, bevor die nächste drankam. Gemessen kamen so sechs Anfragen auf einmal zurück, die längste nach 14,8 Sekunden. Überholte Anfragen brechen jetzt sofort ab.
+
+### Intern
+- 8 neue Tests (`NoteConflictCopyTests`), 896 grün. Grundlage: Code-Audit vom 17.11.2026.
 
 ## [2.40.0] — 2026-11-16
 
