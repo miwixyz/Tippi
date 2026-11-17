@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.1</title>
+            <pubDate>Tue, 17 Nov 2026 23:08:55 +0100</pubDate>
+            <sparkle:version>695</sparkle:version>
+            <sparkle:shortVersionString>2.41.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Neue Symbole für das Stream-Deck-Plugin.</b> Alle Tasten und Drehregler haben ein einheitliches Aussehen bekommen: dunkle Glasfläche, klare weiße Linien, ein ruhiges Leuchten von oben. Der Diktat-Zustand bleibt auf einen Blick erkennbar: roter Punkt beim Aufnehmen, drei Punkte beim Schreiben, abgeblendet, wenn Diktat nicht bereit ist. Der Tastentitel steht oben und überdeckt das Zeichen nicht. Nach dem Update meldet Tippi unter Einstellungen → Allgemein → Stream Deck, dass das Plugin älter ist – dort „Plugin installieren“ wählen. Tasten, denen du selbst ein Bild zugewiesen hast, behalten es.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.1/Tippi-2.41.1.dmg" length="25987871" type="application/octet-stream" sparkle:edSignature="VDPdWYhU10pzxak0cuU2+zAwfx6vVMpdMDnX8IquHFJdfAIham6HMMxML6xmDuYjUWWRGPofkZvxKq/QOvSCCg=="/>
+        </item>
+        <item>
             <title>2.41.0</title>
             <pubDate>Tue, 17 Nov 2026 15:45:12 +0100</pubDate>
             <sparkle:version>690</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Klick in eine hängende App friert Tippi nicht mehr sekundenlang ein.</b> Mit eingeschalteter Auswahlleiste fragte Tippi nach jedem Mausklick die angeklickte App ab und wartete bis zu 2 Sekunden je Abfrage. Bei aktiver Autovervollständigung stockte in der Zeit auch das Tippen in allen Apps. Jetzt höchstens rund eine Sekunde, und eine nicht antwortende App wird nur alle 5 Sekunden erneut gefragt.</li></ul><h3>Sicherheit</h3><ul><li><b>Lokales MLX läuft mit fester Umgebung.</b> Der MLX-Server und die MLX-Installation laufen als Unterprogramme mit Tippis Rechten (Bedienungshilfen, Mikrofon). Sie übernahmen bisher alle Umgebungsvariablen. So hätte ein Programm, das schon auf dem Mac läuft, ohne Rückfrage eigenen Code einschleusen können. Jetzt bekommen sie nur Suchpfad, Benutzerordner, Sprache, Proxy und die Hugging-Face-Einstellungen. Die Installation startet <code>brew</code> und <code>uv</code> direkt, ohne Shell.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.2/Tippi-2.40.2.dmg" length="25009762" type="application/octet-stream" sparkle:edSignature="6wqspHqu6laE1cggtL/iH6+vkCgci7NftiMer4tLWe1MhbJNdQ4VlbN6dCLxak8aeps42PvLwNrHZiKvnKwdAw=="/>
-        </item>
-        <item>
-            <title>2.40.1</title>
-            <pubDate>Tue, 17 Nov 2026 11:03:29 +0100</pubDate>
-            <sparkle:version>677</sparkle:version>
-            <sparkle:shortVersionString>2.40.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Notizen gehen bei zwei Macs nicht mehr verloren.</b> Wurde die erste Zeile derselben Notiz auf zwei Macs kurz nacheinander geändert (oder auf einem davon offline), entstanden zwei Dateien derselben Notiz, und Tippi löschte eine davon endgültig. Jetzt bleibt jede abweichende Fassung als eigene Notiz erhalten (Konfliktkopie). Beide Macs legen dieselbe Kopie an, keine doppelte. Gelöscht wird nur noch eine exakt gleiche Datei oder die eigene Vorgängerfassung beim Umbenennen.</li><li><b>Autovervollständigung: Vorschläge stauen sich nicht mehr.</b> Eine beim Weitertippen überholte Anfrage rechnete den ganzen Text noch durch, bevor die nächste drankam. Gemessen kamen so sechs Anfragen auf einmal zurück, die längste nach 14,8 Sekunden. Überholte Anfragen brechen jetzt sofort ab.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.1/Tippi-2.40.1.dmg" length="25008058" type="application/octet-stream" sparkle:edSignature="Is9VOImMa/rtYSOHIejeowEUlI0MVxrIhl5e0X8qiy2Ou/l+r/z5wsCOGLCfER1+57iZJHEcVqdgmexje3fYCg=="/>
         </item>
     </channel>
 </rss>
