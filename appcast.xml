@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.0</title>
+            <pubDate>Tue, 17 Nov 2026 15:45:12 +0100</pubDate>
+            <sparkle:version>690</sparkle:version>
+            <sparkle:shortVersionString>2.41.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Tippi auf dem Stream Deck.</b> Ein eigenes Plugin für Elgatos Stream Deck (Stream Deck +, Neo und alle anderen Modelle): Diktat starten und stoppen oder halten zum Sprechen, Diktat für Mails, Sprachnotiz, einen Prompt direkt auf die Auswahl anwenden (auch deine eigenen), Tippi öffnen, Übersetzen, Emoji, Notizen, Schnellnotiz, Text vom Bildschirm, Passwort, Pause, Autovervollständigung und Diktatsprache. Am Stream Deck + wählt ein Drehregler den Diktat-Modus und zeigt den Mikrofonpegel, ein zweiter blättert durch die Prompts. Jede Taste zeigt ihren Zustand (bereit, nimmt auf, schreibt). Fertige Profile für Stream Deck + und Neo mit zwei Seiten werden mitinstalliert. Einschalten unter Einstellungen → Allgemein → Stream Deck, dort auch „Plugin installieren“.</li></ul><h3>Sicherheit</h3><ul><li><b>Stream Deck nur über ein geprüftes Plugin.</b> Ab Werk aus; aus heißt, Tippi öffnet gar keinen Zugang. Eingeschaltet nimmt Tippi Befehle nur von seinem eigenen, mit Developer ID signierten Plugin an, und nur, wenn Elgatos Stream-Deck-App es gestartet hat. Ein selbst gestartetes Plugin wird abgelehnt. Es gibt nur eine feste Liste von Befehlen, die auch per Kürzel oder Menü gehen; nichts davon fügt fremden Text ein. Ans Stream Deck gehen nur Zustand, Pegel und Prompt-Namen, nie markierter Text, Diktat oder Ergebnis. Entwurf: <code>docs/SECURE-DESIGN-stream-deck.md</code>.</li><li><b>Fremde MLX-Server bleiben unberührt.</b> Tippi übernimmt und beendet nur noch den MLX-Server, den es selbst gestartet hat. Läuft auf dem Port ein Server einer anderen App, meldet Tippi das, statt ihn zu beenden.</li><li><b>Cloud-Anbieter folgen keinen Weiterleitungen mehr.</b> Sonst wäre der API-Schlüssel mitgegangen. Antworten sind auf 8 MB begrenzt.</li><li><b>Whisper-Modelle werden mit Prüfsumme geladen</b> (feste Fassung, SHA-256 geprüft).</li><li><b>Passwortfelder werden nie erfasst</b>, auch nicht über die Bedienungshilfen. Ein erzeugtes Passwort verlässt die Zwischenablage auch, wenn Tippi vorher beendet wird.</li></ul><h3>Behoben</h3><ul><li><b>Lokale Modelle geben den Speicher wieder frei.</b> Nach 15 Minuten ohne Nutzung entlädt Tippi das lokale Modell und stoppt den selbst gestarteten MLX-Server (neue Einstellung, ab Werk an). Der nächste Gebrauch lädt es wieder.</li><li><b>Eine gerade ladende Notiz verschwindet nicht mehr kurz</b> aus der Liste.</li><li><b>Zurückgehaltenes Einfügen meldet sich</b>, und der Hinweis sagt, dass die vorherige Zwischenablage ersetzt wurde.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.0/Tippi-2.41.0.dmg" length="25785600" type="application/octet-stream" sparkle:edSignature="+k0nfBpoPHgdtkNMWKUKbSrEuNSicKBzt8bnoNUgn0lruzTcwjYRsmtkELUhSiPOyVg8dfpUEYFJq+ZrZqRzCA=="/>
+        </item>
+        <item>
             <title>2.40.2</title>
             <pubDate>Tue, 17 Nov 2026 11:57:57 +0100</pubDate>
             <sparkle:version>682</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Notizen gehen bei zwei Macs nicht mehr verloren.</b> Wurde die erste Zeile derselben Notiz auf zwei Macs kurz nacheinander geändert (oder auf einem davon offline), entstanden zwei Dateien derselben Notiz, und Tippi löschte eine davon endgültig. Jetzt bleibt jede abweichende Fassung als eigene Notiz erhalten (Konfliktkopie). Beide Macs legen dieselbe Kopie an, keine doppelte. Gelöscht wird nur noch eine exakt gleiche Datei oder die eigene Vorgängerfassung beim Umbenennen.</li><li><b>Autovervollständigung: Vorschläge stauen sich nicht mehr.</b> Eine beim Weitertippen überholte Anfrage rechnete den ganzen Text noch durch, bevor die nächste drankam. Gemessen kamen so sechs Anfragen auf einmal zurück, die längste nach 14,8 Sekunden. Überholte Anfragen brechen jetzt sofort ab.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.1/Tippi-2.40.1.dmg" length="25008058" type="application/octet-stream" sparkle:edSignature="Is9VOImMa/rtYSOHIejeowEUlI0MVxrIhl5e0X8qiy2Ou/l+r/z5wsCOGLCfER1+57iZJHEcVqdgmexje3fYCg=="/>
-        </item>
-        <item>
-            <title>2.40.0</title>
-            <pubDate>Mon, 16 Nov 2026 18:23:38 +0100</pubDate>
-            <sparkle:version>672</sparkle:version>
-            <sparkle:shortVersionString>2.40.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Geändert</h3><ul><li><b>Das Prompt-Popup (⌥⌘T) hat das Design der App-Familie.</b> Feste Karte statt Glas, Hinweiszeile „Prompt wählen oder tippen“ statt Titel und Schließen-Knopf, Prompt-Zeilen in Plus Jakarta Sans ohne Symbole, die gewählte Zeile mit Akzent-Tönung statt voller Blau-Fläche. Die Schnellaktionen nutzen nur noch die Akzentfarbe statt sechs Kategoriefarben. Tastatur unverändert (1–9, Pfeile, Return, Esc, Tippen zum Filtern).</li><li><b>Emoji-Vorschlag und -Auswahl, Auswahl-Leiste, Toast, Aufnahme-Anzeige, Übersetzen-Fenster und die Sprachsteuerung im Popup folgen demselben Design.</b> Listen und Fenster sind feste Karten, Pille und Leiste getöntes Glas mit Rand und Schatten. Schrift Plus Jakarta Sans, Auswahl mit Akzent-Tönung, Aufnahme und Fehler in den Statusfarben der Familie statt Systemrot und -orange. Der graue Vorschlag beim Autovervollständigen bleibt bewusst unverändert.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.0/Tippi-2.40.0.dmg" length="25007198" type="application/octet-stream" sparkle:edSignature="jqLjjxaraVxGtl5eSWAv4iuPCBRodEZhxCf3QvBxY2oSc7x1eMtcjaphPQKHWXMzY7MxikSuF8y7ksC5ZDvOBA=="/>
         </item>
     </channel>
 </rss>
