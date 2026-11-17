@@ -516,6 +516,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.34.0 | ✅ Done | **Quick notes in the menu bar** — up to three notes as tabs behind the Tippi icon; permission hints use the macOS 27 name |
 | v2.40.0 | ✅ Done | **One look** — the popup and six floating surfaces use the app family design; keys unchanged |
 | v2.40.1 | ✅ Done | **Safer notes sync** — a note renamed on two Macs keeps both versions; autocomplete no longer queues stale requests |
+| v2.40.2 | ✅ Done | **Hardening** — local MLX runs with a fixed environment; a hung app no longer freezes typing for seconds |
 | v2.39.2 | ✅ Done | **Voice note window on screen** — the quick-notes window is always kept on the visible screen (it opened below the edge on a notched MacBook) and stays open until Esc; dictation goes straight into the open “Inbox” |
 | v2.39.1 | ✅ Done | **Voice note window** — the quick-notes window now also appears on the first ⌃⌥⌘N after launch (notes load at startup) |
 | v2.39.0 | ✅ Done | **Voice note** — ⌃⌥⌘N: floating quick notes + dictation into the note “Inbox”, transparency slider; clipboard restore marked as transient |

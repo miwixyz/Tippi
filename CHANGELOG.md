@@ -2,7 +2,14 @@
 
 ## [2.40.2] — 2026-11-17
 
-- _Add release notes here._
+### Behoben
+- **Klick in eine hängende App friert Tippi nicht mehr sekundenlang ein.** Mit eingeschalteter Auswahlleiste fragte Tippi nach jedem Mausklick die angeklickte App ab und wartete bis zu 2 Sekunden je Abfrage. Bei aktiver Autovervollständigung stockte in der Zeit auch das Tippen in allen Apps. Jetzt höchstens rund eine Sekunde, und eine nicht antwortende App wird nur alle 5 Sekunden erneut gefragt.
+
+### Sicherheit
+- **Lokales MLX läuft mit fester Umgebung.** Der MLX-Server und die MLX-Installation laufen als Unterprogramme mit Tippis Rechten (Bedienungshilfen, Mikrofon). Sie übernahmen bisher alle Umgebungsvariablen. So hätte ein Programm, das schon auf dem Mac läuft, ohne Rückfrage eigenen Code einschleusen können. Jetzt bekommen sie nur Suchpfad, Benutzerordner, Sprache, Proxy und die Hugging-Face-Einstellungen. Die Installation startet `brew` und `uv` direkt, ohne Shell.
+
+### Intern
+- 3 neue Tests (`AuditFund4und5Tests`), 899 grün. Grundlage: Code-Audit vom 17.11.2026, Funde 4 und 5.
 
 ## [2.40.1] — 2026-11-17
 
