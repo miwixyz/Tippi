@@ -28,14 +28,15 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.40.2. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.41.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
 Tippi/
 ├── App/
 │   ├── TippiApp.swift              # @main, NSApplication-Setup
-│   └── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (7 Hotkeys + Sicherheits-Hotkey)
+│   ├── AppDelegate.swift           # Lifecycle, MenuBar, Hotkey-Verdrahtung (7 Hotkeys + Sicherheits-Hotkey)
+│   └── AppDelegate+StreamDeck.swift # 2.41 — Stream-Deck-Befehle auf dieselben Wege wie Kürzel/Menü, Zustand fürs Plugin
 ├── Core/
 │   ├── HotkeyManager.swift         # Carbon-Hotkey + CGEventTap (nur .listenOnly)
 │   ├── TextCapture.swift           # Accessibility + Pasteboard-Fallback
@@ -153,6 +154,10 @@ Tippi/
 │       │                                   #   Design: docs/SECURE-DESIGN-datei-aufgaben.md
 │       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
 │                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
+├── Deck/                           # 2.41 — Stream Deck, docs/SECURE-DESIGN-stream-deck.md
+│   ├── DeckWire.swift              # Nachrichtenformat, Allowlist, Rahmen – dieselbe Datei im Plugin TippiDeck
+│   ├── DeckSocketServer.swift      # deck.sock: Peer (eigenes Plugin) + Eltern (Elgato) vor dem ersten Byte
+│   └── StreamDeckLink.swift        # Einstellung (ab Werk aus), Zustand senden, „Plugin installieren“
 ├── Debug/                          # 2.33 — nur Debug-Build (`#if DEBUG`), Befehlskanal der Bild-Testkopie, docs/SECURE-DESIGN-befehlskanal.md
 │   ├── DebugSocketServer.swift     # Unix-Socket debug.sock, nur für das Developer-ID-signierte tippictl
 │   ├── DebugCommand.swift          # Befehle status · snapshot <reiter> · appearance
