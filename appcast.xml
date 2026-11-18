@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.5</title>
+            <pubDate>Wed, 18 Nov 2026 17:28:31 +0100</pubDate>
+            <sparkle:version>711</sparkle:version>
+            <sparkle:shortVersionString>2.41.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Emoticons zerschneiden keine Wörter mehr.</b> <code>XD</code> wurde sofort umgewandelt, auch als Anfang eines Wortes: aus <code>XDG_CONFIG_HOME</code> wurde <code>😆G_CONFIG_HOME</code>. Emoticons, die auf einen Buchstaben enden (<code>XD</code>, <code>:D</code>, <code>T_T</code> …), wandelt Tippi jetzt erst um, wenn danach ein Leerzeichen oder Satzzeichen folgt. Für <code>:o</code> und <code>:p</code> galt das schon.</li><li><b>Emoji-Kürzel greifen nicht mehr mitten im Code.</b> Aus <code>value(for:key:)</code> wurde <code>value(for🔑)</code>. Steht direkt vor dem ersten Doppelpunkt ein Buchstabe oder eine Ziffer, bleibt der Text jetzt, wie er ist. <code>:rakete:</code> nach einem Leerzeichen, einer Klammer oder einem Emoji funktioniert wie bisher.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.5/Tippi-2.41.5.dmg" length="25996682" type="application/octet-stream" sparkle:edSignature="RYMAZHw8PcR5RoqSgYY/5UNPAhOXHjT+AcH5yDSdnjMC/tMwDvQyFWRYbGULuAlHsuVC39bgyO+7anMbDTluCw=="/>
+        </item>
+        <item>
             <title>2.41.4</title>
             <pubDate>Wed, 18 Nov 2026 16:46:57 +0100</pubDate>
             <sparkle:version>706</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Verbessert</h3><ul><li><b>Diktat-Zeiten in der Konsole nachlesbar.</b> Tippi schreibt Start, Ende und die Dauer der Glättung jedes Diktats jetzt ins Systemprotokoll (App „Konsole“, Kategorie <code>dictation</code>). Das hilft bei der Fehlersuche, wenn ein Diktat langsam war. Der diktierte Text selbst steht dort nicht, Fehlermeldungen sind geschwärzt.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.3/Tippi-2.41.3.dmg" length="25992081" type="application/octet-stream" sparkle:edSignature="n4Di9cI9XFVn93pUbY84DFjzfq/8+pVri+S7fAq3zDvyr9p13Tar2BamU6H0sQNbA250pSwskC8qnPHLiTREDg=="/>
-        </item>
-        <item>
-            <title>2.41.2</title>
-            <pubDate>Wed, 18 Nov 2026 09:49:23 +0100</pubDate>
-            <sparkle:version>698</sparkle:version>
-            <sparkle:shortVersionString>2.41.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Verbessert</h3><ul><li><b>Glättung mit dem lokalen Modell auch nach langen Diktaten schnell.</b> Bisher wurde das lokale Modell (MLX) nur zu Beginn der Aufnahme geweckt. Nach 30 Sekunden Sprechen war es wieder abgekühlt, und die Glättung brauchte danach 0,6 bis 1 Sekunde länger, nach einer Minute rund 1,6 Sekunden. Jetzt hält Tippi das Modell während der ganzen Aufnahme wach. Gilt für die Glättung und für Diktat-Modi, die das lokale Modell nutzen. Mit Cloud-Anbietern ändert sich nichts.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.2/Tippi-2.41.2.dmg" length="25989804" type="application/octet-stream" sparkle:edSignature="WQ8QYhJEVk9IxGddE4sarXorcBqFCKaeL7sDUyPEZCtsDD4aW+FVaoPkq5JjDyrVUqmKUlYRiZnAIcpAYTL2CQ=="/>
         </item>
     </channel>
 </rss>
