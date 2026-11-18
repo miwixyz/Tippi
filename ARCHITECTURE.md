@@ -71,6 +71,8 @@ Tippi/
 │   │                               #   Belegung (JSON, versioniert), Zusatztaste aus CGEventFlags (rein)
 │   ├── DictationController+Modes.swift # Ablauf eines Modus: Prompt nach der Erkennung, 30-s-Deckel,
 │   │                               #   Rohtext-Rückfall, MLX-Vorwärmen mit dem Prompt des Modus
+│   ├── DictationController+KeepWarm.swift # 2.41.2 — MLX während der Aufnahme alle 2 s wecken,
+│   │                               #   Stopp bei Aufnahmeende oder gescheitertem Weckruf
 │   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
 │   │                               #   Ergebnis geschrieben wird (Notizfenster /
 │   │                               #   Accessibility / blind) + ReplacementWriter.
