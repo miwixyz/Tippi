@@ -266,6 +266,13 @@ is not the pinned, clean version and fails on non-system dylibs;
 `prune-releases.sh` and `docs-drift-check.sh` fail instead of reporting success
 when `gh` or a doc file is missing.
 
+Since v2.41.7 (code audit 2026-11-18): `release.sh` stops before the build when
+tracked files are modified or new files sit in `Tippi/`, `TippiDeck/`,
+`TippiTests/` or `project.yml` — the app is built from the working tree but the
+tag points at the pushed commit. A stray file at the repo root (e.g. `AGENTS.md`)
+does not stop it. `generate_appcast` errors are no longer hidden, and the
+release fails if the version's appcast entry has no `sparkle:edSignature`.
+
 Since v2.39.2: every build (`make test`, `make build`, `make release`,
 `scripts/devid-testbuild.sh`) registers its copy with LaunchServices as an owner
 of `tippi:` and `com.tippi.app`, so `tippi://schnellnotiz` could open a build

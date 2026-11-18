@@ -2,7 +2,12 @@
 
 ## [2.41.7] — 2026-11-18
 
-- _Add release notes here._
+### Behoben
+- **Abgeschnittene Antworten von Ollama werden erkannt.** Bricht eine Antwort am Längen-Limit des Modells ab, meldet Tippi das jetzt auch bei Ollama, wie bei allen anderen Anbietern. Bisher setzte Tippi die halbe Antwort ein, als wäre sie fertig. Ältere Ollama-Versionen, die keinen Abbruchgrund schicken, funktionieren wie bisher.
+
+### Intern
+- `OllamaProvider.content(from:)` liest `done_reason`; `"length"` → `LLMError.truncated` (Wert aus `ollama/llm/server.go`, `DoneReasonLength`). Neue Tests `OllamaResponseTests` (954 Tests).
+- `release.sh` bricht vor dem Build ab, wenn versionierte Dateien geändert sind oder in `Tippi/`, `TippiDeck/`, `TippiTests/` oder `project.yml` neue Dateien liegen (gebaut wird der Arbeitsordner, getaggt der gepushte Commit). `generate_appcast` schreibt Fehler wieder sichtbar, und der Appcast-Eintrag der Version muss eine `sparkle:edSignature` haben. Beides aus dem Code-Audit vom 18.11.
 
 ## [2.41.6] — 2026-11-18
 

@@ -519,6 +519,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.40.0 | ✅ Done | **One look** — the popup and six floating surfaces use the app family design; keys unchanged |
 | v2.40.1 | ✅ Done | **Safer notes sync** — a note renamed on two Macs keeps both versions; autocomplete no longer queues stale requests |
 | v2.40.2 | ✅ Done | **Hardening** — local MLX runs with a fixed environment; a hung app no longer freezes typing for seconds |
+| v2.41.7 | ✅ Done | **Ollama cut-off answers** — an Ollama answer that stops at the length limit is flagged as cut off like with every other provider, never inserted as if complete |
 | v2.41.6 | ✅ Done | **Hotkey recorder ends with Settings** — closing Settings while a shortcut field waits for a key no longer lets the next ⌘ combination in another Tippi window become a global hotkey |
 | v2.41.5 | ✅ Done | **Emoji fixes** — emoticons ending in a letter (XD, :D) wait for a space or punctuation, `:name:` shortcodes no longer fire right after a letter or digit, so code like `value(for:key:)` stays intact |
 | v2.41.4 | ✅ Done | **Autocomplete after launch** — the local server for suggestions starts again right after Tippi launches; a server stopped by hand stays stopped |
