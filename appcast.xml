@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.2</title>
+            <pubDate>Wed, 18 Nov 2026 09:49:23 +0100</pubDate>
+            <sparkle:version>698</sparkle:version>
+            <sparkle:shortVersionString>2.41.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Verbessert</h3><ul><li><b>Glättung mit dem lokalen Modell auch nach langen Diktaten schnell.</b> Bisher wurde das lokale Modell (MLX) nur zu Beginn der Aufnahme geweckt. Nach 30 Sekunden Sprechen war es wieder abgekühlt, und die Glättung brauchte danach 0,6 bis 1 Sekunde länger, nach einer Minute rund 1,6 Sekunden. Jetzt hält Tippi das Modell während der ganzen Aufnahme wach. Gilt für die Glättung und für Diktat-Modi, die das lokale Modell nutzen. Mit Cloud-Anbietern ändert sich nichts.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.2/Tippi-2.41.2.dmg" length="25989804" type="application/octet-stream" sparkle:edSignature="WQ8QYhJEVk9IxGddE4sarXorcBqFCKaeL7sDUyPEZCtsDD4aW+FVaoPkq5JjDyrVUqmKUlYRiZnAIcpAYTL2CQ=="/>
+        </item>
+        <item>
             <title>2.41.1</title>
             <pubDate>Tue, 17 Nov 2026 23:08:55 +0100</pubDate>
             <sparkle:version>695</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Tippi auf dem Stream Deck.</b> Ein eigenes Plugin für Elgatos Stream Deck (Stream Deck +, Neo und alle anderen Modelle): Diktat starten und stoppen oder halten zum Sprechen, Diktat für Mails, Sprachnotiz, einen Prompt direkt auf die Auswahl anwenden (auch deine eigenen), Tippi öffnen, Übersetzen, Emoji, Notizen, Schnellnotiz, Text vom Bildschirm, Passwort, Pause, Autovervollständigung und Diktatsprache. Am Stream Deck + wählt ein Drehregler den Diktat-Modus und zeigt den Mikrofonpegel, ein zweiter blättert durch die Prompts. Jede Taste zeigt ihren Zustand (bereit, nimmt auf, schreibt). Fertige Profile für Stream Deck + und Neo mit zwei Seiten werden mitinstalliert. Einschalten unter Einstellungen → Allgemein → Stream Deck, dort auch „Plugin installieren“.</li></ul><h3>Sicherheit</h3><ul><li><b>Stream Deck nur über ein geprüftes Plugin.</b> Ab Werk aus; aus heißt, Tippi öffnet gar keinen Zugang. Eingeschaltet nimmt Tippi Befehle nur von seinem eigenen, mit Developer ID signierten Plugin an, und nur, wenn Elgatos Stream-Deck-App es gestartet hat. Ein selbst gestartetes Plugin wird abgelehnt. Es gibt nur eine feste Liste von Befehlen, die auch per Kürzel oder Menü gehen; nichts davon fügt fremden Text ein. Ans Stream Deck gehen nur Zustand, Pegel und Prompt-Namen, nie markierter Text, Diktat oder Ergebnis. Entwurf: <code>docs/SECURE-DESIGN-stream-deck.md</code>.</li><li><b>Fremde MLX-Server bleiben unberührt.</b> Tippi übernimmt und beendet nur noch den MLX-Server, den es selbst gestartet hat. Läuft auf dem Port ein Server einer anderen App, meldet Tippi das, statt ihn zu beenden.</li><li><b>Cloud-Anbieter folgen keinen Weiterleitungen mehr.</b> Sonst wäre der API-Schlüssel mitgegangen. Antworten sind auf 8 MB begrenzt.</li><li><b>Whisper-Modelle werden mit Prüfsumme geladen</b> (feste Fassung, SHA-256 geprüft).</li><li><b>Passwortfelder werden nie erfasst</b>, auch nicht über die Bedienungshilfen. Ein erzeugtes Passwort verlässt die Zwischenablage auch, wenn Tippi vorher beendet wird.</li></ul><h3>Behoben</h3><ul><li><b>Lokale Modelle geben den Speicher wieder frei.</b> Nach 15 Minuten ohne Nutzung entlädt Tippi das lokale Modell und stoppt den selbst gestarteten MLX-Server (neue Einstellung, ab Werk an). Der nächste Gebrauch lädt es wieder.</li><li><b>Eine gerade ladende Notiz verschwindet nicht mehr kurz</b> aus der Liste.</li><li><b>Zurückgehaltenes Einfügen meldet sich</b>, und der Hinweis sagt, dass die vorherige Zwischenablage ersetzt wurde.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.0/Tippi-2.41.0.dmg" length="25785600" type="application/octet-stream" sparkle:edSignature="+k0nfBpoPHgdtkNMWKUKbSrEuNSicKBzt8bnoNUgn0lruzTcwjYRsmtkELUhSiPOyVg8dfpUEYFJq+ZrZqRzCA=="/>
-        </item>
-        <item>
-            <title>2.40.2</title>
-            <pubDate>Tue, 17 Nov 2026 11:57:57 +0100</pubDate>
-            <sparkle:version>682</sparkle:version>
-            <sparkle:shortVersionString>2.40.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Klick in eine hängende App friert Tippi nicht mehr sekundenlang ein.</b> Mit eingeschalteter Auswahlleiste fragte Tippi nach jedem Mausklick die angeklickte App ab und wartete bis zu 2 Sekunden je Abfrage. Bei aktiver Autovervollständigung stockte in der Zeit auch das Tippen in allen Apps. Jetzt höchstens rund eine Sekunde, und eine nicht antwortende App wird nur alle 5 Sekunden erneut gefragt.</li></ul><h3>Sicherheit</h3><ul><li><b>Lokales MLX läuft mit fester Umgebung.</b> Der MLX-Server und die MLX-Installation laufen als Unterprogramme mit Tippis Rechten (Bedienungshilfen, Mikrofon). Sie übernahmen bisher alle Umgebungsvariablen. So hätte ein Programm, das schon auf dem Mac läuft, ohne Rückfrage eigenen Code einschleusen können. Jetzt bekommen sie nur Suchpfad, Benutzerordner, Sprache, Proxy und die Hugging-Face-Einstellungen. Die Installation startet <code>brew</code> und <code>uv</code> direkt, ohne Shell.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.40.2/Tippi-2.40.2.dmg" length="25009762" type="application/octet-stream" sparkle:edSignature="6wqspHqu6laE1cggtL/iH6+vkCgci7NftiMer4tLWe1MhbJNdQ4VlbN6dCLxak8aeps42PvLwNrHZiKvnKwdAw=="/>
         </item>
     </channel>
 </rss>
