@@ -284,6 +284,19 @@ else
     echo "  ✓ Branch in sync with origin."
 fi
 
+# The release is built from the working tree but tagged on the pushed commit. Uncommitted changes to
+# tracked files, or new files in the build's source folders, would ship without being in the tag
+# (code audit 2026-11-18). A stray file at the repo root (e.g. AGENTS.md) is not built and may stay.
+DIRTY=$( { git status --porcelain --untracked-files=no; \
+           git status --porcelain --untracked-files=all -- Tippi TippiDeck TippiTests project.yml; } | sort -u)
+if [ -n "${DIRTY}" ]; then
+    echo "  ✗ ABORT: working tree not clean — these changes would ship without being in the tag:"
+    printf '%s\n' "${DIRTY}" | sed 's/^/      /'
+    echo "  → ZU TUN: commit (and push) or stash them, then re-run make release."
+    exit 1
+fi
+echo "  ✓ Working tree clean (tracked files and source folders)."
+
 # Check if the release tag for this version already exists on remote.
 # If it does, that tag belongs to the other Mac's release — we must not clobber.
 EXISTING_REMOTE_TAG=$(git ls-remote --tags origin "refs/tags/v${VERSION}" 2>/dev/null | awk '{print $1}')
@@ -609,10 +622,19 @@ if [ -f "${APPCAST_TOOL}" ]; then
         python3 -I scripts/release-notes.py "${VERSION}" CHANGELOG.md "${archive%.dmg}.html" || {
             echo "✗ Versionshinweise für ${VERSION} nicht erzeugt (CHANGELOG-Abschnitt fehlt?)"; exit 1; }
     done
+    # stderr stays visible: under `set -e` a failure used to stop the release here without a word.
     "${APPCAST_TOOL}" "${DIST_DIR}" \
         --download-url-prefix "${GH_RELEASE_URL}/" \
         --embed-release-notes \
-        -o appcast.xml 2>/dev/null
+        -o appcast.xml
+    # Sparkle rejects an update whose enclosure carries no EdDSA signature — every user would stay
+    # on the old version while this script reported success (code audit 2026-11-18).
+    if ! grep -E "Tippi-${VERSION}\.dmg\"" appcast.xml | grep -qE 'sparkle:edSignature="[A-Za-z0-9+/=]{40,}"'; then
+        echo "  ❌ appcast.xml: Eintrag für ${VERSION} ohne sparkle:edSignature — Update würde abgelehnt."
+        echo "     → ZU TUN: Sparkle-Schlüssel im Schlüsselbund prüfen (generate_keys -p), dann erneut generate_appcast."
+        exit 1
+    fi
+    echo "  ✓ appcast.xml: Eintrag für ${VERSION} ist signiert (sparkle:edSignature)."
     # Der Appcast liegt in einem Gist, und dafuer braucht das Token den
     # 'gist'-Scope. Ein GITHUB_TOKEN aus der Umgebung ueberschreibt gh's
     # Keyring-Anmeldung -- hat es den Scope nicht, antwortet GitHub mit
