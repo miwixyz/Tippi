@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.6</title>
+            <pubDate>Wed, 18 Nov 2026 18:24:41 +0100</pubDate>
+            <sparkle:version>715</sparkle:version>
+            <sparkle:shortVersionString>2.41.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Ein Tastenkürzel-Feld nimmt nach dem Schließen der Einstellungen nichts mehr auf.</b> Hast du auf ein Kürzel-Feld geklickt und die Einstellungen geschlossen, ohne eine Taste zu drücken, wartete das Feld weiter. Die nächste ⌘-Kombination in einem anderen Tippi-Fenster, etwa ⌘V in den Notizen, wurde dann als neues globales Kürzel gespeichert. Jetzt endet die Aufnahme mit dem Fenster, beim nächsten Öffnen steht das Feld wieder auf dem alten Kürzel. Gilt auch für das Feld der Sondertaste.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.6/Tippi-2.41.6.dmg" length="25990109" type="application/octet-stream" sparkle:edSignature="OALR57keTGQsImyOLgVsisOvleEA8ghWf95r6JzogQihw50R9ETGW0OXHofuSs7QC+H8pF/vmUpDj93G++EoDg=="/>
+        </item>
+        <item>
             <title>2.41.5</title>
             <pubDate>Wed, 18 Nov 2026 17:28:31 +0100</pubDate>
             <sparkle:version>711</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Autovervollständigung liefert nach dem Start von Tippi wieder Vorschläge.</b> Seit 2.41.0 startete Tippi den lokalen MLX-Server für die Vorschläge nur noch nach einer Leerlauf-Pause, nicht mehr nach dem Start der App. Ohne das Labs-Rechenwerk kamen dann keine Vorschläge. Einen Server, den du in den Einstellungen mit „Server stoppen“ anhältst, startet Tippi weiterhin nicht von selbst.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.4/Tippi-2.41.4.dmg" length="25991809" type="application/octet-stream" sparkle:edSignature="6sFuBbpWFtBMKDyFQ5BN6K8Fi1lU2DMoiIolY9l4/8tz/MGeQgx2uMxMRLMcJXvZCGlDS6WbZKgNfwnJkGM5BA=="/>
-        </item>
-        <item>
-            <title>2.41.3</title>
-            <pubDate>Wed, 18 Nov 2026 10:50:37 +0100</pubDate>
-            <sparkle:version>701</sparkle:version>
-            <sparkle:shortVersionString>2.41.3</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Verbessert</h3><ul><li><b>Diktat-Zeiten in der Konsole nachlesbar.</b> Tippi schreibt Start, Ende und die Dauer der Glättung jedes Diktats jetzt ins Systemprotokoll (App „Konsole“, Kategorie <code>dictation</code>). Das hilft bei der Fehlersuche, wenn ein Diktat langsam war. Der diktierte Text selbst steht dort nicht, Fehlermeldungen sind geschwärzt.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.3/Tippi-2.41.3.dmg" length="25992081" type="application/octet-stream" sparkle:edSignature="n4Di9cI9XFVn93pUbY84DFjzfq/8+pVri+S7fAq3zDvyr9p13Tar2BamU6H0sQNbA250pSwskC8qnPHLiTREDg=="/>
         </item>
     </channel>
 </rss>
