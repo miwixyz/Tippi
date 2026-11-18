@@ -1,4 +1,5 @@
 import AppKit
+import os
 
 /// Diktat-Modi im Ablauf des Diktats (`DictationModes`). Eigene Datei, damit
 /// `DictationController.swift` unter seiner Längengrenze bleibt und die Modi an
@@ -74,19 +75,19 @@ extension DictationController {
                 try await Self.run(prompt, text: trimmed, appName: appName)
             }
             let output = try LLMError.nonEmpty(result.text)
-            NSLog("Tippi: dictation mode '\(prompt.id)' via \(result.providerDisplay) in \(String(format: "%.2f", result.duration))s")
+            dictationLog.notice("dictation mode '\(prompt.id, privacy: .public)' via \(result.providerDisplay, privacy: .public) in \(String(format: "%.2f", result.duration), privacy: .public)s")
             do {
                 try HistoryStore.shared.append(
                     appName: "Dictation", promptTitle: prompt.title, provider: result.providerID,
                     model: result.model, language: nil, latencyMs: Int((result.duration * 1000).rounded()),
                     input: trimmed, output: output)
             } catch {
-                NSLog("Tippi: history append failed — \(error.localizedDescription)")
+                dictationLog.error("history append failed — \(error.localizedDescription, privacy: .private)")
             }
             return (output, nil)
         } catch {
             let reason = Self.cleanupFailureReason(error)
-            NSLog("Tippi: dictation mode '\(prompt.id)' failed — \(reason) — keeping raw")
+            dictationLog.error("dictation mode '\(prompt.id, privacy: .public)' failed — \(reason, privacy: .private) — keeping raw")
             return (raw, Self.cleanupFailedNotice(reason))
         }
     }

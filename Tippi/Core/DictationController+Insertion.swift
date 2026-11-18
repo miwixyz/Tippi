@@ -46,7 +46,7 @@ extension DictationController {
         }
         ToastWindowController.shared.show(message: message)
         // Nur Längen und Ausgang, nie Text.
-        NSLog("Tippi: dictation to inbox \(text.count) chars (raw=\(rawCount)) — \(String(describing: outcome))")
+        dictationLog.notice("dictation to inbox \(text.count, privacy: .public) chars (raw=\(rawCount, privacy: .public)) — \(String(describing: outcome), privacy: .public)")
     }
 
     func prepareInsertion(_ polished: String, targetID: String?, isNotes: Bool) -> (String, CorrectionDraft?) {
@@ -98,7 +98,7 @@ extension DictationController {
            let now = FocusedFieldReader.focusSpot(pid: pid, textFieldOnly: false),
            !now.isSameField(as: targetField) {
             TextInsertion.copy(text)
-            NSLog("Tippi: dictation not inserted — focus moved to another field (\(now.fingerprint.role ?? "?"))")
+            dictationLog.notice("dictation not inserted — focus moved to another field (\(now.fingerprint.role ?? "?", privacy: .public))")
             return InsertionOutcome(notice: String(localized: "dictation.toast.fieldChangedCopied"))
         }
         // Read right before writing: that is where the text actually goes.

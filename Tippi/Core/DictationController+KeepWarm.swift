@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Warming the local MLX model for the polish step while the user speaks.
 /// Own file so `DictationController.swift` stays under its length limit.
@@ -46,7 +47,7 @@ extension DictationController {
                     await MLXProvider.prime(systemPrompt: prompt)
                 }.value
                 guard primed else {
-                    NSLog("Tippi: keep-warm stopped — local model prime failed")
+                    dictationLog.notice("keep-warm stopped — local model prime failed")
                     return
                 }
                 try? await Task.sleep(nanoseconds: Self.keepWarmInterval * 1_000_000_000)

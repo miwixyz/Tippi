@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unveröffentlicht]
+
+### Intern
+- Diktat-Meldungen über `Logger` (Kategorie `dictation`) statt `NSLog`. NSLog-Zeilen landeten weder im gespeicherten Protokoll noch in `log stream` (gemessen 18.11.), Diktat- und Glättungszeiten waren im Nachhinein nicht lesbar. Zahlen, Zeiten, Anbieter- und Modusnamen öffentlich, Fehlertexte ausdrücklich privat (eine Fehlerantwort kann Diktattext enthalten). Lesen: `log show --predicate 'subsystem == "com.tippi.app" AND category == "dictation"'`.
+
 ## [2.41.2] — 2026-11-18
 
 ### Verbessert

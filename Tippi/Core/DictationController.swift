@@ -1,4 +1,11 @@
 import AppKit
+import os
+
+/// Dictation flow messages. `Logger`, not `NSLog`: NSLog lines were neither
+/// persisted nor visible in `log stream` (measured 2026-11-18), so dictation
+/// timings could not be read back. Counts, durations and names are public;
+/// error texts stay private, a provider error body can echo dictated text.
+let dictationLog = Logger(subsystem: "com.tippi.app", category: "dictation")
 
 // MARK: - Settings
 
@@ -343,7 +350,7 @@ final class DictationController: ObservableObject {
         case .recording(let url):
             beginTranscription(wavURL: url, targetApp: targetApp, notesTextView: notesTextView)
         case .transcribing:
-            NSLog("Tippi: dictation cancel requested")
+            dictationLog.notice("dictation cancel requested")
             transcriptionTask?.cancel()
         }
     }
@@ -365,7 +372,7 @@ final class DictationController: ObservableObject {
             livePreview?.stop(); livePreview = nil
             state = .idle
             RecordingIndicatorWindowController.shared.hide()
-            NSLog("Tippi: hold released during mic permission prompt — recording discarded")
+            dictationLog.notice("hold released during mic permission prompt — recording discarded")
             return
         }
         holdWatchdog?.invalidate()
@@ -375,7 +382,7 @@ final class DictationController: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor in
                 guard let self, case .recording(let url) = self.state else { return }
-                NSLog("Tippi: dictation hold exceeded \(Int(DictationSettings.maxHoldSeconds))s — stopping (stuck key?)")
+                dictationLog.notice("dictation hold exceeded \(Int(DictationSettings.maxHoldSeconds), privacy: .public)s — stopping (stuck key?)")
                 ToastWindowController.shared.show(message: String(localized: "dictation.toast.holdTimeout"))
                 self.beginTranscription(wavURL: url, targetApp: nil)
             }
@@ -418,7 +425,7 @@ final class DictationController: ObservableObject {
             }
             indicator.recording(recorder: recorder, preview: livePreview,
                                 aiEnabled: aiStepPlanned, source: source)
-            NSLog("Tippi: dictation recording started (\(self.source))")
+            dictationLog.notice("dictation recording started (\(String(describing: self.source), privacy: .public))")
             // Warm the engine while the user is speaking, so a cold first
             // transcription doesn't stall on loading the model.
             SpeechTranscriber.prewarm()
@@ -435,7 +442,7 @@ final class DictationController: ObservableObject {
             if !warmModeProviderIfNeeded() { warmPostProcessProviderIfNeeded() }
         } catch {
             ToastWindowController.shared.show(message: error.localizedDescription)
-            NSLog("Tippi: dictation start failed — \(error.localizedDescription)")
+            dictationLog.error("dictation start failed — \(error.localizedDescription, privacy: .private)")
         }
     }
 
@@ -546,15 +553,15 @@ final class DictationController: ObservableObject {
                 message += " · " + String(localized: "dictation.toast.returnWithheld")
             }
             ToastWindowController.shared.show(message: message)
-            NSLog("Tippi: dictation inserted \(final.count) chars (raw=\(raw.count)) via \(engineName), return=\(returnDecision) pressed=\(pressReturn)")
+            dictationLog.notice("dictation inserted \(final.count, privacy: .public) chars (raw=\(raw.count, privacy: .public)) via \(engineName, privacy: .public), return=\(String(describing: returnDecision), privacy: .public) pressed=\(pressReturn, privacy: .public)")
         } catch {
             RecordingIndicatorWindowController.shared.hide()
             if error is CancellationError || Task.isCancelled {
                 ToastWindowController.shared.show(message: String(localized: "dictation.toast.cancelled"))
-                NSLog("Tippi: dictation cancelled by user")
+                dictationLog.notice("dictation cancelled by user")
             } else {
                 ToastWindowController.shared.show(message: error.localizedDescription)
-                NSLog("Tippi: dictation transcription failed — \(error.localizedDescription)")
+                dictationLog.error("dictation transcription failed — \(error.localizedDescription, privacy: .private)")
             }
         }
     }
@@ -575,7 +582,7 @@ final class DictationController: ObservableObject {
         // LLM round-trip would dominate perceived latency without adding
         // meaningful cleanup.
         guard forced || trimmed.count >= DictationSettings.postProcessMinChars else {
-            NSLog("Tippi: dictation post-process skipped — \(trimmed.count) chars < min \(DictationSettings.postProcessMinChars)")
+            dictationLog.notice("dictation post-process skipped — \(trimmed.count, privacy: .public) chars < min \(DictationSettings.postProcessMinChars, privacy: .public)")
             return (raw, nil)
         }
 
@@ -629,7 +636,7 @@ final class DictationController: ObservableObject {
             }
             let polished = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !polished.isEmpty else {
-                NSLog("Tippi: dictation post-process returned empty — keeping raw")
+                dictationLog.notice("dictation post-process returned empty — keeping raw")
                 return (raw, Self.cleanupFailedNotice(String(localized: "dictation.toast.cleanupEmpty")))
             }
             // Hard rule: dictation cleanup must NEVER respond conversationally.
@@ -638,10 +645,10 @@ final class DictationController: ObservableObject {
             // looks like a chat response, fall back to the raw transcript
             // and tell the user so the misbehavior is visible, not silent.
             if Self.looksLikeConversationalResponse(input: trimmed, output: polished) {
-                NSLog("Tippi: dictation post-process went conversational — falling back to raw (in=\(trimmed.count), out=\(polished.count))")
+                dictationLog.notice("dictation post-process went conversational — falling back to raw (in=\(trimmed.count, privacy: .public), out=\(polished.count, privacy: .public))")
                 return (raw, String(localized: "dictation.toast.cleanupFallback"))
             }
-            NSLog("Tippi: dictation post-processed via \(result.providerDisplay) in \(String(format: "%.2f", result.duration))s")
+            dictationLog.notice("dictation post-processed via \(result.providerDisplay, privacy: .public) in \(String(format: "%.2f", result.duration), privacy: .public)s")
             do {
                 try HistoryStore.shared.append(
                     appName: "Dictation",
@@ -654,14 +661,14 @@ final class DictationController: ObservableObject {
                     output: polished
                 )
             } catch {
-                NSLog("Tippi: history append failed — \(error.localizedDescription)")
+                dictationLog.error("history append failed — \(error.localizedDescription, privacy: .private)")
             }
             return (polished, nil)
         } catch {
             // The short reason, never the provider's response body — it is
             // foreign text, in the log as much as in the toast.
             let reason = Self.cleanupFailureReason(error)
-            NSLog("Tippi: dictation post-process failed — \(reason) — keeping raw")
+            dictationLog.error("dictation post-process failed — \(reason, privacy: .private) — keeping raw")
             return (raw, Self.cleanupFailedNotice(reason))
         }
     }
