@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.3</title>
+            <pubDate>Wed, 18 Nov 2026 10:50:37 +0100</pubDate>
+            <sparkle:version>701</sparkle:version>
+            <sparkle:shortVersionString>2.41.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Verbessert</h3><ul><li><b>Diktat-Zeiten in der Konsole nachlesbar.</b> Tippi schreibt Start, Ende und die Dauer der Glättung jedes Diktats jetzt ins Systemprotokoll (App „Konsole“, Kategorie <code>dictation</code>). Das hilft bei der Fehlersuche, wenn ein Diktat langsam war. Der diktierte Text selbst steht dort nicht, Fehlermeldungen sind geschwärzt.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.3/Tippi-2.41.3.dmg" length="25992081" type="application/octet-stream" sparkle:edSignature="n4Di9cI9XFVn93pUbY84DFjzfq/8+pVri+S7fAq3zDvyr9p13Tar2BamU6H0sQNbA250pSwskC8qnPHLiTREDg=="/>
+        </item>
+        <item>
             <title>2.41.2</title>
             <pubDate>Wed, 18 Nov 2026 09:49:23 +0100</pubDate>
             <sparkle:version>698</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Neue Symbole für das Stream-Deck-Plugin.</b> Alle Tasten und Drehregler haben ein einheitliches Aussehen bekommen: dunkle Glasfläche, klare weiße Linien, ein ruhiges Leuchten von oben. Der Diktat-Zustand bleibt auf einen Blick erkennbar: roter Punkt beim Aufnehmen, drei Punkte beim Schreiben, abgeblendet, wenn Diktat nicht bereit ist. Der Tastentitel steht oben und überdeckt das Zeichen nicht. Nach dem Update meldet Tippi unter Einstellungen → Allgemein → Stream Deck, dass das Plugin älter ist – dort „Plugin installieren“ wählen. Tasten, denen du selbst ein Bild zugewiesen hast, behalten es.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.1/Tippi-2.41.1.dmg" length="25987871" type="application/octet-stream" sparkle:edSignature="VDPdWYhU10pzxak0cuU2+zAwfx6vVMpdMDnX8IquHFJdfAIham6HMMxML6xmDuYjUWWRGPofkZvxKq/QOvSCCg=="/>
-        </item>
-        <item>
-            <title>2.41.0</title>
-            <pubDate>Tue, 17 Nov 2026 15:45:12 +0100</pubDate>
-            <sparkle:version>690</sparkle:version>
-            <sparkle:shortVersionString>2.41.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Tippi auf dem Stream Deck.</b> Ein eigenes Plugin für Elgatos Stream Deck (Stream Deck +, Neo und alle anderen Modelle): Diktat starten und stoppen oder halten zum Sprechen, Diktat für Mails, Sprachnotiz, einen Prompt direkt auf die Auswahl anwenden (auch deine eigenen), Tippi öffnen, Übersetzen, Emoji, Notizen, Schnellnotiz, Text vom Bildschirm, Passwort, Pause, Autovervollständigung und Diktatsprache. Am Stream Deck + wählt ein Drehregler den Diktat-Modus und zeigt den Mikrofonpegel, ein zweiter blättert durch die Prompts. Jede Taste zeigt ihren Zustand (bereit, nimmt auf, schreibt). Fertige Profile für Stream Deck + und Neo mit zwei Seiten werden mitinstalliert. Einschalten unter Einstellungen → Allgemein → Stream Deck, dort auch „Plugin installieren“.</li></ul><h3>Sicherheit</h3><ul><li><b>Stream Deck nur über ein geprüftes Plugin.</b> Ab Werk aus; aus heißt, Tippi öffnet gar keinen Zugang. Eingeschaltet nimmt Tippi Befehle nur von seinem eigenen, mit Developer ID signierten Plugin an, und nur, wenn Elgatos Stream-Deck-App es gestartet hat. Ein selbst gestartetes Plugin wird abgelehnt. Es gibt nur eine feste Liste von Befehlen, die auch per Kürzel oder Menü gehen; nichts davon fügt fremden Text ein. Ans Stream Deck gehen nur Zustand, Pegel und Prompt-Namen, nie markierter Text, Diktat oder Ergebnis. Entwurf: <code>docs/SECURE-DESIGN-stream-deck.md</code>.</li><li><b>Fremde MLX-Server bleiben unberührt.</b> Tippi übernimmt und beendet nur noch den MLX-Server, den es selbst gestartet hat. Läuft auf dem Port ein Server einer anderen App, meldet Tippi das, statt ihn zu beenden.</li><li><b>Cloud-Anbieter folgen keinen Weiterleitungen mehr.</b> Sonst wäre der API-Schlüssel mitgegangen. Antworten sind auf 8 MB begrenzt.</li><li><b>Whisper-Modelle werden mit Prüfsumme geladen</b> (feste Fassung, SHA-256 geprüft).</li><li><b>Passwortfelder werden nie erfasst</b>, auch nicht über die Bedienungshilfen. Ein erzeugtes Passwort verlässt die Zwischenablage auch, wenn Tippi vorher beendet wird.</li></ul><h3>Behoben</h3><ul><li><b>Lokale Modelle geben den Speicher wieder frei.</b> Nach 15 Minuten ohne Nutzung entlädt Tippi das lokale Modell und stoppt den selbst gestarteten MLX-Server (neue Einstellung, ab Werk an). Der nächste Gebrauch lädt es wieder.</li><li><b>Eine gerade ladende Notiz verschwindet nicht mehr kurz</b> aus der Liste.</li><li><b>Zurückgehaltenes Einfügen meldet sich</b>, und der Hinweis sagt, dass die vorherige Zwischenablage ersetzt wurde.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.0/Tippi-2.41.0.dmg" length="25785600" type="application/octet-stream" sparkle:edSignature="+k0nfBpoPHgdtkNMWKUKbSrEuNSicKBzt8bnoNUgn0lruzTcwjYRsmtkELUhSiPOyVg8dfpUEYFJq+ZrZqRzCA=="/>
         </item>
     </channel>
 </rss>
