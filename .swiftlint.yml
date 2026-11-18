@@ -34,7 +34,7 @@ identifier_name:
   min_length:
     warning: 1
     error: 1
-  # JSON-Feldnamen der Provider-APIs (Anthropic, OpenAI-kompatibel, Gemini, MLX).
+  # JSON-Feldnamen der Provider-APIs (Anthropic, OpenAI-kompatibel, Gemini, MLX, Ollama).
   # Die Codable-Structs spiegeln das Wire-Format 1:1; umbenennen hieße CodingKeys
   # nachrüsten — Verhaltensrisiko ohne Gewinn. Nur diese Namen, nicht `_` generell.
   excluded:
@@ -42,6 +42,7 @@ identifier_name:
     - stop_reason
     - has_more
     - finish_reason
+    - done_reason
     - system_instruction
     - enable_thinking
     - chat_template_kwargs

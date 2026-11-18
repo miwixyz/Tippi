@@ -54,11 +54,20 @@ struct OllamaProvider: LLMProvider {
             throw LLMError.httpError(status: http.statusCode, body: text)
         }
 
+        return try Self.content(from: data)
+    }
+
+    /// `done_reason == "length"` (`num_predict` reached, ollama `llm/server.go`) → `.truncated`, like the
+    /// other providers: a half answer must never be inserted as if complete (code audit 2026-11-18).
+    /// Older Ollama versions send no `done_reason`; that stays a normal answer.
+    static func content(from data: Data) throws -> String {
         struct ResponseBody: Decodable {
             struct Msg: Decodable { let content: String }
             let message: Msg
+            let done_reason: String?
         }
         let decoded = try JSONDecoder().decode(ResponseBody.self, from: data)
+        guard decoded.done_reason != "length" else { throw LLMError.truncated }
         return decoded.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
