@@ -12,7 +12,7 @@ final class EmoticonMatcherTests: XCTestCase {
         XCTAssertEqual(EmoticonMatcher.match(in: "Hallo :-)")?.emoji, "🙂")
         XCTAssertEqual(EmoticonMatcher.match(in: "Schade :(")?.emoji, "🙁")
         XCTAssertEqual(EmoticonMatcher.match(in: "Ich <3")?.emoji, "❤️")
-        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD")?.emoji, "😆")
+        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD ")?.emoji, "😆")
     }
 
     func testMatchesAtStartOfBuffer() {
@@ -69,12 +69,17 @@ final class EmoticonMatcherTests: XCTestCase {
         XCTAssertEqual(EmoticonMatcher.match(in: "wow :-O.")?.replacement, "😮.")
     }
 
-    /// Bare letter combos with no colon/semicolon prefix aren't ambiguous the
-    /// same way — nothing accidentally starts a word with "XD" — so they must
-    /// keep firing immediately, same as before this fix.
-    func testBareLetterEmoticonStillFiresImmediately() {
-        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD")?.emoji, "😆")
-        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD")?.replacement, "😆")
+    /// Code-Audit 18.11.: "XDG_CONFIG_HOME" wurde zu "😆G_CONFIG_HOME". Die Annahme, kein Wort beginne
+    /// mit "XD", war falsch. Jedes Emoticon, das auf einen Buchstaben endet, wartet deshalb auf eine
+    /// Grenze danach — wie `:o`.
+    func testLetterEndingEmoticonWaitsForBoundary() {
+        XCTAssertNil(EmoticonMatcher.match(in: "haha XD"), "fires only once confirmed")
+        XCTAssertEqual(EmoticonMatcher.match(in: "haha XD ")?.replacement, "😆 ")
+        XCTAssertEqual(EmoticonMatcher.match(in: "haha xD!")?.replacement, "😆!")
+        XCTAssertNil(EmoticonMatcher.match(in: "export XDG"))
+        XCTAssertNil(EmoticonMatcher.match(in: "export XDG_"))
+        XCTAssertNil(EmoticonMatcher.match(in: "T_Test"))
+        XCTAssertEqual(EmoticonMatcher.match(in: "T_T ")?.replacement, "😭 ")
     }
 
     // MARK: - Must NOT match (the whole reason the boundary rule exists)

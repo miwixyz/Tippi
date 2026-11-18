@@ -57,8 +57,8 @@ enum EmoticonMatcher {
     struct Match: Equatable {
         let emoticon: String
         let emoji: String
-        /// Set only for emoticons that end in a letter (`:o`, `:O`, `:p`,
-        /// `:P`, incl. their `:-` variants) — see `match(in:)`. The character
+        /// Set only for emoticons that end in a letter (`:o`, `:P`, `:D`,
+        /// `XD`, `T_T`, …) — see `match(in:)`. The character
         /// that confirmed the match (a space or punctuation typed right
         /// after) must be re-inserted, since it belongs to the user's text,
         /// not to the emoticon.
@@ -75,27 +75,21 @@ enum EmoticonMatcher {
     /// directly followed by exactly one letter — are also the literal start
     /// of every real word beginning with that letter. `:ot` reported
     /// 2026-09-13: the instant `:o` completed, it converted to 😮, leaving
-    /// "😮t" once the rest of the word was typed. Deliberately narrow: bare
-    /// letter combos with no colon prefix (`XD`, `xD`) are not ambiguous the
-    /// same way — nobody accidentally starts an unrelated word with "XD" —
-    /// so they keep firing immediately, and `testMatchesAfterSpace` (which
-    /// expects exactly that for "haha XD") stays green.
+    /// "😮t" once the rest of the word was typed. The same holds for every
+    /// emoticon that ends in a letter: `XD` is the start of `XDG_CONFIG_HOME`
+    /// (code audit 2026-11-18, it became "😆G_CONFIG_HOME"), `T_T` of `T_Test`.
     private static func needsTrailingBoundary(_ emoticon: String) -> Bool {
-        guard let first = emoticon.first, first == ":" || first == ";" else { return false }
-        var rest = emoticon.dropFirst()
-        if rest.first == "-" { rest = rest.dropFirst() }
-        return rest.count == 1 && (rest.first?.isLetter ?? false)
+        emoticon.last?.isLetter ?? false
     }
 
     /// Returns a match if `buffer` ends with a known emoticon that starts at a
     /// word boundary. Nil otherwise — the typed text is then left untouched.
     static func match(in buffer: String) -> Match? {
         for candidate in byLengthDescending {
-            // Punctuation-ending emoticons (`:)`, `:(`, `<3`, `XD`, …) don't
-            // have the word-prefix problem — no English word continues with
-            // `)`/`(`/`3` mid-token, and bare letter combos like `XD` have no
-            // colon prefix to collide with — so only the handful matching
-            // `needsTrailingBoundary` wait for one more, non-word character
+            // Punctuation-ending emoticons (`:)`, `:(`, `<3`, …) don't
+            // have the word-prefix problem — no word continues with
+            // `)`/`(`/`3` mid-token — so only the letter-ending ones
+            // (`needsTrailingBoundary`) wait for one more, non-word character
             // before firing. Same "confirm with a boundary char" idiom the
             // Space-accepts-suggestion path elsewhere already uses.
             let needsBoundary = needsTrailingBoundary(candidate.emoticon)

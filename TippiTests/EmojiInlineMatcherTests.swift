@@ -94,4 +94,15 @@ final class EmojiInlineMatcherTests: XCTestCase {
         XCTAssertEqual(EmojiInlineMatcher.candidate(in: ":\(min):")?.alias, min)
         XCTAssertEqual(EmojiInlineMatcher.candidate(in: ":\(max):")?.alias, max)
     }
+
+    /// Code-Audit 18.11.: `value(for:key:)` wurde zu `value(for🔑)`. Vor dem öffnenden Doppelpunkt
+    /// muss eine Grenze stehen (Leerzeichen, Anfang, Satz- oder Sonderzeichen), kein Buchstabe/keine Ziffer.
+    func testNeedsBoundaryBeforeOpeningColon() {
+        XCTAssertNil(EmojiInlineMatcher.candidate(in: "value(for:key:"))
+        XCTAssertNil(EmojiInlineMatcher.candidate(in: "self.foo:bar:"))
+        XCTAssertNil(EmojiInlineMatcher.candidate(in: "v2:rakete:"))
+        XCTAssertEqual(EmojiInlineMatcher.candidate(in: "(:key:")?.alias, "key")
+        XCTAssertEqual(EmojiInlineMatcher.candidate(in: "🚀:herz:")?.alias, "herz", "chained after an inserted emoji")
+        XCTAssertEqual(EmojiInlineMatcher.candidate(in: ":rakete::herz:")?.alias, "herz")
+    }
 }

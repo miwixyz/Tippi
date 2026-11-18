@@ -68,6 +68,12 @@ enum EmojiInlineMatcher {
         let name = withoutClosing[withoutClosing.index(after: openIndex)...]
         guard name.count >= minNameLength, name.count <= maxNameLength else { return nil }
 
+        // No letter or digit right before the opening colon: `value(for:key:)` must stay code,
+        // not become `value(for🔑)` (code audit 2026-11-18). `(`, an emoji or `::` still chain.
+        if let previous = withoutClosing[..<openIndex].last, previous.isLetter || previous.isNumber {
+            return nil
+        }
+
         var hasLetter = false
         for char in name {
             if char.isLetter {
