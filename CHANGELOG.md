@@ -1,9 +1,12 @@
 # Changelog
 
-## [Unveröffentlicht]
+## [2.41.3] — 2026-11-18
+
+### Verbessert
+- **Diktat-Zeiten in der Konsole nachlesbar.** Tippi schreibt Start, Ende und die Dauer der Glättung jedes Diktats jetzt ins Systemprotokoll (App „Konsole“, Kategorie `dictation`). Das hilft bei der Fehlersuche, wenn ein Diktat langsam war. Der diktierte Text selbst steht dort nicht, Fehlermeldungen sind geschwärzt.
 
 ### Intern
-- Diktat-Meldungen über `Logger` (Kategorie `dictation`) statt `NSLog`. NSLog-Zeilen landeten weder im gespeicherten Protokoll noch in `log stream` (gemessen 18.11.), Diktat- und Glättungszeiten waren im Nachhinein nicht lesbar. Zahlen, Zeiten, Anbieter- und Modusnamen öffentlich, Fehlertexte ausdrücklich privat (eine Fehlerantwort kann Diktattext enthalten). Lesen: `log show --predicate 'subsystem == "com.tippi.app" AND category == "dictation"'`.
+- Diktat-Meldungen über `Logger` (Kategorie `dictation`) statt `NSLog`. NSLog-Zeilen der installierten Release-App landeten weder im gespeicherten Protokoll noch in `log stream` (gemessen 18.11.; die Testläufe zeigten sie im Stream), Diktat- und Glättungszeiten waren im Nachhinein nicht lesbar. Zahlen, Zeiten, Anbieter- und Modusnamen öffentlich, Fehlertexte ausdrücklich privat (eine Fehlerantwort kann Diktattext enthalten). Lesen: `log show --predicate 'subsystem == "com.tippi.app" AND category == "dictation"'`.
 
 ## [2.41.2] — 2026-11-18
 

@@ -519,6 +519,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.40.0 | ✅ Done | **One look** — the popup and six floating surfaces use the app family design; keys unchanged |
 | v2.40.1 | ✅ Done | **Safer notes sync** — a note renamed on two Macs keeps both versions; autocomplete no longer queues stale requests |
 | v2.40.2 | ✅ Done | **Hardening** — local MLX runs with a fixed environment; a hung app no longer freezes typing for seconds |
+| v2.41.3 | ✅ Done | **Dictation timings in the log** — start, end and polish duration of every dictation readable in Console (category `dictation`), never the dictated text |
 | v2.41.2 | ✅ Done | **Local polish stays warm** — the local model is kept awake for the whole recording, so long dictations no longer end with a 0.6–1.6 s slower polish |
 | v2.41.1 | ✅ Done | **Stream Deck icons** — one consistent glass look for all plugin keys and dials, dictation states stay obvious |
 | v2.41.0 | ✅ Done | **Stream Deck** — own signed plugin: dictation, prompts, tools and switches on keys and dials, profiles for Stream Deck + and Neo; local models unload after 15 min idle |
