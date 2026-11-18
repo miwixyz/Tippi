@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.4</title>
+            <pubDate>Wed, 18 Nov 2026 16:46:57 +0100</pubDate>
+            <sparkle:version>706</sparkle:version>
+            <sparkle:shortVersionString>2.41.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Autovervollständigung liefert nach dem Start von Tippi wieder Vorschläge.</b> Seit 2.41.0 startete Tippi den lokalen MLX-Server für die Vorschläge nur noch nach einer Leerlauf-Pause, nicht mehr nach dem Start der App. Ohne das Labs-Rechenwerk kamen dann keine Vorschläge. Einen Server, den du in den Einstellungen mit „Server stoppen“ anhältst, startet Tippi weiterhin nicht von selbst.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.4/Tippi-2.41.4.dmg" length="25991809" type="application/octet-stream" sparkle:edSignature="6sFuBbpWFtBMKDyFQ5BN6K8Fi1lU2DMoiIolY9l4/8tz/MGeQgx2uMxMRLMcJXvZCGlDS6WbZKgNfwnJkGM5BA=="/>
+        </item>
+        <item>
             <title>2.41.3</title>
             <pubDate>Wed, 18 Nov 2026 10:50:37 +0100</pubDate>
             <sparkle:version>701</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Verbessert</h3><ul><li><b>Glättung mit dem lokalen Modell auch nach langen Diktaten schnell.</b> Bisher wurde das lokale Modell (MLX) nur zu Beginn der Aufnahme geweckt. Nach 30 Sekunden Sprechen war es wieder abgekühlt, und die Glättung brauchte danach 0,6 bis 1 Sekunde länger, nach einer Minute rund 1,6 Sekunden. Jetzt hält Tippi das Modell während der ganzen Aufnahme wach. Gilt für die Glättung und für Diktat-Modi, die das lokale Modell nutzen. Mit Cloud-Anbietern ändert sich nichts.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.2/Tippi-2.41.2.dmg" length="25989804" type="application/octet-stream" sparkle:edSignature="WQ8QYhJEVk9IxGddE4sarXorcBqFCKaeL7sDUyPEZCtsDD4aW+FVaoPkq5JjDyrVUqmKUlYRiZnAIcpAYTL2CQ=="/>
-        </item>
-        <item>
-            <title>2.41.1</title>
-            <pubDate>Tue, 17 Nov 2026 23:08:55 +0100</pubDate>
-            <sparkle:version>695</sparkle:version>
-            <sparkle:shortVersionString>2.41.1</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Neue Symbole für das Stream-Deck-Plugin.</b> Alle Tasten und Drehregler haben ein einheitliches Aussehen bekommen: dunkle Glasfläche, klare weiße Linien, ein ruhiges Leuchten von oben. Der Diktat-Zustand bleibt auf einen Blick erkennbar: roter Punkt beim Aufnehmen, drei Punkte beim Schreiben, abgeblendet, wenn Diktat nicht bereit ist. Der Tastentitel steht oben und überdeckt das Zeichen nicht. Nach dem Update meldet Tippi unter Einstellungen → Allgemein → Stream Deck, dass das Plugin älter ist – dort „Plugin installieren“ wählen. Tasten, denen du selbst ein Bild zugewiesen hast, behalten es.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.1/Tippi-2.41.1.dmg" length="25987871" type="application/octet-stream" sparkle:edSignature="VDPdWYhU10pzxak0cuU2+zAwfx6vVMpdMDnX8IquHFJdfAIham6HMMxML6xmDuYjUWWRGPofkZvxKq/QOvSCCg=="/>
         </item>
     </channel>
 </rss>
