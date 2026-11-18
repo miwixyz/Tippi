@@ -286,20 +286,20 @@ final class MLXServerManager: ObservableObject {
 
     // MARK: - Stop
 
-    func stop() {
+    func stop(byUser: Bool = false) {
         process?.terminate()
         process = nil
         state = .stopped
-        unloadedForIdle = false
+        (unloadedForIdle, stoppedByUser) = (false, byUser)
         activeModelID = nil
         isWarm = false
         downloadStatus = nil
         lastProgressAt = nil
     }
 
-    /// `.stopped` by the idle unload, not by the user: the next use starts it
-    /// again, so the menu bar must not turn red (`TippiStatusMonitor`).
-    private(set) var unloadedForIdle = false
+    /// `unloadedForIdle`: stopped by the idle unload, the next use starts it again, so the menu bar must not turn red
+    /// (`TippiStatusMonitor`). `stoppedByUser` (in memory only): autocomplete must not restart it (regression 7bda155).
+    private(set) var unloadedForIdle = false, stoppedByUser = false
 
     /// Idle unload: only a server this Tippi started, only once fully up (a
     /// start in flight is "in use"). Next `start()` launches it again.

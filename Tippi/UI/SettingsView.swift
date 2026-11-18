@@ -912,7 +912,7 @@ private struct ProviderRow: View {
                         Spacer()
                         if mlxManager.state.isRunning {
                             Button(String(localized: "settings.providers.mlx.stop")) {
-                                mlxManager.stop()
+                                mlxManager.stop(byUser: true)
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
