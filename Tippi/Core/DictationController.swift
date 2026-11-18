@@ -321,6 +321,8 @@ final class DictationController: ObservableObject {
     /// swallowed while another app owned the event tap). Without this, "record
     /// while held" can mean "record until the disk is full".
     private var holdWatchdog: Timer?
+    /// Re-primes the local MLX model while recording runs (`keepLocalModelWarm`).
+    var keepWarmTask: Task<Void, Never>?
     private(set) var livePreview: LiveTranscriptionPreview?   // nil: setting off or Whisper
 
     /// Which hot key started the running recording — the mail hot key always lays
@@ -441,6 +443,7 @@ final class DictationController: ObservableObject {
         // Central exit from `.recording` — covers tap-toggle, hold release and watchdog.
         holdWatchdog?.invalidate()
         holdWatchdog = nil
+        stopKeepingLocalModelWarm()
         livePreview?.stop()
         livePreview = nil
         _ = recorder.stop(ifStartedBy: .dictation)   // the WAV is `wavURL` either way
@@ -553,29 +556,6 @@ final class DictationController: ObservableObject {
                 ToastWindowController.shared.show(message: error.localizedDescription)
                 NSLog("Tippi: dictation transcription failed — \(error.localizedDescription)")
             }
-        }
-    }
-
-    /// Fire-and-forget: if dictation post-process is enabled and resolves to
-    /// the local MLX provider, start warming its server now instead of
-    /// waiting for the first real polish request. Mirrors
-    /// `SpeechTranscriber.prewarm()` right above the call site — both let
-    /// model loading overlap with the time the user spends speaking.
-    /// Resolution mirrors `postProcessIfEnabled`: an explicit per-prompt
-    /// override wins, otherwise the global default provider.
-    private func warmPostProcessProviderIfNeeded() {
-        guard DictationSettings.postProcessEnabled else { return }
-        let override = DictationSettings.postProcessProviderOverride
-        let provider = override.isEmpty ? LLMRouter.shared.effectivePreferredProviderID() : override
-        guard provider == "mlx" else { return }
-        // Not just start(): for an already running server that is a no-op, yet
-        // the first polish after a long idle still paid the weight page-in and
-        // the full prompt prefill after recording ended (20.6 s measured
-        // 2026-10-27). prime() starts the server if needed AND sends the exact
-        // cleanup prompt, so the real request only prefills the transcript.
-        let prompt = DictationSettings.effectivePostProcessPrompt
-        Task.detached(priority: .utility) {
-            await MLXProvider.prime(systemPrompt: prompt)
         }
     }
 

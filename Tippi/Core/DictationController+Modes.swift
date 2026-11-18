@@ -52,11 +52,10 @@ extension DictationController {
             // Server hält den Prompt-Anfang bis zur ersten Abweichung im Zwischenspeicher.
             target = (provider, Self.resolvedPrompt(first ?? prompt, text: "", appName: ""))
         }
-        guard target.providerID == "mlx" else { return true }
-        let prompt = target.prompt
-        Task.detached(priority: .utility) {
-            await MLXProvider.prime(systemPrompt: prompt)
-        }
+        // A late mode on a cloud provider must also stop warming the standard
+        // polish prompt, which this recording no longer uses.
+        guard target.providerID == "mlx" else { stopKeepingLocalModelWarm(); return true }
+        keepLocalModelWarm(prompt: target.prompt)
         return true
     }
 

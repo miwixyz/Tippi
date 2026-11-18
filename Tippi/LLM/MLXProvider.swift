@@ -135,12 +135,14 @@ struct MLXProvider: LLMProvider {
     /// 606 of 624 prompt tokens cached. Without it, the first dictation polish
     /// after ~2 h idle took 20.6 s, all of it after recording had ended.
     /// `MLXServerManager.start()` returns immediately for a running server, so
-    /// it never covered that case. Best-effort: all errors are ignored.
-    static func prime(systemPrompt: String) async {
+    /// it never covered that case. Best-effort: errors are not shown, only
+    /// reported as `false` so a repeating caller can stop instead of retrying.
+    @discardableResult
+    static func prime(systemPrompt: String) async -> Bool {
         await MainActor.run { LocalModelIdleUnloader.shared.beginRequest() }
         defer { Task { @MainActor in LocalModelIdleUnloader.shared.endRequest() } }
         guard let port = try? await MLXServerManager.shared.start(),
-              let url = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions") else { return }
+              let url = URL(string: "http://127.0.0.1:\(port)/v1/chat/completions") else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = 90
@@ -157,12 +159,13 @@ struct MLXProvider: LLMProvider {
             temperature: 0,
             chat_template_kwargs: ChatTemplateKwargs(enable_thinking: false)
         )
-        guard let data = try? JSONEncoder().encode(body) else { return }
+        guard let data = try? JSONEncoder().encode(body) else { return false }
         request.httpBody = data
         guard let (_, response) = try? await URLSession.shared.data(for: request),
               let http = response as? HTTPURLResponse,
-              (200..<300).contains(http.statusCode) else { return }
+              (200..<300).contains(http.statusCode) else { return false }
         await MainActor.run { MLXServerManager.shared.markWarm() }
+        return true
     }
 
     private func maxTokens(for userText: String) -> Int {

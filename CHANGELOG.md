@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.41.2] — 2026-11-18
+
+### Verbessert
+- **Glättung mit dem lokalen Modell auch nach langen Diktaten schnell.** Bisher wurde das lokale Modell (MLX) nur zu Beginn der Aufnahme geweckt. Nach 30 Sekunden Sprechen war es wieder abgekühlt, und die Glättung brauchte danach 0,6 bis 1 Sekunde länger, nach einer Minute rund 1,6 Sekunden. Jetzt hält Tippi das Modell während der ganzen Aufnahme wach. Gilt für die Glättung und für Diktat-Modi, die das lokale Modell nutzen. Mit Cloud-Anbietern ändert sich nichts.
+
+### Intern
+- `DictationController+KeepWarm.swift`: `MLXProvider.prime` alle 2 s während `.recording`, immer nur einer gleichzeitig, Abbruch beim Ende der Aufnahme oder wenn ein Weckruf scheitert (kein Server-Neustart im 2-s-Takt). `prime` meldet jetzt Erfolg als `Bool`. Gemessen 16.11. (Mac mini, gemma-4-e4b-it-4bit): +0,63 s / +0,97 s nach 30 s Pause bei intaktem Prompt-Cache; ein warmer Weckruf kostet ~0,3 s (18.11.). Auslöser: Koe-Abgleich vom 14.11.
+
 ## [2.41.1] — 2026-11-17
 
 ### Neu
