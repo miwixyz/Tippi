@@ -45,6 +45,10 @@ struct HotkeyRecorderField: View {
             }
         }
         .onDisappear { stopRecording() }
+        // Monitor taken elsewhere (window closed, another field) → stop showing "recording".
+        .onReceive(NotificationCenter.default.publisher(for: RecorderMonitorStore.didRelease)) { _ in
+            if monitor != nil, RecorderMonitorStore.active == nil { monitor = nil; recording = false; rejection = nil }
+        }
     }
 
     private var recorderButton: some View {

@@ -137,6 +137,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBadgeLayer: CALayer?
     private var welcomeWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
+    /// Releases an armed hotkey recorder when the Settings window closes (`RecorderMonitorStore`).
+    private var settingsCloseObserver: NSObjectProtocol?
     private var lastNonTippiApp: NSRunningApplication?
     /// Focused text element + selection range captured at trigger time (before the popup
     /// steals focus). Used to re-select and replace for local quick actions.
@@ -1283,6 +1285,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // colour and the window reads as fog, not glass. Liquid Glass stays
             // where the HIG puts it: floating panels, popups, toasts.
             window.center()
+            settingsCloseObserver = RecorderMonitorStore.releaseOnClose(of: window)
             settingsWindowController = NSWindowController(window: window)
         }
 

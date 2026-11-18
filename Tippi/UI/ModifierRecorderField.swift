@@ -13,9 +13,24 @@ import SwiftUI
 enum RecorderMonitorStore {
     static var active: Any?
 
+    /// Posted after every release, so a field whose monitor was taken (by another field or by closing
+    /// the window) stops showing "recording" without a monitor behind it.
+    static let didRelease = Notification.Name("tippi.recorderMonitorReleased")
+
     static func release() {
         if let active { NSEvent.removeMonitor(active) }
         active = nil
+        NotificationCenter.default.post(name: didRelease, object: nil)
+    }
+
+    /// The Settings window is only hidden on close (`isReleasedWhenClosed = false`), so the fields'
+    /// `.onDisappear` never fires. Without this an armed recorder kept its monitor and recorded the next
+    /// ⌘-combo typed in another Tippi window as a global hotkey (code audit 2026-11-18).
+    static func releaseOnClose(of window: NSWindow) -> NSObjectProtocol {
+        NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window,
+                                               queue: .main) { _ in
+            MainActor.assumeIsolated { release() }
+        }
     }
 }
 
@@ -74,6 +89,10 @@ struct ModifierRecorderField: View {
             }
         }
         .onDisappear { stopRecording() }
+        // Monitor taken elsewhere (window closed, another field) → stop showing "recording".
+        .onReceive(NotificationCenter.default.publisher(for: RecorderMonitorStore.didRelease)) { _ in
+            if monitor != nil, RecorderMonitorStore.active == nil { monitor = nil; recording = false; rejected = false }
+        }
     }
 
     private func toggleRecording() {
