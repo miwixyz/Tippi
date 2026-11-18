@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.41.7</title>
+            <pubDate>Wed, 18 Nov 2026 18:51:57 +0100</pubDate>
+            <sparkle:version>720</sparkle:version>
+            <sparkle:shortVersionString>2.41.7</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Abgeschnittene Antworten von Ollama werden erkannt.</b> Bricht eine Antwort am Längen-Limit des Modells ab, meldet Tippi das jetzt auch bei Ollama, wie bei allen anderen Anbietern. Bisher setzte Tippi die halbe Antwort ein, als wäre sie fertig. Ältere Ollama-Versionen, die keinen Abbruchgrund schicken, funktionieren wie bisher.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.7/Tippi-2.41.7.dmg" length="25991228" type="application/octet-stream" sparkle:edSignature="zhQ89Pq9otJ3IezuDMmFHI3LJ1OrrJ2NSQ7INfayzE5JaDx+UW8h6g9T4+u67om2g2ID7r2BtxUiYCF1vWA8BQ=="/>
+        </item>
+        <item>
             <title>2.41.6</title>
             <pubDate>Wed, 18 Nov 2026 18:24:41 +0100</pubDate>
             <sparkle:version>715</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Emoticons zerschneiden keine Wörter mehr.</b> <code>XD</code> wurde sofort umgewandelt, auch als Anfang eines Wortes: aus <code>XDG_CONFIG_HOME</code> wurde <code>😆G_CONFIG_HOME</code>. Emoticons, die auf einen Buchstaben enden (<code>XD</code>, <code>:D</code>, <code>T_T</code> …), wandelt Tippi jetzt erst um, wenn danach ein Leerzeichen oder Satzzeichen folgt. Für <code>:o</code> und <code>:p</code> galt das schon.</li><li><b>Emoji-Kürzel greifen nicht mehr mitten im Code.</b> Aus <code>value(for:key:)</code> wurde <code>value(for🔑)</code>. Steht direkt vor dem ersten Doppelpunkt ein Buchstabe oder eine Ziffer, bleibt der Text jetzt, wie er ist. <code>:rakete:</code> nach einem Leerzeichen, einer Klammer oder einem Emoji funktioniert wie bisher.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.5/Tippi-2.41.5.dmg" length="25996682" type="application/octet-stream" sparkle:edSignature="RYMAZHw8PcR5RoqSgYY/5UNPAhOXHjT+AcH5yDSdnjMC/tMwDvQyFWRYbGULuAlHsuVC39bgyO+7anMbDTluCw=="/>
-        </item>
-        <item>
-            <title>2.41.4</title>
-            <pubDate>Wed, 18 Nov 2026 16:46:57 +0100</pubDate>
-            <sparkle:version>706</sparkle:version>
-            <sparkle:shortVersionString>2.41.4</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Autovervollständigung liefert nach dem Start von Tippi wieder Vorschläge.</b> Seit 2.41.0 startete Tippi den lokalen MLX-Server für die Vorschläge nur noch nach einer Leerlauf-Pause, nicht mehr nach dem Start der App. Ohne das Labs-Rechenwerk kamen dann keine Vorschläge. Einen Server, den du in den Einstellungen mit „Server stoppen“ anhältst, startet Tippi weiterhin nicht von selbst.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.4/Tippi-2.41.4.dmg" length="25991809" type="application/octet-stream" sparkle:edSignature="6sFuBbpWFtBMKDyFQ5BN6K8Fi1lU2DMoiIolY9l4/8tz/MGeQgx2uMxMRLMcJXvZCGlDS6WbZKgNfwnJkGM5BA=="/>
         </item>
     </channel>
 </rss>
