@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.41.4] — 2026-11-18
+
+- _Add release notes here._
+
 ## [2.41.3] — 2026-11-18
 
 ### Verbessert
