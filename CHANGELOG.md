@@ -2,7 +2,11 @@
 
 ## [2.41.6] — 2026-11-18
 
-- _Add release notes here._
+### Behoben
+- **Ein Tastenkürzel-Feld nimmt nach dem Schließen der Einstellungen nichts mehr auf.** Hast du auf ein Kürzel-Feld geklickt und die Einstellungen geschlossen, ohne eine Taste zu drücken, wartete das Feld weiter. Die nächste ⌘-Kombination in einem anderen Tippi-Fenster, etwa ⌘V in den Notizen, wurde dann als neues globales Kürzel gespeichert. Jetzt endet die Aufnahme mit dem Fenster, beim nächsten Öffnen steht das Feld wieder auf dem alten Kürzel. Gilt auch für das Feld der Sondertaste.
+
+### Intern
+- `RecorderMonitorStore.releaseOnClose(of:)` am Einstellungsfenster (es wird beim Schließen nur versteckt, `onDisappear` feuert nicht); `release()` meldet `didRelease`, beide Rekorder-Felder setzen ihre Anzeige zurück. Gefunden im Code-Audit vom 18.11., Testfassung von Michael geprüft (951 Tests).
 
 ## [2.41.5] — 2026-11-18
 
