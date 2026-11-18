@@ -108,17 +108,18 @@ fi
 
 echo ""
 echo "▶ Diff:"
-git --no-pager diff -- "${PROJECT_FILE}" "${CHANGELOG_FILE}" || true
+git --no-pager diff -- "${PROJECT_FILE}" "${CHANGELOG_FILE}" "${DECK_MANIFEST}" || true
 
 if [ "${COMMIT_FLAG}" = "--commit" ]; then
-    git add "${PROJECT_FILE}" "${CHANGELOG_FILE}"
+    # Stream-Deck-Manifest mit: blieb bei 2.41.4/2.41.5 unstaged liegen (18.11.).
+    git add "${PROJECT_FILE}" "${CHANGELOG_FILE}" "${DECK_MANIFEST}"
     git commit -m "chore: bump version to ${NEW_VERSION}"
     echo ""
     echo "✓ Committed. Edit CHANGELOG.md entries, then: make release"
 else
     echo ""
     echo "✓ Files patched (uncommitted). Review CHANGELOG.md, then:"
-    echo "    git add ${PROJECT_FILE} ${CHANGELOG_FILE}"
+    echo "    git add ${PROJECT_FILE} ${CHANGELOG_FILE} ${DECK_MANIFEST}"
     echo "    git commit -m 'chore: bump version to ${NEW_VERSION}'"
     echo "    make release"
 fi

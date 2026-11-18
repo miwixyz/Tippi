@@ -2,7 +2,13 @@
 
 ## [2.41.5] — 2026-11-18
 
-- _Add release notes here._
+### Behoben
+- **Emoticons zerschneiden keine Wörter mehr.** `XD` wurde sofort umgewandelt, auch als Anfang eines Wortes: aus `XDG_CONFIG_HOME` wurde `😆G_CONFIG_HOME`. Emoticons, die auf einen Buchstaben enden (`XD`, `:D`, `T_T` …), wandelt Tippi jetzt erst um, wenn danach ein Leerzeichen oder Satzzeichen folgt. Für `:o` und `:p` galt das schon.
+- **Emoji-Kürzel greifen nicht mehr mitten im Code.** Aus `value(for:key:)` wurde `value(for🔑)`. Steht direkt vor dem ersten Doppelpunkt ein Buchstabe oder eine Ziffer, bleibt der Text jetzt, wie er ist. `:rakete:` nach einem Leerzeichen, einer Klammer oder einem Emoji funktioniert wie bisher.
+
+### Intern
+- `EmoticonMatcher.needsTrailingBoundary` gilt für jedes Emoticon mit Buchstaben am Ende, `EmojiInlineMatcher.candidate` prüft die Grenze vor dem öffnenden Doppelpunkt. Gefunden im Code-Audit vom 18.11. (948 Tests).
+- `bump-version.sh --commit` nimmt das Stream-Deck-Manifest mit in den Commit (blieb bei 2.41.4 liegen).
 
 ## [2.41.4] — 2026-11-18
 
