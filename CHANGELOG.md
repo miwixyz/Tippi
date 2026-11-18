@@ -2,7 +2,11 @@
 
 ## [2.41.4] — 2026-11-18
 
-- _Add release notes here._
+### Behoben
+- **Autovervollständigung liefert nach dem Start von Tippi wieder Vorschläge.** Seit 2.41.0 startete Tippi den lokalen MLX-Server für die Vorschläge nur noch nach einer Leerlauf-Pause, nicht mehr nach dem Start der App. Ohne das Labs-Rechenwerk kamen dann keine Vorschläge. Einen Server, den du in den Einstellungen mit „Server stoppen“ anhältst, startet Tippi weiterhin nicht von selbst.
+
+### Intern
+- `MLXServerManager.stoppedByUser` (nur im Speicher) statt `unloadedForIdle` als Bedingung in `AutocompleteController.shouldStartOwnServer`. Regression aus `7bda155`, gefunden im Code-Audit vom 18.11. Neue Tests `AutocompleteServerStartTests` (947 Tests).
 
 ## [2.41.3] — 2026-11-18
 
