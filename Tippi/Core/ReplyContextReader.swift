@@ -31,6 +31,10 @@ enum ReplyContextReader {
     static let maxNodes = 4000
     /// Mehr wird nicht gesammelt; ans Modell gehen davon höchstens die letzten 3.000 Zeichen.
     static let maxCollectedCharacters = 60_000
+    /// Webseiten (Gmail in Helium) schachteln tief. Tiefer wird nur dieser Zweig
+    /// übersprungen, der Rest des Fensters wird weiter gelesen (Gerätetest 19.11.:
+    /// Abbruch bei Tiefe 30 nach 648 Knoten, Mailtext fehlte).
+    static let maxDepth = 80
     static let textRoles: Set<String> = [kAXStaticTextRole as String, kAXTextAreaRole as String,
                                          kAXTextFieldRole as String]
 
@@ -58,14 +62,15 @@ enum ReplyContextReader {
         var walk = Walk(deadline: started + walkBudget)
         walk.collect(window, depth: 0)
         let text = walk.parts.joined(separator: "\n")
-        log(.window, chars: text.count, nodes: walk.nodes, started: started, app: app, truncated: walk.truncated)
+        log(.window, chars: text.count, nodes: walk.nodes, started: started, app: app, truncated: walk.truncated,
+            stopped: walk.stopped)
         return text.isEmpty ? .empty() : Context(text: text, source: .window, notice: nil)
     }
 
     private static func log(_ source: Source, chars: Int, nodes: Int, started: CFAbsoluteTime,
-                            app: NSRunningApplication, truncated: Bool = false) {
+                            app: NSRunningApplication, truncated: Bool = false, stopped: Bool = false) {
         let ms = Int((CFAbsoluteTimeGetCurrent() - started) * 1000)
-        replyContextLog.notice("reply context source=\(source.rawValue, privacy: .public) chars=\(chars, privacy: .public) nodes=\(nodes, privacy: .public) ms=\(ms, privacy: .public) truncated=\(truncated, privacy: .public) app=\(app.bundleIdentifier ?? "?", privacy: .public)")
+        replyContextLog.notice("reply context source=\(source.rawValue, privacy: .public) chars=\(chars, privacy: .public) nodes=\(nodes, privacy: .public) ms=\(ms, privacy: .public) truncated=\(truncated, privacy: .public) stopped=\(stopped, privacy: .public) app=\(app.bundleIdentifier ?? "?", privacy: .public)")
     }
 
     /// Text der Textelemente in Dokumentreihenfolge, begrenzt nach Zeit, Knoten und Länge.
@@ -75,13 +80,22 @@ enum ReplyContextReader {
         var parts: [String] = []
         var nodes = 0
         var characters = 0
+        /// Etwas wurde ausgelassen (zu tief oder Budget erschöpft) — fürs Protokoll.
         var truncated = false
+        /// Budget erschöpft: ganzen Durchlauf beenden.
+        var stopped = false
 
         init(deadline: CFAbsoluteTime) { self.deadline = deadline }
 
         mutating func collect(_ element: AXUIElement, depth: Int) {
-            guard depth <= 30, nodes < maxNodes, characters < maxCollectedCharacters,
+            guard !stopped else { return }
+            guard nodes < maxNodes, characters < maxCollectedCharacters,
                   CFAbsoluteTimeGetCurrent() < deadline else {
+                stopped = true
+                truncated = true
+                return
+            }
+            guard depth <= maxDepth else {
                 truncated = true
                 return
             }
@@ -100,7 +114,7 @@ enum ReplyContextReader {
                   let children = childrenRef as? [AXUIElement] else { return }
             for child in children {
                 collect(child, depth: depth + 1)
-                if truncated { return }
+                if stopped { return }
             }
         }
     }
