@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Tippi",
-  "Version": "2.41.7.0",
+  "Version": "2.42.0.0",
   "Author": "MWLR",
   "Description": "Diktat, Prompts und Werkzeuge von Tippi auf Tasten und Drehreglern.",
   "URL": "https://tippi.mwlr.dev",
