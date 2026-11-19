@@ -2,7 +2,15 @@
 
 ## [2.42.0] — 2026-11-20
 
-- _Add release notes here._
+### Neu
+- **Antwort per Sprache (Labs, ab Werk aus).** ⌃⌥⌘A drücken oder ein normales Diktat mit „Hey Tippi“ beginnen und sagen, was du antworten willst, etwa „sag zu, dass ich Donnerstag um zehn komme“. Tippi liest die markierte Nachricht, sonst den Text des vorderen Fensters (höchstens die letzten 3.000 Zeichen), und schreibt die Antwort nur mit Tippis eigenem lokalen MLX-Modell, nie mit einem Cloud-Anbieter. Die Antwort steht in der Sprache der Nachricht und hält deren Ton und Förmlichkeit; bei Mails setzt Tippi Gruß und deinen Namen darunter. Eingefügt wird erst nach deinem Klick in der Vorschau: dort kannst du den Text bearbeiten, die Sprache wechseln (DE/ES/EN), neu schreiben lassen (⌘R) oder einfügen (⌘↩). Einschalten unter Einstellungen → Hotkeys, im Diktat-Kasten. Ausprobiert in Apple Mail, Gmail in Helium und WhatsApp.
+- **Bereich wählen.** Stimmt der gelesene Kontext nicht, ziehst du in der Vorschau einen Rahmen um die Nachricht. Tippi liest den Text darin per Texterkennung und schreibt die Antwort neu.
+- **Stream Deck:** Eine Diktat-Taste kann jetzt die Art „Antwort per Sprache“ haben.
+- **Pille:** Mit Live-Text (Parakeet) zeigt sie den Antwortpfeil, sobald „Hey Tippi“ erkannt ist.
+
+### Intern
+- Kontext über die Bedienungshilfen: höchstens 0,5 s, 4.000 Knoten, Tiefe 80; zu tiefe Zweige werden übersprungen statt den Durchlauf abzubrechen (Gmail in Helium). Leere Textwerte fallen auf `AXDescription` zurück, Knopfwerte nur in WhatsApp, die WhatsApp-Chatliste blendet ein Spaltenfilter aus. Protokoll nur mit Zahlen, Messpunkt per `defaults write com.tippi.app dictation.reply.measure -bool true`.
+- Prüfstand `scripts/antwort-pruefstand.py` liest den Prompt live aus `ReplyByVoice.swift`: Gemma E2B Steuerfälle 8/9, Abnahme 3/5, 0,4 s. Apple Intelligence ist ausgeschlossen, weil es eingeschleusten Anweisungen folgte. Design `docs/SECURE-DESIGN-antwort.md`. 979 Tests.
 
 ## [2.41.7] — 2026-11-18
 

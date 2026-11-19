@@ -60,6 +60,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Reply by voice (v2.42)** — ⌃⌥⌘A or “Hey Tippi …” (Labs): Tippi reads the message and drafts the reply with its local model only; preview before insert, pick area, Stream Deck key.
 - **Stream Deck (v2.41)** — an own plugin for Elgato Stream Deck: dictation (start/stop or hold, with modes), prompts on the selection, translate, emoji, notes, quick note, screen text, password, pause, autocomplete, language. Dials on the Stream Deck + pick the dictation mode and browse prompts. Profiles for Stream Deck + and Neo. Off by default; only Tippi's own signed plugin started by Stream Deck is accepted.
 - **One look (v2.40)** — popup, emoji, selection bar, toast and recording pill share one calm design. Keys unchanged.
 - **Voice note (v2.39)** — ⌃⌥⌘N: quick notes float above everything and dictation starts; the text lands with a timestamp in the note “Inbox”. Transparency slider.
