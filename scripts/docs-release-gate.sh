@@ -71,11 +71,32 @@ done < <(git diff --name-only --diff-filter=A "$BASE"...HEAD -- 'Tippi/**/*.swif
 # `whatsNewBody` does not count: the release script already forces that one, and
 # it is exactly what was kept current while everything else went stale.
 if changed 'Tippi/UI' 'Tippi/Core' 'Tippi/LLM'; then
-    help_changed=$(git diff "$BASE"...HEAD -- 'Tippi/Resources/*.lproj/Localizable.strings' 2>/dev/null \
-                   | grep -c '^+"settings\.help\.[a-zA-Z]*Body"' || true)
-    whats_new_only=$(git diff "$BASE"...HEAD -- 'Tippi/Resources/*.lproj/Localizable.strings' 2>/dev/null \
-                     | grep -c '^+"settings\.help\.whatsNewBody"' || true)
-    if [ "$help_changed" -le "$whats_new_only" ]; then
+    # Compare the parsed values, not diff lines: several Help texts span multiple
+    # lines in the .strings file, and a change in a continuation line never showed
+    # up as `+"settings.help.…Body"` (2.42.1: mlxBody extended, gate said "no Help").
+    help_changed=$(python3 - "$BASE" <<'PY'
+import json, subprocess, sys
+base = sys.argv[1]
+def load(ref, path):
+    try:
+        raw = subprocess.run(["git", "show", f"{ref}:{path}"], capture_output=True, check=True).stdout
+        out = subprocess.run(["plutil", "-convert", "json", "-o", "-", "-"], input=raw,
+                             capture_output=True, check=True).stdout
+        return json.loads(out)
+    except Exception:
+        return {}
+changed = set()
+for lang in ("de", "en"):
+    path = f"Tippi/Resources/{lang}.lproj/Localizable.strings"
+    old, new = load(base, path), load("HEAD", path)
+    for key, value in new.items():
+        if key.startswith("settings.help.") and key.endswith("Body") and key != "settings.help.whatsNewBody" \
+                and old.get(key) != value:
+            changed.add(key)
+print(len(changed))
+PY
+)
+    if [ "${help_changed:-0}" -eq 0 ]; then
         fail "Code changed in UI/Core/LLM, but no Help section other than What's New did." \
              "$(count_changed 'Tippi/UI' 'Tippi/Core' 'Tippi/LLM') file(s) changed. Update settings.help.*Body in BOTH languages, or waive."
     fi
