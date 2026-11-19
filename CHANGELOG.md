@@ -2,7 +2,11 @@
 
 ## [2.42.1] — 2026-11-20
 
-- _Add release notes here._
+### Behoben
+- **„Port 8080 ist von einem anderen Programm belegt“ nach einem harten Beenden.** Wurde Tippi per `kill` beendet, etwa durch ein Skript, blieb Tippis lokaler MLX-Server zurück und blockierte den Port. Die nächste Tippi meldete ihn dann als fremd, bis man ihn von Hand beendete. Jetzt beendet sich Tippi auch dabei ordentlich und nimmt ihren Server mit. Ein schon verwaister Server wird beim nächsten Start erkannt und ersetzt, auch wenn er über `uvx` gestartet wurde.
+
+### Intern
+- SIGTERM läuft über `NSApp.terminate` (`installTerminationSignalHandler`). Auslöser war die 2-Sekunden-Startprüfung in `release.sh`, die die App per `kill` beendet. `owningParentPID` wertet den Elternprozess des `uvx`-Wrappers aus. Am Gerät gemessen: 2.42.0 nach `kill` Exit 143 und ein verwaister Server, mit dem Fix Exit 0 und keiner; eine bestehende Waise wird beim Start ersetzt. 980 Tests.
 
 ## [2.42.0] — 2026-11-20
 

@@ -524,6 +524,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.40.0 | ✅ Done | **One look** — the popup and six floating surfaces use the app family design; keys unchanged |
 | v2.40.1 | ✅ Done | **Safer notes sync** — a note renamed on two Macs keeps both versions; autocomplete no longer queues stale requests |
 | v2.40.2 | ✅ Done | **Hardening** — local MLX runs with a fixed environment; a hung app no longer freezes typing for seconds |
+| v2.42.1 | ✅ Done | **No more orphaned local server** — a killed Tippi now stops its MLX server like a normal quit, and a leftover one (also when started through `uvx`) is cleared on launch instead of blocking port 8080 |
 | v2.42.0 | ✅ Done | **Reply by voice (Labs)** — say what you want to answer, Tippi reads the message and drafts the reply with its own local model in a preview; pick area, Stream Deck key, reply arrow in the pill |
 | v2.41.7 | ✅ Done | **Ollama cut-off answers** — an Ollama answer that stops at the length limit is flagged as cut off like with every other provider, never inserted as if complete |
 | v2.41.6 | ✅ Done | **Hotkey recorder ends with Settings** — closing Settings while a shortcut field waits for a key no longer lets the next ⌘ combination in another Tippi window become a global hotkey |
