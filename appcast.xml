@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.42.0</title>
+            <pubDate>Fri, 20 Nov 2026 00:24:52 +0100</pubDate>
+            <sparkle:version>729</sparkle:version>
+            <sparkle:shortVersionString>2.42.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Antwort per Sprache (Labs, ab Werk aus).</b> ⌃⌥⌘A drücken oder ein normales Diktat mit „Hey Tippi“ beginnen und sagen, was du antworten willst, etwa „sag zu, dass ich Donnerstag um zehn komme“. Tippi liest die markierte Nachricht, sonst den Text des vorderen Fensters (höchstens die letzten 3.000 Zeichen), und schreibt die Antwort nur mit Tippis eigenem lokalen MLX-Modell, nie mit einem Cloud-Anbieter. Die Antwort steht in der Sprache der Nachricht und hält deren Ton und Förmlichkeit; bei Mails setzt Tippi Gruß und deinen Namen darunter. Eingefügt wird erst nach deinem Klick in der Vorschau: dort kannst du den Text bearbeiten, die Sprache wechseln (DE/ES/EN), neu schreiben lassen (⌘R) oder einfügen (⌘↩). Einschalten unter Einstellungen → Hotkeys, im Diktat-Kasten. Ausprobiert in Apple Mail, Gmail in Helium und WhatsApp.</li><li><b>Bereich wählen.</b> Stimmt der gelesene Kontext nicht, ziehst du in der Vorschau einen Rahmen um die Nachricht. Tippi liest den Text darin per Texterkennung und schreibt die Antwort neu.</li><li><b>Stream Deck:</b> Eine Diktat-Taste kann jetzt die Art „Antwort per Sprache“ haben.</li><li><b>Pille:</b> Mit Live-Text (Parakeet) zeigt sie den Antwortpfeil, sobald „Hey Tippi“ erkannt ist.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.42.0/Tippi-2.42.0.dmg" length="26645917" type="application/octet-stream" sparkle:edSignature="m49PZYWp2xq+1LD3Db4pcco3ZNUfYInG2isdCn+fidRaodnjw5sYpbYCeI2pDTAdyQbQTeaTxV83tuWmcvHwAQ=="/>
+        </item>
+        <item>
             <title>2.41.7</title>
             <pubDate>Wed, 18 Nov 2026 18:51:57 +0100</pubDate>
             <sparkle:version>720</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Ein Tastenkürzel-Feld nimmt nach dem Schließen der Einstellungen nichts mehr auf.</b> Hast du auf ein Kürzel-Feld geklickt und die Einstellungen geschlossen, ohne eine Taste zu drücken, wartete das Feld weiter. Die nächste ⌘-Kombination in einem anderen Tippi-Fenster, etwa ⌘V in den Notizen, wurde dann als neues globales Kürzel gespeichert. Jetzt endet die Aufnahme mit dem Fenster, beim nächsten Öffnen steht das Feld wieder auf dem alten Kürzel. Gilt auch für das Feld der Sondertaste.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.6/Tippi-2.41.6.dmg" length="25990109" type="application/octet-stream" sparkle:edSignature="OALR57keTGQsImyOLgVsisOvleEA8ghWf95r6JzogQihw50R9ETGW0OXHofuSs7QC+H8pF/vmUpDj93G++EoDg=="/>
-        </item>
-        <item>
-            <title>2.41.5</title>
-            <pubDate>Wed, 18 Nov 2026 17:28:31 +0100</pubDate>
-            <sparkle:version>711</sparkle:version>
-            <sparkle:shortVersionString>2.41.5</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Emoticons zerschneiden keine Wörter mehr.</b> <code>XD</code> wurde sofort umgewandelt, auch als Anfang eines Wortes: aus <code>XDG_CONFIG_HOME</code> wurde <code>😆G_CONFIG_HOME</code>. Emoticons, die auf einen Buchstaben enden (<code>XD</code>, <code>:D</code>, <code>T_T</code> …), wandelt Tippi jetzt erst um, wenn danach ein Leerzeichen oder Satzzeichen folgt. Für <code>:o</code> und <code>:p</code> galt das schon.</li><li><b>Emoji-Kürzel greifen nicht mehr mitten im Code.</b> Aus <code>value(for:key:)</code> wurde <code>value(for🔑)</code>. Steht direkt vor dem ersten Doppelpunkt ein Buchstabe oder eine Ziffer, bleibt der Text jetzt, wie er ist. <code>:rakete:</code> nach einem Leerzeichen, einer Klammer oder einem Emoji funktioniert wie bisher.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.5/Tippi-2.41.5.dmg" length="25996682" type="application/octet-stream" sparkle:edSignature="RYMAZHw8PcR5RoqSgYY/5UNPAhOXHjT+AcH5yDSdnjMC/tMwDvQyFWRYbGULuAlHsuVC39bgyO+7anMbDTluCw=="/>
         </item>
     </channel>
 </rss>
