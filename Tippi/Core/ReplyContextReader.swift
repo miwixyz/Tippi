@@ -60,7 +60,20 @@ enum ReplyContextReader {
             return .empty()
         }
         var walk = Walk(deadline: started + walkBudget)
+        walk.measure = DictationSettings.store.bool(forKey: measureKey)
+        walk.buttonValues = buttonValueApps.contains(app.bundleIdentifier ?? "")
+        // Die Chatliste links gehört nicht zum Kontext (Gerätetest 19.11.: Vorschauen anderer
+        // Chats im Kontext). Gelesen wird nur, was rechts über die linke Kante des
+        // Eingabefelds hinausreicht — also die Spalte des offenen Chats.
+        if walk.buttonValues, let focused,
+           let origin = FocusedFieldReader.point(focused, kAXPositionAttribute as String) {
+            walk.columnMinX = origin.x
+        }
         walk.collect(window, depth: 0)
+        if walk.measure { logMeasurement(walk, app: app) }
+        if walk.columnMinX != nil {
+            replyContextLog.notice("reply context column filter skipped=\(walk.skippedOutsideColumn, privacy: .public)")
+        }
         let text = walk.parts.joined(separator: "\n")
         log(.window, chars: text.count, nodes: walk.nodes, started: started, app: app, truncated: walk.truncated,
             stopped: walk.stopped)
@@ -71,6 +84,25 @@ enum ReplyContextReader {
                             app: NSRunningApplication, truncated: Bool = false, stopped: Bool = false) {
         let ms = Int((CFAbsoluteTimeGetCurrent() - started) * 1000)
         replyContextLog.notice("reply context source=\(source.rawValue, privacy: .public) chars=\(chars, privacy: .public) nodes=\(nodes, privacy: .public) ms=\(ms, privacy: .public) truncated=\(truncated, privacy: .public) stopped=\(stopped, privacy: .public) app=\(app.bundleIdentifier ?? "?", privacy: .public)")
+    }
+
+    /// Messpunkt (Gerätetest WhatsApp 19.11.: nur 83 Zeichen gelesen). Ein mit
+    /// `defaults write com.tippi.app dictation.reply.measure -bool true`: protokolliert je
+    /// Rolle, welche Attribute Text tragen (Anzahl + Zeichen) und welche Attributnamen
+    /// vorkommen — nur Namen und Zahlen, nie Inhalt.
+    static let measureKey = "dictation.reply.measure"
+    static let buttonValueApps: Set<String> = ["net.whatsapp.WhatsApp"]
+    static let measuredAttributes = [kAXValueAttribute as String, kAXTitleAttribute as String,
+                                     kAXDescriptionAttribute as String, kAXHelpAttribute as String]
+
+    private static func logMeasurement(_ walk: Walk, app: NSRunningApplication) {
+        let text = walk.textStats.sorted { $0.value.chars > $1.value.chars }.prefix(25)
+            .map { "\($0.key)=\($0.value.count)/\($0.value.chars)" }.joined(separator: " ")
+        let names = walk.attributeNames.sorted { $0.value > $1.value }.prefix(40)
+            .map { "\($0.key)=\($0.value)" }.joined(separator: " ")
+        let id = app.bundleIdentifier ?? "?"
+        replyContextLog.notice("reply measure app=\(id, privacy: .public) text[role.attr=count/chars]: \(text, privacy: .public)")
+        replyContextLog.notice("reply measure app=\(id, privacy: .public) attrs[name=nodes]: \(names, privacy: .public)")
     }
 
     /// Text der Textelemente in Dokumentreihenfolge, begrenzt nach Zeit, Knoten und Länge.
@@ -84,8 +116,56 @@ enum ReplyContextReader {
         var truncated = false
         /// Budget erschöpft: ganzen Durchlauf beenden.
         var stopped = false
+        var measure = false
+        /// Nur für Apps, deren Nachrichten Knöpfe sind — sonst landen Schalterwerte im Kontext.
+        var buttonValues = false
+        /// Linke Kante des Eingabefelds; Text, der ganz links davon endet, wird übergangen.
+        var columnMinX: CGFloat?
+        var skippedOutsideColumn = 0
+
+        private func isLeftOfColumn(_ element: AXUIElement) -> Bool {
+            guard let columnMinX,
+                  let origin = FocusedFieldReader.point(element, kAXPositionAttribute as String) else { return false }
+            var ref: CFTypeRef?
+            var size = CGSize.zero
+            guard AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &ref) == .success,
+                  let raw = ref, CFGetTypeID(raw) == AXValueGetTypeID(),
+                  // swiftlint:disable:next force_cast - CF-Typ oben per CFGetTypeID geprüft
+                  AXValueGetValue(raw as! AXValue, .cgSize, &size) else { return false }
+            return origin.x + size.width <= columnMinX
+        }
+        var textStats: [String: (count: Int, chars: Int)] = [:]
+        var attributeNames: [String: Int] = [:]
 
         init(deadline: CFAbsoluteTime) { self.deadline = deadline }
+
+        /// Catalyst-Apps (WhatsApp, gemessen 19.11.) legen Text in `AXDescription` statt
+        /// `AXValue`, Nachrichtenblasen sind Knöpfe mit dem Text als `AXValue`.
+        private func text(of element: AXUIElement, role: String) -> String? {
+            if textRoles.contains(role) {
+                let value = FocusedFieldReader.string(element, kAXValueAttribute as String)
+                if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return value }
+                guard role == kAXStaticTextRole as String else { return nil }
+                return FocusedFieldReader.string(element, kAXDescriptionAttribute as String)
+            }
+            guard buttonValues, role == kAXButtonRole as String else { return nil }
+            return FocusedFieldReader.string(element, kAXValueAttribute as String)
+        }
+
+        private mutating func record(_ element: AXUIElement) {
+            let role = FocusedFieldReader.string(element, kAXRoleAttribute as String) ?? "?"
+            for attr in measuredAttributes {
+                guard let value = FocusedFieldReader.string(element, attr),
+                      !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { continue }
+                let key = "\(role).\(attr)"
+                let old = textStats[key] ?? (0, 0)
+                textStats[key] = (old.count + 1, old.chars + value.count)
+            }
+            var namesRef: CFArray?
+            if AXUIElementCopyAttributeNames(element, &namesRef) == .success, let names = namesRef as? [String] {
+                for name in names { attributeNames[name, default: 0] += 1 }
+            }
+        }
 
         mutating func collect(_ element: AXUIElement, depth: Int) {
             guard !stopped else { return }
@@ -101,10 +181,14 @@ enum ReplyContextReader {
             }
             nodes += 1
             if FocusedFieldReader.isSecure(element) { return }
-            if let role = FocusedFieldReader.string(element, kAXRoleAttribute as String), textRoles.contains(role),
-               let value = FocusedFieldReader.string(element, kAXValueAttribute as String) {
-                let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty, trimmed != parts.last {
+            if measure { record(element) }
+            if let role = FocusedFieldReader.string(element, kAXRoleAttribute as String),
+               let value = text(of: element, role: role) {
+                let trimmed = value.replacingOccurrences(of: "\u{200E}", with: "")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty, isLeftOfColumn(element) {
+                    skippedOutsideColumn += 1
+                } else if !trimmed.isEmpty, trimmed != parts.last {
                     parts.append(trimmed)
                     characters += trimmed.count
                 }
