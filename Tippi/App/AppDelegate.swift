@@ -1458,6 +1458,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Bildschirmtext für „Antwort per Sprache → Bereich wählen“: gleicher Weg wie
+    /// `beginScreenOCR` (einfrieren, Rahmen aufziehen, OCR), aber der Text geht an den
+    /// Aufrufer statt in die Zwischenablage. `nil` bei Abbruch oder Fehler — Fehler
+    /// werden hier gemeldet wie beim Bildschirmtext. Nie auf Platte, nie ins Log.
+    @MainActor
+    func pickScreenText() async -> String? {
+        // Eine offene Auswahl riefe die completion nie auf — die Fortsetzung hinge für immer.
+        guard !screenOCRInProgress, !screenSelectionOverlay.isActive else { return nil }
+        screenOCRInProgress = true
+        defer { screenOCRInProgress = false }
+        do {
+            let frozen = try await ScreenTextCapture.freezeAllScreens()
+            let rect: CGRect? = await withCheckedContinuation { cont in
+                screenSelectionOverlay.begin(frozen: frozen) { cont.resume(returning: $0) }
+            }
+            guard let rect else { return nil }
+            var text = try await ScreenTextCapture.text(in: rect, from: frozen)
+            if ScreenOCRSettings.joinLines { text = RecognizedTextJoiner.join(text) }
+            return text
+        } catch let failure as ScreenTextCapture.Failure {
+            switch failure {
+            case .noPermission, .blankCapture: showScreenOCRPermissionAlert(failure.userMessage)
+            default: ToastWindowController.shared.show(message: failure.userMessage)
+            }
+            return nil
+        } catch {
+            ToastWindowController.shared.show(message: String(localized: "ocr.error.recognitionFailed"))
+            return nil
+        }
+    }
+
     func restartNotesHotkey() {
         notesHotkeyManager.stop()
         guard NotesSettings.isEnabled else {

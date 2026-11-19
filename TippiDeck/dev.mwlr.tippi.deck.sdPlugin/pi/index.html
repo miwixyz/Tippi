@@ -21,6 +21,7 @@
       <option value="dictation" data-de="Diktat" data-en="Dictation">Diktat</option>
       <option value="mail" data-de="Diktat für Mails" data-en="Mail dictation">Diktat für Mails</option>
       <option value="voiceNote" data-de="Sprachnotiz" data-en="Voice note">Sprachnotiz</option>
+      <option value="reply" data-de="Antwort per Sprache" data-en="Reply by voice">Antwort per Sprache</option>
     </select>
   </div>
   <div class="row hidden" id="pressRow"><label for="press" data-de="Taste" data-en="Key">Taste</label>
@@ -57,7 +58,7 @@
 <script>
   const PREFIX = 'dev.mwlr.tippi.deck.';
   const fixed = {
-    kind: ['dictation', 'mail', 'voiceNote'], press: ['toggle', 'hold'],
+    kind: ['dictation', 'mail', 'voiceNote', 'reply'], press: ['toggle', 'hold'],
     mode: ['standard', 'shift', 'control', 'command', 'option'],
     tool: ['popup', 'translate', 'emoji', 'notes', 'quickNotes', 'screenText', 'password'],
     toggle: ['pause', 'autocomplete', 'language']

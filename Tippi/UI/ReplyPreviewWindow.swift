@@ -21,8 +21,15 @@ final class ReplyPreviewWindowController {
 
     var isOpen: Bool { window != nil }
 
+    /// Für „Bereich wählen“: Die Vorschau darf den Rahmen nicht verdecken.
+    func setHidden(_ hidden: Bool) {
+        guard let window else { return }
+        if hidden { window.orderOut(nil) } else { window.makeKeyAndOrderFront(nil) }
+    }
+
     func show(model: ReplyDraftModel, onInsert: @escaping (String) -> Void,
-              onRegenerate: @escaping () -> Void, onCancel: @escaping () -> Void) {
+              onRegenerate: @escaping () -> Void, onPickRegion: @escaping () -> Void,
+              onCancel: @escaping () -> Void) {
         close()
         self.onCancel = onCancel
         let view = ReplyPreviewView(
@@ -32,6 +39,7 @@ final class ReplyPreviewWindowController {
                 onInsert(text)
             },
             onRegenerate: onRegenerate,
+            onPickRegion: onPickRegion,
             onCancel: { [weak self] in self?.close() }
         )
         let panel = ReplyPanel(contentRect: NSRect(x: 0, y: 0, width: 560, height: 440),
@@ -72,6 +80,7 @@ struct ReplyPreviewView: View {
     @ObservedObject var model: ReplyDraftModel
     let onInsert: (String) -> Void
     let onRegenerate: () -> Void
+    let onPickRegion: () -> Void
     let onCancel: () -> Void
     @State private var showContext = false
 
@@ -162,7 +171,11 @@ struct ReplyPreviewView: View {
     }
 
     private var contextLabel: String {
-        let source = String(localized: model.contextSource == .selection ? "reply.context.selection" : "reply.context.window")
+        let source = switch model.contextSource {
+        case .selection: String(localized: "reply.context.selection")
+        case .region: String(localized: "reply.context.region")
+        default: String(localized: "reply.context.window")
+        }
         return String(format: String(localized: "reply.context.used %@ %lld"), source, model.context.count)
     }
 
@@ -171,6 +184,10 @@ struct ReplyPreviewView: View {
             Button(String(localized: "reply.cancel"), action: onCancel)
                 .keyboardShortcut(.cancelAction)
             Spacer()
+            Button(action: onPickRegion) {
+                Label(String(localized: "reply.region"), systemImage: "viewfinder")
+            }
+            .help(String(localized: "reply.region.help"))
             Button(String(localized: "reply.regenerate"), action: onRegenerate)
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(model.phase == .loading)

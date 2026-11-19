@@ -219,6 +219,7 @@ final class Plugin {
             case .dictation: tippi.send(.dictation(.toggle, mode: a.mode))
             case .mail: tippi.send(.run(.mailDictation))
             case .voiceNote: tippi.send(.run(.voiceNote))
+            case .reply: tippi.send(.run(.reply))
             }
         case .prompt:
             if down { runPrompt(a) }
@@ -342,6 +343,7 @@ final class Plugin {
         case .dictation: tr("Diktat", "Dictate")
         case .mail: tr("Mail", "Mail")
         case .voiceNote: tr("Notiz", "Voice note")
+        case .reply: tr("Antwort", "Reply")
         }
     }
 

@@ -43,6 +43,9 @@ final class ScreenSelectionOverlay {
     ///
     /// `completion` bekommt das Rechteck in globalen Koordinaten — oder `nil`
     /// bei Abbruch.
+    /// Läuft schon eine Auswahl? Dann ruft `begin` die completion nie auf.
+    var isActive: Bool { !windows.isEmpty }
+
     func begin(frozen: [ScreenTextCapture.FrozenScreen],
                completion: @escaping (CGRect?) -> Void) {
         guard windows.isEmpty else { return }

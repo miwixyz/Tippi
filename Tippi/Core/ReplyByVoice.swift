@@ -210,6 +210,18 @@ enum ReplyLogic {
     /// Wörtern steht. Groß/klein, Akzente und Satzzeichen zählen nicht; „Tippi“ in
     /// den Schreibweisen der Spracherkennung (`nameVariants`) und eigene Varianten.
     static func intent(afterPrefixIn raw: String, prefix: String, variants: [String]) -> String? {
+        guard let end = prefixEnd(in: raw, prefix: prefix, variants: variants) else { return nil }
+        let intent = raw[end...].trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters))
+        return intent.isEmpty ? nil : intent
+    }
+
+    /// Steht das Vorwort schon am Anfang? Für die Pille, solange noch gesprochen wird
+    /// (Live-Text) — auch wenn nach „Hey Tippi“ noch nichts kam.
+    static func startsWithPrefix(_ raw: String, prefix: String, variants: [String]) -> Bool {
+        prefixEnd(in: raw, prefix: prefix, variants: variants) != nil
+    }
+
+    private static func prefixEnd(in raw: String, prefix: String, variants: [String]) -> String.Index? {
         let words = wordRanges(in: raw)
         guard !words.isEmpty else { return nil }
         let candidates = ([prefix] + variants).map(normalizedWords).filter { !$0.isEmpty }
@@ -217,9 +229,7 @@ enum ReplyLogic {
             for start in 0...(prefixWindowWords - candidate.count) where start + candidate.count <= words.count {
                 let spoken = words[start..<(start + candidate.count)].map { normalize(String(raw[$0])) }
                 guard zip(spoken, candidate).allSatisfy(wordMatches) else { continue }
-                let rest = raw[words[start + candidate.count - 1].upperBound...]
-                let intent = rest.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters))
-                return intent.isEmpty ? nil : intent
+                return words[start + candidate.count - 1].upperBound
             }
         }
         return nil

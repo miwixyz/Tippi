@@ -4,7 +4,7 @@
 @testable import Tippi
 #endif
 
-enum DeckDictKind: String { case dictation, mail, voiceNote }
+enum DeckDictKind: String { case dictation, mail, voiceNote, reply }
 enum DeckPress: String { case toggle, hold }
 enum DeckSwitch: String { case pause, autocomplete, language }
 
@@ -41,6 +41,7 @@ enum DeckLogic {
         case .dictation: source == "standard" || source == "mode"
         case .mail: source == "mail"
         case .voiceNote: source == "inbox"
+        case .reply: source == "reply"
         }
     }
 
@@ -50,6 +51,7 @@ enum DeckLogic {
         case .dictation: "key-mic"
         case .mail: "key-mail"
         case .voiceNote: "key-voicenote"
+        case .reply: "key-reply"
         }
         guard connected, let s, s.ready else { return base + "-off" }
         guard matches(kind, source: s.source) else { return base }

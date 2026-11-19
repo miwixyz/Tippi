@@ -83,6 +83,12 @@ extension AppDelegate {
         case .voiceNote:
             guard dictationReady else { return ToastWindowController.shared.show(message: String(localized: "streamdeck.dictationOff")) }
             await handleVoiceNoteHotkey()
+        case .reply:
+            guard dictationReady else { return ToastWindowController.shared.show(message: String(localized: "streamdeck.dictationOff")) }
+            guard ReplySettings.isEnabled else {
+                return ToastWindowController.shared.show(message: String(localized: "streamdeck.replyOff"))
+            }
+            await dictationController.toggle(targetApp: resolvedSourceAppForCapture(), source: .reply)
         case .popup:
             guard deckAIAllowed() else { return }
             await handleTriggered(from: .manual)

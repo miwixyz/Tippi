@@ -36,6 +36,7 @@ final class ReplyCoordinator {
             contextSource: context.source,
             notice: context.notice,
             appName: targetApp?.localizedName ?? "",
+            bundleID: bundleID,
             isMail: ReplyLogic.isMail(bundleID: bundleID, context: context.text),
             formal: ReplyLogic.isFormal(context: context.text),
             language: ReplyLogic.language(context: context.text, intent: intent)
@@ -43,6 +44,7 @@ final class ReplyCoordinator {
         window.show(model: model,
                     onInsert: { [weak self] text in self?.insert(text, into: targetApp, targetField: targetField) },
                     onRegenerate: { [weak self] in self?.generate(model) },
+                    onPickRegion: { [weak self] in self?.pickRegion(model) },
                     onCancel: { [weak self] in self?.generation?.cancel() })
         generate(model)
         return true
@@ -92,6 +94,33 @@ final class ReplyCoordinator {
         }
     }
 
+    /// „Bereich wählen“: Vorschau weg, Rahmen um die Nachricht ziehen, mit dem erkannten
+    /// Text neu schreiben. Abbruch lässt den bisherigen Kontext stehen.
+    private func pickRegion(_ model: ReplyDraftModel) {
+        generation?.cancel()
+        window.setHidden(true)
+        Task { @MainActor in
+            let text = await AppDelegate.shared?.pickScreenText()
+            window.setHidden(false)
+            guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                if model.phase == .loading { generate(model) }
+                return
+            }
+            model.context = ReplyLogic.trimContext(text)
+            model.contextSource = .region
+            model.notice = nil
+            model.isMail = ReplyLogic.isMail(bundleID: model.bundleID, context: text)
+            model.formal = ReplyLogic.isFormal(context: text)
+            let language = ReplyLogic.language(context: text, intent: model.intent)
+            replyLog.notice("reply context source=region chars=\(text.count, privacy: .public)")
+            if model.language != language {
+                model.language = language   // löst über die Vorschau selbst „neu schreiben“ aus
+            } else {
+                generate(model)
+            }
+        }
+    }
+
     private func insert(_ text: String, into targetApp: NSRunningApplication?,
                         targetField: FocusedFieldReader.FocusSpot?) {
         generation?.cancel()
@@ -123,12 +152,13 @@ final class ReplyDraftModel: ObservableObject {
     }
 
     let intent: String
-    let context: String
-    let contextSource: ReplyContextReader.Source
-    let notice: String?
     let appName: String
-    let isMail: Bool
-    let formal: Bool
+    let bundleID: String?
+    @Published var context: String
+    @Published var contextSource: ReplyContextReader.Source
+    @Published var notice: String?
+    @Published var isMail: Bool
+    var formal: Bool
 
     @Published var language: ReplyLanguage
     @Published var text = ""
@@ -136,8 +166,9 @@ final class ReplyDraftModel: ObservableObject {
     @Published var hasPlaceholder = false
 
     init(intent: String, context: String, contextSource: ReplyContextReader.Source, notice: String?,
-         appName: String, isMail: Bool, formal: Bool, language: ReplyLanguage) {
+         appName: String, bundleID: String?, isMail: Bool, formal: Bool, language: ReplyLanguage) {
         self.intent = intent
+        self.bundleID = bundleID
         self.context = context
         self.contextSource = contextSource
         self.notice = notice

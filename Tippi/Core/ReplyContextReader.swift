@@ -13,7 +13,7 @@ private let replyContextLog = Logger(subsystem: "com.tippi.app", category: "repl
 @MainActor
 enum ReplyContextReader {
     enum Source: String {
-        case selection, window, none
+        case selection, window, region, none
     }
 
     struct Context {

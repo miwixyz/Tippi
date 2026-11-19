@@ -51,6 +51,13 @@ final class ReplyByVoiceTests: XCTestCase {
                                          variants: ["Hallo Kollege"]), "schreib zurück")
     }
 
+    func testStartsWithPrefixAlsoWithoutIntentYet() {
+        XCTAssertTrue(ReplyLogic.startsWithPrefix("Hey Tippi", prefix: "Hey Tippi", variants: []))
+        XCTAssertTrue(ReplyLogic.startsWithPrefix("hey tippy, sag", prefix: "Hey Tippi", variants: []))
+        XCTAssertFalse(ReplyLogic.startsWithPrefix("Ich habe gestern mit Hey Tippi", prefix: "Hey Tippi", variants: []))
+        XCTAssertFalse(ReplyLogic.startsWithPrefix("", prefix: "Hey Tippi", variants: []))
+    }
+
     func testEmptyPrefixNeverTriggers() {
         XCTAssertNil(ReplyLogic.intent(afterPrefixIn: "sag zu", prefix: "", variants: []))
     }

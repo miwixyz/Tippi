@@ -195,6 +195,10 @@ final class StreamDeckTests: XCTestCase {
         s.dictation = .transcribing
         s.source = "mode"
         XCTAssertEqual(DeckLogic.dictationImage(.dictation, status: s, connected: true), "key-mic-busy")
+        s.dictation = .recording
+        s.source = "reply"
+        XCTAssertEqual(DeckLogic.dictationImage(.reply, status: s, connected: true), "key-reply-rec")
+        XCTAssertEqual(DeckLogic.dictationImage(.mail, status: s, connected: true), "key-mail")
         s.ready = false
         XCTAssertEqual(DeckLogic.dictationImage(.voiceNote, status: s, connected: true), "key-voicenote-off")
     }
@@ -204,7 +208,7 @@ final class StreamDeckTests: XCTestCase {
             .appendingPathComponent("TippiDeck/dev.mwlr.tippi.deck.sdPlugin/imgs")
         var names = ["key-prompt", "key-popup", "key-translate", "key-emoji", "key-notes", "key-quicknote", "key-screentext",
                      "key-password", "key-pause", "key-resume", "key-autocomplete", "key-autocomplete-on", "key-language"]
-        for base in ["key-mic", "key-mail", "key-voicenote"] { names += [base, base + "-rec", base + "-busy", base + "-off"] }
+        for base in ["key-mic", "key-mail", "key-voicenote", "key-reply"] { names += [base, base + "-rec", base + "-busy", base + "-off"] }
         for n in names {
             XCTAssertTrue(FileManager.default.fileExists(atPath: imgs.appendingPathComponent("\(n)@2x.png").path), n)
         }

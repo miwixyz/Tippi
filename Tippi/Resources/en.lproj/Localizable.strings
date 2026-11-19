@@ -306,6 +306,7 @@
 "settings.streamDeck.error.unsigned" = "The plugin is not validly signed – not handed over.";
 "settings.streamDeck.error.pack" = "The plugin package could not be built.";
 "streamdeck.dictationOff" = "Dictation is off or the speech model is missing (Settings → Voice)";
+"streamdeck.replyOff" = "Reply by voice is off (Settings → Hotkeys, in the dictation box)";
 "streamdeck.promptMissing" = "This prompt no longer exists – pick it again on the Stream Deck";
 
 /* Local quick actions */
@@ -938,6 +939,9 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "reply.context.secureInput" = "Context not read: a password field or secure input is active.";
 "reply.context.selection" = "selection";
 "reply.context.window" = "window text";
+"reply.region" = "Pick area";
+"reply.region.help" = "Wrong context? Drag a frame around the message — Tippi reads the text inside and rewrites.";
+"reply.context.region" = "Screen area";
 "reply.context.used %@ %lld" = "Context used: %1$@, %2$lld characters";
 "reply.placeholder" = "The draft contains a placeholder in square brackets – replace it before inserting.";
 "reply.toast.needsLocalModel" = "Reply by voice needs Tippi's local MLX model. Dictation was inserted as usual.";
@@ -954,4 +958,4 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "settings.reply.name.placeholder" = "First name";
 "settings.reply.prefix.body" = "If a normal dictation starts with the prefix (within the first three words), it becomes a reply. Empty prefix: hot key only. For emails Tippi adds the sign-off with your name itself.";
 "settings.help.replyTitle" = "Reply by voice (Labs)";
-"settings.help.replyBody" = "Turn it on under Settings → Hotkeys → Reply by voice (in the dictation box). Open the email or chat you want to answer (or select the message), press ⌃⌥⌘A and say what you want to reply, e.g. “say yes, I'll come on Thursday at ten”. Or start a normal dictation with “Hey Tippi”. Tippi writes the reply with the local MLX model in the message's language and shows it in a preview: edit it, switch the language, rewrite (⌘R) or insert (⌘↩). For emails Tippi adds the sign-off and your name. Check times and promises before inserting. The feature never uses a cloud provider and stores nothing.";
+"settings.help.replyBody" = "Turn it on under Settings → Hotkeys → Reply by voice (in the dictation box). Open the email or chat you want to answer (or select the message), press ⌃⌥⌘A and say what you want to reply, e.g. “say yes, I'll come on Thursday at ten”. Or start a normal dictation with “Hey Tippi”. Tippi writes the reply with the local MLX model in the message's language and shows it in a preview: edit it, switch the language, rewrite (⌘R) or insert (⌘↩). If the context is wrong, “Pick area” lets you drag a frame around the message. On the Stream Deck, set a dictation key to the kind “Reply by voice”. For emails Tippi adds the sign-off and your name. Check times and promises before inserting. The feature never uses a cloud provider and stores nothing.";

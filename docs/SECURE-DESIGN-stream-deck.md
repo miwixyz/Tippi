@@ -46,7 +46,7 @@ oder falscher Typ → **Verbindung zu**, Zähler im Protokoll, nie der Inhalt.
 {"v":1,"hello":"2.41.0"}
 {"v":1,"watch":true}
 {"v":1,"cmd":"dictation","do":"toggle|holdStart|holdEnd","mode":"standard|shift|control|command|option"}
-{"v":1,"cmd":"run","action":"mailDictation|voiceNote|popup|translate|emoji|notes|quickNotes|screenText|password|pause|autocomplete|language"}
+{"v":1,"cmd":"run","action":"mailDictation|voiceNote|reply|popup|translate|emoji|notes|quickNotes|screenText|password|pause|autocomplete|language"}
 {"v":1,"cmd":"prompt","id":"improve"}
 ```
 

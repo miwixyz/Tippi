@@ -306,6 +306,7 @@
 "settings.streamDeck.error.unsigned" = "Plugin ist nicht gültig signiert – nicht übergeben.";
 "settings.streamDeck.error.pack" = "Plugin-Paket konnte nicht erstellt werden.";
 "streamdeck.dictationOff" = "Diktat ist aus oder das Sprachmodell fehlt (Einstellungen → Sprache)";
+"streamdeck.replyOff" = "Antwort per Sprache ist aus (Einstellungen → Hotkeys, im Diktat-Kasten)";
 "streamdeck.promptMissing" = "Diesen Prompt gibt es nicht mehr – am Stream Deck neu wählen";
 
 /* Lokale Schnellaktionen */
@@ -940,6 +941,9 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "reply.context.secureInput" = "Kontext nicht gelesen: Ein Passwortfeld oder die sichere Eingabe ist aktiv.";
 "reply.context.selection" = "Markierung";
 "reply.context.window" = "Fenstertext";
+"reply.region" = "Bereich wählen";
+"reply.region.help" = "Stimmt der Kontext nicht? Rahmen um die Nachricht ziehen — Tippi liest den Text darin und schreibt neu.";
+"reply.context.region" = "Bildschirmbereich";
 "reply.context.used %@ %lld" = "Benutzter Kontext: %1$@, %2$lld Zeichen";
 "reply.placeholder" = "Der Entwurf enthält einen Platzhalter in eckigen Klammern – bitte vor dem Einfügen ersetzen.";
 "reply.toast.needsLocalModel" = "Antwort per Sprache braucht Tippis lokales MLX-Modell. Diktat wurde normal eingefügt.";
@@ -956,4 +960,4 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "settings.reply.name.placeholder" = "Vorname";
 "settings.reply.prefix.body" = "Beginnt ein normales Diktat mit dem Vorwort (in den ersten drei Wörtern), wird daraus eine Antwort. Leeres Vorwort: nur die Taste. Den Gruß mit deinem Namen setzt Tippi bei Mails selbst darunter.";
 "settings.help.replyTitle" = "Antwort per Sprache (Labs)";
-"settings.help.replyBody" = "Einschalten unter Einstellungen → Hotkeys → Antwort per Sprache (im Diktat-Kasten). Öffne die Mail oder den Chat, auf den du antworten willst (oder markiere die Nachricht), drücke ⌃⌥⌘A und sag, was du antworten willst, z. B. „sag zu, dass ich Donnerstag um zehn komme“. Alternativ beginnst du ein normales Diktat mit „Hey Tippi“. Tippi schreibt die Antwort mit dem lokalen MLX-Modell in der Sprache der Nachricht und zeigt sie in einer Vorschau: dort kannst du sie bearbeiten, die Sprache wechseln, neu schreiben lassen (⌘R) oder einfügen (⌘↩). Bei Mails setzt Tippi Gruß und Namen darunter. Prüfe Uhrzeiten und Zusagen vor dem Einfügen. Die Funktion nutzt nie einen Cloud-Anbieter und speichert nichts.";
+"settings.help.replyBody" = "Einschalten unter Einstellungen → Hotkeys → Antwort per Sprache (im Diktat-Kasten). Öffne die Mail oder den Chat, auf den du antworten willst (oder markiere die Nachricht), drücke ⌃⌥⌘A und sag, was du antworten willst, z. B. „sag zu, dass ich Donnerstag um zehn komme“. Alternativ beginnst du ein normales Diktat mit „Hey Tippi“. Tippi schreibt die Antwort mit dem lokalen MLX-Modell in der Sprache der Nachricht und zeigt sie in einer Vorschau: dort kannst du sie bearbeiten, die Sprache wechseln, neu schreiben lassen (⌘R) oder einfügen (⌘↩). Stimmt der Kontext nicht, ziehst du mit „Bereich wählen“ einen Rahmen um die Nachricht. Auf dem Stream Deck gibt es dafür die Diktat-Taste mit der Art „Antwort per Sprache“. Bei Mails setzt Tippi Gruß und Namen darunter. Prüfe Uhrzeiten und Zusagen vor dem Einfügen. Die Funktion nutzt nie einen Cloud-Anbieter und speichert nichts.";

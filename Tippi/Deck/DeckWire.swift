@@ -47,7 +47,7 @@ enum DeckWire {
     enum ModeSlot: String, CaseIterable, Sendable { case standard, shift, control, command, option }
 
     enum Action: String, CaseIterable, Sendable {
-        case mailDictation, voiceNote, popup, translate, emoji, notes, quickNotes, screenText, password, pause, autocomplete, language
+        case mailDictation, voiceNote, reply, popup, translate, emoji, notes, quickNotes, screenText, password, pause, autocomplete, language
     }
 
     enum Command: Equatable, Sendable {
@@ -167,7 +167,7 @@ enum DeckWire {
         s.paused = obj["paused"] as? Bool ?? false
         s.autocomplete = obj["autocomplete"] as? Bool ?? false
         s.language = (obj["language"] as? String).flatMap { isValidLanguage($0) ? $0 : nil } ?? "auto"
-        s.source = (obj["source"] as? String).flatMap { ["standard", "mail", "mode", "inbox"].contains($0) ? $0 : nil }
+        s.source = (obj["source"] as? String).flatMap { ["standard", "mail", "mode", "inbox", "reply"].contains($0) ? $0 : nil }
         let items = { (key: String, limit: Int) -> [Item] in
             ((obj[key] as? [[String: Any]]) ?? []).prefix(limit).compactMap { o in
                 guard let id = o["id"] as? String, isValidID(id), let t = o["title"] as? String else { return nil }

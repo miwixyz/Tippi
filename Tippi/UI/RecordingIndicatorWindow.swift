@@ -62,6 +62,9 @@ struct RecordingIndicatorView: View {
     let providerName: String?
     /// Mail hot key: envelope instead of microphone. Dictation mode: its symbol and name.
     let source: DictationSource
+    /// Live-Text eines normalen Diktats: Sagt er schon „Hey Tippi“, zeigt die Pille den
+    /// Antwortpfeil (nur mit eingeschalteter „Antwort per Sprache“).
+    var replyPreview: LiveTranscriptionPreview?
     private var isMail: Bool { source == .mail }
     private var symbol: String {
         if let mode = source.dictationMode { return mode.symbol }
@@ -78,9 +81,15 @@ struct RecordingIndicatorView: View {
         HStack(spacing: 8) {
             switch mode {
             case .recording:
-                Image(systemName: symbol)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(FamilyTheme.accent)
+                Group {
+                    if let replyPreview {
+                        ReplyAwareSymbol(base: symbol, preview: replyPreview)
+                    } else {
+                        Image(systemName: symbol)
+                    }
+                }
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(FamilyTheme.accent)
                 WaveformBars(level: recorder.level)
                 Text(RecordingDuration.formatted(recorder.elapsed))
                     // Monospaced digits: without them the pill twitches on every
@@ -190,6 +199,20 @@ private struct LiveTextBox: View {
 /// (the text grows inside it instead of the window resizing every second); the
 /// pill stays where it always was — at the bottom of that area, or at the top
 /// when the indicator sits at the top of the screen.
+/// Eigene Ansicht, damit nur das Symbol dem Live-Text folgt — die Pille selbst wird einmal
+/// vermessen und darf ihre Breite nicht ändern (deshalb kein Wechsel der Beschriftung).
+private struct ReplyAwareSymbol: View {
+    let base: String
+    @ObservedObject var preview: LiveTranscriptionPreview
+
+    var body: some View {
+        let reply = ReplyLogic.startsWithPrefix(preview.text, prefix: ReplySettings.prefix,
+                                                variants: ReplySettings.prefixVariants)
+        Image(systemName: reply ? "arrowshape.turn.up.left.fill" : base)
+            .accessibilityLabel(Text(reply ? String(localized: "dictation.indicator.recordingReply") : ""))
+    }
+}
+
 private struct IndicatorContainer: View {
     let pill: RecordingIndicatorView
     let preview: LiveTranscriptionPreview?
@@ -246,9 +269,11 @@ final class RecordingIndicatorWindowController {
     func show(mode: Mode, recorder: AudioRecorder, preview: LiveTranscriptionPreview? = nil,
               aiEnabled: Bool = false, providerName: String? = nil, source: DictationSource = .standard) {
         generation &+= 1
-        let pill = RecordingIndicatorView(
-            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, source: source)
         let live = mode == .recording ? preview : nil
+        var pill = RecordingIndicatorView(
+            mode: mode, recorder: recorder, aiEnabled: aiEnabled, providerName: providerName, source: source)
+        // Gleiche Bedingung wie `DictationController.replyIntent`: nur ein normales Diktat.
+        if source == .standard, ReplySettings.isEnabled { pill.replyPreview = live }
         let textSize = DictationSettings.liveTextSize
         // Fixed, separately measured size — same layout-loop fix as the toast, see `fixedSizeContent` (2026-10-07).
         let (hostView, measured) = NSHostingView<AnyView>.fixedSizeContent(AnyView(IndicatorContainer(
