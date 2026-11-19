@@ -586,7 +586,9 @@ Einmalige Einrichtung: MLX im Anbieter-Tab wählen und auf „MLX installieren�
 
 Voreingestellt ist Gemma 4 E2B. Es war im Vergleich an echten deutschen Diktaten sowohl das genaueste als auch das schnellste Modell; welche vier Modelle zur Wahl stehen und woran sie gemessen wurden, steht unter „Welches lokale Modell fürs Diktat?“. Tippi begrenzt lokale Antwortlängen gegen langsame Ausreißer und zeigt die echte Generierungszeit im Vorschau-Badge.
 
-Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.\n\nHaengt „Server starten“? Meist blockiert ein Serverprozess aus einem frueheren Absturz den Port: Er nimmt Verbindungen an, antwortet aber nicht. Tippi raeumt so einen haengengebliebenen Server seit v2.11.7 selbst weg und prueft danach nach, ob der Port wirklich frei ist. Haelt ein fremdes Programm den Port, wird nichts beendet — die Meldung nennt Programm und Prozessnummer, damit du entscheiden kannst. Alternativ den Port in diesem Bereich aendern.";
+Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorgewärmt — die erste Transformation ist schneller.\n\nHaengt „Server starten“? Meist blockiert ein Serverprozess aus einem frueheren Absturz den Port: Er nimmt Verbindungen an, antwortet aber nicht. Tippi raeumt so einen haengengebliebenen Server seit v2.11.7 selbst weg und prueft danach nach, ob der Port wirklich frei ist. Haelt ein fremdes Programm den Port, wird nichts beendet — die Meldung nennt Programm und Prozessnummer, damit du entscheiden kannst. Alternativ den Port in diesem Bereich aendern.
+
+Meldung „Port 8080 ist von einem anderen Programm belegt“: Einen Server, den Tippi selbst gestartet und zurückgelassen hat, räumt Tippi seit 2.42.1 beim Start selbst weg. Bleibt die Meldung, hält wirklich ein anderes Programm den Port. Beende es oder ändere Tippis MLX-Port in den Einstellungen.";
 "settings.help.troubleTitle" = "Probleme & Loesungen";
 
 /* Voice Input */
