@@ -73,6 +73,12 @@ Tippi/
 │   │                               #   Rohtext-Rückfall, MLX-Vorwärmen mit dem Prompt des Modus
 │   ├── DictationController+KeepWarm.swift # 2.41.2 — MLX während der Aufnahme alle 2 s wecken,
 │   │                               #   Stopp bei Aufnahmeende oder gescheitertem Weckruf
+│   ├── DictationController+Reply.swift # 2.42 — Absicht für „Antwort per Sprache“ (eigene Taste oder Vorwort)
+│   ├── ReplyByVoice.swift          # 2.42 — Einstellungen + reine Logik: Vorwort, Prompt, Kontext kürzen/entschärfen,
+│   │                               #   Sprache, Gruß, Sperrliste (Design docs/SECURE-DESIGN-antwort.md)
+│   ├── ReplyContextReader.swift    # 2.42 — Kontext: Markierung, sonst Fenstertext über Bedienungshilfen
+│   │                               #   (0,5 s / 4.000 Knoten / Tiefe 80, WhatsApp-Spaltenfilter, Log nur Zahlen)
+│   ├── ReplyCoordinator.swift      # 2.42 — Ablauf: nur eigener MLX-Server, Vorschau, „Bereich wählen“, Einfügen
 │   ├── ReplacementTarget.swift     # DIE eine Stelle, die entscheidet, wohin ein
 │   │                               #   Ergebnis geschrieben wird (Notizfenster /
 │   │                               #   Accessibility / blind) + ReplacementWriter.
@@ -205,6 +211,8 @@ Tippi/
 │   ├── DictationHotkeySection.swift       # Diktat-Hotkey, seit 2026-09-28 unter Einstellungen → Hotkeys;
 │   │                                      #   2.21: „Diktat für Mails" (MailDictationHotkeyControls)
 │   ├── DictationModesSection.swift        # Diktat-Modi: Hauptschalter + vier Plätze, in DictationHotkeySection
+│   ├── ReplySettingsSection.swift         # 2.42 — „Antwort per Sprache“ (Labs) im Diktat-Kasten unter Hotkeys
+│   ├── ReplyPreviewWindow.swift           # 2.42 — Vorschau der Antwort, ohne Aktivierung (Ziel-App behält Fokus)
 │   ├── ParakeetModelRows.swift            # 2.32 — Einstellungszeilen „Parakeet-Modell“ (v3 / Ultra, Laden)
 │   ├── HotkeyRecorderField.swift          # Tasten-Recorder; ohne `validator` globale Hotkeys (⌘/⌃ Pflicht),
 │   │                                      #   mit `validator` z. B. die Übernahme-Tasten
