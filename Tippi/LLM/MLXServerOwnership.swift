@@ -45,8 +45,8 @@ extension MLXServerManager {
     /// Known limits (review 2026-11-17): a server started by hand (`nohup`,
     /// LaunchAgent) with exactly Tippi's arguments and parent 1 counts as a
     /// leftover and is replaced. With the `uvx` install the Python listener's
-    /// command line and parent (`uvx`) never match, so after a crash that
-    /// leftover is reported as foreign until it is ended by hand.
+    /// command line never matches, so an *answering* uvx leftover is still
+    /// reported as foreign; a *silent* one is cleared via `owningParentPID`.
     nonisolated static func answeringServerVerdict(listener: PortListener?, ownPID: Int32,
                                                    binaryPath: String, port: Int) -> AnsweringServer {
         guard let listener else { return .foreign(pid: nil, command: "") }
@@ -65,6 +65,34 @@ extension MLXServerManager {
         let words = command.split(separator: " ").map(String.init)
         let word = words.first { $0.contains("mlx_lm.server") } ?? words.first ?? "?"
         return (word as NSString).lastPathComponent
+    }
+
+    /// The parent that decides who owns a listener. Tippi starts the server through
+    /// `uvx`/`uv` when installed that way, so the Python listener's parent is the
+    /// wrapper, not Tippi. If that wrapper is itself an `mlx-lm` launcher, its own parent
+    /// counts — otherwise an orphaned wrapper (parent 1) made the silent server look
+    /// "foreign" and it blocked the port until ended by hand (measured 2026-11-20).
+    nonisolated static func owningParentPID(parentPID: Int32?, parentCommand: String?,
+                                            grandparentPID: Int32?) -> Int32? {
+        guard let parentPID, let parentCommand,
+              parentCommand.contains("mlx-lm") || parentCommand.contains("mlx_lm.server") else { return parentPID }
+        return grandparentPID ?? parentPID
+    }
+
+    /// `ps -o ppid=,command=` for one process, or `nil`.
+    nonisolated static func psLine(of pid: Int32) -> (parentPID: Int32?, command: String)? {
+        let ps = Process()
+        ps.executableURL = URL(fileURLWithPath: "/bin/ps")
+        ps.arguments = ["-o", "ppid=,command=", "-p", "\(pid)"]
+        let pipe = Pipe()
+        ps.standardOutput = pipe
+        ps.standardError = FileHandle.nullDevice
+        do { try ps.run() } catch { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        ps.waitUntilExit()
+        // swiftlint:disable:next optional_data_string_conversion - ersetzen statt verwerfen
+        let parsed = parsePSLine(String(decoding: data, as: UTF8.self))
+        return parsed.command.isEmpty ? nil : parsed
     }
 
     /// Splits a `ps -o ppid=,command=` line into parent PID and command.

@@ -87,6 +87,20 @@ final class MLXPortOccupancyTests: XCTestCase {
         XCTAssertEqual(verdict, .foreignProcess(pid: 87957, command: ownCommand))
     }
 
+    func testUvxWrapperHandsOwnershipToItsParent() {
+        let uvx = "/Users/x/.local/bin/uv tool uvx --from mlx-lm mlx_lm.server --model m --port 8080 --host 127.0.0.1"
+        // Gemessen 20.11.: Python-Server unter uvx, uvx verwaist (Eltern-PID 1).
+        XCTAssertEqual(MLXServerManager.owningParentPID(parentPID: 72124, parentCommand: uvx, grandparentPID: 1), 1)
+        XCTAssertEqual(MLXServerManager.occupantVerdict(listenerPID: 72133, listenerCommand: ownCommand,
+                                                        listenerParentPID: 1, ownPID: 500),
+                       .staleMLXServer(pid: 72133))
+        // uvx unter einer laufenden Tippi: gehört der, bleibt fremd.
+        XCTAssertEqual(MLXServerManager.owningParentPID(parentPID: 72124, parentCommand: uvx, grandparentPID: 87915), 87915)
+        // Kein Wrapper (Terminal, andere App): Elternprozess bleibt, wie er ist.
+        XCTAssertEqual(MLXServerManager.owningParentPID(parentPID: 600, parentCommand: "-zsh", grandparentPID: 1), 600)
+        XCTAssertNil(MLXServerManager.owningParentPID(parentPID: nil, parentCommand: nil, grandparentPID: nil))
+    }
+
     func testASilentOrphanedMLXServerIsStillStale() {
         XCTAssertEqual(MLXServerManager.occupantVerdict(listenerPID: 4992, listenerCommand: ownCommand,
                                                         listenerParentPID: 1, ownPID: 500),

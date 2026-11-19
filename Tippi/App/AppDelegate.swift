@@ -98,6 +98,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let screenSelectionOverlay = ScreenSelectionOverlay()
     /// Verhindert, dass ein zweiter Hotkey-Druck ein zweites Overlay öffnet.
     private var screenOCRInProgress = false
+    /// SIGTERM → ordentliches Beenden (siehe `installTerminationSignalHandler`).
+    private var sigtermSource: DispatchSourceSignal?
     /// Passive `:prefix` suggestion list. Never takes keyboard focus — see
     /// `EmojiSuggestionPanel`.
     private let emojiSuggestionPanel = EmojiSuggestionPanel()
@@ -206,6 +208,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSLog("Tippi: applicationDidFinishLaunching")
+        installTerminationSignalHandler()
         #if DEBUG
         if startedAsBildKopie() { return }
         // PRÜFSTAND (nur Debug, nur mit Umgebungsvariable): Diktat-Ende in einer Notiz nachspielen.
@@ -346,6 +349,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.autocomplete.engines.unload()
             MLXServerManager.shared.stopIfOwned()
         }
+    }
+
+    /// `kill`/`pkill` (SIGTERM) beendete Tippi bisher sofort, ohne `applicationWillTerminate` —
+    /// der MLX-Server blieb verwaist auf dem Port (gemessen 20.11.: Startprüfung in
+    /// `release.sh` beendet die App nach 2 s, die Autovervollständigung hatte den Server
+    /// schon gestartet; danach meldete die installierte Tippi „Port 8080 belegt“).
+    /// Jetzt läuft SIGTERM über denselben Weg wie ⌘Q.
+    private func installTerminationSignalHandler() {
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler { NSApp.terminate(nil) }
+        source.resume()
+        sigtermSource = source
     }
 
     func applicationWillTerminate(_ notification: Notification) {

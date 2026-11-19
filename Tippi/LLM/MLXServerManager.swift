@@ -516,18 +516,12 @@ final class MLXServerManager: ObservableObject {
               let pid = Int32(first.trimmingCharacters(in: .whitespaces))
         else { return nil }
 
-        let ps = Process()
-        ps.executableURL = URL(fileURLWithPath: "/bin/ps")
-        ps.arguments = ["-o", "ppid=,command=", "-p", "\(pid)"]
-        let psPipe = Pipe()
-        ps.standardOutput = psPipe
-        ps.standardError = FileHandle.nullDevice
-        do { try ps.run() } catch { return PortListener(pid: pid, parentPID: nil, command: "") }
-        let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
-        ps.waitUntilExit()
-        // swiftlint:disable:next optional_data_string_conversion - wie oben: ersetzen statt verwerfen
-        let parsed = parsePSLine(String(decoding: psData, as: UTF8.self))
-        return PortListener(pid: pid, parentPID: parsed.parentPID, command: parsed.command)
+        guard let parsed = psLine(of: pid) else { return PortListener(pid: pid, parentPID: nil, command: "") }
+        // Through a `uvx` wrapper the real owner is one level further up.
+        let wrapper = parsed.parentPID.flatMap(psLine(of:))
+        let owner = owningParentPID(parentPID: parsed.parentPID, parentCommand: wrapper?.command,
+                                    grandparentPID: wrapper?.parentPID)
+        return PortListener(pid: pid, parentPID: owner, command: parsed.command)
     }
 
     /// Clears a stale MLX server off `port`. Returns `true` when the port is
