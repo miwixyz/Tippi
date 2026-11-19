@@ -51,6 +51,7 @@ enum MailDictationSettings {
         if DictationSettings.mode == .combo {
             taken.append((String(localized: "hotkeyName.dictation"), DictationSettings.combo))
         }
+        taken.append((String(localized: "hotkeyName.reply"), ReplySettings.combo))
         return taken
     }
 }

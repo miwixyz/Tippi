@@ -44,6 +44,7 @@ covers that whole row:
 | Quick translation window | DeepL app | **Translate Quick Panel** (5 languages) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), iCloud-synced `.txt`, favorites |
 | Voice note into one inbox | Apple Notes + system dictation | **Voice note** (⌃⌥⌘N): floating quick notes, dictation straight into “Inbox” |
+| Answer a message by voice | Blip · Wispr Flow (cloud) | **Reply by voice** (⌃⌥⌘A, Labs): local model drafts the reply, preview before insert |
 | Pull text off the screen | TextSniper · CleanShot X | **Screen OCR** (⌥⌘2), local, freezes the screen — captures pop-ups too |
 | AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 prompts + your own**, 8 providers — in place, no app switch |
 | Text case/formatting one-offs | TextSoap, a word-count widget | **Local Quick Actions** — instant, offline, no AI call |

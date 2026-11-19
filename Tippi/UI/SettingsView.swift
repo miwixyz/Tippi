@@ -1410,6 +1410,8 @@ private struct HelpTab: View {
 
         HelpEntry(id: "voice", icon: "mic", category: .voice,
                   title: String(localized: "settings.help.voiceTitle"), body: String(localized: "settings.help.voiceBody")),
+        HelpEntry(id: "reply", icon: "arrowshape.turn.up.left", category: .voice,
+                  title: String(localized: "settings.help.replyTitle"), body: String(localized: "settings.help.replyBody")),
         HelpEntry(id: "translate", icon: "character.bubble", category: .voice,
                   title: String(localized: "settings.help.translateTitle"), body: String(localized: "settings.help.translateBody")),
 

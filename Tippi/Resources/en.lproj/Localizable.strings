@@ -920,3 +920,38 @@ When MLX is your default provider, Tippi pre-warms the server on app launch so y
 "dictation.toast.correctionWriteUnverified" = "Insertion could not be confirmed. Check the text field.";
 
 "popup.hint" = "Pick a prompt or type";
+
+/* Reply by voice (Labs) */
+"hotkeyName.reply" = "Reply by voice";
+"hotkeyName.mailDictation" = "Dictation for emails";
+"dictation.indicator.recordingReply" = "Dictating reply";
+"reply.window.title" = "Reply";
+"reply.header.mail" = "Reply to email";
+"reply.header.chat" = "Reply to message";
+"reply.language.help" = "Language of the reply. Switching rewrites it.";
+"reply.loading" = "The local model is writing the reply …";
+"reply.retry" = "Try again";
+"reply.cancel" = "Cancel";
+"reply.regenerate" = "Rewrite";
+"reply.insert" = "Insert";
+"reply.context.none" = "No context found – written from your intent only.";
+"reply.context.secureInput" = "Context not read: a password field or secure input is active.";
+"reply.context.selection" = "selection";
+"reply.context.window" = "window text";
+"reply.context.used %@ %lld" = "Context used: %1$@, %2$lld characters";
+"reply.placeholder" = "The draft contains a placeholder in square brackets – replace it before inserting.";
+"reply.toast.needsLocalModel" = "Reply by voice needs Tippi's local MLX model. Dictation was inserted as usual.";
+"reply.toast.inserted" = "Reply inserted";
+"reply.error.empty" = "The model returned no reply.";
+"settings.reply.enable" = "Reply by voice";
+"settings.reply.body" = "Dictate what you want to reply (“say yes, I'll come on Thursday”). Tippi reads the selection or the window text, writes a reply with the local model and shows it in a preview first. Local only (MLX), never in the cloud, never with Apple Intelligence. Nothing is stored. Never in terminals, code editors or password managers.";
+"settings.reply.needsMLX" = "Needs a local MLX model (Settings → AI providers → MLX).";
+"settings.reply.hotkey" = "Own hot key";
+"settings.reply.prefix" = "Prefix";
+"settings.reply.variants" = "Other spellings";
+"settings.reply.variants.placeholder" = "e.g. Hey Tippy, He Tipi";
+"settings.reply.name" = "Name in sign-off";
+"settings.reply.name.placeholder" = "First name";
+"settings.reply.prefix.body" = "If a normal dictation starts with the prefix (within the first three words), it becomes a reply. Empty prefix: hot key only. For emails Tippi adds the sign-off with your name itself.";
+"settings.help.replyTitle" = "Reply by voice (Labs)";
+"settings.help.replyBody" = "Turn it on under Settings → Dictation → Reply by voice. Open the email or chat you want to answer (or select the message), press ⌃⌥⌘A and say what you want to reply, e.g. “say yes, I'll come on Thursday at ten”. Or start a normal dictation with “Hey Tippi”. Tippi writes the reply with the local MLX model in the message's language and shows it in a preview: edit it, switch the language, rewrite (⌘R) or insert (⌘↩). For emails Tippi adds the sign-off and your name. Check times and promises before inserting. The feature never uses a cloud provider and stores nothing.";

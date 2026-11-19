@@ -157,6 +157,7 @@ extension AppDelegate {
             case .mail: "mail"
             case .mode: "mode"
             case .inbox: "inbox"
+            case .reply: "reply"
             }
         }
         s.ready = dictationReady

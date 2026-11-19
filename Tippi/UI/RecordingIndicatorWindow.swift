@@ -63,12 +63,22 @@ struct RecordingIndicatorView: View {
     /// Mail hot key: envelope instead of microphone. Dictation mode: its symbol and name.
     let source: DictationSource
     private var isMail: Bool { source == .mail }
+    private var symbol: String {
+        if let mode = source.dictationMode { return mode.symbol }
+        if source == .reply { return "arrowshape.turn.up.left.fill" }
+        return isMail ? "envelope.fill" : "mic.fill"
+    }
+    private var recordingLabel: String {
+        if let mode = source.dictationMode { return mode.title }
+        if source == .reply { return String(localized: "dictation.indicator.recordingReply") }
+        return String(localized: isMail ? "dictation.indicator.recordingMail" : "dictation.indicator.recording")
+    }
 
     var body: some View {
         HStack(spacing: 8) {
             switch mode {
             case .recording:
-                Image(systemName: source.dictationMode?.symbol ?? (isMail ? "envelope.fill" : "mic.fill"))
+                Image(systemName: symbol)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(FamilyTheme.accent)
                 WaveformBars(level: recorder.level)
@@ -76,8 +86,7 @@ struct RecordingIndicatorView: View {
                     // Monospaced digits: without them the pill twitches on every
                     // tick as glyph widths change, and the window is sized once.
                     .font(FamilyTheme.font(.subheadline, weight: .medium).monospacedDigit())
-                Text(source.dictationMode?.title
-                     ?? String(localized: isMail ? "dictation.indicator.recordingMail" : "dictation.indicator.recording"))
+                Text(recordingLabel)
                     .font(FamilyTheme.font(.subheadline, weight: .medium))
             case .transcribing:
                 ProgressView()

@@ -37,6 +37,7 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
 | Voice note into one inbox | Apple Notes + system dictation | **Voice note** (⌃⌥⌘N): quick notes float above everything, dictation starts at once, the text lands with a timestamp in the note “Inbox”; adjustable transparency |
+| Answer a message by voice | Blip · Wispr Flow (cloud, subscription) | **Reply by voice** (⌃⌥⌘A or “Hey Tippi …”, Labs): say what you want to answer, Tippi reads the message and drafts the reply with a **local** model, shown in a preview before anything is inserted |
 | Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
 | AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 8 providers — in place, no app switch, your own keys |
 | Silence the helpers for a while (no popup, no autocomplete, no snippets) | quitting each helper app, or toggling settings one by one | **Pause** (⌃⌥⌘P or menu bar), timed or until you resume — hotkeys keep working (v2.29) |
@@ -53,6 +54,7 @@ your text for anything that touches AI.
 
 ## Features
 
+- **Reply by voice (Labs, off by default)** — press ⌃⌥⌘A, or start a normal dictation with “Hey Tippi” (prefix and spellings configurable), and say what you want to answer: “say yes, I’ll come on Thursday”. Tippi reads the selection, otherwise the text of the front window via Accessibility (at most the last 3,000 characters), and writes a reply with **Tippi’s own local MLX model only** — never a cloud provider, never Apple Intelligence (it followed instructions hidden in a test message). The reply is in the message’s language and mirrors its formality; for emails Tippi adds the sign-off with your name itself. Nothing is inserted until you click Insert in the preview (language switch DE/ES/EN, context used is shown). Nothing is stored or logged. Never in terminals, code editors or password managers. Design: `docs/SECURE-DESIGN-antwort.md`.
 - **One look (v2.40)** — the popup, emoji suggestions and picker, selection bar, toast, recording indicator and translate window share one design: solid cards, glass only for the small pill and bar, Plus Jakarta Sans, the chosen row tinted in the accent colour. Keys and behaviour are unchanged.
 - **Voice note (v2.39)** — ⌃⌥⌘N shows your quick notes floating above everything, even over a full-screen video, and starts dictation at once; press again and the text lands with a timestamp at the bottom of the note “Inbox”. The quick-notes window has a transparency slider.
 - **File tasks from Porter (v2.38)** — if you use Porter, the Notes window lists the open tasks you attached to files and folders there, newest first. A click opens the file in Porter (without Porter, in Finder). Tippi only reads Porter's list in iCloud Drive and never changes it.
@@ -292,6 +294,7 @@ This route always works because macOS does the binding, not Tippi.
 | ⌥⌘E | Emoji picker | yes |
 | ⌥⌘N | Notes window | yes |
 | ⌃⌥⌘N | Voice note: quick notes + dictation into “Inbox” | yes |
+| ⌃⌥⌘A | Reply by voice (Labs): dictate your intent, get a drafted reply in a preview | yes, once the feature is on |
 | ⌃⌘S | Show/hide the note list (only while Notes is open, View menu) | yes, fixed |
 | ⌥⌘2 | Text from a screen selection | no |
 | ⌃⌥⌘P | Pause / resume what Tippi does on its own (popup, autocomplete, snippets) — v2.29 | yes, fixed |

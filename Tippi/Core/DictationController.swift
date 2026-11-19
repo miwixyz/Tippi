@@ -481,6 +481,15 @@ final class DictationController: ObservableObject {
         do {
             let raw = try await SpeechTranscriber.transcribe(wavURL: wavURL)
             try Task.checkCancellation()
+            // „Antwort per Sprache": eigene Taste, oder das Vorwort am Anfang eines normalen
+            // Diktats. Zuständig ist `ReplyCoordinator`; lehnt er ab (aus, Terminal, kein
+            // lokales Modell), läuft das Diktat unverändert weiter.
+            if notesTextView == nil, let intent = replyIntent(in: raw),
+               await ReplyCoordinator.shared.begin(intent: intent, targetApp: targetApp, targetField: targetField) {
+                RecordingIndicatorWindowController.shared.hide()
+                dictationLog.notice("dictation became reply intent (raw=\(raw.count, privacy: .public))")
+                return
+            }
             let (polished, cleanupNotice) = await processTranscript(raw, appName: targetApp?.localizedName ?? "")
             let targetID = notesTextView == nil ? targetApp?.bundleIdentifier : nil
             let (final, correction) = prepareInsertion(polished, targetID: targetID,
@@ -490,7 +499,8 @@ final class DictationController: ObservableObject {
             // Decided BEFORE insertion: the clipboard fallback activates the target
             // app itself, so "frontmost" afterwards is true by construction.
             // Mail dictation never presses Return — it writes a mail, it sends nothing.
-            let returnDecision = source == .mail ? .skip : DictationSettings.autoReturnDecision(
+            // Antwort-Taste ohne Vorschau (Funktion lehnte ab): auch kein Return.
+            let returnDecision = source == .mail || source == .reply ? .skip : DictationSettings.autoReturnDecision(
                 raw: raw,
                 inserted: final,
                 // Notes is Tippi's own editor: never a Return target.

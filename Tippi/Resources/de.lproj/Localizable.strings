@@ -922,3 +922,38 @@ Wenn MLX dein Standard-Anbieter ist, läuft der Server beim App-Start schon vorg
 "dictation.toast.correctionWriteUnverified" = "Einfügen konnte nicht bestätigt werden — prüfe das Textfeld.";
 
 "popup.hint" = "Prompt wählen oder tippen";
+
+/* Antwort per Sprache (Labs) */
+"hotkeyName.reply" = "Antwort per Sprache";
+"hotkeyName.mailDictation" = "Diktat für Mails";
+"dictation.indicator.recordingReply" = "Antwort diktieren";
+"reply.window.title" = "Antwort";
+"reply.header.mail" = "Antwort auf Mail";
+"reply.header.chat" = "Antwort auf Nachricht";
+"reply.language.help" = "Sprache der Antwort. Ein Wechsel schreibt die Antwort neu.";
+"reply.loading" = "Lokales Modell schreibt die Antwort …";
+"reply.retry" = "Erneut versuchen";
+"reply.cancel" = "Abbrechen";
+"reply.regenerate" = "Neu schreiben";
+"reply.insert" = "Einfügen";
+"reply.context.none" = "Kein Kontext gefunden – geschrieben nur aus deiner Absicht.";
+"reply.context.secureInput" = "Kontext nicht gelesen: Ein Passwortfeld oder die sichere Eingabe ist aktiv.";
+"reply.context.selection" = "Markierung";
+"reply.context.window" = "Fenstertext";
+"reply.context.used %@ %lld" = "Benutzter Kontext: %1$@, %2$lld Zeichen";
+"reply.placeholder" = "Der Entwurf enthält einen Platzhalter in eckigen Klammern – bitte vor dem Einfügen ersetzen.";
+"reply.toast.needsLocalModel" = "Antwort per Sprache braucht Tippis lokales MLX-Modell. Diktat wurde normal eingefügt.";
+"reply.toast.inserted" = "Antwort eingefügt";
+"reply.error.empty" = "Das Modell hat keine Antwort geliefert.";
+"settings.reply.enable" = "Antwort per Sprache";
+"settings.reply.body" = "Diktiere, was du antworten willst („sag zu, dass ich Donnerstag komme“). Tippi liest die Markierung oder den Text des Fensters, schreibt mit dem lokalen Modell eine Antwort und zeigt sie zuerst in einer Vorschau. Nur lokal (MLX), nie in der Cloud, nie mit Apple Intelligence. Nichts wird gespeichert. Nie in Terminals, Code-Editoren und Passwortmanagern.";
+"settings.reply.needsMLX" = "Braucht ein lokales MLX-Modell (Einstellungen → KI-Anbieter → MLX).";
+"settings.reply.hotkey" = "Eigene Taste";
+"settings.reply.prefix" = "Vorwort";
+"settings.reply.variants" = "Weitere Schreibweisen";
+"settings.reply.variants.placeholder" = "z. B. Hey Tippy, He Tipi";
+"settings.reply.name" = "Name im Gruß";
+"settings.reply.name.placeholder" = "Vorname";
+"settings.reply.prefix.body" = "Beginnt ein normales Diktat mit dem Vorwort (in den ersten drei Wörtern), wird daraus eine Antwort. Leeres Vorwort: nur die Taste. Den Gruß mit deinem Namen setzt Tippi bei Mails selbst darunter.";
+"settings.help.replyTitle" = "Antwort per Sprache (Labs)";
+"settings.help.replyBody" = "Einschalten unter Einstellungen → Diktat → Antwort per Sprache. Öffne die Mail oder den Chat, auf den du antworten willst (oder markiere die Nachricht), drücke ⌃⌥⌘A und sag, was du antworten willst, z. B. „sag zu, dass ich Donnerstag um zehn komme“. Alternativ beginnst du ein normales Diktat mit „Hey Tippi“. Tippi schreibt die Antwort mit dem lokalen MLX-Modell in der Sprache der Nachricht und zeigt sie in einer Vorschau: dort kannst du sie bearbeiten, die Sprache wechseln, neu schreiben lassen (⌘R) oder einfügen (⌘↩). Bei Mails setzt Tippi Gruß und Namen darunter. Prüfe Uhrzeiten und Zusagen vor dem Einfügen. Die Funktion nutzt nie einen Cloud-Anbieter und speichert nichts.";

@@ -66,6 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let dictationHotkeyManager = HotkeyManager(id: 2)
     /// Siebter Carbon-Hotkey (id 7): „Diktat für Mails" — gleiches Diktat, Layout immer an.
     let mailDictationHotkeyManager = HotkeyManager(id: 7)
+    let replyHotkeyManager = HotkeyManager(id: 10)
     /// Shares the single `audioRecorder` instance — two separate recorders on
     /// the same audio hardware/temp file could otherwise collide (dictation
     /// hotkey vs. popup mic). `lazy` so it can reference `audioRecorder`.
@@ -1632,6 +1633,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Same preconditions as the mail hot key — every path that changes them lands here.
         defer {
             restartMailDictationHotkey()
+            restartReplyHotkey()
             restartVoiceNoteHotkey()
         }
         dictationHotkeyManager.stop()
@@ -1697,6 +1699,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             NSLog("Tippi: dictation hot key registered (tap or hold \(modifier.displayName))")
         }
+    }
+
+    /// „Antwort per Sprache" (⌃⌥⌘A ab Werk, Labs). Wie das Mail-Diktat nur mit
+    /// eingeschaltetem Diktat und bereiter Engine, dazu die Funktion selbst an.
+    func restartReplyHotkey() {
+        replyHotkeyManager.stop()
+        guard DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady,
+              ReplySettings.isEnabled, ReplySettings.hotkeyEnabled else {
+            NSLog("Tippi: reply hot key inactive")
+            return
+        }
+        let combo = ReplySettings.combo
+        if let taken = MailDictationSettings.conflict(of: combo, in: ReplySettings.takenCombos()) {
+            NSLog("Tippi: reply hot key not registered — \(combo.displayString) already used by \(taken)")
+            return
+        }
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
+        replyHotkeyManager.update(trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags))
+        replyHotkeyManager.start { [weak self] in
+            guard let self else { return }
+            Task { @MainActor in
+                await self.dictationController.toggle(targetApp: self.resolvedSourceAppForCapture(), source: .reply)
+            }
+        }
+        NSLog("Tippi: reply hot key registered (\(combo.displayString))")
     }
 
     /// „Diktat für Mails" (⌃⌥⌘B ab Werk). Nur mit eingeschaltetem Diktat und bereiter

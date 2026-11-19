@@ -65,6 +65,9 @@ struct DictationHotkeySection: View {
 
                 Divider().padding(.vertical, 4)
                 MailDictationHotkeyControls()
+
+                Divider().padding(.vertical, 4)
+                ReplySettingsSection()
             }
         }
     }

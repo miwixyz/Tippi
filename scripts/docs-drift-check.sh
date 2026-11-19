@@ -257,7 +257,8 @@ for feature in $hotkeys; do
     translate) needle="translat" ;;     # deckt "translation" und "Translate"
     emoji)     needle="emoji" ;;
     notes)     needle="Notes" ;;
-    voiceNote) needle="Voice note" ;;  # ⌃⌥⌘N (2.39), Sprachnotiz an „Eingang“
+    voiceNote) needle="Voice note" ;;
+    reply)     needle="Reply by voice" ;;  # ⌃⌥⌘A (Labs), Antwort per Sprache  # ⌃⌥⌘N (2.39), Sprachnotiz an „Eingang“
     screenOCR) needle="OCR" ;;
     main)      needle="rewriting" ;;   # das KI-Umschreiben, Tippis Kernfeature
     pause)     needle="Pause" ;;       # ⌃⌥⌘P (2.29), Zeile „Silence the helpers“
