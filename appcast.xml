@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.42.1</title>
+            <pubDate>Fri, 20 Nov 2026 00:57:45 +0100</pubDate>
+            <sparkle:version>736</sparkle:version>
+            <sparkle:shortVersionString>2.42.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>„Port 8080 ist von einem anderen Programm belegt“ nach einem harten Beenden.</b> Wurde Tippi per <code>kill</code> beendet, etwa durch ein Skript, blieb Tippis lokaler MLX-Server zurück und blockierte den Port. Die nächste Tippi meldete ihn dann als fremd, bis man ihn von Hand beendete. Jetzt beendet sich Tippi auch dabei ordentlich und nimmt ihren Server mit. Ein schon verwaister Server wird beim nächsten Start erkannt und ersetzt, auch wenn er über <code>uvx</code> gestartet wurde.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.42.1/Tippi-2.42.1.dmg" length="26648745" type="application/octet-stream" sparkle:edSignature="25GAPHN2LCod3eK3taHm6jwaNTtNCrErGKJzYGXwMXXpFpRb5ZJy0ItH2RR1On683WJ/lfISRlsYnhUbdZXXBw=="/>
+        </item>
+        <item>
             <title>2.42.0</title>
             <pubDate>Fri, 20 Nov 2026 00:24:52 +0100</pubDate>
             <sparkle:version>729</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Abgeschnittene Antworten von Ollama werden erkannt.</b> Bricht eine Antwort am Längen-Limit des Modells ab, meldet Tippi das jetzt auch bei Ollama, wie bei allen anderen Anbietern. Bisher setzte Tippi die halbe Antwort ein, als wäre sie fertig. Ältere Ollama-Versionen, die keinen Abbruchgrund schicken, funktionieren wie bisher.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.7/Tippi-2.41.7.dmg" length="25991228" type="application/octet-stream" sparkle:edSignature="zhQ89Pq9otJ3IezuDMmFHI3LJ1OrrJ2NSQ7INfayzE5JaDx+UW8h6g9T4+u67om2g2ID7r2BtxUiYCF1vWA8BQ=="/>
-        </item>
-        <item>
-            <title>2.41.6</title>
-            <pubDate>Wed, 18 Nov 2026 18:24:41 +0100</pubDate>
-            <sparkle:version>715</sparkle:version>
-            <sparkle:shortVersionString>2.41.6</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Ein Tastenkürzel-Feld nimmt nach dem Schließen der Einstellungen nichts mehr auf.</b> Hast du auf ein Kürzel-Feld geklickt und die Einstellungen geschlossen, ohne eine Taste zu drücken, wartete das Feld weiter. Die nächste ⌘-Kombination in einem anderen Tippi-Fenster, etwa ⌘V in den Notizen, wurde dann als neues globales Kürzel gespeichert. Jetzt endet die Aufnahme mit dem Fenster, beim nächsten Öffnen steht das Feld wieder auf dem alten Kürzel. Gilt auch für das Feld der Sondertaste.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.6/Tippi-2.41.6.dmg" length="25990109" type="application/octet-stream" sparkle:edSignature="OALR57keTGQsImyOLgVsisOvleEA8ghWf95r6JzogQihw50R9ETGW0OXHofuSs7QC+H8pF/vmUpDj93G++EoDg=="/>
         </item>
     </channel>
 </rss>
