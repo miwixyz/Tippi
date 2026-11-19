@@ -165,7 +165,7 @@ not move with the code. Compared against the previous tag:
 | If this changed | then this must have changed |
 |---|---|
 | a new `.swift` file was added | `ARCHITECTURE.md` lists it |
-| `Tippi/UI`, `Tippi/Core`, `Tippi/LLM` | some `settings.help.*Body` other than What's New, in **both** languages |
+| `Tippi/UI`, `Tippi/Core`, `Tippi/LLM` | some `settings.help.*Body` other than What's New, in **both** languages (compared as parsed values, so a change in a multi-line Help text counts) |
 | `Makefile` or `scripts/` | `CONTRIBUTING.md` |
 | `Tippi/UI` or `Tippi/Core` | `README.md` **and** `docs/index.html` |
 
