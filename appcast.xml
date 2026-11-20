@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.43.0</title>
+            <pubDate>Fri, 20 Nov 2026 13:07:52 +0100</pubDate>
+            <sparkle:version>742</sparkle:version>
+            <sparkle:shortVersionString>2.43.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hängender iCloud-Upload wird sichtbar.</b> Liegt eine Notiz länger als eine Minute nur auf diesem Mac, zeigt die Leiste unter dem Notiz-Editor in Orange „Nicht in iCloud: n“. Ein Hinweis beim Darüberfahren sagt, was zu prüfen ist. Bisher fiel das nicht auf: Andere Geräte und TippAI sahen die Änderung einfach nicht. Dieselbe Regel wie in TippAI.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.43.0/Tippi-2.43.0.dmg" length="26685597" type="application/octet-stream" sparkle:edSignature="lWRfN5cBMAz3EnHzSdBAgJbVuvwGhGsknuUYmB2yee+SuWfFp/SH6WqWMmWu3WmpZ9xQtSkh+C4Y117QKxksDg=="/>
+        </item>
+        <item>
             <title>2.42.1</title>
             <pubDate>Fri, 20 Nov 2026 00:57:45 +0100</pubDate>
             <sparkle:version>736</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Antwort per Sprache (Labs, ab Werk aus).</b> ⌃⌥⌘A drücken oder ein normales Diktat mit „Hey Tippi“ beginnen und sagen, was du antworten willst, etwa „sag zu, dass ich Donnerstag um zehn komme“. Tippi liest die markierte Nachricht, sonst den Text des vorderen Fensters (höchstens die letzten 3.000 Zeichen), und schreibt die Antwort nur mit Tippis eigenem lokalen MLX-Modell, nie mit einem Cloud-Anbieter. Die Antwort steht in der Sprache der Nachricht und hält deren Ton und Förmlichkeit; bei Mails setzt Tippi Gruß und deinen Namen darunter. Eingefügt wird erst nach deinem Klick in der Vorschau: dort kannst du den Text bearbeiten, die Sprache wechseln (DE/ES/EN), neu schreiben lassen (⌘R) oder einfügen (⌘↩). Einschalten unter Einstellungen → Hotkeys, im Diktat-Kasten. Ausprobiert in Apple Mail, Gmail in Helium und WhatsApp.</li><li><b>Bereich wählen.</b> Stimmt der gelesene Kontext nicht, ziehst du in der Vorschau einen Rahmen um die Nachricht. Tippi liest den Text darin per Texterkennung und schreibt die Antwort neu.</li><li><b>Stream Deck:</b> Eine Diktat-Taste kann jetzt die Art „Antwort per Sprache“ haben.</li><li><b>Pille:</b> Mit Live-Text (Parakeet) zeigt sie den Antwortpfeil, sobald „Hey Tippi“ erkannt ist.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.42.0/Tippi-2.42.0.dmg" length="26645917" type="application/octet-stream" sparkle:edSignature="m49PZYWp2xq+1LD3Db4pcco3ZNUfYInG2isdCn+fidRaodnjw5sYpbYCeI2pDTAdyQbQTeaTxV83tuWmcvHwAQ=="/>
-        </item>
-        <item>
-            <title>2.41.7</title>
-            <pubDate>Wed, 18 Nov 2026 18:51:57 +0100</pubDate>
-            <sparkle:version>720</sparkle:version>
-            <sparkle:shortVersionString>2.41.7</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Abgeschnittene Antworten von Ollama werden erkannt.</b> Bricht eine Antwort am Längen-Limit des Modells ab, meldet Tippi das jetzt auch bei Ollama, wie bei allen anderen Anbietern. Bisher setzte Tippi die halbe Antwort ein, als wäre sie fertig. Ältere Ollama-Versionen, die keinen Abbruchgrund schicken, funktionieren wie bisher.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.41.7/Tippi-2.41.7.dmg" length="25991228" type="application/octet-stream" sparkle:edSignature="zhQ89Pq9otJ3IezuDMmFHI3LJ1OrrJ2NSQ7INfayzE5JaDx+UW8h6g9T4+u67om2g2ID7r2BtxUiYCF1vWA8BQ=="/>
         </item>
     </channel>
 </rss>
