@@ -64,6 +64,15 @@ struct NotesEditorView: View {
                 if store.noteBeingEdited == note.id { store.noteBeingEdited = nil }
                 // The held-back change was skipped by live sync, not queued —
                 // reload so "applied once you leave this note" actually happens.
+                if store.pendingUploadCount > 0 {
+                    Label(String(format: String(localized: "notes.uploadPending"), store.pendingUploadCount),
+                          systemImage: "icloud.and.arrow.up")
+                        .font(FamilyTheme.font(.caption))
+                        .foregroundStyle(.orange)
+                        .lineLimit(1)
+                        .help(String(localized: "notes.uploadPending.help"))
+                }
+
                 if store.heldBackExternalEdit { store.refresh() }
             }
 

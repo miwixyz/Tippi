@@ -36,6 +36,11 @@ final class NotesStore: ObservableObject {
 
     @Published private(set) var notes: [Note] = []
     @Published private(set) var isUsingiCloud: Bool = false
+    /// Notes iCloud has not uploaded for over a minute. Makes a silently stuck
+    /// upload visible — measured 2026-11-20: iCloud Drive had no cellular data
+    /// on the iPhone, edits sat there for two days and nothing said so.
+    @Published private(set) var pendingUploadCount = 0
+    private var uploadWatch: Task<Void, Never>?
     /// Erster `refresh()` ist durch. Vorher ist `notes` leer – wer per Titel sucht (Sprachnotiz „Eingang“),
     /// würde sonst eine zweite Notiz anlegen.
     @Published private(set) var hasLoaded = false
@@ -210,13 +215,66 @@ final class NotesStore: ObservableObject {
     /// directory has no second writer, so watching it would cost work and
     /// report nothing.
     private func startLiveSync(in directory: URL, enabled: Bool) {
-        guard enabled else { liveSync?.stop(); liveSync = nil; return }
+        guard enabled else {
+            liveSync?.stop(); liveSync = nil
+            uploadWatch?.cancel(); uploadWatch = nil
+            pendingUploadCount = 0
+            return
+        }
+        startUploadWatchIfNeeded()
         if liveSync == nil {
             liveSync = NotesLiveSync { [weak self] urls in
                 self?.applyExternalChanges(at: urls)
             }
         }
         liveSync?.start(watching: directory)
+    }
+
+    /// Re-checks every 30 s. Finishing an upload raises no file event, so
+    /// `NotesLiveSync` alone never notices it.
+    private func startUploadWatchIfNeeded() {
+        guard uploadWatch == nil else { return }
+        uploadWatch = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let directory = self?.currentDirectory else { return }
+                let count = await Task.detached(priority: .utility) {
+                    NotesStore.pendingUploadCount(in: directory, now: Date())
+                }.value
+                guard !Task.isCancelled, let self else { return }
+                if self.pendingUploadCount != count { self.pendingUploadCount = count }
+                try? await Task.sleep(for: .seconds(30))
+            }
+        }
+    }
+
+    /// Counts note files iCloud reports as not uploaded and older than
+    /// `minimumAge` — a fresh save needs a few seconds and must not flash the
+    /// warning. Files outside iCloud report no upload state and never count.
+    /// Same rule as TippAI (`NotesStore.pendingUploadCount`), both read this folder.
+    nonisolated static func pendingUploadCount(
+        in directory: URL,
+        now: Date,
+        minimumAge: TimeInterval = 60,
+        uploadState: (URL) -> (isUploaded: Bool?, modifiedAt: Date?) = NotesStore.uploadState(of:)
+    ) -> Int {
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil
+        ) else { return 0 }
+        return files.filter { url in
+            guard url.pathExtension == fileExtension else { return false }
+            let state = uploadState(url)
+            guard state.isUploaded == false else { return false }
+            guard let modified = state.modifiedAt else { return true }
+            return now.timeIntervalSince(modified) >= minimumAge
+        }.count
+    }
+
+    nonisolated static func uploadState(of url: URL) -> (isUploaded: Bool?, modifiedAt: Date?) {
+        let values = try? url.resourceValues(forKeys: [
+            .isUbiquitousItemKey, .ubiquitousItemIsUploadedKey, .contentModificationDateKey
+        ])
+        guard values?.isUbiquitousItem == true else { return (nil, values?.contentModificationDate) }
+        return (values?.ubiquitousItemIsUploaded, values?.contentModificationDate)
     }
 
     /// Folds externally changed files into the list. **Upsert only — this never

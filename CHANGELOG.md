@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Neu
+- **Hängender iCloud-Upload wird sichtbar.** Liegt eine Notiz länger als eine Minute nur auf diesem Mac, zeigt die Leiste unter dem Notiz-Editor in Orange „Nicht in iCloud: n“. Ein Hinweis beim Darüberfahren sagt, was zu prüfen ist. Bisher fiel das nicht auf: Andere Geräte und TippAI sahen die Änderung einfach nicht. Dieselbe Regel wie in TippAI.
+
+### Intern
+- `NotesStore.pendingUploadCount` liest `ubiquitousItemIsUploadedKey` alle 30 s, weil ein fertiger Upload kein Dateiereignis für `NotesLiveSync` auslöst. Anlass 2026-11-20: Mobilfunk für iCloud Drive war am iPhone aus. 983 Tests.
+
 ## [2.42.1] — 2026-11-20
 
 ### Behoben
