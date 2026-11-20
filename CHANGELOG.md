@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.43.0] — 2026-11-20
+
+- _Add release notes here._
+
 ## [Unreleased]
 
 ### Neu
