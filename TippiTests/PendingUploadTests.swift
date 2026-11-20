@@ -22,7 +22,7 @@ final class PendingUploadTests: XCTestCase {
     }
 
     func testCountsOnlyStaleNotUploadedNotes() {
-        let count = NotesStore.pendingUploadCount(in: dir, now: now) { url in
+        let count = NotesUploadState.pendingCount(in: dir, now: now) { url in
             let name = url.lastPathComponent
             if name.hasPrefix("alt") { return (false, self.now.addingTimeInterval(-3600)) }
             if name.hasPrefix("frisch") { return (false, self.now.addingTimeInterval(-5)) }
@@ -33,10 +33,10 @@ final class PendingUploadTests: XCTestCase {
     }
 
     func testLocalFolderNeverCountsAsPending() {
-        XCTAssertEqual(NotesStore.pendingUploadCount(in: dir, now: now), 0)
+        XCTAssertEqual(NotesUploadState.pendingCount(in: dir, now: now), 0)
     }
 
     func testMissingFolderCountsZero() {
-        XCTAssertEqual(NotesStore.pendingUploadCount(in: dir.appendingPathComponent("fehlt"), now: now), 0)
+        XCTAssertEqual(NotesUploadState.pendingCount(in: dir.appendingPathComponent("fehlt"), now: now), 0)
     }
 }

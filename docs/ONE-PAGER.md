@@ -60,6 +60,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Stuck uploads show (v2.43)** — if a note has been on this Mac only for over a minute, the notes editor footer says “Not in iCloud” in orange, same rule as TippAI on iPhone.
 - **Reply by voice (v2.42)** — ⌃⌥⌘A or “Hey Tippi …” (Labs): Tippi reads the message and drafts the reply with its local model only; preview before insert, pick area, Stream Deck key.
 - **Stream Deck (v2.41)** — an own plugin for Elgato Stream Deck: dictation (start/stop or hold, with modes), prompts on the selection, translate, emoji, notes, quick note, screen text, password, pause, autocomplete, language. Dials on the Stream Deck + pick the dictation mode and browse prompts. Profiles for Stream Deck + and Neo. Off by default; only Tippi's own signed plugin started by Stream Deck is accepted.
 - **One look (v2.40)** — popup, emoji, selection bar, toast and recording pill share one calm design. Keys unchanged.

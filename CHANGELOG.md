@@ -2,10 +2,6 @@
 
 ## [2.43.0] — 2026-11-20
 
-- _Add release notes here._
-
-## [Unreleased]
-
 ### Neu
 - **Hängender iCloud-Upload wird sichtbar.** Liegt eine Notiz länger als eine Minute nur auf diesem Mac, zeigt die Leiste unter dem Notiz-Editor in Orange „Nicht in iCloud: n“. Ein Hinweis beim Darüberfahren sagt, was zu prüfen ist. Bisher fiel das nicht auf: Andere Geräte und TippAI sahen die Änderung einfach nicht. Dieselbe Regel wie in TippAI.
 

@@ -216,10 +216,7 @@ final class NotesStore: ObservableObject {
     /// report nothing.
     private func startLiveSync(in directory: URL, enabled: Bool) {
         guard enabled else {
-            liveSync?.stop(); liveSync = nil
-            uploadWatch?.cancel(); uploadWatch = nil
-            pendingUploadCount = 0
-            return
+            liveSync?.stop(); liveSync = nil; uploadWatch?.cancel(); uploadWatch = nil; pendingUploadCount = 0; return
         }
         startUploadWatchIfNeeded()
         if liveSync == nil {
@@ -237,44 +234,12 @@ final class NotesStore: ObservableObject {
         uploadWatch = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let directory = self?.currentDirectory else { return }
-                let count = await Task.detached(priority: .utility) {
-                    NotesStore.pendingUploadCount(in: directory, now: Date())
-                }.value
+                let count = await Task.detached(priority: .utility) { NotesUploadState.pendingCount(in: directory, now: Date()) }.value
                 guard !Task.isCancelled, let self else { return }
                 if self.pendingUploadCount != count { self.pendingUploadCount = count }
                 try? await Task.sleep(for: .seconds(30))
             }
         }
-    }
-
-    /// Counts note files iCloud reports as not uploaded and older than
-    /// `minimumAge` — a fresh save needs a few seconds and must not flash the
-    /// warning. Files outside iCloud report no upload state and never count.
-    /// Same rule as TippAI (`NotesStore.pendingUploadCount`), both read this folder.
-    nonisolated static func pendingUploadCount(
-        in directory: URL,
-        now: Date,
-        minimumAge: TimeInterval = 60,
-        uploadState: (URL) -> (isUploaded: Bool?, modifiedAt: Date?) = NotesStore.uploadState(of:)
-    ) -> Int {
-        guard let files = try? FileManager.default.contentsOfDirectory(
-            at: directory, includingPropertiesForKeys: nil
-        ) else { return 0 }
-        return files.filter { url in
-            guard url.pathExtension == fileExtension else { return false }
-            let state = uploadState(url)
-            guard state.isUploaded == false else { return false }
-            guard let modified = state.modifiedAt else { return true }
-            return now.timeIntervalSince(modified) >= minimumAge
-        }.count
-    }
-
-    nonisolated static func uploadState(of url: URL) -> (isUploaded: Bool?, modifiedAt: Date?) {
-        let values = try? url.resourceValues(forKeys: [
-            .isUbiquitousItemKey, .ubiquitousItemIsUploadedKey, .contentModificationDateKey
-        ])
-        guard values?.isUbiquitousItem == true else { return (nil, values?.contentModificationDate) }
-        return (values?.ubiquitousItemIsUploaded, values?.contentModificationDate)
     }
 
     /// Folds externally changed files into the list. **Upsert only — this never
