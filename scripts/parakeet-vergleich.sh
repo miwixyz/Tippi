@@ -3,6 +3,16 @@
 #
 #   bash scripts/parakeet-vergleich.sh <ordner> [--modelle v3,ultra] [--sprache de|auto] [--laden] [--texte]
 #   bash scripts/parakeet-vergleich.sh --eichsatz <ordner>
+#   bash scripts/parakeet-vergleich.sh <ordner> --modelle v3 --vokabular scripts/parakeet-vergleich/vokabular-beispiel.txt --texte
+#
+# --vokabular (2026-11-21, Anlass Hex): misst zusaetzlich FluidAudios CTC-Vokabular-Boosting
+# (VocabularyBoostingSession, CTC 110M ≈ 98 MB) in zwei Stufen — „Std“ (FluidAudio-Standard)
+# und „Dikt“ (cbw 0, Aehnlichkeit 0,7) — auf derselben Erkennung, plus Namens-Trefferquote
+# und „falsch eingesetzt“ (ein richtig gehoertes Wort wurde zum Namen gemacht).
+# Basiswerte 2026-11-21, MacBook Air M5, 10 synthetische Saetze (Anna, NUR Eichung), v3:
+#   ohne Boosting  WER 11,4 % · Namen 3/12 · falsch 0 · 0,17 s je Satz
+#   Std            WER  3,8 % · Namen 10/12 · falsch 1 („Tipps“ → „Tippi“) · +0,06 s
+#   Dikt           WER  8,6 % · Namen 5/12 · falsch 0 · +0,06 s
 #
 # <ordner> enthaelt Paare name.wav + name.txt (Referenztext). Fehlende Modelle werden nur
 # mit --laden heruntergeladen (v3 ≈ 470 MB, Ultra ≈ 630 MB; Ablage wie bei Tippi unter

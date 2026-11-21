@@ -9,8 +9,8 @@ let package = Package(
     name: "parakeet-vergleich",
     platforms: [.macOS(.v15)],
     dependencies: [
-        // Gleiche Mindestversion wie die App (project.yml).
-        .package(url: "https://github.com/FluidInference/FluidAudio", from: "0.17.3"),
+        // Gleiche Version wie die App (Package.resolved, 0.18.3).
+        .package(url: "https://github.com/FluidInference/FluidAudio", exact: "0.18.3"),
     ],
     targets: [
         .target(name: "Wortfehler"),

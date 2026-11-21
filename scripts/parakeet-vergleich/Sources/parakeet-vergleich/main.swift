@@ -21,6 +21,10 @@ struct Optionen {
     var sprache: Language? = .german
     var laden = false
     var texte = false
+    /// Vokabeldatei (`Begriff: Variante, Variante`). Gesetzt → je Modell drei
+    /// Varianten: ohne Boosting, Boosting mit FluidAudio-Standardschwellen,
+    /// Boosting mit Diktat-Schwellen (cbw 0, Ähnlichkeit 0,7, FluidAudio #967).
+    var vokabular: URL?
 }
 
 func hilfe() -> Never {
@@ -32,6 +36,9 @@ func hilfe() -> Never {
       --sprache   Sprachhinweis wie in Tippi, Standard: de; auto = ohne Hinweis
       --laden     Fehlende Modelle herunterladen (v3 ≈ 470 MB, Ultra ≈ 630 MB)
       --texte     Erkannten Text je Datei mit ausgeben
+      --vokabular Datei mit Begriffen (eine Zeile je Begriff, Varianten nach „:“);
+                  misst zusätzlich CTC-Vokabular-Boosting (lädt CTC 110M ≈ 98 MB)
+                  und zählt Namenstreffer
     """)
     exit(2)
 }
@@ -69,6 +76,10 @@ func leseOptionen() -> Optionen {
             }
         case "--laden": opt.laden = true
         case "--texte": opt.texte = true
+        case "--vokabular":
+            guard let wert = args.first else { hilfe() }
+            args.removeFirst()
+            opt.vokabular = URL(fileURLWithPath: wert)
         default: hilfe()
         }
     }
@@ -108,9 +119,26 @@ struct Messung {
     var ergebnis: Wortfehler.Ergebnis
     var rechenzeit: Double
     var text: String
+    var namen = Namen.Bilanz()
 }
 
-func messe(_ version: AsrModelVersion, paare: [Paar], opt: Optionen) async throws -> (laden: Double, je: [Messung]) {
+/// Eine Spalte der Auswertung: Modell, optional mit Boosting-Sitzung.
+struct Variante {
+    let version: AsrModelVersion
+    let boost: (titel: String, schwellen: VocabularyBoostingSession.Thresholds)?
+    var titel: String { name(version) + (boost.map { "+" + $0.titel } ?? "") }
+}
+
+/// Boosting-Stufen. „Std“ = FluidAudio-Standard (auf Trefferquote getrimmt),
+/// „Dikt“ = Empfehlung für Diktat, wo ein falsch ersetztes Wort mehr kostet
+/// als ein verpasster Name (VocabularyBoostingSession.Thresholds-Doku, #967).
+let boostStufen: [(titel: String, schwellen: VocabularyBoostingSession.Thresholds)] = [
+    ("Std", .default),
+    ("Dikt", .init(cbw: 0, minSimilarity: 0.7)),
+]
+
+func messe(_ version: AsrModelVersion, paare: [Paar], opt: Optionen,
+           vokabular: CustomVocabularyContext?, begriffe: [String]) async throws -> [(Variante, Double, [Messung])] {
     let ordner = AsrModels.defaultCacheDirectory(for: version)
     if !AsrModels.modelsExist(at: ordner, version: version) {
         guard opt.laden else {
@@ -126,24 +154,54 @@ func messe(_ version: AsrModelVersion, paare: [Paar], opt: Optionen) async throw
     try await manager.loadModels(modelle)
     let laden = Date().timeIntervalSince(start)
 
-    // Aufwärmen: der erste Durchlauf auf der Neural Engine ist langsamer. Gilt
-    // für beide Modelle gleich und gehört nicht in die Rechenzeit je Datei.
-    if let erstes = paare.first {
-        var zustand = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
-        _ = try? await manager.transcribe(erstes.wav, decoderState: &zustand, language: opt.sprache)
+    // Boosting-Sitzungen: gleiche Erkennung, danach je Stufe neu bewertet. So
+    // vergleichen die Spalten nur die Nachbewertung, nicht zwei Läufe des Modells.
+    var sitzungen: [(Variante, VocabularyBoostingSession)] = []
+    if let vokabular {
+        let ctc = try await CtcModels.downloadAndLoad(variant: .ctc110m)
+        for stufe in boostStufen {
+            let sitzung = try await VocabularyBoostingSession(vocabulary: vokabular, ctcModels: ctc, thresholds: stufe.schwellen)
+            sitzungen.append((Variante(version: version, boost: stufe), sitzung))
+        }
     }
 
-    var je: [Messung] = []
-    for paar in paare {
+    let konverter = AudioConverter()
+    let audio = try paare.map { try konverter.resampleAudioFile($0.wav) }
+
+    // Aufwärmen: der erste Durchlauf auf der Neural Engine ist langsamer. Gilt
+    // für beide Modelle gleich und gehört nicht in die Rechenzeit je Datei.
+    if let erstes = audio.first {
+        var zustand = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
+        let probe = try? await manager.transcribe(erstes, decoderState: &zustand, language: opt.sprache)
+        for (_, sitzung) in sitzungen {
+            _ = await sitzung.rescore(text: probe?.text ?? "", tokenTimings: probe?.tokenTimings ?? [], audioSamples: erstes)
+        }
+    }
+
+    var ohne: [Messung] = []
+    var mit = Array(repeating: [Messung](), count: sitzungen.count)
+    for (i, paar) in paare.enumerated() {
         var zustand = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
         let t0 = Date()
-        let ergebnis = try await manager.transcribe(paar.wav, decoderState: &zustand, language: opt.sprache)
+        let ergebnis = try await manager.transcribe(audio[i], decoderState: &zustand, language: opt.sprache)
         let dauer = Date().timeIntervalSince(t0)
         let text = ergebnis.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        je.append(Messung(ergebnis: Wortfehler.vergleiche(referenz: paar.referenz, erkannt: text),
-                          rechenzeit: dauer, text: text))
+        func messung(_ t: String, _ zeit: Double) -> Messung {
+            Messung(ergebnis: Wortfehler.vergleiche(referenz: paar.referenz, erkannt: t), rechenzeit: zeit, text: t,
+                    namen: Namen.zaehle(referenz: paar.referenz, erkannt: t, begriffe: begriffe))
+        }
+        ohne.append(messung(text, dauer))
+        for (k, (_, sitzung)) in sitzungen.enumerated() {
+            let t1 = Date()
+            let neu = await sitzung.rescore(text: ergebnis.text, tokenTimings: ergebnis.tokenTimings ?? [], audioSamples: audio[i])
+            let zusatz = Date().timeIntervalSince(t1)
+            let neuText = (neu?.text ?? ergebnis.text).trimmingCharacters(in: .whitespacesAndNewlines)
+            mit[k].append(messung(neuText, dauer + zusatz))
+        }
     }
-    return (laden, je)
+    var aus: [(Variante, Double, [Messung])] = [(Variante(version: version, boost: nil), laden, ohne)]
+    for (k, (variante, _)) in sitzungen.enumerated() { aus.append((variante, laden, mit[k])) }
+    return aus
 }
 
 func prozent(_ wert: Double) -> String { String(format: "%5.1f %%", wert * 100) }
@@ -174,11 +232,28 @@ if !fehlend.isEmpty, !opt.laden {
     exit(1)
 }
 
-var messungen: [(AsrModelVersion, Double, [Messung])] = []
+var vokabular: CustomVocabularyContext?
+var begriffe: [String] = []
+if let datei = opt.vokabular {
+    guard let inhalt = try? String(contentsOf: datei, encoding: .utf8) else {
+        print("✗ Vokabeldatei nicht lesbar: \(datei.path)")
+        exit(1)
+    }
+    let eintraege = Namen.leseVokabular(inhalt)
+    guard !eintraege.isEmpty else {
+        print("✗ Vokabeldatei enthält keine Begriffe: \(datei.path)")
+        exit(1)
+    }
+    begriffe = eintraege.map(\.begriff)
+    vokabular = CustomVocabularyContext(terms: eintraege.map {
+        CustomVocabularyTerm(text: $0.begriff, aliases: $0.varianten.isEmpty ? nil : $0.varianten)
+    })
+}
+
+var messungen: [(Variante, Double, [Messung])] = []
 for version in opt.modelle {
     do {
-        let (laden, je) = try await messe(version, paare: paare, opt: opt)
-        messungen.append((version, laden, je))
+        messungen += try await messe(version, paare: paare, opt: opt, vokabular: vokabular, begriffe: begriffe)
     } catch {
         print("✗ Parakeet \(name(version)): \(error.localizedDescription)")
         exit(1)
@@ -189,21 +264,23 @@ let audioGesamt = paare.reduce(0) { $0 + $1.sekunden }
 print("")
 print("\(paare.count) Dateien, \(sek(audioGesamt)) Audio, Sprachhinweis: \(opt.sprache?.rawValue ?? "auto")")
 var kopf = spalte("Datei", 24) + spalte("Audio", 9)
-for (v, _, _) in messungen { kopf += spalte("WER \(name(v))", 12) + spalte("Zeit \(name(v))", 12) }
+for (v, _, _) in messungen { kopf += spalte("WER \(v.titel)", 15) + spalte("Zeit", 9) }
 print(kopf)
 for (i, paar) in paare.enumerated() {
     var zeile = spalte(paar.name, 24) + spalte(sek(paar.sekunden), 9)
-    for (_, _, je) in messungen { zeile += spalte(prozent(je[i].ergebnis.rate), 12) + spalte(sek(je[i].rechenzeit), 12) }
+    for (_, _, je) in messungen { zeile += spalte(prozent(je[i].ergebnis.rate), 15) + spalte(sek(je[i].rechenzeit), 9) }
     print(zeile)
     if opt.texte {
         print("    Referenz: \(paar.referenz.trimmingCharacters(in: .whitespacesAndNewlines))")
-        for (v, _, je) in messungen { print("    \(spalte(name(v) + ":", 9)) \(je[i].text)") }
+        for (v, _, je) in messungen { print("    \(spalte(v.titel + ":", 12)) \(je[i].text)") }
     }
 }
 print("")
 for (v, laden, je) in messungen {
     let summe = je.reduce(Wortfehler.Ergebnis(fehler: 0, referenzWoerter: 0)) { $0 + $1.ergebnis }
     let zeit = je.reduce(0) { $0 + $1.rechenzeit }
-    print("Gesamt \(spalte(name(v), 6)) WER \(prozent(summe.rate)) (\(summe.fehler) Fehler / \(summe.referenzWoerter) Wörter) · "
-          + "Rechenzeit \(sek(zeit)) (\(String(format: "%.0f", audioGesamt / max(zeit, 0.001)))× Echtzeit) · Laden \(sek(laden))")
+    let namen = je.reduce(Namen.Bilanz()) { $0 + $1.namen }
+    let namenText = begriffe.isEmpty ? "" : " · Namen \(namen.treffer)/\(namen.soll), falsch eingesetzt \(namen.falsch)"
+    print("Gesamt \(spalte(v.titel, 11)) WER \(prozent(summe.rate)) (\(summe.fehler) Fehler / \(summe.referenzWoerter) Wörter) · "
+          + "Rechenzeit \(sek(zeit)) (\(String(format: "%.0f", audioGesamt / max(zeit, 0.001)))× Echtzeit) · Laden \(sek(laden))" + namenText)
 }
