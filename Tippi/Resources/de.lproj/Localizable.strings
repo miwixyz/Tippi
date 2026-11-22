@@ -965,3 +965,18 @@ Meldung „Port 8080 ist von einem anderen Programm belegt“: Einen Server, den
 "settings.reply.prefix.body" = "Beginnt ein normales Diktat mit dem Vorwort (in den ersten drei Wörtern), wird daraus eine Antwort. Leeres Vorwort: nur die Taste. Den Gruß mit deinem Namen setzt Tippi bei Mails selbst darunter.";
 "settings.help.replyTitle" = "Antwort per Sprache (Labs)";
 "settings.help.replyBody" = "Einschalten unter Einstellungen → Hotkeys → Antwort per Sprache (im Diktat-Kasten). Öffne die Mail oder den Chat, auf den du antworten willst (oder markiere die Nachricht), drücke ⌃⌥⌘A und sag, was du antworten willst, z. B. „sag zu, dass ich Donnerstag um zehn komme“. Alternativ beginnst du ein normales Diktat mit „Hey Tippi“. Tippi schreibt die Antwort mit dem lokalen MLX-Modell in der Sprache der Nachricht und zeigt sie in einer Vorschau: dort kannst du sie bearbeiten, die Sprache wechseln, neu schreiben lassen (⌘R) oder einfügen (⌘↩). Stimmt der Kontext nicht, ziehst du mit „Bereich wählen“ einen Rahmen um die Nachricht. Auf dem Stream Deck gibt es dafür die Diktat-Taste mit der Art „Antwort per Sprache“. Bei Mails setzt Tippi Gruß und Namen darunter. Prüfe Uhrzeiten und Zusagen vor dem Einfügen. Die Funktion nutzt nie einen Cloud-Anbieter und speichert nichts.";
+
+/* Desk device (Tippi-Firmware 0.9) */
+"settings.deskDevice.toggle" = "Schreibtischgerät";
+"settings.deskDevice.hint" = "Zeigt den Diktat-Zustand auf Tippis Gesicht am Schreibtischgerät: hört zu, denkt, fertig. Es geht nur das Zustandswort ins Heimnetz, nie Text oder Ton. Jede Meldung ist mit dem Schlüssel signiert.";
+"settings.deskDevice.host" = "Adresse";
+"settings.deskDevice.key" = "Schlüssel (leer = behalten)";
+"settings.deskDevice.save" = "Speichern";
+"settings.deskDevice.test" = "Testen";
+"settings.deskDevice.noKey" = "Schlüssel fehlt";
+"settings.deskDevice.notFound" = "Gerät nicht gefunden";
+"settings.deskDevice.ok" = "Verbunden";
+"settings.deskDevice.rejected" = "Gerät lehnt den Schlüssel ab";
+"settings.deskDevice.error" = "Gerät antwortet mit Fehler %d";
+"settings.deskDevice.badHost" = "Adresse ungültig (nur Name oder IPv4)";
+"settings.deskDevice.badKey" = "Schlüssel ungültig (20–128 Zeichen, keine Leerzeichen)";

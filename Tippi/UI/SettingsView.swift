@@ -184,6 +184,10 @@ private struct GeneralSettingsTab: View {
                 StreamDeckSection(link: link)
             }
 
+            if let app = AppDelegate.shared {
+                DeskDeviceSection(link: app.deskDevice, dictation: app.dictationController)
+            }
+
             Section {
                 Toggle(String(localized: "settings.general.selectionPopup"), isOn: $selectionPopupEnabled)
                     .onChange(of: selectionPopupEnabled) { _, _ in

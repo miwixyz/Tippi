@@ -182,6 +182,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var isHandlingTrigger = false
     /// Stream Deck plugin link (docs/SECURE-DESIGN-stream-deck.md). Socket only while the setting is on.
     let streamDeck = StreamDeckLink()
+    /// Desk gadget (Tippi-Firmware 0.9), off by default.
+    let deskDevice = DeskDeviceLink()
     /// A Stream Deck key is holding a dictation (ends when the key is released or the plugin goes away).
     var deckHoldActive = false
     /// Last AI command from the Stream Deck (cost guard, D5).
@@ -316,6 +318,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         startHotkey()
         wireIdleUnload()
         startStreamDeck()
+        deskDevice.apply(dictation: dictationController)
 
         // Pre-warm the MLX server if it's the user's preferred provider.
         // This avoids a 30–60s wait on first transformation after launch.

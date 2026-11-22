@@ -963,3 +963,18 @@ Message “Port 8080 is used by another program”: since 2.42.1 Tippi clears a 
 "settings.reply.prefix.body" = "If a normal dictation starts with the prefix (within the first three words), it becomes a reply. Empty prefix: hot key only. For emails Tippi adds the sign-off with your name itself.";
 "settings.help.replyTitle" = "Reply by voice (Labs)";
 "settings.help.replyBody" = "Turn it on under Settings → Hotkeys → Reply by voice (in the dictation box). Open the email or chat you want to answer (or select the message), press ⌃⌥⌘A and say what you want to reply, e.g. “say yes, I'll come on Thursday at ten”. Or start a normal dictation with “Hey Tippi”. Tippi writes the reply with the local MLX model in the message's language and shows it in a preview: edit it, switch the language, rewrite (⌘R) or insert (⌘↩). If the context is wrong, “Pick area” lets you drag a frame around the message. On the Stream Deck, set a dictation key to the kind “Reply by voice”. For emails Tippi adds the sign-off and your name. Check times and promises before inserting. The feature never uses a cloud provider and stores nothing.";
+
+/* Desk device (Tippi-Firmware 0.9) */
+"settings.deskDevice.toggle" = "Desk device";
+"settings.deskDevice.hint" = "Shows the dictation state on Tippi’s face on the desk gadget: listening, thinking, done. Only the state word goes into your home network, never text or audio. Each message is signed with the key.";
+"settings.deskDevice.host" = "Address";
+"settings.deskDevice.key" = "Key (empty = keep)";
+"settings.deskDevice.save" = "Save";
+"settings.deskDevice.test" = "Test";
+"settings.deskDevice.noKey" = "Key missing";
+"settings.deskDevice.notFound" = "Device not found";
+"settings.deskDevice.ok" = "Connected";
+"settings.deskDevice.rejected" = "Device rejects the key";
+"settings.deskDevice.error" = "Device answers with error %d";
+"settings.deskDevice.badHost" = "Invalid address (name or IPv4 only)";
+"settings.deskDevice.badKey" = "Invalid key (20–128 characters, no spaces)";
