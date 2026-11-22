@@ -2,7 +2,11 @@
 
 ## [2.44.0] — 2026-11-22
 
-- _Add release notes here._
+### Neu
+- **Schreibtischgerät.** Tippis Schreibtischgerät (ESP32 mit eigener Tippi-Firmware ab 0.9) zeigt den Diktat-Zustand auf Tippis Gesicht: hört zu, denkt, fertig. Einstellungen → Allgemein → „Schreibtischgerät“, ab Werk aus. Ins Heimnetz geht nur das Zustandswort, nie Text, Ton oder App-Namen. Jede Meldung ist mit einem Schlüssel aus dem Schlüsselbund signiert (HMAC-SHA256), das Gerät lehnt alte und wiederholte Meldungen ab.
+
+### Intern
+- `DeskDevice.swift`: folgt `DictationController.state`, Lebenszeichen alle 30 s (das Gerät fällt nach 60 s ohne Meldung in Ruhe zurück), keine Weiterleitungen, Protokoll nur bei geändertem Ergebnis. `tippi.local` wird nur über IPv4 aufgelöst, weil macOS sonst rund 5 s auf eine IPv6-Antwort wartet (gemessen 22.11.: 5,3 s statt 0,18 s). Info.plist: `NSLocalNetworkUsageDescription`, `NSAllowsLocalNetworking`. 986 Tests.
 
 ## [2.43.0] — 2026-11-20
 

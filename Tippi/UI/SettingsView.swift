@@ -1421,6 +1421,8 @@ private struct HelpTab: View {
 
         HelpEntry(id: "streamDeck", icon: "square.grid.3x2", category: .misc,
                   title: String(localized: "settings.help.streamDeckTitle"), body: String(localized: "settings.help.streamDeckBody")),
+        HelpEntry(id: "deskDevice", icon: "display", category: .misc,
+                  title: String(localized: "settings.help.deskDeviceTitle"), body: String(localized: "settings.help.deskDeviceBody")),
         HelpEntry(id: "appearance", icon: "circle.lefthalf.filled", category: .misc,
                   title: String(localized: "settings.help.appearanceTitle"), body: String(localized: "settings.help.appearanceBody")),
         HelpEntry(id: "notes", icon: "note.text", category: .misc,

@@ -9,7 +9,7 @@ final class DeskDeviceTests: XCTestCase {
     func testSignatureMatchesFirmwareFormat() {
         // Same input as tippi-firmware tools/zustand_senden.py: HMAC-SHA256(key, "<time>\n" + body), lower hex
         let body = DeskDeviceSettings.body(.denkt)
-        XCTAssertEqual(String(decoding: body, as: UTF8.self), #"{"z":"denkt"}"#)
+        XCTAssertEqual(String(bytes: body, encoding: .utf8), #"{"z":"denkt"}"#)
         let sig = DeskDeviceSettings.signature(key: "k", time: 1_800_000_000, body: body)
         let expected = HMAC<SHA256>.authenticationCode(for: Data("1800000000\n{\"z\":\"denkt\"}".utf8),
                                                        using: SymmetricKey(data: Data("k".utf8)))
