@@ -146,6 +146,8 @@ Tippi/
 │   │                                       #   `/v1/completions`, Umgehung mlx-lm-Hänger (2 Stücke/Schritt)
 │   │                                       #   Design: docs/SECURE-DESIGN-autocomplete.md
 │   ├── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
+│   ├── DeskDevice.swift            # 2.44 — Schreibtischgerät: Diktat-Zustand signiert (HMAC) an tippi.local,
+│   │                               #   nur IPv4, ab Werk aus. Entwurf: tippi-firmware SICHERHEIT.md „Entwurf 0.9“
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync
 │       ├── Note.swift                      # Model, nicht Codable (1 .txt-Datei/Notiz)
 │       ├── NotesStore.swift                # iCloud-Container + lokaler Fallback, NSFileCoordinator
@@ -161,10 +163,8 @@ Tippi/
 │       ├── PorterFileTasks.swift           # 2.38 — Datei-Aufgaben: liest Porters iCloud-Liste
 │       │                                   #   `Porter/Notizen.json` NUR (nie schreiben), Klick → Porter/Finder.
 │       │                                   #   Design: docs/SECURE-DESIGN-datei-aufgaben.md
-│       ├── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
-│       │                                   #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
-│       └── DeskDevice.swift                # 2.44 — Schreibtischgerät: Diktat-Zustand signiert (HMAC) an tippi.local,
-│                                           #   nur IPv4, ab Werk aus. Entwurf: tippi-firmware SICHERHEIT.md „Entwurf 0.9“
+│       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
+│                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
 ├── Deck/                           # 2.41 — Stream Deck, docs/SECURE-DESIGN-stream-deck.md
 │   ├── DeckWire.swift              # Nachrichtenformat, Allowlist, Rahmen – dieselbe Datei im Plugin TippiDeck
 │   ├── DeckSocketServer.swift      # deck.sock: Peer (eigenes Plugin) + Eltern (Elgato) vor dem ersten Byte
