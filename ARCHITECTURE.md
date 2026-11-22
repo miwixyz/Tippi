@@ -161,8 +161,10 @@ Tippi/
 │       ├── PorterFileTasks.swift           # 2.38 — Datei-Aufgaben: liest Porters iCloud-Liste
 │       │                                   #   `Porter/Notizen.json` NUR (nie schreiben), Klick → Porter/Finder.
 │       │                                   #   Design: docs/SECURE-DESIGN-datei-aufgaben.md
-│       └── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
-│                                           #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
+│       ├── NotesSettings.swift             # Hotkey Enable/Combo (Muster von TranslateSettings),
+│       │                                   #   Seitenleiste ein/aus (⌃⌘S, lokal); `store` für Tests
+│       └── DeskDevice.swift                # 2.44 — Schreibtischgerät: Diktat-Zustand signiert (HMAC) an tippi.local,
+│                                           #   nur IPv4, ab Werk aus. Entwurf: tippi-firmware SICHERHEIT.md „Entwurf 0.9“
 ├── Deck/                           # 2.41 — Stream Deck, docs/SECURE-DESIGN-stream-deck.md
 │   ├── DeckWire.swift              # Nachrichtenformat, Allowlist, Rahmen – dieselbe Datei im Plugin TippiDeck
 │   ├── DeckSocketServer.swift      # deck.sock: Peer (eigenes Plugin) + Eltern (Elgato) vor dem ersten Byte
@@ -239,6 +241,7 @@ Tippi/
 │   ├── DictationCorrectionWindow.swift # Editor für bestätigte Wortgruppen und Verwaltung in Eigene Wörter
 │   ├── SnippetEditorSheet.swift    # Kürzel-Editor (eigene + importierte) + Variablen-Picker
 │   └── StreamDeckSection.swift     # 2.41 — Einstellung „Stream Deck“ + „Plugin installieren“ (Allgemein)
+│   └── DeskDeviceSection.swift     # 2.44 — Einstellung „Schreibtischgerät“: Adresse, Schlüssel, Testen
 ├── Voice/
 │   ├── AudioRecorder.swift         # geteilte Instanz (Diktat, Popup, Translate), AVAudioEngine seit 2.22
 │   ├── AudioCapture.swift          # 16-kHz-Umrechnung, Sample-Speicher, WAV, Formatprüfung (2.22)
