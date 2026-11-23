@@ -61,6 +61,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Last dictation again (v2.45)** — ⌃⌥⌘V writes your last dictation at the cursor once more, if it landed in the wrong place. Memory only, 30 minutes at most, never into a password field.
 - **Desk gadget (v2.44)** — Tippi’s ESP32 desk gadget shows the dictation state on its face: listening, thinking, done. Only the signed state word goes into your home network, never text or audio. Off by default.
 - **Stuck uploads show (v2.43)** — if a note has been on this Mac only for over a minute, the notes editor footer says “Not in iCloud” in orange, same rule as TippAI on iPhone.
 - **Reply by voice (v2.42)** — ⌃⌥⌘A or “Hey Tippi …” (Labs): Tippi reads the message and drafts the reply with its local model only; preview before insert, pick area, Stream Deck key.

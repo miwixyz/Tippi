@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bump only after actually reading this page against the release. docs-drift-check.sh dimension 6. -->
-<meta name="tippi:documented-version" content="2.44.0">
+<meta name="tippi:documented-version" content="2.45.0">
 <title>Tippi: AI writing for macOS, one app instead of eight</title>
 <meta name="description" content="AI writing right at your cursor in any Mac app, plus dictation, translation, snippets, emoji, notes and screen text. One app instead of eight. Open source, BYOK, 8 AI providers, fully local option.">
 <link rel="canonical" href="https://tippi.mwlr.dev/">
@@ -110,7 +110,7 @@
       <span class="app-chip"><span data-lang="en">and any other text field</span><span data-lang="de">und jedem anderen Textfeld</span></span>
     </div>
 
-    <p class="news"><span data-lang="en">New in 2.44: Tippi’s desk gadget shows on its face whether Tippi is listening, thinking or done. Only the signed state word goes into your home network.</span><span data-lang="de">Neu in 2.44: Tippis Schreibtischgerät zeigt auf seinem Gesicht, ob Tippi zuhört, nachdenkt oder fertig ist. Ins Heimnetz geht nur das signierte Zustandswort.</span></p>
+    <p class="news"><span data-lang="en">New in 2.45: ⌃⌥⌘V writes your last dictation at the cursor once more, for when it landed in the wrong place. It stays in memory for 30 minutes at most.</span><span data-lang="de">Neu in 2.45: ⌃⌥⌘V schreibt dein letztes Diktat noch einmal an den Cursor, falls es am falschen Ort gelandet ist. Es bleibt höchstens 30 Minuten im Arbeitsspeicher.</span></p>
   </div>
 </header>
 
@@ -251,6 +251,12 @@
             <h4 data-lang="de">Text live beim Diktieren</h4>
             <p data-lang="en">The recording window shows your words as you speak, in three text sizes and six positions. The same local model writes the final text, so nothing changes when you stop.</p>
             <p data-lang="de">Das Aufnahmefenster zeigt deine Worte schon beim Sprechen, in drei Schriftgrößen und an sechs Stellen. Derselbe lokale Erkenner schreibt den Text, nichts springt um.</p>
+          </li>
+          <li>
+            <h4 data-lang="en">Insert the last dictation again</h4>
+            <h4 data-lang="de">Letztes Diktat erneut einfügen</h4>
+            <p data-lang="en">⌃⌥⌘V writes your last dictation at the cursor once more, for when it landed in the wrong place. It stays in memory only, 30 minutes at most, and never goes into a password field.</p>
+            <p data-lang="de">⌃⌥⌘V schreibt dein letztes Diktat noch einmal an den Cursor, falls es am falschen Ort gelandet ist. Es bleibt nur im Arbeitsspeicher, höchstens 30 Minuten, und geht nie in ein Passwortfeld.</p>
           </li>
           </ul>
         </details>
@@ -508,6 +514,15 @@
           <strong data-lang="de">Diktatkorrekturen bleiben auf diesem Mac</strong>
           <p data-lang="en">Off by default. Tippi stores only the phrases you confirm. The last dictation excerpt stays in memory for up to five minutes.</p>
           <p data-lang="de">Ab Werk aus. Tippi speichert nur die Wortgruppen, die du bestätigst. Der letzte Diktatausschnitt bleibt bis zu fünf Minuten im Arbeitsspeicher.</p>
+        </div>
+      </div>
+      <div class="privacy-item">
+        <div class="check"><svg class="ico" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div>
+          <strong data-lang="en">The last dictation stays in memory only</strong>
+          <strong data-lang="de">Das letzte Diktat bleibt nur im Arbeitsspeicher</strong>
+          <p data-lang="en">On by default. For ⌃⌥⌘V Tippi keeps your last dictation for 30 minutes at most. Never on disk, never in the log, never into a password field.</p>
+          <p data-lang="de">Ab Werk an. Für ⌃⌥⌘V behält Tippi dein letztes Diktat höchstens 30 Minuten. Nie auf der Platte, nie im Protokoll, nie in ein Passwortfeld.</p>
         </div>
       </div>
       <div class="privacy-item">

@@ -28,7 +28,7 @@
 
 ## 2. Modul-Struktur
 
-Stand v2.44.0. Nur die tragenden Dateien — die vollständige Liste liefert
+Stand v2.45.0. Nur die tragenden Dateien — die vollständige Liste liefert
 `find Tippi -name '*.swift' -not -path '*/Helpers/whisper.cpp/*'`.
 
 ```
@@ -146,6 +146,8 @@ Tippi/
 │   │                                       #   `/v1/completions`, Umgehung mlx-lm-Hänger (2 Stücke/Schritt)
 │   │                                       #   Design: docs/SECURE-DESIGN-autocomplete.md
 │   ├── SelectionPopup/             # v2.0 — PopClip-artige Leiste an der Auswahl
+│   ├── LastDictation.swift         # 2.45 — letztes Diktat nur im Arbeitsspeicher (30 Min.), Kürzel ⌃⌥⌘V.
+│   │                               #   Entwurf: docs/SECURE-DESIGN-letztes-diktat.md
 │   ├── DeskDevice.swift            # 2.44 — Schreibtischgerät: Diktat-Zustand signiert (HMAC) an tippi.local,
 │   │                               #   nur IPv4, ab Werk aus. Entwurf: tippi-firmware SICHERHEIT.md „Entwurf 0.9“
 │   └── Notes/                      # v2.3 — Notizen mit iCloud-Sync

@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.45.0] — 2026-11-23
+
+### Neu
+- **Letztes Diktat erneut einfügen.** ⌃⌥⌘V schreibt dein letztes Diktat noch einmal an den Cursor der vordersten App, wenn es am falschen Ort gelandet ist oder du das Textfeld verpasst hast. Ab Werk an; Kürzel und Schalter unter Einstellungen → Hotkeys. Der Text bleibt nur im Arbeitsspeicher, höchstens 30 Minuten, nie auf der Platte und nie im Protokoll, und ist beim Beenden von Tippi weg. Nie in ein Passwortfeld, in Terminals einzeilig und ohne Return. Nicht gemerkt werden Sprachnotiz-Diktat und „Antwort per Sprache“.
+
+### Intern
+- `LastDictation.swift`: ein Eintrag, 30 Minuten, höchstens 100 000 Zeichen, Hotkey-ID 11, `LastDictationSettings` (Schalter an, ⌃⌥⌘V). 15 neue Tests, 1001 gesamt. Entwurf: `docs/SECURE-DESIGN-letztes-diktat.md`. Einfüge-Test am Developer-ID-Testbuild von Michael am 23.11. als bestanden gemeldet.
+
 ## [2.44.0] — 2026-11-22
 
 ### Neu
