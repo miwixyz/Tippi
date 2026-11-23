@@ -195,7 +195,7 @@ and the built-in prompts, every visible version number against
 external scripts or fonts (the privacy policy promises that). Every global hotkey
 must have a row in the comparison tables of `README.md` and `docs/ONE-PAGER.md`; a new
 `HotkeyManager` needs its table word mapped in the script (2.39 added `voiceNote` →
-"Voice note"). The website once
+"Voice note", 2.45 added `lastDictation` → "Last dictation"). The website once
 showed 10 of 11 providers and 22 of 24 prompts while this script reported no
 drift, because it only read prose. `TIPPI_INDEX_HTML=<file>` checks a copy, for
 negative tests. Every `HotkeyManager` in `AppDelegate` must map to a word in the

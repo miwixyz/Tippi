@@ -1455,6 +1455,8 @@ private struct HelpTab: View {
                   title: String(localized: "settings.help.voiceTitle"), body: String(localized: "settings.help.voiceBody")),
         HelpEntry(id: "reply", icon: "arrowshape.turn.up.left", category: .voice,
                   title: String(localized: "settings.help.replyTitle"), body: String(localized: "settings.help.replyBody")),
+        HelpEntry(id: "lastDictation", icon: "arrow.uturn.forward", category: .voice,
+                  title: String(localized: "settings.help.lastDictationTitle"), body: String(localized: "settings.help.lastDictationBody")),
         HelpEntry(id: "translate", icon: "character.bubble", category: .voice,
                   title: String(localized: "settings.help.translateTitle"), body: String(localized: "settings.help.translateBody")),
 
