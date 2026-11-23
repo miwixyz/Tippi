@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.46.0</title>
+            <pubDate>Mon, 23 Nov 2026 17:00:03 +0100</pubDate>
+            <sparkle:version>756</sparkle:version>
+            <sparkle:shortVersionString>2.46.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream-Deck-Taste „Letztes Diktat“.</b> Eine Werkzeug-Taste schreibt das letzte Diktat noch einmal an den Cursor, dasselbe wie ⌃⌥⌘V. In der Stream-Deck-App: Aktion „Werkzeug“ → „Letztes Diktat erneut einfügen“. Das Plugin bekommt den Text nie, es schickt nur den Befehl. Ist die Funktion ausgeschaltet (Einstellungen → Hotkeys), sagt die Taste es. In die mitgelieferten Profile ist sie nicht eingebaut, du ziehst sie selbst auf ein Feld. Nach dem Update das Plugin einmal neu installieren (Einstellungen → Allgemein → Stream Deck → „Plugin installieren …“); Tippi meldet es, wenn das Plugin älter ist.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.46.0/Tippi-2.46.0.dmg" length="26219731" type="application/octet-stream" sparkle:edSignature="5KwhhFY97E1596yyvQ7YkfX9L5VrQzE6Ja35QnpO0wTUiBf0zO1cHUJiU27M9t8uCfiabvWiRLRnwPfDHjl5BQ=="/>
+        </item>
+        <item>
             <title>2.45.0</title>
             <pubDate>Mon, 23 Nov 2026 15:44:33 +0100</pubDate>
             <sparkle:version>753</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Schreibtischgerät.</b> Tippis Schreibtischgerät (ESP32 mit eigener Tippi-Firmware ab 0.9) zeigt den Diktat-Zustand auf Tippis Gesicht: hört zu, denkt, fertig. Einstellungen → Allgemein → „Schreibtischgerät“, ab Werk aus. Ins Heimnetz geht nur das Zustandswort, nie Text, Ton oder App-Namen. Jede Meldung ist mit einem Schlüssel aus dem Schlüsselbund signiert (HMAC-SHA256), das Gerät lehnt alte und wiederholte Meldungen ab.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.44.0/Tippi-2.44.0.dmg" length="26691246" type="application/octet-stream" sparkle:edSignature="OwXIKevplVMBXwzkasYsSIGy3MXsM+Etc+yxnzaAwFzT0Dncw/CkcMB3onZj38jpWuSdCC5/lPZz0EMPOYpdDg=="/>
-        </item>
-        <item>
-            <title>2.43.0</title>
-            <pubDate>Fri, 20 Nov 2026 13:07:52 +0100</pubDate>
-            <sparkle:version>742</sparkle:version>
-            <sparkle:shortVersionString>2.43.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Hängender iCloud-Upload wird sichtbar.</b> Liegt eine Notiz länger als eine Minute nur auf diesem Mac, zeigt die Leiste unter dem Notiz-Editor in Orange „Nicht in iCloud: n“. Ein Hinweis beim Darüberfahren sagt, was zu prüfen ist. Bisher fiel das nicht auf: Andere Geräte und TippAI sahen die Änderung einfach nicht. Dieselbe Regel wie in TippAI.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.43.0/Tippi-2.43.0.dmg" length="26685597" type="application/octet-stream" sparkle:edSignature="lWRfN5cBMAz3EnHzSdBAgJbVuvwGhGsknuUYmB2yee+SuWfFp/SH6WqWMmWu3WmpZ9xQtSkh+C4Y117QKxksDg=="/>
         </item>
     </channel>
 </rss>
