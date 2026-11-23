@@ -45,6 +45,7 @@
       <option value="quickNotes" data-de="Schnellnotiz" data-en="Quick note">Schnellnotiz</option>
       <option value="screenText" data-de="Text vom Bildschirm lesen" data-en="Read text from screen">Text vom Bildschirm lesen</option>
       <option value="password" data-de="Passwort erzeugen" data-en="Generate password">Passwort erzeugen</option>
+      <option value="lastDictation" data-de="Letztes Diktat erneut einfügen" data-en="Insert last dictation again">Letztes Diktat erneut einfügen</option>
     </select>
   </div>
   <div class="row hidden" id="toggleRow"><label for="toggle" data-de="Schalter" data-en="Switch">Schalter</label>
@@ -60,7 +61,7 @@
   const fixed = {
     kind: ['dictation', 'mail', 'voiceNote', 'reply'], press: ['toggle', 'hold'],
     mode: ['standard', 'shift', 'control', 'command', 'option'],
-    tool: ['popup', 'translate', 'emoji', 'notes', 'quickNotes', 'screenText', 'password'],
+    tool: ['popup', 'translate', 'emoji', 'notes', 'quickNotes', 'screenText', 'password', 'lastDictation'],
     toggle: ['pause', 'autocomplete', 'language']
   };
   const idPattern = /^[A-Za-z0-9._-]{1,64}$/;

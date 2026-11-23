@@ -356,6 +356,7 @@ final class Plugin {
         case .quickNotes: tr("Schnell-\nnotiz", "Quick\nnote")
         case .screenText: tr("Text vom\nBildschirm", "Screen\ntext")
         case .password: tr("Passwort", "Password")
+        case .lastDictation: tr("Letztes\nDiktat", "Last\ndictation")
         default: ""
         }
     }
@@ -369,6 +370,7 @@ final class Plugin {
         case .quickNotes: "key-quicknote"
         case .screenText: "key-screentext"
         case .password: "key-password"
+        case .lastDictation: "key-lastdictation"
         default: "key-popup"
         }
     }

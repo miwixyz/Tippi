@@ -47,7 +47,8 @@ enum DeckWire {
     enum ModeSlot: String, CaseIterable, Sendable { case standard, shift, control, command, option }
 
     enum Action: String, CaseIterable, Sendable {
-        case mailDictation, voiceNote, reply, popup, translate, emoji, notes, quickNotes, screenText, password, pause, autocomplete, language
+        case mailDictation, voiceNote, reply, popup, translate, emoji, notes, quickNotes, screenText, password
+        case lastDictation, pause, autocomplete, language
     }
 
     enum Command: Equatable, Sendable {

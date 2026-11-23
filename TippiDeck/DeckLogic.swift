@@ -11,7 +11,7 @@ enum DeckSwitch: String { case pause, autocomplete, language }
 enum DeckLogic {
 
     /// Tools on a key – a subset of `DeckWire.Action`.
-    static let tools: [DeckWire.Action] = [.popup, .translate, .emoji, .notes, .quickNotes, .screenText, .password]
+    static let tools: [DeckWire.Action] = [.popup, .translate, .emoji, .notes, .quickNotes, .screenText, .password, .lastDictation]
 
     /// Ring step through a list of `count` entries from `current` (nil → first or last, by direction).
     static func step(count: Int, from current: Int?, by ticks: Int) -> Int? {

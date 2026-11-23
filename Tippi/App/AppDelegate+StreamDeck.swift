@@ -104,6 +104,11 @@ extension AppDelegate {
             beginScreenOCR()
         case .password:
             generatePasswordFromMenu()
+        case .lastDictation:
+            guard LastDictationSettings.isEnabled else {
+                return ToastWindowController.shared.show(message: String(localized: "streamdeck.lastDictationOff"))
+            }
+            await handleLastDictationHotkey()
         case .pause:
             togglePause()
         case .autocomplete:

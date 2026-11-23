@@ -46,7 +46,7 @@ oder falscher Typ → **Verbindung zu**, Zähler im Protokoll, nie der Inhalt.
 {"v":1,"hello":"2.41.0"}
 {"v":1,"watch":true}
 {"v":1,"cmd":"dictation","do":"toggle|holdStart|holdEnd","mode":"standard|shift|control|command|option"}
-{"v":1,"cmd":"run","action":"mailDictation|voiceNote|reply|popup|translate|emoji|notes|quickNotes|screenText|password|pause|autocomplete|language"}
+{"v":1,"cmd":"run","action":"mailDictation|voiceNote|reply|popup|translate|emoji|notes|quickNotes|screenText|password|lastDictation|pause|autocomplete|language"}
 {"v":1,"cmd":"prompt","id":"improve"}
 ```
 
@@ -119,6 +119,7 @@ Temp-Ordner (0700) als `Tippi.streamDeckPlugin` und öffnet die Datei. Stream De
 - „Taste startet Diktat“ → „Mikrofon wird heimlich eingeschaltet.“ macOS zeigt den orangen Punkt, Tippi Pille/Insel; das
   Transkript geht an die App vorne, nie ans Plugin. Restrisiko angenommen (gleich wie Kürzel).
 - „Taste erzeugt Passwort“ → „Passwort wird abgegriffen.“ Es geht wie im Menü nur in die App vorne, nie zurück.
+- „Taste „Letztes Diktat“ (2.46)“ → „Ein Schadplugin liest das Diktat.“ Nein: Der Befehl heißt nur `lastDictation`, der Text liegt im Arbeitsspeicher von Tippi (30 Minuten, `docs/SECURE-DESIGN-letztes-diktat.md`) und geht nie zum Plugin. Er wird wie beim Kürzel ⌃⌥⌘V in die App vorne geschrieben, nie in ein Passwortfeld, in Terminals einzeilig ohne Return. Eine Schadtaste kann also nur „noch einmal einfügen“ auslösen, nichts lesen.
 
 ## D9 – Restrisiken (bewusst angenommen)
 

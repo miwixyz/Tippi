@@ -24,6 +24,14 @@ final class StreamDeckTests: XCTestCase {
         XCTAssertEqual(DeckWire.parse(json(["v": 1, "cmd": "prompt", "id": custom])), .prompt(id: custom))
     }
 
+    func testLastDictationIsAToolKeyAndTravelsOverTheWire() {
+        XCTAssertTrue(DeckLogic.tools.contains(.lastDictation))
+        XCTAssertEqual(DeckWire.Action(rawValue: "lastDictation"), .lastDictation)
+        XCTAssertEqual(DeckWire.parse(json(DeckWire.encode(.run(.lastDictation)))), .run(.lastDictation))
+        // Unknown actions stay rejected (allowlist): a typo does not turn into this one.
+        XCTAssertNil(DeckWire.parse(json(["v": 1, "cmd": "run", "action": "lastdictation "])))
+    }
+
     func testEncodeParseRoundTrip() {
         let all: [DeckWire.Command] = [.hello(version: "1.0"), .watch, .dictation(.holdEnd, mode: .option), .run(.password),
                                        .prompt(id: "improve")]
