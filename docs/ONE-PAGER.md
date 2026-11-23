@@ -61,6 +61,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Stream Deck key “Last dictation” (v2.46)** — a key that writes your last dictation at the cursor once more, like ⌃⌥⌘V. The plugin sends only the command, never sees the text.
 - **Last dictation again (v2.45)** — ⌃⌥⌘V writes your last dictation at the cursor once more, if it landed in the wrong place. Memory only, 30 minutes at most, never into a password field.
 - **Desk gadget (v2.44)** — Tippi’s ESP32 desk gadget shows the dictation state on its face: listening, thinking, done. Only the signed state word goes into your home network, never text or audio. Off by default.
 - **Stuck uploads show (v2.43)** — if a note has been on this Mac only for over a minute, the notes editor footer says “Not in iCloud” in orange, same rule as TippAI on iPhone.

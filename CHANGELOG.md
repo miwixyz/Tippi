@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.46.0] — 2026-11-23
+
+### Neu
+- **Stream-Deck-Taste „Letztes Diktat“.** Eine Werkzeug-Taste schreibt das letzte Diktat noch einmal an den Cursor, dasselbe wie ⌃⌥⌘V. In der Stream-Deck-App: Aktion „Werkzeug“ → „Letztes Diktat erneut einfügen“. Das Plugin bekommt den Text nie, es schickt nur den Befehl. Ist die Funktion ausgeschaltet (Einstellungen → Hotkeys), sagt die Taste es. In die mitgelieferten Profile ist sie nicht eingebaut, du ziehst sie selbst auf ein Feld. Nach dem Update das Plugin einmal neu installieren (Einstellungen → Allgemein → Stream Deck → „Plugin installieren …“); Tippi meldet es, wenn das Plugin älter ist.
+
+### Intern
+- Neuer Befehl `lastDictation` in der Allowlist (`DeckWire.Action`), Werkzeug-Taste in `DeckLogic.tools`, Symbol `key-lastdictation`, Test dafür (1002 gesamt). Sicherheit: `docs/SECURE-DESIGN-stream-deck.md`.
+
 ## [2.45.0] — 2026-11-23
 
 ### Neu
