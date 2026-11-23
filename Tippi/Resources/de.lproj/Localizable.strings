@@ -930,6 +930,12 @@ Meldung „Port 8080 ist von einem anderen Programm belegt“: Einen Server, den
 
 /* Antwort per Sprache (Labs) */
 "hotkeyName.reply" = "Antwort per Sprache";
+"hotkeyName.lastDictation" = "Letztes Diktat";
+"settings.hotkeys.lastDictation.header" = "Letztes Diktat erneut einfügen";
+"settings.hotkeys.lastDictation.intro" = "Schreibt dein letztes Diktat noch einmal an den Cursor, wenn es am falschen Ort gelandet ist oder du das Textfeld verpasst hast. Der Text bleibt nur im Arbeitsspeicher, höchstens 30 Minuten, und ist beim Beenden von Tippi weg. Nie in ein Passwortfeld.";
+"lastDictation.toast.none" = "Kein Diktat zum Einfügen";
+"lastDictation.toast.secure" = "Nicht in ein Passwortfeld";
+"lastDictation.toast.inserted" = "Letztes Diktat erneut eingefügt";
 "hotkeyName.mailDictation" = "Diktat für Mails";
 "dictation.indicator.recordingReply" = "Antwort diktieren";
 "reply.window.title" = "Antwort";

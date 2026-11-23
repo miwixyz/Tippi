@@ -37,6 +37,7 @@ mechanism, and its own hotkeys to keep out of each other's way.
 | Quick translation window | DeepL app | **Translate Quick Panel**, 5 languages (v1.15) |
 | Quick notes synced across Macs | Apple Notes, a separate notes app | **Notes window** (⌥⌘N), plain `.txt` files synced via iCloud, favorites, choosable font (v2.3–v2.7) |
 | Voice note into one inbox | Apple Notes + system dictation | **Voice note** (⌃⌥⌘N): quick notes float above everything, dictation starts at once, the text lands with a timestamp in the note “Inbox”; adjustable transparency |
+| Insert the last dictation again | EnviousWispr (“Paste Last Dictation”) | **Last dictation again** (⌃⌥⌘V): writes it once more at the cursor when it landed in the wrong place; kept in memory only, 30 minutes at most, never into a password field |
 | Answer a message by voice | Blip · Wispr Flow (cloud, subscription) | **Reply by voice** (⌃⌥⌘A or “Hey Tippi …”, Labs): say what you want to answer, Tippi reads the message and drafts the reply with a **local** model, shown in a preview before anything is inserted |
 | Pull text off the screen (OCR) | TextSniper, CleanShot X | **Screen OCR** (⌥⌘2) — local, via Apple Vision; freezes the screen, so pop-ups are captured too (v2.12) |
 | AI rewriting, grammar, tone | Grammarly · the copy-paste round trip into a chat app | **24 built-in prompts + your own**, 8 providers — in place, no app switch, your own keys |

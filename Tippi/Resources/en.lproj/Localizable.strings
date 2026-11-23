@@ -928,6 +928,12 @@ Message “Port 8080 is used by another program”: since 2.42.1 Tippi clears a 
 
 /* Reply by voice (Labs) */
 "hotkeyName.reply" = "Reply by voice";
+"hotkeyName.lastDictation" = "Last dictation";
+"settings.hotkeys.lastDictation.header" = "Insert last dictation again";
+"settings.hotkeys.lastDictation.intro" = "Writes your last dictation again at the cursor, for when it landed in the wrong place or you missed the text box. The text stays in memory only, for 30 minutes at most, and is gone when you quit Tippi. Never into a password field.";
+"lastDictation.toast.none" = "No dictation to insert";
+"lastDictation.toast.secure" = "Not into a password field";
+"lastDictation.toast.inserted" = "Last dictation inserted again";
 "hotkeyName.mailDictation" = "Dictation for emails";
 "dictation.indicator.recordingReply" = "Dictating reply";
 "reply.window.title" = "Reply";

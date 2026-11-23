@@ -46,6 +46,7 @@ enum MailDictationSettings {
             (String(localized: "hotkeyName.emoji"), EmojiSettings.combo),
             (String(localized: "hotkeyName.notes"), NotesSettings.combo),
             (String(localized: "hotkeyName.voiceNote"), NotesSettings.voiceCombo),
+            (String(localized: "hotkeyName.lastDictation"), LastDictationSettings.combo),
             (String(localized: "hotkeyName.screenOCR"), ScreenOCRSettings.combo),
         ]
         if DictationSettings.mode == .combo {

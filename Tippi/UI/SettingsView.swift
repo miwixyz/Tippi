@@ -260,6 +260,7 @@ private struct HotkeysTab: View {
     @ObservedObject private var emojiHotkey: HotkeyManager
     @ObservedObject private var notesHotkey: HotkeyManager
     @ObservedObject private var voiceNoteHotkey: HotkeyManager
+    @ObservedObject private var lastDictationHotkey: HotkeyManager
     @ObservedObject private var screenOCRHotkey: HotkeyManager
 
     init() {
@@ -276,6 +277,8 @@ private struct HotkeysTab: View {
             wrappedValue: delegate?.notesHotkeyManager ?? HotkeyManager(id: 905))
         _voiceNoteHotkey = ObservedObject(
             wrappedValue: delegate?.voiceNoteHotkeyManager ?? HotkeyManager(id: 909))
+        _lastDictationHotkey = ObservedObject(
+            wrappedValue: delegate?.lastDictationHotkeyManager ?? HotkeyManager(id: 911))
     }
 
     @State private var combo: KeyCombo = KeyComboStore.load()
@@ -295,6 +298,8 @@ private struct HotkeysTab: View {
     @State private var notesCombo: KeyCombo = NotesSettings.combo
     @State private var voiceNoteEnabled: Bool = NotesSettings.isVoiceEnabled
     @State private var voiceNoteCombo: KeyCombo = NotesSettings.voiceCombo
+    @State private var lastDictationEnabled: Bool = LastDictationSettings.isEnabled
+    @State private var lastDictationCombo: KeyCombo = LastDictationSettings.combo
 
     var body: some View {
         ScrollView {
@@ -494,6 +499,40 @@ private struct HotkeysTab: View {
                                 combo: voiceNoteCombo,
                                 reset: { voiceNoteCombo = .voiceNoteDefault },
                                 test: { Task { @MainActor in await AppDelegate.shared?.handleVoiceNoteHotkey() } }
+                            )
+                        }
+                    }
+                    .padding(6)
+                }
+
+                // Letztes Diktat erneut einfügen (2026-11-23).
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(isOn: $lastDictationEnabled) {
+                            Text(String(localized: "settings.hotkeys.lastDictation.header"))
+                                .font(FamilyTheme.font(.headline))
+                        }
+                        .onChange(of: lastDictationEnabled) { _, new in
+                            LastDictationSettings.isEnabled = new
+                            AppDelegate.shared?.restartLastDictationHotkey()
+                        }
+
+                        Text(String(localized: "settings.hotkeys.lastDictation.intro"))
+                            .font(FamilyTheme.font(.caption))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if lastDictationEnabled {
+                            HotkeyRecorderField(combo: $lastDictationCombo)
+                                .onChange(of: lastDictationCombo) { _, new in
+                                    LastDictationSettings.combo = new
+                                    AppDelegate.shared?.restartLastDictationHotkey()
+                                }
+                            hotkeyControls(
+                                manager: lastDictationHotkey,
+                                combo: lastDictationCombo,
+                                reset: { lastDictationCombo = .lastDictationDefault },
+                                test: { Task { @MainActor in await AppDelegate.shared?.handleLastDictationHotkey() } }
                             )
                         }
                     }

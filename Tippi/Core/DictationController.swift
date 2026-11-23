@@ -533,6 +533,8 @@ final class DictationController: ObservableObject {
             if let excerpt = insertion.excerpt, !Task.isCancelled {
                 DictationCorrections.shared.offer(excerpt)
             }
+            // For „Letztes Diktat erneut einfügen“: memory only (docs/SECURE-DESIGN-letztes-diktat.md).
+            LastDictation.shared.rememberDictation(correction?.text ?? final, source: source)
             var pressReturn = false
             // A cancel that arrived during insertion still means "don't send";
             // nothing inserted means nothing to send either.

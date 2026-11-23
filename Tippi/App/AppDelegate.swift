@@ -92,6 +92,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let pauseHotkeyManager = HotkeyManager(id: 8)
     /// Sprachnotiz ⌃⌥⌘N (2026-11-14): Panel schwebend + Diktat an „Eingang“.
     let voiceNoteHotkeyManager = HotkeyManager(id: 9)
+    /// „Letztes Diktat erneut einfügen“ (⌃⌥⌘V), `LastDictation`.
+    let lastDictationHotkeyManager = HotkeyManager(id: 11)
     private var pauseMenuItem: NSMenuItem?
     private var resumeMenuItem: NSMenuItem?
     private var pauseEndTimer: Timer?
@@ -1679,12 +1681,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quickNotesPopover.openFloating(relativeTo: statusItem?.button, focus: inbox.id)
     }
 
+    /// „Letztes Diktat erneut einfügen“: eigener Schalter, keine Modell-Voraussetzung (der Text liegt im
+    /// Speicher). Wird aus `restartDictationHotkey` mit neu gestartet, damit es beim Start und nach jeder
+    /// Einstellungsänderung registriert ist.
+    func restartLastDictationHotkey() {
+        lastDictationHotkeyManager.stop()
+        guard LastDictationSettings.isEnabled else {
+            NSLog("Tippi: last dictation hot key inactive")
+            return
+        }
+        let combo = LastDictationSettings.combo
+        var flags: UInt32 = 0
+        let m = combo.modifiers
+        if m.contains(.command) { flags |= UInt32(cmdKey) }
+        if m.contains(.option) { flags |= UInt32(optionKey) }
+        if m.contains(.control) { flags |= UInt32(controlKey) }
+        if m.contains(.shift) { flags |= UInt32(shiftKey) }
+        lastDictationHotkeyManager.update(trigger: .combo(keyCode: UInt32(combo.keyCode), carbonModifierFlags: flags))
+        lastDictationHotkeyManager.start { [weak self] in
+            Task { @MainActor in await self?.handleLastDictationHotkey() }
+        }
+        NSLog("Tippi: last dictation hot key registered (\(combo.displayString))")
+    }
+
+    /// Writes the last dictation again into the app in front, with the same care as the dictation:
+    /// never into a password field, one line only in a terminal or other command-capable app.
+    /// Nothing to insert is said, not ignored.
+    func handleLastDictationHotkey() async {
+        guard LastDictationSettings.isEnabled else { return }
+        guard let text = LastDictation.shared.recall() else {
+            ToastWindowController.shared.show(message: String(localized: "lastDictation.toast.none"))
+            return
+        }
+        guard !IsSecureEventInputEnabled() else {
+            ToastWindowController.shared.show(message: String(localized: "lastDictation.toast.secure"))
+            return
+        }
+        let app = NSWorkspace.shared.frontmostApplication
+        let isCommandTarget = app?.bundleIdentifier.map(DictationSettings.commandCapableBundleIDs.contains) ?? false
+        let toInsert = isCommandTarget ? DictationController.singleLine(text) : text
+        await TextInsertion.insertViaClipboard(toInsert, into: app)
+        ToastWindowController.shared.show(message: String(localized: "lastDictation.toast.inserted"))
+    }
+
     func restartDictationHotkey() {
         // Same preconditions as the mail hot key — every path that changes them lands here.
         defer {
             restartMailDictationHotkey()
             restartReplyHotkey()
             restartVoiceNoteHotkey()
+            restartLastDictationHotkey()
         }
         dictationHotkeyManager.stop()
         guard DictationSettings.isEnabled, SpeechEngine.isCurrentEngineReady else {

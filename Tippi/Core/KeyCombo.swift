@@ -46,6 +46,11 @@ struct KeyCombo: Codable, Equatable {
     /// ⌃⌥⌘T (Sicherheit) und ⌃⌥⌘P (Pause); in Michaels anderen Apps nicht belegt (geprüft 2026-11-14).
     static let voiceNoteDefault = KeyCombo(keyCode: 45, modifiers: [.control, .option, .command])
 
+    /// „Letztes Diktat erneut einfügen“ default: ⌃⌥⌘V (V wie wieder-einfügen). Frei gegenüber ⌃⌥⌘M (Diktat),
+    /// ⌃⌥⌘N (Sprachnotiz), ⌃⌥⌘B (Mail), ⌃⌥⌘A (Antwort), ⌃⌥⌘P (Pause) und ⌃⌥⌘T (Sicherheit); in anderen
+    /// Apps nicht geprüft.
+    static let lastDictationDefault = KeyCombo(keyCode: 9, modifiers: [.control, .option, .command])
+
     var displayString: String {
         var parts: [String] = []
         let m = modifiers

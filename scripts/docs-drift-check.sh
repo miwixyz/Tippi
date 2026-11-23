@@ -258,6 +258,7 @@ for feature in $hotkeys; do
     emoji)     needle="emoji" ;;
     notes)     needle="Notes" ;;
     voiceNote) needle="Voice note" ;;  # ⌃⌥⌘N (2.39), Sprachnotiz an „Eingang“
+    lastDictation) needle="Last dictation" ;;  # ⌃⌥⌘V (2.45), Diktat erneut einfügen
     reply)     needle="Reply by voice" ;;  # ⌃⌥⌘A (Labs), Antwort per Sprache
     screenOCR) needle="OCR" ;;
     main)      needle="rewriting" ;;   # das KI-Umschreiben, Tippis Kernfeature
