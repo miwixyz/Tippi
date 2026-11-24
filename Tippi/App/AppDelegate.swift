@@ -352,7 +352,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         unloader.unload = { [weak self] in
             self?.autocomplete.engines.unload()
-            MLXServerManager.shared.stopIfOwned()
+            // Der Server bleibt, solange die Diktat-Nachbearbeitung auf ihn zeigt: Kaltstart
+            // (Prozess + 4,4 GB Gewichte) kostete gemessen 24.11. 14–18 s mitten im Diktat,
+            // warm 1,2–1,6 s — länger als ein kurzes Diktat dauert, das Vorwärmen beim
+            // Aufnahmestart konnte es nicht verdecken.
+            if !DictationController.postProcessUsesMLX { MLXServerManager.shared.stopIfOwned() }
         }
     }
 

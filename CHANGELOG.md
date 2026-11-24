@@ -2,7 +2,11 @@
 
 ## [2.46.1] — 2026-11-24
 
-- _Add release notes here._
+### Behoben
+- **Erstes Diktat nach einer Pause dauerte 14–18 Sekunden.** Der Leerlauf-Entlader beendete nach 15 Minuten den lokalen MLX-Server, auch wenn die Diktat-Nachbearbeitung über ihn läuft. Der Neustart (Prozess und 4,4 GB Gewichte) fiel in die Nachbearbeitung und war länger als ein kurzes Diktat. Gemessen am 24.11.: kalt 17,65 s und 13,94 s, warm 1,2–1,6 s. Jetzt bleibt der Server geladen, solange die Nachbearbeitung auf MLX zeigt; die Autovervollständigung wird weiter nach 15 Minuten entladen. Kosten: ca. 4,4 GB Arbeitsspeicher dauerhaft belegt.
+
+### Intern
+- `DictationController.postProcessUsesMLX` ist die eine Stelle für „läuft die Nachbearbeitung über MLX?“ (Vorwärmen und Entlader). Hilfetext der Einstellung nennt die Ausnahme.
 
 ## [2.46.0] — 2026-11-23
 

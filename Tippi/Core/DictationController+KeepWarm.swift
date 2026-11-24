@@ -12,16 +12,23 @@ extension DictationController {
     /// Resolution mirrors `postProcessIfEnabled`: an explicit per-prompt
     /// override wins, otherwise the global default provider.
     func warmPostProcessProviderIfNeeded() {
-        guard DictationSettings.postProcessEnabled else { return }
-        let override = DictationSettings.postProcessProviderOverride
-        let provider = override.isEmpty ? LLMRouter.shared.effectivePreferredProviderID() : override
-        guard provider == "mlx" else { return }
+        guard Self.postProcessUsesMLX else { return }
         // Not just start(): for an already running server that is a no-op, yet
         // the first polish after a long idle still paid the weight page-in and
         // the full prompt prefill after recording ended (20.6 s measured
         // 2026-10-27). prime() starts the server if needed AND sends the exact
         // cleanup prompt, so the real request only prefills the transcript.
         keepLocalModelWarm(prompt: DictationSettings.effectivePostProcessPrompt)
+    }
+
+    /// Läuft die Diktat-Nachbearbeitung über den lokalen MLX-Server? Gleiche Auflösung
+    /// wie `postProcessIfEnabled`: Override pro Prompt gewinnt, sonst der globale Standard.
+    /// Auch der Leerlauf-Entlader fragt das (`AppDelegate.wireIdleUnload`).
+    static var postProcessUsesMLX: Bool {
+        guard DictationSettings.postProcessEnabled else { return false }
+        let override = DictationSettings.postProcessProviderOverride
+        let provider = override.isEmpty ? LLMRouter.shared.effectivePreferredProviderID() : override
+        return provider == "mlx"
     }
 
     /// Seconds between two primes while recording.
