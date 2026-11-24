@@ -528,6 +528,7 @@ Provider-specific privacy varies — review each provider's data policy if you h
 | v2.40.0 | ✅ Done | **One look** — the popup and six floating surfaces use the app family design; keys unchanged |
 | v2.40.1 | ✅ Done | **Safer notes sync** — a note renamed on two Macs keeps both versions; autocomplete no longer queues stale requests |
 | v2.40.2 | ✅ Done | **Hardening** — local MLX runs with a fixed environment; a hung app no longer freezes typing for seconds |
+| v2.46.1 | ✅ Done | **First dictation after a break no longer takes ~15 s** — the local MLX cleanup server stays loaded while dictation cleanup runs on MLX (about 4.4 GB of memory stay in use) |
 | v2.46.0 | ✅ Done | **Stream Deck key “Last dictation”** — writes the last dictation at the cursor once more; the plugin only sends the command, never sees the text |
 | v2.45.0 | ✅ Done | **Last dictation again** — ⌃⌥⌘V writes your last dictation at the cursor once more; memory only, 30 minutes, never into a password field |
 | v2.44.0 | ✅ Done | **Desk gadget** — Tippi’s ESP32 desk gadget shows the dictation state on its face (listening, thinking, done); only the signed state word goes into your home network |

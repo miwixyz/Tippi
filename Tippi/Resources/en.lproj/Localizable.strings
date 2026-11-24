@@ -588,7 +588,9 @@ The default is Gemma 4 E2B. Measured against real German dictations it was both 
 
 When MLX is your default provider, Tippi pre-warms the server on app launch so your first transformation is faster.\n\nIs “Start server” stuck? Usually a server process left behind by an earlier crash is holding the port: it accepts connections but never answers. Since v2.11.7 Tippi clears such a stale server itself and then checks that the port is really free. If a foreign program holds it, nothing is terminated — the message names the program and pid so you can decide. Alternatively, change the port in this section.
 
-Message “Port 8080 is used by another program”: since 2.42.1 Tippi clears a server it started itself and left behind when it launches. If the message stays, another program really holds the port. Quit it or change Tippi’s MLX port in Settings.";
+Message “Port 8080 is used by another program”: since 2.42.1 Tippi clears a server it started itself and left behind when it launches. If the message stays, another program really holds the port. Quit it or change Tippi’s MLX port in Settings.
+
+Memory: By default Tippi frees the model after 15 minutes without use. While dictation cleanup runs on MLX, the server stays loaded (about 4.4 GB of memory), otherwise the first dictation after a break takes up to 18 seconds longer.";
 "settings.help.troubleTitle" = "Troubleshooting";
 
 /* Voice Input */
