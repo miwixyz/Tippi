@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.46.1</title>
+            <pubDate>Tue, 24 Nov 2026 15:44:41 +0100</pubDate>
+            <sparkle:version>760</sparkle:version>
+            <sparkle:shortVersionString>2.46.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Behoben</h3><ul><li><b>Erstes Diktat nach einer Pause dauerte 14–18 Sekunden.</b> Der Leerlauf-Entlader beendete nach 15 Minuten den lokalen MLX-Server, auch wenn die Diktat-Nachbearbeitung über ihn läuft. Der Neustart (Prozess und 4,4 GB Gewichte) fiel in die Nachbearbeitung und war länger als ein kurzes Diktat. Gemessen am 24.11.: kalt 17,65 s und 13,94 s, warm 1,2–1,6 s. Jetzt bleibt der Server geladen, solange die Nachbearbeitung auf MLX zeigt; die Autovervollständigung wird weiter nach 15 Minuten entladen. Kosten: ca. 4,4 GB Arbeitsspeicher dauerhaft belegt.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.46.1/Tippi-2.46.1.dmg" length="26218240" type="application/octet-stream" sparkle:edSignature="aqXkxBmItYTk5MaJHwwtu3Ijuf6GBQXsSjc38e8rKV69HWEuD+OgIlhY9U10he/rNjXUM0SQ3RXhBy7AhgcyDw=="/>
+        </item>
+        <item>
             <title>2.46.0</title>
             <pubDate>Mon, 23 Nov 2026 17:00:03 +0100</pubDate>
             <sparkle:version>756</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Letztes Diktat erneut einfügen.</b> ⌃⌥⌘V schreibt dein letztes Diktat noch einmal an den Cursor der vordersten App, wenn es am falschen Ort gelandet ist oder du das Textfeld verpasst hast. Ab Werk an; Kürzel und Schalter unter Einstellungen → Hotkeys. Der Text bleibt nur im Arbeitsspeicher, höchstens 30 Minuten, nie auf der Platte und nie im Protokoll, und ist beim Beenden von Tippi weg. Nie in ein Passwortfeld, in Terminals einzeilig und ohne Return. Nicht gemerkt werden Sprachnotiz-Diktat und „Antwort per Sprache“.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.45.0/Tippi-2.45.0.dmg" length="26206446" type="application/octet-stream" sparkle:edSignature="Qc2PtucnVFTwFmJA6+wRIXyUwuyCdu4Rin3aFVZY7zRw1GCHkLn/oJbGnmYro4CJmHUibGBhF067Oi9QOgjiAA=="/>
-        </item>
-        <item>
-            <title>2.44.0</title>
-            <pubDate>Sun, 22 Nov 2026 12:06:03 +0100</pubDate>
-            <sparkle:version>749</sparkle:version>
-            <sparkle:shortVersionString>2.44.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Schreibtischgerät.</b> Tippis Schreibtischgerät (ESP32 mit eigener Tippi-Firmware ab 0.9) zeigt den Diktat-Zustand auf Tippis Gesicht: hört zu, denkt, fertig. Einstellungen → Allgemein → „Schreibtischgerät“, ab Werk aus. Ins Heimnetz geht nur das Zustandswort, nie Text, Ton oder App-Namen. Jede Meldung ist mit einem Schlüssel aus dem Schlüsselbund signiert (HMAC-SHA256), das Gerät lehnt alte und wiederholte Meldungen ab.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.44.0/Tippi-2.44.0.dmg" length="26691246" type="application/octet-stream" sparkle:edSignature="OwXIKevplVMBXwzkasYsSIGy3MXsM+Etc+yxnzaAwFzT0Dncw/CkcMB3onZj38jpWuSdCC5/lPZz0EMPOYpdDg=="/>
         </item>
     </channel>
 </rss>
