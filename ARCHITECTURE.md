@@ -162,6 +162,7 @@ Tippi/
 │       │                                   #   Meldet NUR Neues/Geaendertes. Abwesenheit einer Datei
 │       │                                   #   heisst im Ubiquity-Container auch „noch nicht geladen"
 │       ├── InboxNote.swift                 # 2.39 — Sprachnotiz ⌃⌥⌘N: hängt Diktate an „Eingang“ an
+│       ├── NoteSearch.swift                # 2.47 — Volltextsuche: alle Wörter, Akzente egal, Ausschnitt + Fettdruck
 │       ├── PorterFileTasks.swift           # 2.38 — Datei-Aufgaben: liest Porters iCloud-Liste
 │       │                                   #   `Porter/Notizen.json` NUR (nie schreiben), Klick → Porter/Finder.
 │       │                                   #   Design: docs/SECURE-DESIGN-datei-aufgaben.md
