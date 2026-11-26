@@ -59,6 +59,7 @@ Tippi/
 │   │                               #   Bedienungshilfen, nie aus Passwortfeldern, 0,25 s je Element
 │   ├── FieldFingerprint.swift      # 2.32 — „dasselbe Feld?“: Rolle + Position relativ zum Fenster, 8 pt
 │   ├── DictationController+Insertion.swift # 2.32 — letzter Schritt des Diktats: Fokus-Schutz, Einfügen
+│   ├── DictationSound.swift        # unveröffentlicht — „Ton nach dem Einfügen“ (tippi.caf), ab Werk aus
 │   │                               #   mit InsertionFitter, Messpunkt `insert-fit`
 │   ├── DictationAutoReturn.swift   # v2.16 — Enter nach dem Diktat, pro App. In Terminals /
 │   │                               #   Code-Editoren nur bei von der KI unverändertem Text

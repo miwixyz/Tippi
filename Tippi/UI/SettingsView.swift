@@ -1675,6 +1675,7 @@ private struct VoiceTab: View {
     @State private var dictationPostProcess: Bool = DictationSettings.postProcessEnabled
     @State private var dictationLayout: Bool = DictationSettings.layoutEnabled
     @State private var dictationFitInsertion: Bool = DictationSettings.fitInsertionEnabled
+    @State private var dictationInsertSound: Bool = DictationSettings.insertSoundEnabled
     @State private var dictationLivePreview: Bool = DictationSettings.livePreviewEnabled
     @State private var dictationLiveTextSize: LiveTextSize = DictationSettings.liveTextSize
     @State private var dictationPostProcessPrompt: String = DictationSettings.postProcessPrompt
@@ -1821,6 +1822,12 @@ private struct VoiceTab: View {
                     Toggle(String(localized: "settings.voice.dictation.fit.enable"), isOn: $dictationFitInsertion)
                         .onChange(of: dictationFitInsertion) { _, new in DictationSettings.fitInsertionEnabled = new }
                     Text(String(localized: "settings.voice.dictation.fit.body"))
+                        .font(FamilyTheme.font(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Toggle(String(localized: "settings.voice.dictation.insertSound.enable"), isOn: $dictationInsertSound)
+                        .onChange(of: dictationInsertSound) { _, new in DictationSettings.insertSoundEnabled = new }
+                    Text(String(localized: "settings.voice.dictation.insertSound.body"))
                         .font(FamilyTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

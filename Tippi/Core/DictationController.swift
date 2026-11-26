@@ -551,6 +551,7 @@ final class DictationController: ObservableObject {
                 }
             }
             RecordingIndicatorWindowController.shared.hide()
+            DictationSound.playAfterInsertion(inserted: insertion.notice == nil && !Task.isCancelled, recorderActive: recorder.isRecording)
             // Engine names are proper nouns — appended unlocalized so the user
             // can verify which engine actually transcribed.
             let engineName = SpeechEngine.current == .parakeet ? ParakeetModel.current.displayName : "Whisper"

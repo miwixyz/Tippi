@@ -1,5 +1,14 @@
 # Changelog
 
+## Unveröffentlicht
+
+### Neu
+- **Neues App-Symbol und Menüleisten-Symbol aus der App-Familie.** Das Maskottchen-Symbol ersetzt das bisherige App-Symbol (gleiche Größe und Lage des Squircles im Bild, jetzt mit transparenten Ecken), das Menüleisten-Symbol ist das einfarbige Familien-Gesicht (weiter als Template-Bild, passt sich hell/dunkel an).
+- **Ton nach dem Einfügen (ab Werk aus).** Einstellungen → Diktat → „Ton nach dem Einfügen“: ein kurzer Tippi-Ton (zwei Marimba-Töne, 0,22 s), sobald das Diktat im Textfeld steht, nicht beim Start der Aufnahme. Kein Ton, wenn der Text nur in der Zwischenablage landet oder das Diktat abgebrochen wurde. Mit „Systemaudio während der Aufnahme stummschalten“ ist das Systemaudio vor dem Ton wieder an.
+
+### Intern
+- `Tippi/Core/DictationSound.swift` (`DictationSettings.insertSoundEnabled`, Schlüssel `dictation.insertSound.enabled.v1`; Abspielen mit `NSSound(contentsOf:byReference:)`, fehlende oder unlesbare Datei → `Logger` `.notice`). Ausgelöst in `DictationController.transcribeAndInsert` nach dem Einfügen; läuft gerade wieder eine Aufnahme, bleibt es still (der Ton würde mit aufgenommen). Ton liegt als `Tippi/Resources/tippi.caf` im Bündel.
+
 ## [2.47.0] — 2026-11-26
 
 ### Neu
