@@ -2,7 +2,11 @@
 
 ## [2.47.0] — 2026-11-26
 
-- _Add release notes here._
+### Neu
+- **Suche im Notizen-Fenster.** Oben in der Notizliste steht ein Suchfeld. Es findet jede Notiz, in der alle eingegebenen Wörter vorkommen, egal in welcher Reihenfolge; Groß-/Kleinschreibung und Akzente spielen keine Rolle („cafe“ findet „Café“). Treffer stehen fett, unter dem Titel erscheint die Fundstelle. Dieselbe Suche wie in TippAI 1.13.
+
+### Intern
+- `Tippi/Core/Notes/NoteSearch.swift` (Suchwörter, Ausschnitt, Hervorhebung), gleiche Logik wie in TippAI. 9 neue Tests, 1010 gesamt.
 
 ## [2.46.1] — 2026-11-24
 

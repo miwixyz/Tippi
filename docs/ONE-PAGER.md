@@ -61,6 +61,7 @@ for anything that touches AI.
 
 ## What's in the box
 
+- **Search in the Notes window (v2.47)** — finds every note that contains all the words you type, in any order; case and accents don't matter, matches in bold.
 - **Stream Deck key “Last dictation” (v2.46)** — a key that writes your last dictation at the cursor once more, like ⌃⌥⌘V. The plugin sends only the command, never sees the text.
 - **Last dictation again (v2.45)** — ⌃⌥⌘V writes your last dictation at the cursor once more, if it landed in the wrong place. Memory only, 30 minutes at most, never into a password field.
 - **Desk gadget (v2.44)** — Tippi’s ESP32 desk gadget shows the dictation state on its face: listening, thinking, done. Only the signed state word goes into your home network, never text or audio. Off by default.
