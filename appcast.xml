@@ -3,6 +3,16 @@
     <channel>
         <title>Tippi</title>
         <item>
+            <title>2.47.0</title>
+            <pubDate>Thu, 26 Nov 2026 16:28:08 +0100</pubDate>
+            <sparkle:version>765</sparkle:version>
+            <sparkle:shortVersionString>2.47.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Suche im Notizen-Fenster.</b> Oben in der Notizliste steht ein Suchfeld. Es findet jede Notiz, in der alle eingegebenen Wörter vorkommen, egal in welcher Reihenfolge; Groß-/Kleinschreibung und Akzente spielen keine Rolle („cafe“ findet „Café“). Treffer stehen fett, unter dem Titel erscheint die Fundstelle. Dieselbe Suche wie in TippAI 1.13.</li></ul>]]></description>
+            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.47.0/Tippi-2.47.0.dmg" length="26218269" type="application/octet-stream" sparkle:edSignature="pwadU7yw30OynW1j1gmIDCXkbqoEH9IRssM90pgdzvdDZC/g3pBIShFESGdJEzDDx8m6SDdEmZ1mP/ScjDI5Ag=="/>
+        </item>
+        <item>
             <title>2.46.1</title>
             <pubDate>Tue, 24 Nov 2026 15:44:41 +0100</pubDate>
             <sparkle:version>760</sparkle:version>
@@ -21,16 +31,6 @@
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Stream-Deck-Taste „Letztes Diktat“.</b> Eine Werkzeug-Taste schreibt das letzte Diktat noch einmal an den Cursor, dasselbe wie ⌃⌥⌘V. In der Stream-Deck-App: Aktion „Werkzeug“ → „Letztes Diktat erneut einfügen“. Das Plugin bekommt den Text nie, es schickt nur den Befehl. Ist die Funktion ausgeschaltet (Einstellungen → Hotkeys), sagt die Taste es. In die mitgelieferten Profile ist sie nicht eingebaut, du ziehst sie selbst auf ein Feld. Nach dem Update das Plugin einmal neu installieren (Einstellungen → Allgemein → Stream Deck → „Plugin installieren …“); Tippi meldet es, wenn das Plugin älter ist.</li></ul>]]></description>
             <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.46.0/Tippi-2.46.0.dmg" length="26219731" type="application/octet-stream" sparkle:edSignature="5KwhhFY97E1596yyvQ7YkfX9L5VrQzE6Ja35QnpO0wTUiBf0zO1cHUJiU27M9t8uCfiabvWiRLRnwPfDHjl5BQ=="/>
-        </item>
-        <item>
-            <title>2.45.0</title>
-            <pubDate>Mon, 23 Nov 2026 15:44:33 +0100</pubDate>
-            <sparkle:version>753</sparkle:version>
-            <sparkle:shortVersionString>2.45.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <description><![CDATA[<meta charset="utf-8"><h3>Neu</h3><ul><li><b>Letztes Diktat erneut einfügen.</b> ⌃⌥⌘V schreibt dein letztes Diktat noch einmal an den Cursor der vordersten App, wenn es am falschen Ort gelandet ist oder du das Textfeld verpasst hast. Ab Werk an; Kürzel und Schalter unter Einstellungen → Hotkeys. Der Text bleibt nur im Arbeitsspeicher, höchstens 30 Minuten, nie auf der Platte und nie im Protokoll, und ist beim Beenden von Tippi weg. Nie in ein Passwortfeld, in Terminals einzeilig und ohne Return. Nicht gemerkt werden Sprachnotiz-Diktat und „Antwort per Sprache“.</li></ul>]]></description>
-            <enclosure url="https://github.com/miwixyz/Tippi/releases/download/v2.45.0/Tippi-2.45.0.dmg" length="26206446" type="application/octet-stream" sparkle:edSignature="Qc2PtucnVFTwFmJA6+wRIXyUwuyCdu4Rin3aFVZY7zRw1GCHkLn/oJbGnmYro4CJmHUibGBhF067Oi9QOgjiAA=="/>
         </item>
     </channel>
 </rss>
