@@ -804,6 +804,9 @@ Memory: By default Tippi frees the model after 15 minutes without use. While dic
 "inbox.toast.notLoaded" = "Notes not loaded yet – text is on the clipboard";
 "inbox.toast.openInEditor" = "“Inbox” is open right now – text is on the clipboard";
 "notes.sort" = "Sort";
+"notes.search.prompt" = "Search notes";
+"notes.search.empty.title" = "No results";
+"notes.search.empty.subtitle" = "No note contains all search words. Try different or fewer words.";
 "notes.sort.help" = "Sort notes by modification, creation or name";
 "notes.sort.by" = "Sort by";
 "notes.sort.modified" = "Modified";

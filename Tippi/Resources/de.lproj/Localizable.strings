@@ -806,6 +806,9 @@ Speicher: Ab Werk gibt Tippi das Modell nach 15 Minuten ohne Nutzung frei. Läuf
 "inbox.toast.notLoaded" = "Notizen noch nicht geladen – Text liegt in der Zwischenablage";
 "inbox.toast.openInEditor" = "„Eingang“ ist gerade geöffnet – Text liegt in der Zwischenablage";
 "notes.sort" = "Sortieren";
+"notes.search.prompt" = "Notizen durchsuchen";
+"notes.search.empty.title" = "Nichts gefunden";
+"notes.search.empty.subtitle" = "Keine Notiz enthält alle Suchwörter. Versuche andere oder weniger Wörter.";
 "notes.sort.help" = "Notizen nach Änderung, Erstellung oder Name sortieren";
 "notes.sort.by" = "Sortieren nach";
 "notes.sort.modified" = "Geändert";

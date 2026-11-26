@@ -15,6 +15,11 @@ struct NotesListView: View {
     @State private var sortOrder: NoteSortOrder = NotesPreferences.sortOrder
     @State private var sortReversed: Bool = NotesPreferences.sortReversed
     @State private var fileTasks: PorterFileTasks.State?
+    /// Volltextsuche (Michael, 2026-11-26), Logik in `NoteSearch`.
+    @State private var searchText = ""
+
+    private var searchTerms: [String] { NoteSearch.terms(searchText) }
+    private var isSearching: Bool { !searchTerms.isEmpty }
 
     private func reloadFileTasks() async {
         fileTasks = await Task.detached(priority: .utility) {
@@ -23,7 +28,9 @@ struct NotesListView: View {
     }
 
     private var sortedNotes: [Note] {
-        NoteSortOrder.sorted(store.notes, by: sortOrder, reversed: sortReversed)
+        let terms = searchTerms
+        let notes = terms.isEmpty ? store.notes : store.notes.filter { NoteSearch.matches($0.content, terms: terms) }
+        return NoteSortOrder.sorted(notes, by: sortOrder, reversed: sortReversed)
     }
 
     private var favoriteNotes: [Note] {
@@ -48,11 +55,21 @@ struct NotesListView: View {
                     ForEach(otherNotes) { row(for: $0) }
                 }
             }
-            if let fileTasks {
+            if let fileTasks, !isSearching {
                 FileTasksSection(state: fileTasks)
             }
         }
         .scrollContentBackground(.hidden)
+        .searchable(text: $searchText, placement: .sidebar, prompt: Text(String(localized: "notes.search.prompt")))
+        .overlay {
+            if isSearching && sortedNotes.isEmpty {
+                ContentUnavailableView(
+                    String(localized: "notes.search.empty.title"),
+                    systemImage: "magnifyingglass",
+                    description: Text(String(localized: "notes.search.empty.subtitle"))
+                )
+            }
+        }
         // Datei-Aufgaben: beim Öffnen und beim Zurückkehren zu Tippi neu lesen, abseits des
         // Hauptthreads (koordiniertes Lesen kann auf iCloud warten). `nil` = Bereich ausblenden.
         .task { await reloadFileTasks() }
@@ -126,9 +143,22 @@ struct NotesListView: View {
             >= NotesPreferences.maxQuickNotes
         HStack(alignment: .top, spacing: 4) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(note.title)
+                Text(NoteSearch.highlighted(note.title, terms: searchTerms))
                     .font(FamilyTheme.font(.callout))
                     .lineLimit(1)
+                // Nur während der Suche: Ausschnitt ab dem ersten Treffer im Text unter dem Titel.
+                if isSearching {
+                    let body = note.content
+                        .split(separator: "\n", omittingEmptySubsequences: true)
+                        .dropFirst()
+                        .joined(separator: " ")
+                    if !body.isEmpty {
+                        Text(NoteSearch.highlighted(NoteSearch.excerpt(body, terms: searchTerms), terms: searchTerms))
+                            .font(FamilyTheme.font(.caption))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
                 Group {
                     if sortOrder == .created {
                         Text(String(format: String(localized: "notes.sort.createdDate"),
